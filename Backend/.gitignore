@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+.env
+shobdo.db
+uploads/
+instance/.env
