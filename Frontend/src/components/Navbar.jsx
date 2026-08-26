@@ -1,31 +1,144 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
+  BookOpen,
+  Check,
+  ChevronDown,
   Feather,
-  Search,
+  Globe2,
+  LogOut,
   Menu,
+  PenLine,
+  Search,
   X,
 } from "lucide-react";
 
-import { logoutUser } from "../api/auth";
-import { useState } from "react";
+import {
+  Link,
+  NavLink,
+  useNavigate,
+} from "react-router-dom";
+
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  logoutUser,
+} from "../api/auth";
+
+import {
+  useLanguage,
+} from "../Language/LanguageContext";
 
 
-function Navbar({ user, setUser }) {
+function Navbar({
+  user,
+  setUser,
+}) {
 
-  const location = useLocation();
+  const navigate =
+    useNavigate();
 
-  const navigate = useNavigate();
+  const {
+    t,
+    language,
+    setLanguage,
+    currentLanguage,
+    languages,
+  } = useLanguage();
 
-  const [mobileMenu, setMobileMenu] =
-    useState(false);
+
+  // =====================================================
+  // STATE
+  // =====================================================
+
+  const [
+    mobileOpen,
+    setMobileOpen,
+  ] = useState(false);
+
+  const [
+    languageOpen,
+    setLanguageOpen,
+  ] = useState(false);
 
 
-  function isActive(path) {
+  const languageMenuRef =
+    useRef(null);
 
-    return location.pathname === path;
 
+  // =====================================================
+  // CLOSE MENUS
+  // =====================================================
+
+  function closeMenus() {
+
+    setMobileOpen(false);
+
+    setLanguageOpen(false);
   }
 
+
+  // =====================================================
+  // LANGUAGE
+  // =====================================================
+
+  function handleLanguageChange(
+    code
+  ) {
+
+    setLanguage(code);
+
+    setLanguageOpen(false);
+  }
+
+
+  // =====================================================
+  // CLICK OUTSIDE LANGUAGE MENU
+  // =====================================================
+
+  useEffect(() => {
+
+    function handleClickOutside(
+      event
+    ) {
+
+      if (
+        languageMenuRef.current &&
+        !languageMenuRef.current.contains(
+          event.target
+        )
+      ) {
+
+        setLanguageOpen(false);
+
+      }
+
+    }
+
+
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+
+    return () => {
+
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+
+    };
+
+  }, []);
+
+
+  // =====================================================
+  // LOGOUT
+  // =====================================================
 
   async function handleLogout() {
 
@@ -36,126 +149,209 @@ function Navbar({ user, setUser }) {
     } catch (error) {
 
       console.error(
-        "Logout failed:",
+        "LOGOUT ERROR:",
         error
       );
 
     } finally {
 
-      setUser(null);
+      if (setUser) {
+        setUser(null);
+      }
 
-      setMobileMenu(false);
+      closeMenus();
 
-      navigate("/");
+      navigate(
+        "/",
+        {
+          replace: true,
+        }
+      );
 
     }
 
   }
 
 
+  // =====================================================
+  // USER INITIAL
+  // =====================================================
+
+  const userInitial =
+    user?.name
+      ?.trim()
+      ?.charAt(0)
+      ?.toUpperCase()
+    || "U";
+
+
+  // =====================================================
+  // UI
+  // =====================================================
+
   return (
+    <header className="shobdo-navbar-header">
 
-    <header className="site-header">
-
-      <nav className="navbar">
+      <div className="shobdo-navbar-container">
 
 
-        {/* BRAND */}
+        {/* ===============================================
+            BRAND
+        ================================================ */}
 
         <Link
           to="/"
-          className="brand"
-          onClick={() =>
-            setMobileMenu(false)
-          }
+          className="shobdo-navbar-brand"
+          onClick={closeMenus}
         >
 
-          <div className="brand-symbol">
+          <span className="shobdo-navbar-logo">
 
             <Feather size={22} />
 
-          </div>
+          </span>
 
 
-          <div>
+          <span className="shobdo-navbar-brand-text">
 
-            <div className="brand-name">
+            <strong>
               SHOBDO
-            </div>
+            </strong>
 
-            <div className="brand-bengali">
+            <small>
               শব্দ
-            </div>
+            </small>
 
-          </div>
+          </span>
 
         </Link>
 
 
-        {/* NAVIGATION */}
+        {/* ===============================================
+            DESKTOP NAVIGATION
+        ================================================ */}
 
-        <nav
-          className={`nav-links ${
-            mobileMenu ? "open" : ""
-          }`}
-        >
+        <nav className="shobdo-navbar-links">
 
-          <Link
+
+          {/* HOME */}
+
+          <NavLink
             to="/"
-            className={
-              isActive("/")
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              setMobileMenu(false)
+            end
+            className={({ isActive }) =>
+              isActive
+                ? "shobdo-nav-link active"
+                : "shobdo-nav-link"
             }
           >
-            Home
-          </Link>
+
+            {t("navbar.home")}
+
+          </NavLink>
 
 
-          <Link
+          {/* EXPLORE */}
+
+          <NavLink
             to="/explore"
-            className={
-              isActive("/explore")
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              setMobileMenu(false)
+            className={({ isActive }) =>
+              isActive
+                ? "shobdo-nav-link active"
+                : "shobdo-nav-link"
             }
           >
-            Explore
-          </Link>
+
+            {t("navbar.explore")}
+
+          </NavLink>
 
 
-          <Link
-            to="/write"
-            className={
-              isActive("/write")
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              setMobileMenu(false)
+          {/* ABOUT */}
+
+          <NavLink
+            to="/about"
+            className={({ isActive }) =>
+              isActive
+                ? "shobdo-nav-link active"
+                : "shobdo-nav-link"
             }
           >
-            Write
-          </Link>
+
+            {t("navbar.about")}
+
+          </NavLink>
+
+
+          {/* MY WRITINGS */}
+
+          {user && (
+
+            <NavLink
+              to="/my-writings"
+              className={({ isActive }) =>
+                isActive
+                  ? "shobdo-nav-link active"
+                  : "shobdo-nav-link"
+              }
+            >
+
+              <BookOpen size={15} />
+
+              <span>
+                {t("navbar.myWritings")}
+              </span>
+
+            </NavLink>
+
+          )}
+
+
+          {/* WRITE */}
+
+          {user && (
+
+            <NavLink
+              to="/write"
+              className={({ isActive }) =>
+                isActive
+                  ? "shobdo-nav-link active"
+                  : "shobdo-nav-link"
+              }
+            >
+
+              <PenLine size={15} />
+
+              <span>
+                {t("navbar.write")}
+              </span>
+
+            </NavLink>
+
+          )}
 
         </nav>
 
 
-        {/* ACTIONS */}
+        {/* ===============================================
+            RIGHT ACTIONS
+        ================================================ */}
 
-        <div className="nav-actions">
+        <div className="shobdo-navbar-actions">
 
+
+          {/* SEARCH */}
 
           <Link
             to="/explore"
-            className="icon-button"
-            aria-label="Search"
+            className="shobdo-navbar-search"
+            aria-label={
+              t("navbar.search")
+            }
+            title={
+              t("navbar.search")
+            }
+            onClick={closeMenus}
           >
 
             <Search size={19} />
@@ -163,48 +359,517 @@ function Navbar({ user, setUser }) {
           </Link>
 
 
-          {user ? (
+          {/* =============================================
+              LANGUAGE SELECTOR
+          ============================================== */}
+
+          <div
+            className="shobdo-language"
+            ref={languageMenuRef}
+          >
 
             <button
-              className="login-button"
-              onClick={handleLogout}
+              type="button"
+              className={
+                languageOpen
+                  ? "shobdo-language-trigger active"
+                  : "shobdo-language-trigger"
+              }
+              onClick={() =>
+                setLanguageOpen(
+                  (current) =>
+                    !current
+                )
+              }
+              aria-expanded={
+                languageOpen
+              }
+              aria-haspopup="menu"
+              title={
+                t(
+                  "navbar.websiteLanguage"
+                )
+              }
             >
-              Logout
+
+              <Globe2 size={15} />
+
+
+              <span>
+
+                {
+                  currentLanguage
+                    ?.nativeName
+                }
+
+              </span>
+
+
+              <ChevronDown
+                size={13}
+                className={
+                  languageOpen
+                    ? "open"
+                    : ""
+                }
+              />
+
             </button>
+
+
+            {languageOpen && (
+
+              <div
+                className="shobdo-language-menu"
+                role="menu"
+              >
+
+                <div className="shobdo-language-menu-title">
+
+                  <Globe2 size={14} />
+
+                  <span>
+
+                    {t(
+                      "navbar.websiteLanguage"
+                    )}
+
+                  </span>
+
+                </div>
+
+
+                {languages.map(
+                  (item) => {
+
+                    const selected =
+                      language ===
+                      item.code;
+
+
+                    return (
+
+                      <button
+                        key={
+                          item.code
+                        }
+                        type="button"
+                        className={
+                          selected
+                            ? "selected"
+                            : ""
+                        }
+                        onClick={() =>
+                          handleLanguageChange(
+                            item.code
+                          )
+                        }
+                      >
+
+                        <span className="language-check">
+
+                          {
+                            selected
+                              ? (
+                                <Check
+                                  size={13}
+                                />
+                              )
+                              : null
+                          }
+
+                        </span>
+
+
+                        <span>
+
+                          <strong>
+
+                            {
+                              item.nativeName
+                            }
+
+                          </strong>
+
+
+                          {
+                            item.nativeName !==
+                              item.name && (
+
+                              <small>
+                                {item.name}
+                              </small>
+
+                            )
+                          }
+
+                        </span>
+
+                      </button>
+
+                    );
+
+                  }
+                )}
+
+              </div>
+
+            )}
+
+          </div>
+
+
+          {/* =============================================
+              AUTH
+          ============================================== */}
+
+          {user ? (
+
+            <>
+
+              {/* USER */}
+
+              <Link
+                to="/my-writings"
+                className="shobdo-navbar-user"
+                onClick={closeMenus}
+              >
+
+                <span className="shobdo-navbar-avatar">
+
+                  {userInitial}
+
+                </span>
+
+
+                <span className="shobdo-navbar-user-name">
+
+                  {
+                    user?.name ||
+                    "Writer"
+                  }
+
+                </span>
+
+              </Link>
+
+
+              {/* LOGOUT */}
+
+              <button
+                type="button"
+                className="shobdo-navbar-logout"
+                onClick={
+                  handleLogout
+                }
+              >
+
+                <LogOut size={15} />
+
+                <span>
+
+                  {t(
+                    "navbar.logout"
+                  )}
+
+                </span>
+
+              </button>
+
+            </>
 
           ) : (
 
             <Link
               to="/login"
-              className="login-button"
+              className="shobdo-navbar-login"
+              onClick={closeMenus}
             >
-              Login
+
+              {t("navbar.login")}
+
             </Link>
 
           )}
 
 
+          {/* =============================================
+              MOBILE MENU BUTTON
+          ============================================== */}
+
           <button
-            className="mobile-menu-button"
+            type="button"
+            className="shobdo-mobile-menu-button"
             onClick={() =>
-              setMobileMenu(!mobileMenu)
+              setMobileOpen(
+                (current) =>
+                  !current
+              )
             }
-            aria-label="Toggle navigation"
+            aria-expanded={
+              mobileOpen
+            }
+            aria-label={
+              mobileOpen
+                ? t(
+                  "navbar.closeMenu"
+                )
+                : t(
+                  "navbar.openMenu"
+                )
+            }
           >
 
-            {mobileMenu
-              ? <X />
-              : <Menu />
+            {
+              mobileOpen
+                ? (
+                  <X size={21} />
+                )
+                : (
+                  <Menu size={21} />
+                )
             }
 
           </button>
 
         </div>
 
-      </nav>
+      </div>
+
+
+      {/* ===============================================
+          MOBILE NAVIGATION
+      ================================================ */}
+
+      {mobileOpen && (
+
+        <div className="shobdo-mobile-nav">
+
+
+          {/* HOME */}
+
+          <NavLink
+            to="/"
+            end
+            onClick={closeMenus}
+          >
+
+            {t("navbar.home")}
+
+          </NavLink>
+
+
+          {/* EXPLORE */}
+
+          <NavLink
+            to="/explore"
+            onClick={closeMenus}
+          >
+
+            {t(
+              "navbar.explore"
+            )}
+
+          </NavLink>
+
+
+          {/* ABOUT */}
+
+          <NavLink
+            to="/about"
+            onClick={closeMenus}
+          >
+
+            {t(
+              "navbar.about"
+            )}
+
+          </NavLink>
+
+
+          {/* MY WRITINGS */}
+
+          {user && (
+
+            <NavLink
+              to="/my-writings"
+              onClick={closeMenus}
+            >
+
+              <BookOpen size={16} />
+
+              {t(
+                "navbar.myWritings"
+              )}
+
+            </NavLink>
+
+          )}
+
+
+          {/* WRITE */}
+
+          {user && (
+
+            <NavLink
+              to="/write"
+              onClick={closeMenus}
+            >
+
+              <PenLine size={16} />
+
+              {t(
+                "navbar.write"
+              )}
+
+            </NavLink>
+
+          )}
+
+
+          {/* =============================================
+              MOBILE LANGUAGE
+          ============================================== */}
+
+          <div className="shobdo-mobile-language">
+
+            <span>
+
+              <Globe2 size={15} />
+
+              {t(
+                "navbar.websiteLanguage"
+              )}
+
+            </span>
+
+
+            <div>
+
+              {languages.map(
+                (item) => (
+
+                  <button
+                    key={
+                      item.code
+                    }
+                    type="button"
+                    className={
+                      language ===
+                        item.code
+                        ? "selected"
+                        : ""
+                    }
+                    onClick={() =>
+                      handleLanguageChange(
+                        item.code
+                      )
+                    }
+                  >
+
+                    {
+                      language ===
+                        item.code && (
+                        <Check
+                          size={12}
+                        />
+                      )
+                    }
+
+                    {
+                      item.nativeName
+                    }
+
+                  </button>
+
+                )
+              )}
+
+            </div>
+
+          </div>
+
+
+          {/* =============================================
+              MOBILE AUTH
+          ============================================== */}
+
+          {user ? (
+
+            <>
+
+              <div className="shobdo-mobile-user">
+
+                <span className="shobdo-navbar-avatar">
+
+                  {userInitial}
+
+                </span>
+
+
+                <div>
+
+                  <small>
+
+                    {t(
+                      "navbar.signedInAs"
+                    )}
+
+                  </small>
+
+                  <strong>
+
+                    {
+                      user?.name ||
+                      "Writer"
+                    }
+
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <button
+                type="button"
+                className="shobdo-mobile-logout"
+                onClick={
+                  handleLogout
+                }
+              >
+
+                <LogOut size={16} />
+
+                {t(
+                  "navbar.logout"
+                )}
+
+              </button>
+
+            </>
+
+          ) : (
+
+            <Link
+              to="/login"
+              className="shobdo-mobile-login"
+              onClick={closeMenus}
+            >
+
+              {t(
+                "navbar.login"
+              )}
+
+            </Link>
+
+          )}
+
+        </div>
+
+      )}
 
     </header>
-
   );
 
 }

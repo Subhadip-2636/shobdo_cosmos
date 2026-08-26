@@ -1,279 +1,648 @@
-import { Link } from "react-router-dom";
+import {
+  useMemo,
+  useState,
+} from "react";
 
 import {
-  ArrowRight,
+  BookOpen,
   CalendarDays,
   Clock3,
+  Globe2,
+  Heart,
+  MessageCircle,
   User,
 } from "lucide-react";
 
+import {
+  Link,
+} from "react-router-dom";
 
-function WritingCard({ writing }) {
-  // =========================================================
-  // SAFETY
-  // =========================================================
+import {
+  likeWriting,
+} from "../api/api";
 
-  if (!writing) {
-    return null;
-  }
+import {
+  getLanguageLabel,
+} from "../config/languages";
+
+import {
+  useLanguage,
+} from "../Language/LanguageContext";
 
 
-  // =========================================================
-  // EXTRACT DATA
-  // =========================================================
+function WritingCard({
+  writing,
+}) {
 
   const {
-    id,
-    title = "শিরোনামহীন লেখা",
-    content = "",
-    category = "অন্যান্য",
-    created_at,
-    author,
-  } = writing;
+    t,
+  } = useLanguage();
 
 
-  // =========================================================
-  // AUTHOR
-  // =========================================================
+  // =====================================================
+  // LIKE STATE
+  // =====================================================
 
-  const authorName =
-    author?.name || "অজানা লেখক";
+  const [
+    likesCount,
+    setLikesCount,
+  ] = useState(
+    writing?.likes_count || 0
+  );
+
+  const [
+    liked,
+    setLiked,
+  ] = useState(
+    Boolean(
+      writing?.liked_by_current_user
+    )
+  );
+
+  const [
+    liking,
+    setLiking,
+  ] = useState(false);
 
 
-  // =========================================================
-  // CONTENT PREVIEW
-  // =========================================================
+  // =====================================================
+  // CATEGORY LABEL
+  // =====================================================
 
-  function createExcerpt(text, maxLength = 180) {
-    if (!text) {
-      return "";
-    }
+  function getCategoryLabel(
+    value
+  ) {
 
-    const cleanText = text
-      .replace(/\s+/g, " ")
-      .trim();
+    const map = {
 
-    if (cleanText.length <= maxLength) {
-      return cleanText;
-    }
+      "কবিতা":
+        t(
+          "categories.poetry"
+        ),
+
+      "গল্প":
+        t(
+          "categories.story"
+        ),
+
+      "অনুভূতি":
+        t(
+          "categories.reflection"
+        ),
+
+      "প্রবন্ধ":
+        t(
+          "categories.essay"
+        ),
+
+      "অন্যান্য":
+        t(
+          "categories.other"
+        ),
+    };
+
 
     return (
-      cleanText
-        .slice(0, maxLength)
-        .trim() + "..."
+      map[value] ||
+      value ||
+      t(
+        "categories.other"
+      )
     );
+
   }
 
 
-  const excerpt =
-    createExcerpt(content);
+  // =====================================================
+  // BASIC DATA
+  // =====================================================
+
+  const authorName =
+    writing?.author?.name ||
+    t(
+      "common.unknownAuthor"
+    );
 
 
-  // =========================================================
+  const category =
+    getCategoryLabel(
+      writing?.category
+    );
+
+
+  const languageCode =
+    writing?.language ||
+    "bn";
+
+
+  const languageLabel =
+    getLanguageLabel(
+      languageCode
+    );
+
+
+  // =====================================================
+  // PREVIEW
+  // =====================================================
+
+  const preview =
+    useMemo(() => {
+
+      const text =
+        writing?.content
+          ?.trim() || "";
+
+
+      if (!text) {
+
+        return t(
+          "writingCard.previewUnavailable"
+        );
+
+      }
+
+
+      if (
+        text.length <= 190
+      ) {
+
+        return text;
+
+      }
+
+
+      return (
+        `${text.slice(
+          0,
+          190
+        )}...`
+      );
+
+    }, [
+      writing,
+      t,
+    ]);
+
+
+  // =====================================================
   // WORD COUNT
-  // =========================================================
+  // =====================================================
 
   const wordCount =
-    content
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)
-      .length;
+    useMemo(() => {
+
+      const content =
+        writing?.content || "";
 
 
-  // =========================================================
+      if (
+        !content.trim()
+      ) {
+
+        return 0;
+
+      }
+
+
+      return content
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .length;
+
+    }, [writing]);
+
+
+  // =====================================================
   // READING TIME
-  // =========================================================
+  // =====================================================
 
   const readingTime =
     Math.max(
       1,
-      Math.ceil(wordCount / 180)
+      Math.ceil(
+        wordCount / 180
+      )
     );
 
 
-  // =========================================================
-  // DATE FORMAT
-  // =========================================================
+  // =====================================================
+  // DATE
+  // =====================================================
 
-  function formatDate(dateString) {
+  function formatDate(
+    dateString
+  ) {
+
     if (!dateString) {
-      return "তারিখ নেই";
+
+      return "";
+
     }
 
+
     const date =
-      new Date(dateString);
+      new Date(
+        dateString
+      );
+
 
     if (
       Number.isNaN(
         date.getTime()
       )
     ) {
-      return "তারিখ নেই";
+
+      return "";
+
     }
 
+
     try {
+
       return new Intl.DateTimeFormat(
-        "bn-BD",
+        undefined,
         {
           day: "numeric",
-          month: "long",
+          month: "short",
           year: "numeric",
         }
       ).format(date);
 
     } catch {
-      return date.toLocaleDateString();
+
+      return date
+        .toLocaleDateString();
+
     }
+
   }
 
 
-  const formattedDate =
-    formatDate(created_at);
+  const publishedDate =
+    formatDate(
+      writing?.published_at ||
+      writing?.created_at
+    );
 
 
-  // =========================================================
-  // CATEGORY CLASS
-  // =========================================================
+  // =====================================================
+  // LIKE
+  // =====================================================
 
-  function getCategoryClass(categoryName) {
-    switch (categoryName) {
-      case "কবিতা":
-        return "poetry";
+  async function handleLike(
+    event
+  ) {
 
-      case "গল্প":
-        return "story";
+    event.preventDefault();
 
-      case "অনুভূতি":
-        return "feeling";
+    event.stopPropagation();
 
-      case "প্রবন্ধ":
-        return "essay";
 
-      default:
-        return "other";
+    if (
+      liking ||
+      !writing?.id
+    ) {
+
+      return;
+
     }
+
+
+    setLiking(true);
+
+
+    try {
+
+      const data =
+        await likeWriting(
+          writing.id
+        );
+
+
+      if (
+        typeof data?.liked
+        === "boolean"
+      ) {
+
+        setLiked(
+          data.liked
+        );
+
+      }
+
+
+      if (
+        typeof data?.likes_count
+        === "number"
+      ) {
+
+        setLikesCount(
+          data.likes_count
+        );
+
+      } else if (
+        typeof data?.writing
+          ?.likes_count
+        === "number"
+      ) {
+
+        setLikesCount(
+          data.writing.likes_count
+        );
+
+      }
+
+
+    } catch (error) {
+
+      console.error(
+        "LIKE WRITING ERROR:",
+        error
+      );
+
+    } finally {
+
+      setLiking(false);
+
+    }
+
   }
 
 
-  const categoryClass =
-    getCategoryClass(category);
-
-
-  // =========================================================
+  // =====================================================
   // UI
-  // =========================================================
+  // =====================================================
 
   return (
     <article className="writing-card">
 
-      {/* ===================================================
-         TOP
-         =================================================== */}
 
-      <div className="writing-card-top">
+      {/* ===============================================
+          BADGES
+      ================================================ */}
 
-        <span
-          className={`
-            writing-category
-            writing-category-${categoryClass}
-          `}
-        >
-          {category}
+      <div className="writing-card-badges">
+
+        <span className="writing-language-badge">
+
+          <Globe2 size={12} />
+
+          <span>
+            {languageLabel}
+          </span>
+
         </span>
 
 
-        <div className="writing-date">
+        <span className="writing-category-badge">
 
-          <CalendarDays size={14} />
+          {category}
 
-          <span>
-            {formattedDate}
-          </span>
-
-        </div>
+        </span>
 
       </div>
 
 
-      {/* ===================================================
-         TITLE
-         =================================================== */}
+      {/* ===============================================
+          TITLE
+      ================================================ */}
 
       <Link
-        to={`/writings/${id}`}
-        className="writing-title-link"
+        to={
+          `/writings/${writing.id}`
+        }
+        className="writing-card-title-link"
       >
 
-        <h3 className="writing-card-title">
-          {title}
-        </h3>
+        <h2 className="writing-card-title">
+
+          {
+            writing?.title ||
+            t(
+              "common.untitled"
+            )
+          }
+
+        </h2>
 
       </Link>
 
 
-      {/* ===================================================
-         EXCERPT
-         =================================================== */}
+      {/* ===============================================
+          CONTENT PREVIEW
+      ================================================ */}
 
-      <p className="writing-card-excerpt">
-        {excerpt || "এই লেখার কোনো সংক্ষিপ্ত অংশ নেই।"}
+      <p className="writing-card-preview">
+
+        {preview}
+
       </p>
 
 
-      {/* ===================================================
-         AUTHOR
-         =================================================== */}
+      {/* ===============================================
+          AUTHOR
+      ================================================ */}
 
-      <div className="writing-author">
+      <div className="writing-card-author">
 
         <div className="writing-author-avatar">
 
-          <User size={15} />
+          {
+            authorName
+              ?.trim()
+              ?.charAt(0)
+              ?.toUpperCase()
+            ||
+            <User size={15} />
+          }
 
         </div>
 
 
         <div className="writing-author-info">
 
-          <span className="writing-author-name">
+          <span>
+
+            {t(
+              "writingCard.by"
+            )}
+
+          </span>
+
+
+          <strong>
+
             {authorName}
-          </span>
 
-
-          <span className="writing-read-time">
-
-            <Clock3 size={13} />
-
-            {readingTime} মিনিট পাঠ
-
-          </span>
+          </strong>
 
         </div>
 
       </div>
 
 
-      {/* ===================================================
-         FOOTER
-         =================================================== */}
+      {/* ===============================================
+          META
+      ================================================ */}
+
+      <div className="writing-card-meta">
+
+
+        {publishedDate && (
+
+          <span>
+
+            <CalendarDays
+              size={13}
+            />
+
+            {publishedDate}
+
+          </span>
+
+        )}
+
+
+        <span>
+
+          <Clock3 size={13} />
+
+          {readingTime}
+
+          {" "}
+
+          {t(
+            "writingCard.minutes"
+          )}
+
+        </span>
+
+
+        <span>
+
+          <BookOpen size={13} />
+
+          {wordCount}
+
+          {" "}
+
+          {t(
+            "writingCard.words"
+          )}
+
+        </span>
+
+      </div>
+
+
+      {/* ===============================================
+          FOOTER
+      ================================================ */}
 
       <div className="writing-card-footer">
 
-        <div className="writing-word-count">
-          {wordCount} শব্দ
+
+        {/* =============================================
+            SOCIAL STATS
+        ============================================== */}
+
+        <div className="writing-card-social">
+
+
+          {/* LIKE */}
+
+          <button
+            type="button"
+
+            className={
+              liked
+                ? "writing-like-button liked"
+                : "writing-like-button"
+            }
+
+            onClick={
+              handleLike
+            }
+
+            disabled={
+              liking
+            }
+
+            aria-label={
+              t(
+                "writingCard.like"
+              )
+            }
+
+            title={
+              t(
+                "writingCard.like"
+              )
+            }
+          >
+
+            <Heart
+              size={15}
+              fill={
+                liked
+                  ? "currentColor"
+                  : "none"
+              }
+            />
+
+            <span>
+              {likesCount}
+            </span>
+
+          </button>
+
+
+          {/* COMMENTS */}
+
+          <span
+            className="writing-comment-count"
+
+            title={
+              t(
+                "writingCard.comments"
+              )
+            }
+          >
+
+            <MessageCircle
+              size={15}
+            />
+
+            {
+              writing
+                ?.comments_count ||
+              0
+            }
+
+          </span>
+
         </div>
 
 
+        {/* =============================================
+            READ
+        ============================================== */}
+
         <Link
-          to={`/writings/${id}`}
+          to={
+            `/writings/${writing.id}`
+          }
           className="writing-read-link"
-          aria-label={`${title} পড়ুন`}
         >
 
-          পড়ুন
+          {t(
+            "writingCard.read"
+          )}
 
-          <ArrowRight size={16} />
+          <span aria-hidden="true">
+            →
+          </span>
 
         </Link>
 
@@ -281,6 +650,7 @@ function WritingCard({ writing }) {
 
     </article>
   );
+
 }
 
 

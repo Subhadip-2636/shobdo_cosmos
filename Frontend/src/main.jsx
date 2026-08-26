@@ -2,7 +2,14 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 
 import App from "./App";
-import { AuthProvider } from "./context/AuthContext";
+
+import {
+  AuthProvider,
+} from "./context/AuthContext";
+
+import {
+  LanguageProvider,
+} from "./Language/LanguageContext";
 
 import "./index.css";
 
@@ -10,15 +17,17 @@ import "./index.css";
 ReactDOM.createRoot(
   document.getElementById("root")
 ).render(
-
   <React.StrictMode>
 
-    <AuthProvider>
+    <LanguageProvider>
 
-      <App />
+      <AuthProvider>
 
-    </AuthProvider>
+        <App />
+
+      </AuthProvider>
+
+    </LanguageProvider>
 
   </React.StrictMode>
-
 );

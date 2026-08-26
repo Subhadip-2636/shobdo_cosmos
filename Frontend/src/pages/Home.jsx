@@ -1,355 +1,1249 @@
 import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  ArrowLeft,
   ArrowRight,
   BookOpen,
-  Heart,
+  Feather,
+  Lightbulb,
   PenLine,
+  Quote,
   Sparkles,
 } from "lucide-react";
 
-import { Link } from "react-router-dom";
+import {
+  Link,
+} from "react-router-dom";
+
 import WritingCard from "../components/WritingCard";
 
-function Home({ writings = [], loading = false }) {
-  const latestWritings = writings.slice(0, 6);
+import {
+  useLanguage,
+} from "../Language/LanguageContext";
 
-  const categories = [
-    {
-      name: "কবিতা",
-      description: "শব্দে অনুভূতির ছন্দ",
-      icon: "✦",
-    },
-    {
-      name: "গল্প",
-      description: "কল্পনা ও জীবনের কথা",
-      icon: "⌘",
-    },
-    {
-      name: "অনুভূতি",
-      description: "মনের গভীরের কথা",
-      icon: "♡",
-    },
-    {
-      name: "প্রবন্ধ",
-      description: "চিন্তা, বিশ্লেষণ ও মতামত",
-      icon: "¶",
-    },
-  ];
+
+// =========================================================
+// CLASSIC PUBLIC-DOMAIN QUOTES
+// =========================================================
+
+const LITERARY_QUOTES = [
+
+  {
+    quote:
+      "To thine own self be true.",
+
+    author:
+      "William Shakespeare",
+
+    source:
+      "Hamlet",
+  },
+
+  {
+    quote:
+      "There is no charm equal to tenderness of heart.",
+
+    author:
+      "Jane Austen",
+
+    source:
+      "Emma",
+  },
+
+  {
+    quote:
+      "I am no bird; and no net ensnares me.",
+
+    author:
+      "Charlotte Brontë",
+
+    source:
+      "Jane Eyre",
+  },
+
+  {
+    quote:
+      "Forever is composed of nows.",
+
+    author:
+      "Emily Dickinson",
+
+    source:
+      "Poem 690",
+  },
+
+];
+
+
+// =========================================================
+// DATABASE CATEGORY VALUES
+// =========================================================
+
+const CATEGORIES = [
+
+  {
+    value:
+      "কবিতা",
+
+    translationKey:
+      "categories.poetry",
+
+    symbol:
+      "✦",
+
+    number:
+      "01",
+  },
+
+  {
+    value:
+      "গল্প",
+
+    translationKey:
+      "categories.story",
+
+    symbol:
+      "◈",
+
+    number:
+      "02",
+  },
+
+  {
+    value:
+      "অনুভূতি",
+
+    translationKey:
+      "categories.reflection",
+
+    symbol:
+      "●",
+
+    number:
+      "03",
+  },
+
+  {
+    value:
+      "প্রবন্ধ",
+
+    translationKey:
+      "categories.essay",
+
+    symbol:
+      "◇",
+
+    number:
+      "04",
+  },
+
+];
+
+
+// =========================================================
+// HOME
+// =========================================================
+
+function Home({
+  writings = [],
+  loading = false,
+}) {
+
+  const {
+    t,
+  } = useLanguage();
+
+
+  // =====================================================
+  // QUOTE STATE
+  // =====================================================
+
+  const [
+    quoteIndex,
+    setQuoteIndex,
+  ] = useState(0);
+
+
+  // =====================================================
+  // AUTO ROTATE QUOTES
+  // =====================================================
+
+  useEffect(() => {
+
+    const timer =
+      window.setInterval(
+        () => {
+
+          setQuoteIndex(
+            (current) =>
+              (
+                current + 1
+              )
+              %
+              LITERARY_QUOTES.length
+          );
+
+        },
+        7000
+      );
+
+
+    return () => {
+
+      window.clearInterval(
+        timer
+      );
+
+    };
+
+  }, []);
+
+
+  // =====================================================
+  // QUOTE CONTROLS
+  // =====================================================
+
+  function previousQuote() {
+
+    setQuoteIndex(
+      (current) =>
+        (
+          current -
+          1 +
+          LITERARY_QUOTES.length
+        )
+        %
+        LITERARY_QUOTES.length
+    );
+
+  }
+
+
+  function nextQuote() {
+
+    setQuoteIndex(
+      (current) =>
+        (
+          current + 1
+        )
+        %
+        LITERARY_QUOTES.length
+    );
+
+  }
+
+
+  const activeQuote =
+    LITERARY_QUOTES[
+      quoteIndex
+    ];
+
+
+  // =====================================================
+  // WRITINGS
+  // =====================================================
+
+  const featuredWriting =
+    writings[0] || null;
+
+
+  const latestWritings =
+    featuredWriting
+      ? writings.slice(
+        1,
+        7
+      )
+      : writings.slice(
+        0,
+        6
+      );
+
+
+  // =====================================================
+  // CATEGORY LABEL
+  // =====================================================
+
+  function categoryLabel(
+    value
+  ) {
+
+    const map = {
+
+      "কবিতা":
+        t(
+          "categories.poetry"
+        ),
+
+      "গল্প":
+        t(
+          "categories.story"
+        ),
+
+      "অনুভূতি":
+        t(
+          "categories.reflection"
+        ),
+
+      "প্রবন্ধ":
+        t(
+          "categories.essay"
+        ),
+
+      "অন্যান্য":
+        t(
+          "categories.other"
+        ),
+    };
+
+
+    return (
+      map[value] ||
+      value
+    );
+
+  }
+
+
+  // =====================================================
+  // UI
+  // =====================================================
 
   return (
-    <main className="home-page">
-
-      {/* ================= HERO ================= */}
-
-      <section className="home-hero">
-        <div className="hero-decoration hero-decoration-one" />
-        <div className="hero-decoration hero-decoration-two" />
-
-        <div className="home-container hero-content">
-
-          <div className="hero-badge">
-            <Sparkles size={15} />
-            বাংলা সাহিত্য সম্প্রদায়
-          </div>
-
-          <h1 className="hero-title">
-            তোমার শব্দ,
-            <br />
-            <span>তোমার গল্প।</span>
-          </h1>
-
-          <p className="hero-description">
-            কবিতা, গল্প, অনুভূতি ও চিন্তার জন্য একটি মুক্ত বাংলা
-            সাহিত্য প্ল্যাটফর্ম। লিখুন, পড়ুন এবং আপনার শব্দ পৌঁছে দিন
-            আরও মানুষের কাছে।
-          </p>
-
-          <div className="hero-actions">
-
-            <Link to="/write" className="btn btn-primary">
-              <PenLine size={18} />
-              লেখা শুরু করুন
-            </Link>
-
-            <Link to="/explore" className="btn btn-secondary">
-              লেখা পড়ুন
-              <ArrowRight size={18} />
-            </Link>
-
-          </div>
-
-          <div className="hero-mini-info">
-            <span>
-              <BookOpen size={16} />
-              স্বাধীনভাবে লিখুন
-            </span>
-
-            <span className="hero-dot">•</span>
-
-            <span>
-              <Heart size={16} />
-              বাংলা সাহিত্যকে ভালোবাসুন
-            </span>
-          </div>
-
-        </div>
-      </section>
+    <main className="literary-home">
 
 
-      {/* ================= CATEGORIES ================= */}
+      {/* =================================================
+          HERO
+      ================================================== */}
 
-      <section className="home-section categories-section">
+      <section className="literary-hero">
 
-        <div className="home-container">
+        <div className="literary-hero-noise" />
 
-          <div className="section-header">
 
-            <div>
-              <span className="section-eyebrow">
-                আবিষ্কার করুন
+        <div className="literary-hero-inner">
+
+
+          {/* LEFT */}
+
+          <div className="literary-hero-copy">
+
+            <div className="literary-kicker">
+
+              <Sparkles
+                size={14}
+              />
+
+              <span>
+
+                {t(
+                  "home.eyebrow"
+                )}
+
               </span>
 
-              <h2>
-                আপনার পছন্দের লেখা
-              </h2>
             </div>
 
-            <Link to="/explore" className="section-link">
-              সব দেখুন
-              <ArrowRight size={17} />
-            </Link>
 
-          </div>
+            <h1>
+
+              {t(
+                "home.heroTitle"
+              )}
+
+            </h1>
 
 
-          <div className="category-grid">
+            <p className="literary-hero-description">
 
-            {categories.map((category) => (
+              {t(
+                "home.heroDescription"
+              )}
+
+            </p>
+
+
+            <div className="literary-hero-buttons">
 
               <Link
-                to={`/explore?category=${encodeURIComponent(
-                  category.name
-                )}`}
-                className="category-card"
-                key={category.name}
+                to="/write"
+                className="literary-primary-button"
               >
 
-                <div className="category-icon">
-                  {category.icon}
-                </div>
-
-                <h3>
-                  {category.name}
-                </h3>
-
-                <p>
-                  {category.description}
-                </p>
-
-                <span className="category-arrow">
-                  <ArrowRight size={18} />
-                </span>
-
-              </Link>
-
-            ))}
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* ================= LATEST WRITINGS ================= */}
-
-      <section className="home-section writings-section">
-
-        <div className="home-container">
-
-          <div className="section-header">
-
-            <div>
-              <span className="section-eyebrow">
-                নতুন প্রকাশনা
-              </span>
-
-              <h2>
-                সর্বশেষ লেখা
-              </h2>
-
-              <p className="section-description">
-                SHOBDO সম্প্রদায়ের নতুন কবিতা, গল্প এবং চিন্তা পড়ুন।
-              </p>
-            </div>
-
-            <Link to="/explore" className="section-link">
-              আরও পড়ুন
-              <ArrowRight size={17} />
-            </Link>
-
-          </div>
-
-
-          {/* Loading */}
-
-          {loading && (
-
-            <div className="writing-loading-grid">
-
-              {[1, 2, 3].map((item) => (
-
-                <div
-                  className="writing-skeleton"
-                  key={item}
-                >
-                  <div className="skeleton-line skeleton-small" />
-                  <div className="skeleton-line skeleton-title" />
-                  <div className="skeleton-line" />
-                  <div className="skeleton-line" />
-                </div>
-
-              ))}
-
-            </div>
-
-          )}
-
-
-          {/* Writing List */}
-
-          {!loading && latestWritings.length > 0 && (
-
-            <div className="home-writing-grid">
-
-              {latestWritings.map((writing) => (
-
-                <WritingCard
-                  key={writing.id}
-                  writing={writing}
+                <PenLine
+                  size={17}
                 />
 
-              ))}
+                {t(
+                  "home.startWriting"
+                )}
+
+              </Link>
+
+
+              <Link
+                to="/explore"
+                className="literary-text-button"
+              >
+
+                {t(
+                  "home.exploreWriting"
+                )}
+
+                <ArrowRight
+                  size={16}
+                />
+
+              </Link>
 
             </div>
 
-          )}
+
+            <div className="literary-hero-footnote">
+
+              <span />
+
+              <p>
+
+                {t(
+                  "home.writerInvitation",
+                  "Some stories are waiting for only you to write them."
+                )}
+
+              </p>
+
+            </div>
+
+          </div>
 
 
-          {/* Empty State */}
+          {/* RIGHT — MANUSCRIPT */}
 
-          {!loading && latestWritings.length === 0 && (
+          <div className="literary-manuscript-wrap">
 
-            <div className="empty-writings">
+            <div className="literary-manuscript-shadow" />
 
-              <div className="empty-icon">
-                <BookOpen size={28} />
+
+            <div className="literary-manuscript">
+
+              <div className="manuscript-top">
+
+                <Feather
+                  size={25}
+                />
+
+                <span>
+                  SHOBDO
+                </span>
+
               </div>
 
-              <h3>
-                এখনও কোনো লেখা প্রকাশিত হয়নি
-              </h3>
 
-              <p>
-                SHOBDO-তে প্রথম লেখাটি আপনার হতে পারে।
+              <div className="manuscript-rule" />
+
+
+              <p className="manuscript-small">
+
+                {t(
+                  "home.blankPageLabel",
+                  "A BLANK PAGE"
+                )}
+
               </p>
 
-              <Link
-                to="/write"
-                className="btn btn-primary"
-              >
-                <PenLine size={17} />
-                লেখা প্রকাশ করুন
-              </Link>
-
-            </div>
-
-          )}
-
-        </div>
-
-      </section>
-
-
-      {/* ================= QUOTE ================= */}
-
-      <section className="literary-quote-section">
-
-        <div className="home-container">
-
-          <div className="literary-quote">
-
-            <span className="quote-mark">
-              “
-            </span>
-
-            <blockquote>
-              প্রতিটি মানুষের ভেতরে একটি গল্প আছে।
-              <br />
-              শুধু প্রয়োজন তাকে শব্দ দেওয়ার।
-            </blockquote>
-
-            <div className="quote-line" />
-
-            <span>
-              SHOBDO
-            </span>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* ================= FINAL CTA ================= */}
-
-      <section className="home-section home-cta-section">
-
-        <div className="home-container">
-
-          <div className="home-cta-card">
-
-            <div className="cta-content">
-
-              <span className="section-eyebrow">
-                আপনার গল্প শুরু হোক
-              </span>
 
               <h2>
-                আপনার শব্দ অপেক্ষা করছে
-                <br />
-                পাঠকের জন্য।
+
+                {t(
+                  "home.blankPageTitle",
+                  "What will you write today?"
+                )}
+
               </h2>
 
-              <p>
-                একটি কবিতা, একটি গল্প কিংবা একটি অনুভূতি —
-                আজই SHOBDO-তে লিখে ফেলুন।
-              </p>
 
-            </div>
+              <div className="manuscript-lines">
 
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
 
-            <div className="cta-actions">
+              </div>
+
 
               <Link
                 to="/write"
-                className="btn cta-main-btn"
+                className="manuscript-write-link"
               >
-                <PenLine size={18} />
-                লেখা শুরু করুন
-              </Link>
 
-              <Link
-                to="/register"
-                className="cta-text-link"
-              >
-                নতুন অ্যাকাউন্ট তৈরি করুন
-                <ArrowRight size={17} />
+                <PenLine
+                  size={15}
+                />
+
+                {t(
+                  "home.beginStory",
+                  "Begin your story"
+                )}
+
               </Link>
 
             </div>
 
           </div>
+
+        </div>
+
+      </section>
+
+
+      {/* =================================================
+          QUOTE EXPERIENCE
+      ================================================== */}
+
+      <section className="literary-quotes-section">
+
+        <div className="literary-quotes-shell">
+
+
+          <div className="quote-section-side">
+
+            <span className="quote-side-number">
+              01
+            </span>
+
+
+            <div>
+
+              <p className="literary-section-label">
+
+                {t(
+                  "home.quoteEyebrow",
+                  "WORDS THAT REMAIN"
+                )}
+
+              </p>
+
+
+              <h2>
+
+                {t(
+                  "home.quoteTitle",
+                  "Words that moved generations."
+                )}
+
+              </h2>
+
+
+              <p>
+
+                {t(
+                  "home.quoteDescription",
+                  "Sometimes one sentence is enough to make someone pick up a pen."
+                )}
+
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div className="quote-stage">
+
+            <Quote
+              className="quote-stage-icon"
+              size={46}
+            />
+
+
+            <blockquote>
+
+              “{activeQuote.quote}”
+
+            </blockquote>
+
+
+            <div className="quote-author">
+
+              <span />
+
+              <div>
+
+                <strong>
+
+                  {activeQuote.author}
+
+                </strong>
+
+                <small>
+
+                  {activeQuote.source}
+
+                </small>
+
+              </div>
+
+            </div>
+
+
+            <div className="quote-navigation">
+
+              <button
+                type="button"
+                onClick={
+                  previousQuote
+                }
+                aria-label="Previous quote"
+              >
+
+                <ArrowLeft
+                  size={16}
+                />
+
+              </button>
+
+
+              <div className="quote-dots">
+
+                {
+                  LITERARY_QUOTES.map(
+                    (
+                      item,
+                      index
+                    ) => (
+
+                      <button
+                        key={
+                          `${item.author}-${index}`
+                        }
+
+                        type="button"
+
+                        className={
+                          index ===
+                          quoteIndex
+                            ? "active"
+                            : ""
+                        }
+
+                        onClick={() =>
+                          setQuoteIndex(
+                            index
+                          )
+                        }
+
+                        aria-label={
+                          `Quote ${index + 1}`
+                        }
+                      />
+
+                    )
+                  )
+                }
+
+              </div>
+
+
+              <button
+                type="button"
+                onClick={
+                  nextQuote
+                }
+                aria-label="Next quote"
+              >
+
+                <ArrowRight
+                  size={16}
+                />
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* =================================================
+          WRITING INVITATION
+      ================================================== */}
+
+      <section className="literary-prompt-section">
+
+        <div className="literary-prompt-card">
+
+          <div className="prompt-light">
+
+            <Lightbulb
+              size={25}
+            />
+
+          </div>
+
+
+          <div className="prompt-content">
+
+            <span>
+
+              {t(
+                "home.promptEyebrow",
+                "A THOUGHT FOR TODAY"
+              )}
+
+            </span>
+
+
+            <h2>
+
+              {t(
+                "home.promptTitle",
+                "Write about something you never said aloud."
+              )}
+
+            </h2>
+
+
+            <p>
+
+              {t(
+                "home.promptDescription",
+                "It does not have to be perfect. It only has to be yours."
+              )}
+
+            </p>
+
+          </div>
+
+
+          <Link
+            to="/write"
+            className="prompt-write-button"
+          >
+
+            <PenLine
+              size={17}
+            />
+
+            {t(
+              "home.startWriting"
+            )}
+
+          </Link>
+
+        </div>
+
+      </section>
+
+
+      {/* =================================================
+          CATEGORIES
+      ================================================== */}
+
+      <section className="literary-content-section">
+
+        <div className="literary-section-header">
+
+          <div>
+
+            <span className="literary-section-label">
+
+              {t(
+                "home.discoverEyebrow",
+                "DISCOVER"
+              )}
+
+            </span>
+
+
+            <h2>
+
+              {t(
+                "home.categoriesTitle"
+              )}
+
+            </h2>
+
+
+            <p>
+
+              {t(
+                "home.categoriesDescription"
+              )}
+
+            </p>
+
+          </div>
+
+
+          <Link
+            to="/explore"
+            className="literary-view-all"
+          >
+
+            {t(
+              "home.viewAll"
+            )}
+
+            <ArrowRight
+              size={15}
+            />
+
+          </Link>
+
+        </div>
+
+
+        <div className="literary-category-grid">
+
+          {
+            CATEGORIES.map(
+              (item) => (
+
+                <Link
+                  key={
+                    item.value
+                  }
+
+                  to={
+                    `/explore?category=${encodeURIComponent(
+                      item.value
+                    )}`
+                  }
+
+                  className="literary-category-card"
+                >
+
+                  <div className="category-card-top">
+
+                    <span className="category-number">
+
+                      {item.number}
+
+                    </span>
+
+
+                    <span className="category-symbol">
+
+                      {item.symbol}
+
+                    </span>
+
+                  </div>
+
+
+                  <div className="category-card-bottom">
+
+                    <div>
+
+                      <h3>
+
+                        {t(
+                          item.translationKey
+                        )}
+
+                      </h3>
+
+
+                      <p>
+
+                        {t(
+                          "home.exploreWriting"
+                        )}
+
+                      </p>
+
+                    </div>
+
+
+                    <ArrowRight
+                      size={17}
+                    />
+
+                  </div>
+
+                </Link>
+
+              )
+            )
+          }
+
+        </div>
+
+      </section>
+
+
+      {/* =================================================
+          FEATURED COMMUNITY WRITING
+      ================================================== */}
+
+      {!loading &&
+      featuredWriting && (
+
+        <section className="literary-featured-section">
+
+          <div className="literary-featured-shell">
+
+
+            <div className="featured-side-label">
+
+              <span>
+                02
+              </span>
+
+              <p>
+
+                {t(
+                  "home.featuredEyebrow",
+                  "FROM THE COMMUNITY"
+                )}
+
+              </p>
+
+            </div>
+
+
+            <article className="literary-featured-article">
+
+              <div className="featured-article-meta">
+
+                <span>
+
+                  {
+                    categoryLabel(
+                      featuredWriting
+                        .category
+                    )
+                  }
+
+                </span>
+
+                <i />
+
+                <span>
+
+                  {
+                    featuredWriting
+                      .author
+                      ?.name ||
+                    t(
+                      "common.unknownAuthor"
+                    )
+                  }
+
+                </span>
+
+              </div>
+
+
+              <h2>
+
+                {
+                  featuredWriting
+                    .title ||
+                  t(
+                    "common.untitled"
+                  )
+                }
+
+              </h2>
+
+
+              <p>
+
+                {
+                  featuredWriting
+                    .content
+                    ?.trim()
+                    ?.slice(
+                      0,
+                      420
+                    )
+                  ||
+                  t(
+                    "writingCard.previewUnavailable"
+                  )
+                }
+
+                {
+                  featuredWriting
+                    .content
+                    ?.length >
+                  420
+                    ? "…"
+                    : ""
+                }
+
+              </p>
+
+
+              <Link
+                to={
+                  `/writings/${featuredWriting.id}`
+                }
+              >
+
+                {t(
+                  "writingCard.read"
+                )}
+
+                <ArrowRight
+                  size={16}
+                />
+
+              </Link>
+
+            </article>
+
+
+            <div className="featured-quote-mark">
+
+              <Quote
+                size={72}
+              />
+
+            </div>
+
+          </div>
+
+        </section>
+
+      )}
+
+
+      {/* =================================================
+          LATEST WRITINGS
+      ================================================== */}
+
+      <section className="literary-content-section literary-latest">
+
+        <div className="literary-section-header">
+
+          <div>
+
+            <span className="literary-section-label">
+
+              {t(
+                "home.latestEyebrow",
+                "FRESH INK"
+              )}
+
+            </span>
+
+
+            <h2>
+
+              {t(
+                "home.latestTitle"
+              )}
+
+            </h2>
+
+
+            <p>
+
+              {t(
+                "home.latestDescription"
+              )}
+
+            </p>
+
+          </div>
+
+
+          <Link
+            to="/explore"
+            className="literary-view-all"
+          >
+
+            {t(
+              "home.viewAll"
+            )}
+
+            <ArrowRight
+              size={15}
+            />
+
+          </Link>
+
+        </div>
+
+
+        {/* LOADING */}
+
+        {loading && (
+
+          <div className="literary-loading">
+
+            <Feather
+              size={28}
+            />
+
+            <span>
+
+              {t(
+                "common.loading"
+              )}
+
+            </span>
+
+          </div>
+
+        )}
+
+
+        {/* EMPTY */}
+
+        {!loading &&
+        writings.length === 0 && (
+
+          <div className="literary-empty-state">
+
+            <Feather
+              size={32}
+            />
+
+
+            <h3>
+
+              {t(
+                "home.emptyTitle"
+              )}
+
+            </h3>
+
+
+            <p>
+
+              {t(
+                "home.emptyDescription"
+              )}
+
+            </p>
+
+
+            <Link
+              to="/write"
+              className="literary-primary-button"
+            >
+
+              <PenLine
+                size={17}
+              />
+
+              {t(
+                "home.startWriting"
+              )}
+
+            </Link>
+
+          </div>
+
+        )}
+
+
+        {/* GRID */}
+
+        {!loading &&
+        latestWritings.length > 0 && (
+
+          <div className="literary-writing-grid">
+
+            {
+              latestWritings.map(
+                (writing) => (
+
+                  <WritingCard
+                    key={
+                      writing.id
+                    }
+
+                    writing={
+                      writing
+                    }
+                  />
+
+                )
+              )
+            }
+
+          </div>
+
+        )}
+
+      </section>
+
+
+      {/* =================================================
+          FINAL CALL TO WRITE
+      ================================================== */}
+
+      <section className="literary-final-section">
+
+        <div className="final-background-word">
+          SHOBDO
+        </div>
+
+
+        <div className="literary-final-inner">
+
+          <Feather
+            size={34}
+          />
+
+
+          <span>
+
+            {t(
+              "home.finalEyebrow",
+              "YOUR PAGE IS STILL BLANK"
+            )}
+
+          </span>
+
+
+          <h2>
+
+            {t(
+              "home.finalTitle",
+              "Someone may be waiting to read the words only you can write."
+            )}
+
+          </h2>
+
+
+          <p>
+
+            {t(
+              "home.finalDescription",
+              "Begin with one sentence. The rest can find its way."
+            )}
+
+          </p>
+
+
+          <Link
+            to="/write"
+            className="literary-final-button"
+          >
+
+            {t(
+              "home.beginWriting",
+              "Write something"
+            )}
+
+            <ArrowRight
+              size={17}
+            />
+
+          </Link>
 
         </div>
 
@@ -357,6 +1251,8 @@ function Home({ writings = [], loading = false }) {
 
     </main>
   );
+
 }
+
 
 export default Home;

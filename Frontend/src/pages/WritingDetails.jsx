@@ -1,4 +1,24 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  AlertCircle,
+  ArrowLeft,
+  BookOpen,
+  CalendarDays,
+  Clock3,
+  Globe2,
+  Heart,
+  Loader2,
+  MessageCircle,
+  RefreshCw,
+  Share2,
+  User,
+} from "lucide-react";
+
 import {
   Link,
   useNavigate,
@@ -6,137 +26,333 @@ import {
 } from "react-router-dom";
 
 import {
-  ArrowLeft,
-  BookOpen,
-  CalendarDays,
-  Clock3,
-  User,
-  AlertCircle,
-  RefreshCw,
-} from "lucide-react";
+  getWriting,
+  likeWriting,
+} from "../api/api";
+
+import {
+  getLanguageLabel,
+} from "../config/languages";
+
+import {
+  useLanguage,
+} from "../Language/LanguageContext";
 
 
-function WritingDetails({ apiUrl }) {
-  const { id } = useParams();
+function WritingDetails() {
 
-  const navigate = useNavigate();
+  const {
+    id,
+  } = useParams();
+
+  const navigate =
+    useNavigate();
+
+  const {
+    t,
+  } = useLanguage();
 
 
-  // =========================================================
+  // =====================================================
   // STATE
-  // =========================================================
+  // =====================================================
 
-  const [writing, setWriting] =
-    useState(null);
+  const [
+    writing,
+    setWriting,
+  ] = useState(null);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
 
-  const [error, setError] =
-    useState("");
+  const [
+    error,
+    setError,
+  ] = useState("");
+
+  const [
+    likesCount,
+    setLikesCount,
+  ] = useState(0);
+
+  const [
+    liked,
+    setLiked,
+  ] = useState(false);
+
+  const [
+    liking,
+    setLiking,
+  ] = useState(false);
+
+  const [
+    shareSuccess,
+    setShareSuccess,
+  ] = useState(false);
 
 
-  // =========================================================
-  // FETCH WRITING
-  // =========================================================
+  // =====================================================
+  // CATEGORY LABEL
+  // =====================================================
+
+  function getCategoryLabel(
+    value
+  ) {
+
+    const map = {
+
+      "কবিতা":
+        t(
+          "categories.poetry"
+        ),
+
+      "গল্প":
+        t(
+          "categories.story"
+        ),
+
+      "অনুভূতি":
+        t(
+          "categories.reflection"
+        ),
+
+      "প্রবন্ধ":
+        t(
+          "categories.essay"
+        ),
+
+      "অন্যান্য":
+        t(
+          "categories.other"
+        ),
+    };
+
+
+    return (
+      map[value] ||
+      value ||
+      t(
+        "categories.other"
+      )
+    );
+
+  }
+
+
+  // =====================================================
+  // LOAD WRITING
+  // =====================================================
 
   useEffect(() => {
-    async function fetchWriting() {
-      try {
-        setLoading(true);
-        setError("");
 
-        const response = await fetch(
-          `${apiUrl}/api/writings/${id}`
-        );
+    let mounted = true;
+
+
+    async function loadWriting() {
+
+      setLoading(true);
+
+      setError("");
+
+
+      try {
 
         const data =
-          await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.message ||
-            "লেখাটি পাওয়া যায়নি।"
+          await getWriting(
+            id
           );
+
+
+        if (!mounted) {
+          return;
         }
 
+
+        const loadedWriting =
+          data?.writing ||
+          null;
+
+
+        if (!loadedWriting) {
+
+          throw new Error(
+            t(
+              "writingDetails.notFound"
+            )
+          );
+
+        }
+
+
         setWriting(
-          data.writing
+          loadedWriting
         );
 
+
+        setLikesCount(
+          loadedWriting
+            ?.likes_count ||
+          0
+        );
+
+
+        if (
+          typeof loadedWriting
+            ?.liked_by_current_user
+          === "boolean"
+        ) {
+
+          setLiked(
+            loadedWriting
+              .liked_by_current_user
+          );
+
+        }
+
+
       } catch (err) {
+
         console.error(
           "WRITING DETAILS ERROR:",
           err
         );
 
+
+        if (!mounted) {
+          return;
+        }
+
+
         setError(
           err.message ||
-          "লেখাটি লোড করা যায়নি।"
+          t(
+            "writingDetails.unavailable"
+          )
         );
 
+
       } finally {
-        setLoading(false);
+
+        if (mounted) {
+
+          setLoading(false);
+
+        }
+
       }
+
     }
 
 
-    fetchWriting();
+    loadWriting();
+
+
+    return () => {
+
+      mounted = false;
+
+    };
 
   }, [
-    apiUrl,
     id,
+    t,
   ]);
 
 
-  // =========================================================
+  // =====================================================
   // WORD COUNT
-  // =========================================================
+  // =====================================================
 
   const wordCount =
-    writing?.content
-      ?.trim()
-      .split(/\s+/)
-      .filter(Boolean)
-      .length || 0;
+    useMemo(() => {
+
+      if (
+        !writing?.content
+      ) {
+
+        return 0;
+
+      }
 
 
-  // =========================================================
+      const content =
+        writing.content.trim();
+
+
+      if (!content) {
+
+        return 0;
+
+      }
+
+
+      return content
+        .split(/\s+/)
+        .filter(Boolean)
+        .length;
+
+    }, [writing]);
+
+
+  // =====================================================
   // READING TIME
-  // =========================================================
+  // =====================================================
 
   const readingTime =
-    Math.max(
-      1,
-      Math.ceil(
-        wordCount / 180
-      )
+    useMemo(
+      () =>
+        Math.max(
+          1,
+          Math.ceil(
+            wordCount / 180
+          )
+        ),
+      [wordCount]
     );
 
 
-  // =========================================================
-  // DATE FORMAT
-  // =========================================================
+  // =====================================================
+  // DATE
+  // =====================================================
 
-  function formatDate(dateString) {
+  function formatDate(
+    dateString
+  ) {
+
     if (!dateString) {
-      return "তারিখ নেই";
+
+      return t(
+        "common.noData"
+      );
+
     }
 
+
     const date =
-      new Date(dateString);
+      new Date(
+        dateString
+      );
+
 
     if (
       Number.isNaN(
         date.getTime()
       )
     ) {
-      return "তারিখ নেই";
+
+      return t(
+        "common.noData"
+      );
+
     }
 
+
     try {
+
       return new Intl.DateTimeFormat(
-        "bn-BD",
+        undefined,
         {
           day: "numeric",
           month: "long",
@@ -145,16 +361,164 @@ function WritingDetails({ apiUrl }) {
       ).format(date);
 
     } catch {
-      return date.toLocaleDateString();
+
+      return date
+        .toLocaleDateString();
+
     }
+
   }
 
 
-  // =========================================================
+  // =====================================================
+  // LIKE
+  // =====================================================
+
+  async function handleLike() {
+
+    if (
+      liking ||
+      !writing?.id
+    ) {
+
+      return;
+
+    }
+
+
+    setLiking(true);
+
+
+    try {
+
+      const data =
+        await likeWriting(
+          writing.id
+        );
+
+
+      if (
+        typeof data?.liked
+        === "boolean"
+      ) {
+
+        setLiked(
+          data.liked
+        );
+
+      }
+
+
+      if (
+        typeof data
+          ?.likes_count
+        === "number"
+      ) {
+
+        setLikesCount(
+          data.likes_count
+        );
+
+      }
+
+
+    } catch (err) {
+
+      console.error(
+        "LIKE WRITING ERROR:",
+        err
+      );
+
+
+    } finally {
+
+      setLiking(false);
+
+    }
+
+  }
+
+
+  // =====================================================
+  // SHARE
+  // =====================================================
+
+  async function handleShare() {
+
+    const shareData = {
+
+      title:
+        writing?.title ||
+        "SHOBDO",
+
+      text:
+        writing?.title ||
+        "SHOBDO",
+
+      url:
+        window.location.href,
+    };
+
+
+    try {
+
+      if (
+        navigator.share
+      ) {
+
+        await navigator.share(
+          shareData
+        );
+
+        return;
+
+      }
+
+
+      await navigator.clipboard
+        .writeText(
+          window.location.href
+        );
+
+
+      setShareSuccess(true);
+
+
+      window.setTimeout(
+        () => {
+
+          setShareSuccess(false);
+
+        },
+        1800
+      );
+
+
+    } catch (err) {
+
+      if (
+        err?.name !==
+        "AbortError"
+      ) {
+
+        console.error(
+          "SHARE ERROR:",
+          err
+        );
+
+      }
+
+    }
+
+  }
+
+
+  // =====================================================
   // LOADING
-  // =========================================================
+  // =====================================================
 
   if (loading) {
+
     return (
       <main className="writing-details-page">
 
@@ -162,15 +526,18 @@ function WritingDetails({ apiUrl }) {
 
           <div className="writing-details-loading">
 
-            <div className="details-skeleton details-small" />
+            <Loader2
+              size={30}
+              className="spin"
+            />
 
-            <div className="details-skeleton details-title" />
+            <p>
 
-            <div className="details-skeleton" />
+              {t(
+                "writingDetails.loading"
+              )}
 
-            <div className="details-skeleton" />
-
-            <div className="details-skeleton details-medium" />
+            </p>
 
           </div>
 
@@ -178,14 +545,19 @@ function WritingDetails({ apiUrl }) {
 
       </main>
     );
+
   }
 
 
-  // =========================================================
+  // =====================================================
   // ERROR
-  // =========================================================
+  // =====================================================
 
-  if (error || !writing) {
+  if (
+    error ||
+    !writing
+  ) {
+
     return (
       <main className="writing-details-page">
 
@@ -194,37 +566,71 @@ function WritingDetails({ apiUrl }) {
           <section className="writing-details-error">
 
             <div className="details-error-icon">
-              <AlertCircle size={30} />
+
+              <AlertCircle
+                size={30}
+              />
+
             </div>
 
+
             <h1>
-              লেখাটি পাওয়া যায়নি
+
+              {t(
+                "writingDetails.notFound"
+              )}
+
             </h1>
 
+
             <p>
-              {error ||
-                "এই লেখাটি আর উপলব্ধ নেই।"}
+
+              {
+                error ||
+                t(
+                  "writingDetails.unavailable"
+                )
+              }
+
             </p>
+
 
             <div className="details-error-actions">
 
               <button
                 type="button"
+
                 className="primary-button"
+
                 onClick={() =>
                   window.location.reload()
                 }
               >
-                <RefreshCw size={17} />
-                আবার চেষ্টা করুন
+
+                <RefreshCw
+                  size={17}
+                />
+
+                {t(
+                  "writingDetails.retry"
+                )}
+
               </button>
+
 
               <Link
                 to="/explore"
                 className="details-secondary-link"
               >
-                <ArrowLeft size={17} />
-                Explore-এ ফিরে যান
+
+                <ArrowLeft
+                  size={17}
+                />
+
+                {t(
+                  "writingDetails.backToExplore"
+                )}
+
               </Link>
 
             </div>
@@ -235,26 +641,56 @@ function WritingDetails({ apiUrl }) {
 
       </main>
     );
+
   }
 
 
-  // =========================================================
+  // =====================================================
   // DATA
-  // =========================================================
+  // =====================================================
 
   const authorName =
     writing.author?.name ||
-    "অজানা লেখক";
+    t(
+      "common.unknownAuthor"
+    );
 
-  const formattedDate =
+
+  const category =
+    getCategoryLabel(
+      writing.category
+    );
+
+
+  const languageCode =
+    writing.language ||
+    "bn";
+
+
+  const languageLabel =
+    getLanguageLabel(
+      languageCode
+    );
+
+
+  const publishedDate =
     formatDate(
+      writing.published_at ||
       writing.created_at
     );
 
 
-  // =========================================================
+  const paragraphs =
+    writing.content
+      ? writing.content.split(
+        "\n"
+      )
+      : [];
+
+
+  // =====================================================
   // UI
-  // =========================================================
+  // =====================================================
 
   return (
     <main className="writing-details-page">
@@ -262,43 +698,76 @@ function WritingDetails({ apiUrl }) {
       <div className="writing-details-container">
 
 
-        {/* =================================================
-           BACK
-           ================================================= */}
+        {/* ===============================================
+            BACK
+        ================================================ */}
 
         <button
           type="button"
+
           className="writing-details-back"
+
           onClick={() =>
             navigate(-1)
           }
         >
+
           <ArrowLeft size={17} />
 
-          ফিরে যান
+          {t(
+            "writingDetails.back"
+          )}
+
         </button>
 
 
-        {/* =================================================
-           ARTICLE HEADER
-           ================================================= */}
+        {/* ===============================================
+            ARTICLE
+        ================================================ */}
 
         <article className="writing-details-article">
+
+
+          {/* =============================================
+              HEADER
+          ============================================== */}
 
           <header className="writing-details-header">
 
 
-            {/* CATEGORY */}
+            {/* LANGUAGE + CATEGORY */}
 
-            <div className="writing-details-category">
-              {writing.category || "অন্যান্য"}
+            <div className="writing-details-badges">
+
+              <span className="writing-details-language">
+
+                <Globe2 size={13} />
+
+                {languageLabel}
+
+              </span>
+
+
+              <span className="writing-details-category">
+
+                {category}
+
+              </span>
+
             </div>
 
 
             {/* TITLE */}
 
             <h1>
-              {writing.title}
+
+              {
+                writing.title ||
+                t(
+                  "common.untitled"
+                )
+              }
+
             </h1>
 
 
@@ -307,34 +776,88 @@ function WritingDetails({ apiUrl }) {
             <div className="writing-details-author">
 
               <div className="details-author-avatar">
-                <User size={18} />
+
+                {
+                  authorName
+                    ?.trim()
+                    ?.charAt(0)
+                    ?.toUpperCase()
+                  ||
+                  <User size={18} />
+                }
+
               </div>
 
 
               <div>
 
+                <span className="writing-details-author-label">
+
+                  {t(
+                    "writingDetails.by"
+                  )}
+
+                </span>
+
+
                 <strong>
+
                   {authorName}
+
                 </strong>
 
 
                 <div className="writing-details-meta">
 
+
+                  {/* DATE */}
+
                   <span>
-                    <CalendarDays size={14} />
-                    {formattedDate}
+
+                    <CalendarDays
+                      size={14}
+                    />
+
+                    {publishedDate}
+
                   </span>
 
 
+                  {/* READING TIME */}
+
                   <span>
-                    <Clock3 size={14} />
-                    {readingTime} মিনিট পাঠ
+
+                    <Clock3
+                      size={14}
+                    />
+
+                    {readingTime}
+
+                    {" "}
+
+                    {t(
+                      "writingDetails.readingTime"
+                    )}
+
                   </span>
 
 
+                  {/* WORD COUNT */}
+
                   <span>
-                    <BookOpen size={14} />
-                    {wordCount} শব্দ
+
+                    <BookOpen
+                      size={14}
+                    />
+
+                    {wordCount}
+
+                    {" "}
+
+                    {t(
+                      "writingDetails.words"
+                    )}
+
                   </span>
 
                 </div>
@@ -343,25 +866,184 @@ function WritingDetails({ apiUrl }) {
 
             </div>
 
+
+            {/* ===========================================
+                ACTION BAR
+            ============================================ */}
+
+            <div className="writing-details-actions">
+
+
+              {/* LIKE */}
+
+              <button
+                type="button"
+
+                className={
+                  liked
+                    ? "writing-details-action liked"
+                    : "writing-details-action"
+                }
+
+                onClick={
+                  handleLike
+                }
+
+                disabled={
+                  liking
+                }
+              >
+
+                {
+                  liking
+                    ? (
+                      <Loader2
+                        size={16}
+                        className="spin"
+                      />
+                    )
+                    : (
+                      <Heart
+                        size={16}
+                        fill={
+                          liked
+                            ? "currentColor"
+                            : "none"
+                        }
+                      />
+                    )
+                }
+
+
+                <span>
+
+                  {
+                    liked
+                      ? t(
+                        "writingDetails.liked"
+                      )
+                      : t(
+                        "writingDetails.like"
+                      )
+                  }
+
+                </span>
+
+
+                <strong>
+                  {likesCount}
+                </strong>
+
+              </button>
+
+
+              {/* COMMENTS */}
+
+              <div className="writing-details-action">
+
+                <MessageCircle
+                  size={16}
+                />
+
+                <span>
+
+                  {t(
+                    "writingDetails.comments"
+                  )}
+
+                </span>
+
+                <strong>
+
+                  {
+                    writing
+                      .comments_count ||
+                    0
+                  }
+
+                </strong>
+
+              </div>
+
+
+              {/* SHARE */}
+
+              <button
+                type="button"
+
+                className="writing-details-action"
+
+                onClick={
+                  handleShare
+                }
+              >
+
+                <Share2 size={16} />
+
+                <span>
+
+                  {
+                    shareSuccess
+                      ? t(
+                        "common.saved",
+                        "Copied"
+                      )
+                      : t(
+                        "writingDetails.share"
+                      )
+                  }
+
+                </span>
+
+              </button>
+
+            </div>
+
           </header>
 
 
-          {/* =================================================
-             DIVIDER
-             ================================================= */}
+          {/* =============================================
+              DIVIDER
+          ============================================== */}
 
           <div className="writing-details-divider" />
 
 
-          {/* =================================================
-             WRITING CONTENT
-             ================================================= */}
+          {/* =============================================
+              ORIGINAL LANGUAGE NOTE
+          ============================================== */}
+
+          <div className="writing-original-language">
+
+            <Globe2 size={14} />
+
+            <span>
+
+              {t(
+                "writingDetails.originalLanguage"
+              )}
+
+              :
+
+            </span>
+
+            <strong>
+
+              {languageLabel}
+
+            </strong>
+
+          </div>
+
+
+          {/* =============================================
+              ORIGINAL WRITING CONTENT
+          ============================================== */}
 
           <section className="writing-details-content">
 
-            {writing.content
-              .split("\n")
-              .map(
+            {
+              paragraphs.map(
                 (
                   paragraph,
                   index
@@ -370,51 +1052,87 @@ function WritingDetails({ apiUrl }) {
                   if (
                     !paragraph.trim()
                   ) {
+
                     return (
                       <div
-                        key={index}
+                        key={
+                          `empty-${index}`
+                        }
                         className="writing-empty-line"
                       />
                     );
+
                   }
 
 
                   return (
-                    <p key={index}>
+                    <p
+                      key={
+                        `paragraph-${index}`
+                      }
+                    >
+
                       {paragraph}
+
                     </p>
                   );
+
                 }
-              )}
+              )
+            }
 
           </section>
 
 
-          {/* =================================================
-             BOTTOM
-             ================================================= */}
+          {/* =============================================
+              FOOTER
+          ============================================== */}
 
           <footer className="writing-details-footer">
 
-            <div>
+            <div className="writing-details-footer-author">
 
               <span>
-                লিখেছেন
+
+                {t(
+                  "writingDetails.by"
+                )}
+
               </span>
 
               <strong>
+
                 {authorName}
+
               </strong>
 
             </div>
 
 
-            <Link
-              to="/explore"
-              className="writing-details-explore-link"
-            >
-              আরও লেখা পড়ুন
-            </Link>
+            <div className="writing-details-footer-links">
+
+              <span className="writing-details-footer-language">
+
+                <Globe2
+                  size={15}
+                />
+
+                {languageLabel}
+
+              </span>
+
+
+              <Link
+                to="/explore"
+              >
+
+                {t(
+                  "writingDetails.moreWritings"
+                )}
+
+              </Link>
+
+            </div>
 
           </footer>
 
@@ -424,6 +1142,7 @@ function WritingDetails({ apiUrl }) {
 
     </main>
   );
+
 }
 
 

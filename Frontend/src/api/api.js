@@ -1,132 +1,159 @@
-// ============================================================
-// SHOBDO API
-// Writing / Explore / Like / Draft API
-// Vite + React + Flask
-// ============================================================
+// =========================================================
+// SHOBDO API CONFIG
+// =========================================================
 
-
-// ============================================================
-// BASE URL
-// ============================================================
-
-const API_BASE_URL =
+const API_URL =
   import.meta.env.VITE_API_URL ||
   "http://127.0.0.1:5000";
 
-// ============================================================
-// API REQUEST HELPER
-// ============================================================
+const TOKEN_KEY =
+  "shobdo_token";
+
+
+// =========================================================
+// TOKEN HELPERS
+// =========================================================
+
+function getToken() {
+
+  return localStorage.getItem(
+    TOKEN_KEY
+  );
+
+}
+
+
+function buildHeaders(
+  customHeaders = {}
+) {
+
+  const token =
+    getToken();
+
+
+  const headers = {
+    "Content-Type":
+      "application/json",
+
+    ...customHeaders,
+  };
+
+
+  if (token) {
+
+    headers.Authorization =
+      `Bearer ${token}`;
+
+  }
+
+
+  return headers;
+
+}
+
+
+// =========================================================
+// RESPONSE HANDLER
+// =========================================================
+
+async function parseResponse(
+  response
+) {
+
+  let data = {};
+
+
+  try {
+
+    data =
+      await response.json();
+
+  } catch {
+
+    data = {};
+
+  }
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      data.message ||
+      "Something went wrong. Please try again."
+    );
+
+  }
+
+
+  return data;
+
+}
+
+
+// =========================================================
+// GENERIC API REQUEST
+// =========================================================
 
 async function apiRequest(
   endpoint,
   options = {}
 ) {
-  try {
 
-    const response = await fetch(
-      `${API_BASE_URL}${endpoint}`,
+  const response =
+    await fetch(
+      `${API_URL}${endpoint}`,
       {
         ...options,
 
-        headers: {
-          "Content-Type": "application/json",
-
-          ...(options.headers || {}),
-        },
-
-        // Important for Flask authentication
-        credentials: "include",
+        headers:
+          buildHeaders(
+            options.headers
+          ),
       }
     );
 
 
-    // --------------------------------------------------------
-    // READ RESPONSE
-    // --------------------------------------------------------
+  return parseResponse(
+    response
+  );
 
-    let data = null;
-
-    const contentType =
-      response.headers.get("content-type");
-
-
-    if (
-      contentType &&
-      contentType.includes("application/json")
-    ) {
-
-      data = await response.json();
-
-    } else {
-
-      const text =
-        await response.text();
-
-      data = text
-        ? { message: text }
-        : null;
-
-    }
-
-
-    // --------------------------------------------------------
-    // ERROR HANDLING
-    // --------------------------------------------------------
-
-    if (!response.ok) {
-
-      const errorMessage =
-        data?.message ||
-        data?.error ||
-        data?.msg ||
-        `Request failed with status ${response.status}`;
-
-
-      throw new Error(
-        errorMessage
-      );
-
-    }
-
-
-    // --------------------------------------------------------
-    // SUCCESS
-    // --------------------------------------------------------
-
-    return data;
-
-  } catch (error) {
-
-    console.error(
-      `API Error [${endpoint}]:`,
-      error
-    );
-
-
-    throw error;
-
-  }
 }
 
 
-// ============================================================
-// GET ALL WRITINGS
-// ============================================================
+// =========================================================
+// PUBLIC — GET WRITINGS
+// =========================================================
 
 export async function getWritings({
+  page = 1,
+  limit = 12,
   search = "",
   category = "",
-  limit = 12,
-  page = 1,
+  language = "",
 } = {}) {
 
   const params =
     new URLSearchParams();
 
 
-  if (search.trim()) {
+  params.set(
+    "page",
+    String(page)
+  );
 
-    params.append(
+
+  params.set(
+    "limit",
+    String(limit)
+  );
+
+
+  if (
+    search &&
+    search.trim()
+  ) {
+
+    params.set(
       "search",
       search.trim()
     );
@@ -134,9 +161,12 @@ export async function getWritings({
   }
 
 
-  if (category.trim()) {
+  if (
+    category &&
+    category.trim()
+  ) {
 
-    params.append(
+    params.set(
       "category",
       category.trim()
     );
@@ -144,35 +174,32 @@ export async function getWritings({
   }
 
 
-  params.append(
-    "limit",
-    String(limit)
-  );
+  if (
+    language &&
+    language.trim()
+  ) {
 
+    params.set(
+      "language",
+      language.trim()
+    );
 
-  params.append(
-    "page",
-    String(page)
-  );
-
-
-  const query =
-    params.toString();
+  }
 
 
   return apiRequest(
-    `/api/writings${
-      query
-        ? `?${query}`
-        : ""
-    }`
+    `/api/writings?${params.toString()}`,
+    {
+      method: "GET",
+    }
   );
+
 }
 
 
-// ============================================================
-// GET SINGLE WRITING
-// ============================================================
+// =========================================================
+// PUBLIC — GET SINGLE PUBLISHED WRITING
+// =========================================================
 
 export async function getWriting(
   writingId
@@ -188,48 +215,72 @@ export async function getWriting(
 
 
   return apiRequest(
-    `/api/writings/${writingId}`
+    `/api/writings/${writingId}`,
+    {
+      method: "GET",
+    }
   );
+
 }
 
 
-// ============================================================
-// CREATE WRITING
-// ============================================================
+// =========================================================
+// AUTH — GET MY WRITINGS
+// =========================================================
 
-export async function createWriting(
-  writingData
-) {
+export async function getMyWritings({
+  status = "",
+  language = "",
+} = {}) {
 
-  if (!writingData) {
+  const params =
+    new URLSearchParams();
 
-    throw new Error(
-      "Writing data is required."
+
+  if (status) {
+
+    params.set(
+      "status",
+      status
     );
 
   }
 
 
-  return apiRequest(
-    "/api/writings",
-    {
-      method: "POST",
+  if (language) {
 
-      body: JSON.stringify(
-        writingData
-      ),
+    params.set(
+      "language",
+      language
+    );
+
+  }
+
+
+  const query =
+    params.toString();
+
+
+  return apiRequest(
+    `/api/writings/mine${
+      query
+        ? `?${query}`
+        : ""
+    }`,
+    {
+      method: "GET",
     }
   );
+
 }
 
 
-// ============================================================
-// UPDATE WRITING
-// ============================================================
+// =========================================================
+// AUTH — GET SINGLE OWN WRITING
+// =========================================================
 
-export async function updateWriting(
-  writingId,
-  writingData
+export async function getMyWriting(
+  writingId
 ) {
 
   if (!writingId) {
@@ -241,10 +292,92 @@ export async function updateWriting(
   }
 
 
-  if (!writingData) {
+  return apiRequest(
+    `/api/writings/mine/${writingId}`,
+    {
+      method: "GET",
+    }
+  );
+
+}
+
+
+// =========================================================
+// AUTH — CREATE DRAFT
+// =========================================================
+
+export async function createDraft({
+  title = "",
+  content = "",
+  category = "অন্যান্য",
+  language = "bn",
+} = {}) {
+
+  return apiRequest(
+    "/api/writings/drafts",
+    {
+      method: "POST",
+
+      body:
+        JSON.stringify({
+          title,
+          content,
+          category,
+          language,
+        }),
+    }
+  );
+
+}
+
+
+// =========================================================
+// AUTH — CREATE AND PUBLISH DIRECTLY
+// =========================================================
+
+export async function createWriting({
+  title,
+  content,
+  category,
+  language = "bn",
+}) {
+
+  return apiRequest(
+    "/api/writings",
+    {
+      method: "POST",
+
+      body:
+        JSON.stringify({
+          title,
+          content,
+          category,
+          language,
+        }),
+    }
+  );
+
+}
+
+
+// =========================================================
+// AUTH — UPDATE OWN WRITING
+// =========================================================
+
+export async function updateWriting(
+  writingId,
+  {
+    title,
+    content,
+    category,
+    language,
+  }
+) {
+
+  if (!writingId) {
 
     throw new Error(
-      "Writing data is required."
+      "Writing ID is required."
     );
 
   }
@@ -255,17 +388,76 @@ export async function updateWriting(
     {
       method: "PUT",
 
-      body: JSON.stringify(
-        writingData
-      ),
+      body:
+        JSON.stringify({
+          title,
+          content,
+          category,
+          language,
+        }),
     }
   );
+
 }
 
 
-// ============================================================
-// DELETE WRITING
-// ============================================================
+// =========================================================
+// AUTH — PUBLISH WRITING
+// =========================================================
+
+export async function publishWriting(
+  writingId
+) {
+
+  if (!writingId) {
+
+    throw new Error(
+      "Writing ID is required."
+    );
+
+  }
+
+
+  return apiRequest(
+    `/api/writings/${writingId}/publish`,
+    {
+      method: "POST",
+    }
+  );
+
+}
+
+
+// =========================================================
+// AUTH — UNPUBLISH WRITING
+// =========================================================
+
+export async function unpublishWriting(
+  writingId
+) {
+
+  if (!writingId) {
+
+    throw new Error(
+      "Writing ID is required."
+    );
+
+  }
+
+
+  return apiRequest(
+    `/api/writings/${writingId}/unpublish`,
+    {
+      method: "POST",
+    }
+  );
+
+}
+
+
+// =========================================================
+// AUTH — DELETE OWN WRITING
+// =========================================================
 
 export async function deleteWriting(
   writingId
@@ -286,12 +478,33 @@ export async function deleteWriting(
       method: "DELETE",
     }
   );
+
 }
 
 
-// ============================================================
+// =========================================================
+// GET SUPPORTED LANGUAGES FROM BACKEND
+// =========================================================
+
+export async function getSupportedLanguages() {
+
+  return apiRequest(
+    "/api/writings/languages",
+    {
+      method: "GET",
+    }
+  );
+
+}
+
+
+// =========================================================
 // LIKE WRITING
-// ============================================================
+// =========================================================
+// Keep this for compatibility with your existing UI.
+// It requires a matching backend endpoint:
+// POST /api/writings/:id/like
+// =========================================================
 
 export async function likeWriting(
   writingId
@@ -312,195 +525,14 @@ export async function likeWriting(
       method: "POST",
     }
   );
-}
-
-
-// ============================================================
-// UNLIKE WRITING
-// ============================================================
-
-export async function unlikeWriting(
-  writingId
-) {
-
-  if (!writingId) {
-
-    throw new Error(
-      "Writing ID is required."
-    );
-
-  }
-
-
-  return apiRequest(
-    `/api/writings/${writingId}/like`,
-    {
-      method: "DELETE",
-    }
-  );
-}
-
-
-// ============================================================
-// GET MY WRITINGS
-// ============================================================
-
-export async function getMyWritings({
-  status = "",
-  limit = 12,
-  page = 1,
-} = {}) {
-
-  const params =
-    new URLSearchParams();
-
-
-  if (status.trim()) {
-
-    params.append(
-      "status",
-      status.trim()
-    );
-
-  }
-
-
-  params.append(
-    "limit",
-    String(limit)
-  );
-
-
-  params.append(
-    "page",
-    String(page)
-  );
-
-
-  return apiRequest(
-    `/api/writings/my?${params.toString()}`
-  );
-}
-
-
-// ============================================================
-// SAVE DRAFT
-// ============================================================
-
-export async function saveDraft(
-  writingData
-) {
-
-  if (!writingData) {
-
-    throw new Error(
-      "Draft data is required."
-    );
-
-  }
-
-
-  return apiRequest(
-    "/api/writings/draft",
-    {
-      method: "POST",
-
-      body: JSON.stringify({
-        ...writingData,
-
-        status: "draft",
-      }),
-    }
-  );
-}
-
-
-// ============================================================
-// GET DRAFTS
-// ============================================================
-
-export async function getDrafts({
-  limit = 12,
-  page = 1,
-} = {}) {
-
-  const params =
-    new URLSearchParams({
-
-      limit: String(limit),
-
-      page: String(page),
-
-    });
-
-
-  return apiRequest(
-    `/api/writings/drafts?${params.toString()}`
-  );
-}
-
-
-// ============================================================
-// SEARCH WRITINGS
-// ============================================================
-
-export async function searchWritings(
-  query,
-  options = {}
-) {
-
-  return getWritings({
-    ...options,
-    search: query || "",
-  });
 
 }
 
 
-// ============================================================
-// API HEALTH CHECK
-// ============================================================
+// =========================================================
+// EXPORT BASE URL
+// =========================================================
 
-export async function checkApiHealth() {
-
-  return apiRequest(
-    "/api/health"
-  );
-
-}
-
-
-// ============================================================
-// DEFAULT EXPORT
-// ============================================================
-
-const api = {
-
-  getWritings,
-
-  getWriting,
-
-  createWriting,
-
-  updateWriting,
-
-  deleteWriting,
-
-  likeWriting,
-
-  unlikeWriting,
-
-  getMyWritings,
-
-  saveDraft,
-
-  getDrafts,
-
-  searchWritings,
-
-  checkApiHealth,
-
+export {
+  API_URL,
 };
-
-
-export default api;

@@ -1,258 +1,134 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  useState,
+} from "react";
 
 import {
-  Feather,
-  Mail,
-  Lock,
+  ArrowRight,
   Eye,
   EyeOff,
-  LogIn,
-  AlertCircle,
-  CheckCircle2,
-  ArrowLeft,
+  Loader2,
+  LockKeyhole,
+  Mail,
+  ShieldCheck,
 } from "lucide-react";
 
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
 
-function Login({ onLogin, apiUrl }) {
-  const navigate = useNavigate();
+import {
+  loginUser,
+} from "../api/auth";
 
-
-  // =========================================================
-  // FORM STATE
-  // =========================================================
-
-  const [email, setEmail] = useState("");
-
-  const [password, setPassword] =
-    useState("");
-
-  const [showPassword, setShowPassword] =
-    useState(false);
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
-
-  const [success, setSuccess] =
-    useState("");
+import {
+  useLanguage,
+} from "../Language/LanguageContext";
 
 
-  // =========================================================
-  // CHECK IF ALREADY LOGGED IN
-  // =========================================================
+function Login({
+  onLogin,
+}) {
 
-  useEffect(() => {
+  const navigate =
+    useNavigate();
 
-    const token =
-      localStorage.getItem("token");
-
-    if (token) {
-
-      navigate("/", {
-        replace: true,
-      });
-
-    }
-
-  }, [navigate]);
+  const {
+    t,
+  } = useLanguage();
 
 
-  // =========================================================
-  // EMAIL CHANGE
-  // =========================================================
+  const [
+    email,
+    setEmail,
+  ] = useState("");
 
-  function handleEmailChange(event) {
+  const [
+    password,
+    setPassword,
+  ] = useState("");
 
-    setEmail(
-      event.target.value
-    );
+  const [
+    showPassword,
+    setShowPassword,
+  ] = useState(false);
 
-    setError("");
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
 
-    setSuccess("");
-  }
-
-
-  // =========================================================
-  // PASSWORD CHANGE
-  // =========================================================
-
-  function handlePasswordChange(event) {
-
-    setPassword(
-      event.target.value
-    );
-
-    setError("");
-
-    setSuccess("");
-  }
+  const [
+    error,
+    setError,
+  ] = useState("");
 
 
-  // =========================================================
-  // LOGIN
-  // =========================================================
-
-  async function handleSubmit(event) {
+  async function handleSubmit(
+    event
+  ) {
 
     event.preventDefault();
 
     setError("");
 
-    setSuccess("");
+
+    const normalizedEmail =
+      email
+        .trim()
+        .toLowerCase();
 
 
-    // -------------------------------------------------------
-    // VALIDATION
-    // -------------------------------------------------------
-
-    if (!email.trim()) {
+    if (
+      !normalizedEmail ||
+      !password
+    ) {
 
       setError(
-        "Email address is required."
+        t(
+          "errors.generic"
+        )
       );
 
       return;
     }
 
-
-    if (!password) {
-
-      setError(
-        "Password is required."
-      );
-
-      return;
-    }
-
-
-    // -------------------------------------------------------
-    // START LOADING
-    // -------------------------------------------------------
 
     setLoading(true);
 
 
     try {
 
-      // -----------------------------------------------------
-      // LOGIN API
-      // -----------------------------------------------------
+      await loginUser({
+        email:
+          normalizedEmail,
 
-      const response = await fetch(
-        `${apiUrl}/api/auth/login`,
+        password,
+      });
+
+
+      if (onLogin) {
+
+        await onLogin();
+
+      }
+
+
+      navigate(
+        "/",
         {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-
-          body: JSON.stringify({
-            email: email
-              .trim()
-              .toLowerCase(),
-
-            password: password,
-          }),
+          replace: true,
         }
       );
 
 
-      // -----------------------------------------------------
-      // RESPONSE DATA
-      // -----------------------------------------------------
-
-      const data =
-        await response.json();
-
-
-      // -----------------------------------------------------
-      // LOGIN FAILED
-      // -----------------------------------------------------
-
-      if (!response.ok) {
-
-        setError(
-          data.message ||
-          "Login failed. Please check your email and password."
-        );
-
-        return;
-      }
-
-
-      // -----------------------------------------------------
-      // TOKEN CHECK
-      // -----------------------------------------------------
-
-      if (!data.access_token) {
-
-        setError(
-          "Login succeeded but no authentication token was received."
-        );
-
-        return;
-      }
-
-
-      // -----------------------------------------------------
-      // SAVE TOKEN THROUGH APP.JSX
-      // -----------------------------------------------------
-
-      onLogin(
-        data.access_token
-      );
-
-
-      // -----------------------------------------------------
-      // OPTIONAL USER INFORMATION
-      // -----------------------------------------------------
-
-      if (data.user) {
-
-        localStorage.setItem(
-          "user",
-          JSON.stringify(
-            data.user
-          )
-        );
-
-      }
-
-
-      // -----------------------------------------------------
-      // SUCCESS
-      // -----------------------------------------------------
-
-      setSuccess(
-        "Login সফল হয়েছে। আপনাকে হোম পেজে নিয়ে যাওয়া হচ্ছে..."
-      );
-
-
-      // -----------------------------------------------------
-      // REDIRECT
-      // -----------------------------------------------------
-
-      navigate("/", {
-        replace: true,
-      });
-
-
     } catch (err) {
 
-      console.error(
-        "LOGIN ERROR:",
-        err
-      );
-
-
       setError(
-        "Backend-এর সাথে সংযোগ করা যায়নি। Flask server চলছে কিনা পরীক্ষা করুন।"
+        err.message ||
+        t(
+          "errors.generic"
+        )
       );
 
 
@@ -265,438 +141,377 @@ function Login({ onLogin, apiUrl }) {
   }
 
 
-  // =========================================================
-  // FORGOT PASSWORD
-  // =========================================================
-
-  function handleForgotPassword() {
-
-    setError("");
-
-    setSuccess(
-      "Password reset functionality শীঘ্রই যোগ করা হবে।"
-    );
-
-  }
-
-
-  // =========================================================
-  // UI
-  // =========================================================
-
   return (
+    <main className="shobdo-auth-page">
 
-    <main className="auth-page">
-
-
-      {/* ===================================================
-         BACK TO HOME
-         =================================================== */}
-
-      <Link
-        to="/"
-        className="auth-back"
-      >
-
-        <ArrowLeft size={16} />
-
-        হোমে ফিরে যান
-
-      </Link>
+      <div className="shobdo-auth-layout">
 
 
-      {/* ===================================================
-         LOGIN CARD
-         =================================================== */}
+        {/* =============================================
+            LEFT INTRO
+        ============================================== */}
 
-      <div className="auth-card">
+        <section className="shobdo-auth-intro">
 
+          <div className="shobdo-auth-eyebrow">
 
-        {/* =================================================
-           BRAND
-           ================================================= */}
+            <ShieldCheck
+              size={15}
+            />
 
-        <Link
-          to="/"
-          className="auth-logo"
-          aria-label="SHOBDO Home"
-        >
+            <span>
 
-          <div
-            className="
-              brand-symbol
-              large-symbol
-            "
-          >
+              {t(
+                "login.eyebrow"
+              )}
 
-            <Feather size={27} />
+            </span>
 
           </div>
-
-
-          <div className="auth-logo-text">
-
-            <div className="brand-name">
-              SHOBDO
-            </div>
-
-
-            <div className="brand-bengali">
-              তোমার শব্দ, তোমার গল্প।
-            </div>
-
-          </div>
-
-        </Link>
-
-
-        {/* =================================================
-           HEADER
-           ================================================= */}
-
-        <div className="auth-header">
-
-          <span className="section-kicker">
-            WELCOME BACK
-          </span>
 
 
           <h1>
-            আবার ফিরে আসুন
+
+            {t(
+              "login.title"
+            )}
+
           </h1>
 
 
           <p>
-            আপনার শব্দের জগতে আবার প্রবেশ করুন।
+
+            {t(
+              "login.description"
+            )}
+
           </p>
 
-        </div>
+
+          <div className="shobdo-auth-quote">
+
+            <span>
+              SHOBDO
+            </span>
+
+            <blockquote>
+
+              “Your words deserve a place
+              where they can be heard.”
+
+            </blockquote>
+
+          </div>
+
+        </section>
 
 
-        {/* =================================================
-           LOGIN FORM
-           ================================================= */}
+        {/* =============================================
+            LOGIN CARD
+        ============================================== */}
 
-        <form
-          className="auth-form"
-          onSubmit={handleSubmit}
-        >
+        <section className="shobdo-auth-card">
 
+          <div className="shobdo-auth-card-icon">
 
-          {/* ===============================================
-             EMAIL
-             =============================================== */}
-
-          <div className="form-group">
-
-            <label htmlFor="login-email">
-              Email address
-            </label>
-
-
-            <div className="input-wrapper">
-
-              <Mail
-                size={18}
-                className="input-icon"
-              />
-
-
-              <input
-                id="login-email"
-
-                className="auth-input"
-
-                type="email"
-
-                value={email}
-
-                onChange={
-                  handleEmailChange
-                }
-
-                placeholder="
-                  your@email.com
-                "
-
-                autoComplete="email"
-
-                disabled={loading}
-
-                required
-              />
-
-            </div>
+            <LockKeyhole
+              size={22}
+            />
 
           </div>
 
 
-          {/* ===============================================
-             PASSWORD
-             =============================================== */}
+          <div className="shobdo-auth-card-heading">
 
-          <div className="form-group">
+            <span>
+              SHOBDO
+            </span>
 
-            <div className="password-label-row">
+            <h2>
 
-              <label htmlFor="login-password">
-                Password
-              </label>
+              {t(
+                "login.loginButton"
+              )}
 
-
-              <button
-                type="button"
-
-                className="
-                  forgot-password
-                "
-
-                onClick={
-                  handleForgotPassword
-                }
-
-                disabled={loading}
-              >
-
-                Forgot password?
-
-              </button>
-
-            </div>
-
-
-            <div className="input-wrapper">
-
-              <Lock
-                size={18}
-                className="input-icon"
-              />
-
-
-              <input
-                id="login-password"
-
-                className="
-                  auth-input
-                  password-input
-                "
-
-                type={
-                  showPassword
-                    ? "text"
-                    : "password"
-                }
-
-                value={password}
-
-                onChange={
-                  handlePasswordChange
-                }
-
-                placeholder="
-                  Enter your password
-                "
-
-                autoComplete="
-                  current-password
-                "
-
-                disabled={loading}
-
-                required
-              />
-
-
-              {/* -----------------------------------------
-                 SHOW / HIDE PASSWORD
-                 ----------------------------------------- */}
-
-              <button
-                type="button"
-
-                className="
-                  password-toggle
-                "
-
-                onClick={() =>
-                  setShowPassword(
-                    (current) =>
-                      !current
-                  )
-                }
-
-                aria-label={
-                  showPassword
-                    ? "Hide password"
-                    : "Show password"
-                }
-
-                disabled={loading}
-              >
-
-                {
-                  showPassword ? (
-                    <EyeOff
-                      size={18}
-                    />
-                  ) : (
-                    <Eye
-                      size={18}
-                    />
-                  )
-                }
-
-              </button>
-
-            </div>
+            </h2>
 
           </div>
 
-
-          {/* ===============================================
-             ERROR
-             =============================================== */}
 
           {error && (
 
             <div
-              className="auth-error"
+              className="shobdo-auth-error"
               role="alert"
             >
 
-              <AlertCircle
-                size={18}
-              />
-
-              <span>
-                {error}
-              </span>
+              {error}
 
             </div>
 
           )}
 
 
-          {/* ===============================================
-             SUCCESS
-             =============================================== */}
+          <form
+            className="shobdo-auth-form"
+            onSubmit={
+              handleSubmit
+            }
+          >
 
-          {success && (
 
-            <div
-              className="auth-success"
-              role="status"
+            {/* EMAIL */}
+
+            <div className="shobdo-auth-field">
+
+              <label
+                htmlFor="login-email"
+              >
+
+                {t(
+                  "login.email"
+                )}
+
+              </label>
+
+
+              <div className="shobdo-auth-input">
+
+                <Mail
+                  size={17}
+                />
+
+                <input
+                  id="login-email"
+                  type="email"
+
+                  value={
+                    email
+                  }
+
+                  onChange={(event) =>
+                    setEmail(
+                      event.target.value
+                    )
+                  }
+
+                  placeholder={
+                    t(
+                      "login.emailPlaceholder"
+                    )
+                  }
+
+                  autoComplete="email"
+
+                  disabled={
+                    loading
+                  }
+
+                  required
+                />
+
+              </div>
+
+            </div>
+
+
+            {/* PASSWORD */}
+
+            <div className="shobdo-auth-field">
+
+              <div className="shobdo-auth-label-row">
+
+                <label
+                  htmlFor="login-password"
+                >
+
+                  {t(
+                    "login.password"
+                  )}
+
+                </label>
+
+
+                <Link
+                  to="/forgot-password"
+                >
+
+                  {t(
+                    "login.forgotPassword"
+                  )}
+
+                </Link>
+
+              </div>
+
+
+              <div className="shobdo-auth-input">
+
+                <LockKeyhole
+                  size={17}
+                />
+
+                <input
+                  id="login-password"
+
+                  type={
+                    showPassword
+                      ? "text"
+                      : "password"
+                  }
+
+                  value={
+                    password
+                  }
+
+                  onChange={(event) =>
+                    setPassword(
+                      event.target.value
+                    )
+                  }
+
+                  placeholder={
+                    t(
+                      "login.passwordPlaceholder"
+                    )
+                  }
+
+                  autoComplete="current-password"
+
+                  disabled={
+                    loading
+                  }
+
+                  required
+                />
+
+
+                <button
+                  type="button"
+
+                  className="shobdo-password-toggle"
+
+                  onClick={() =>
+                    setShowPassword(
+                      (current) =>
+                        !current
+                    )
+                  }
+
+                  aria-label={
+                    showPassword
+                      ? t(
+                        "login.hidePassword"
+                      )
+                      : t(
+                        "login.showPassword"
+                      )
+                  }
+                >
+
+                  {
+                    showPassword
+                      ? (
+                        <EyeOff
+                          size={17}
+                        />
+                      )
+                      : (
+                        <Eye
+                          size={17}
+                        />
+                      )
+                  }
+
+                </button>
+
+              </div>
+
+            </div>
+
+
+            {/* SUBMIT */}
+
+            <button
+              type="submit"
+              className="shobdo-auth-submit"
+              disabled={
+                loading
+              }
             >
 
-              <CheckCircle2
-                size={18}
-              />
+              {
+                loading
+                  ? (
+                    <Loader2
+                      size={18}
+                      className="spin"
+                    />
+                  )
+                  : (
+                    <ArrowRight
+                      size={18}
+                    />
+                  )
+              }
 
-              <span>
-                {success}
-              </span>
+              {
+                loading
+                  ? t(
+                    "login.loggingIn"
+                  )
+                  : t(
+                    "login.loginButton"
+                  )
+              }
 
-            </div>
+            </button>
 
-          )}
-
-
-          {/* ===============================================
-             LOGIN BUTTON
-             =============================================== */}
-
-          <button
-            type="submit"
-
-            className="
-              primary-button
-              full
-              auth-submit
-            "
-
-            disabled={
-              loading ||
-              !email.trim() ||
-              !password
-            }
-          >
-
-            {
-              loading ? (
-
-                <>
-
-                  <span
-                    className="
-                      button-loader
-                    "
-                  />
-
-                  Logging in...
-
-                </>
-
-              ) : (
-
-                <>
-
-                  <LogIn
-                    size={18}
-                  />
-
-                  Login
-
-                </>
-
-              )
-            }
-
-          </button>
-
-        </form>
+          </form>
 
 
-        {/* =================================================
-           REGISTER
-           ================================================= */}
+          <div className="shobdo-auth-divider">
 
-        <div className="auth-switch">
+            <span />
 
-          <span>
-            SHOBDO-তে নতুন?
-          </span>
+            <small>
+              SHOBDO
+            </small>
 
+            <span />
 
-          <Link
-            to="/register"
-            className="
-              auth-switch-link
-            "
-          >
-
-            Create account
-
-          </Link>
-
-        </div>
+          </div>
 
 
-        {/* =================================================
-           FOOTER NOTE
-           ================================================= */}
+          <div className="shobdo-auth-bottom">
 
-        <p className="auth-footer-note">
+            <span>
 
-          বাংলা সাহিত্য ও সৃষ্টিশীলতার জন্য
-          নির্মিত একটি স্বাধীন প্ল্যাটফর্ম।
+              {t(
+                "login.noAccount"
+              )}
 
-        </p>
+            </span>
+
+            <Link
+              to="/register"
+            >
+
+              {t(
+                "login.createAccount"
+              )}
+
+            </Link>
+
+          </div>
+
+        </section>
 
       </div>
 
     </main>
-
   );
+
 }
 
 

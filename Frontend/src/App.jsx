@@ -1,10 +1,15 @@
-import { useEffect, useState } from "react";
 import {
   BrowserRouter,
-  Routes,
-  Route,
   Navigate,
+  Route,
+  Routes,
 } from "react-router-dom";
+
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -13,310 +18,486 @@ import Home from "./pages/Home";
 import Explore from "./pages/Explore";
 import Write from "./pages/Write";
 import WritingDetails from "./pages/WritingDetails";
+import MyWritings from "./pages/MyWritings";
+
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
+import About from "./pages/About";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+
+import {
+  getWritings,
+} from "./api/api";
+
+import {
+  getCurrentUser,
+} from "./api/auth";
+
+
+// =========================================================
+// PRIVATE ROUTE
+// =========================================================
+
+function PrivateRoute({
+  user,
+  authLoading,
+  children,
+}) {
+
+  if (authLoading) {
+
+    return (
+      <div className="app-route-loading">
+
+        Loading...
+
+      </div>
+    );
+
+  }
+
+
+  if (!user) {
+
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
+
+  }
+
+
+  return children;
+}
+
+
+// =========================================================
+// APP
+// =========================================================
 
 function App() {
+
   // =====================================================
   // AUTH STATE
   // =====================================================
 
-  const [token, setToken] = useState(
-    localStorage.getItem("token")
-  );
+  const [
+    user,
+    setUser,
+  ] = useState(null);
 
-  const isLoggedIn = !!token;
+  const [
+    authLoading,
+    setAuthLoading,
+  ] = useState(true);
 
 
   // =====================================================
   // WRITINGS STATE
   // =====================================================
 
-  const [writings, setWritings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [
+    writings,
+    setWritings,
+  ] = useState([]);
+
+  const [
+    writingsLoading,
+    setWritingsLoading,
+  ] = useState(true);
 
 
   // =====================================================
-  // BACKEND URL
+  // LOAD CURRENT USER
   // =====================================================
 
-  const API_URL =
-    import.meta.env.VITE_API_URL ||
-    "http://127.0.0.1:5000";
+  const loadCurrentUser =
+    useCallback(
+      async () => {
+
+        try {
+
+          const currentUser =
+            await getCurrentUser();
 
 
-  // =====================================================
-  // FETCH WRITINGS FROM BACKEND
-  // =====================================================
+          setUser(
+            currentUser
+          );
 
-  const fetchWritings = async () => {
-    try {
-      setLoading(true);
-      setError("");
 
-      const response = await fetch(
-        `${API_URL}/api/writings`
-      );
+          return currentUser;
 
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch writings: ${response.status}`
-        );
-      }
 
-      const data = await response.json();
+        } catch (error) {
 
-      console.log("Writings from backend:", data);
+          console.error(
+            "CURRENT USER ERROR:",
+            error
+          );
 
-      /*
-        This handles several possible backend responses:
 
-        1.
-        [
-          {...},
-          {...}
-        ]
+          setUser(null);
 
-        2.
-        {
-          writings: [...]
+          return null;
+
+
+        } finally {
+
+          setAuthLoading(
+            false
+          );
+
         }
 
-        3.
-        {
-          data: [...]
-        }
-      */
-
-      if (Array.isArray(data)) {
-        setWritings(data);
-      } else if (Array.isArray(data.writings)) {
-        setWritings(data.writings);
-      } else if (Array.isArray(data.data)) {
-        setWritings(data.data);
-      } else {
-        console.warn(
-          "Unexpected writings response:",
-          data
-        );
-
-        setWritings([]);
-      }
-    } catch (err) {
-      console.error(
-        "Error fetching writings:",
-        err
-      );
-
-      setError(
-        "লেখাগুলো লোড করা যায়নি।"
-      );
-
-      setWritings([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      },
+      []
+    );
 
 
   // =====================================================
-  // FETCH ON APP LOAD
+  // LOAD PUBLIC WRITINGS
+  // =====================================================
+
+  const loadWritings =
+    useCallback(
+      async () => {
+
+        setWritingsLoading(
+          true
+        );
+
+
+        try {
+
+          const data =
+            await getWritings({
+              page: 1,
+              limit: 12,
+            });
+
+
+          setWritings(
+            Array.isArray(
+              data?.writings
+            )
+              ? data.writings
+              : []
+          );
+
+
+        } catch (error) {
+
+          console.error(
+            "LOAD WRITINGS ERROR:",
+            error
+          );
+
+
+          setWritings([]);
+
+
+        } finally {
+
+          setWritingsLoading(
+            false
+          );
+
+        }
+
+      },
+      []
+    );
+
+
+  // =====================================================
+  // INITIAL LOAD
   // =====================================================
 
   useEffect(() => {
-    fetchWritings();
-  }, []);
+
+    loadCurrentUser();
+
+    loadWritings();
+
+  }, [
+    loadCurrentUser,
+    loadWritings,
+  ]);
 
 
   // =====================================================
-  // LOGIN
+  // AUTH CALLBACK
   // =====================================================
 
-  const handleLogin = (newToken) => {
-    localStorage.setItem(
-      "token",
-      newToken
-    );
+  async function handleAuthSuccess() {
 
-    setToken(newToken);
-  };
+    return loadCurrentUser();
+
+  }
 
 
   // =====================================================
-  // LOGOUT
+  // WRITING CREATED / UPDATED
   // =====================================================
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
+  async function handleWritingChanged() {
 
-    setToken(null);
-  };
+    await loadWritings();
 
-
-  // =====================================================
-  // NEW WRITING PUBLISHED
-  // =====================================================
-
-  const handleWritingPublished = (
-    newWriting
-  ) => {
-    /*
-      Immediately add the new writing to the UI.
-
-      Then you can optionally fetch again from
-      PostgreSQL to keep everything synchronized.
-    */
-
-    if (newWriting) {
-      setWritings((previousWritings) => [
-        newWriting,
-        ...previousWritings,
-      ]);
-    }
-
-    fetchWritings();
-  };
+  }
 
 
   // =====================================================
-  // APP UI
+  // UI
   // =====================================================
 
   return (
     <BrowserRouter>
 
-      <div className="app">
+      <div className="app-shell">
 
-        {/* ================= NAVBAR ================= */}
+
+        {/* =============================================
+            NAVBAR
+        ============================================== */}
 
         <Navbar
-          isLoggedIn={isLoggedIn}
-          onLogout={handleLogout}
+          user={user}
+          setUser={setUser}
         />
 
 
-        {/* ================= ROUTES ================= */}
+        {/* =============================================
+            PAGE CONTENT
+        ============================================== */}
 
-        <Routes>
+        <div className="app-content">
 
-          {/* HOME */}
-
-          <Route
-            path="/"
-            element={
-              <Home
-                writings={writings}
-                loading={loading}
-                error={error}
-              />
-            }
-          />
+          <Routes>
 
 
-          {/* EXPLORE */}
+            {/* =========================================
+                PUBLIC
+            ========================================== */}
 
-          <Route
-            path="/explore"
-            element={
-              <Explore
-                writings={writings}
-                loading={loading}
-                error={error}
-              />
-            }
-          />
+            <Route
+              path="/"
+              element={
+                <Home
+                  writings={
+                    writings
+                  }
 
-
-          {/* WRITE */}
-
-          <Route
-            path="/write"
-            element={
-              isLoggedIn ? (
-                <Write
-                  token={token}
-                  apiUrl={API_URL}
-                  onPublished={
-                    handleWritingPublished
+                  loading={
+                    writingsLoading
                   }
                 />
-              ) : (
-                <Navigate
-                  to="/login"
-                  replace
-                />
-              )
-            }
-          />
-          
-          {/* WRITING DETAILS */}
-
-          <Route
-            path="/writings/:id"
-            element={
-              <WritingDetails
-                apiUrl={API_URL}
-              />
-            }
-          />
+              }
+            />
 
 
-          {/* LOGIN */}
+            <Route
+              path="/explore"
+              element={
+                <Explore />
+              }
+            />
 
-          <Route
-            path="/login"
-            element={
-              isLoggedIn ? (
+
+            <Route
+              path="/writings/:id"
+              element={
+                <WritingDetails />
+              }
+            />
+
+
+            {/* =========================================
+                AUTH
+            ========================================== */}
+
+            <Route
+              path="/login"
+              element={
+                user
+                  ? (
+                    <Navigate
+                      to="/"
+                      replace
+                    />
+                  )
+                  : (
+                    <Login
+                      onLogin={
+                        handleAuthSuccess
+                      }
+                    />
+                  )
+              }
+            />
+
+
+            <Route
+              path="/register"
+              element={
+                user
+                  ? (
+                    <Navigate
+                      to="/"
+                      replace
+                    />
+                  )
+                  : (
+                    <Register
+                      onRegister={
+                        handleAuthSuccess
+                      }
+                    />
+                  )
+              }
+            />
+
+
+            <Route
+              path="/forgot-password"
+              element={
+                <ForgotPassword />
+              }
+            />
+
+
+            <Route
+              path="/reset-password/:token"
+              element={
+                <ResetPassword />
+              }
+            />
+
+
+            {/* =========================================
+                PROTECTED
+            ========================================== */}
+
+            <Route
+              path="/write"
+              element={
+                <PrivateRoute
+                  user={user}
+                  authLoading={
+                    authLoading
+                  }
+                >
+
+                  <Write
+                    user={user}
+
+                    onWritingCreated={
+                      handleWritingChanged
+                    }
+                  />
+
+                </PrivateRoute>
+              }
+            />
+
+
+            <Route
+              path="/write/:id"
+              element={
+                <PrivateRoute
+                  user={user}
+                  authLoading={
+                    authLoading
+                  }
+                >
+
+                  <Write
+                    user={user}
+
+                    onWritingCreated={
+                      handleWritingChanged
+                    }
+                  />
+
+                </PrivateRoute>
+              }
+            />
+
+
+            <Route
+              path="/my-writings"
+              element={
+                <PrivateRoute
+                  user={user}
+                  authLoading={
+                    authLoading
+                  }
+                >
+
+                  <MyWritings />
+
+                </PrivateRoute>
+              }
+            />
+
+
+            {/* =========================================
+                INFORMATION / LEGAL
+            ========================================== */}
+
+            <Route
+              path="/about"
+              element={
+                <About />
+              }
+            />
+
+
+            <Route
+              path="/privacy"
+              element={
+                <Privacy />
+              }
+            />
+
+
+            <Route
+              path="/terms"
+              element={
+                <Terms />
+              }
+            />
+
+
+            {/* =========================================
+                404
+            ========================================== */}
+
+            <Route
+              path="*"
+              element={
                 <Navigate
                   to="/"
                   replace
                 />
-              ) : (
-                <Login
-                  onLogin={handleLogin}
-                  apiUrl={API_URL}
-                />
-              )
-            }
-          />
+              }
+            />
 
-          {/* REGISTER */}
+          </Routes>
 
-          <Route
-            path="/register"
-            element={
-              isLoggedIn ? (
-                <Navigate
-                  to="/"
-                  replace
-                />
-              ) : (
-                <Register
-                  apiUrl={API_URL}
-                />
-              )
-            }
-          />
+        </div>
 
 
-          {/* 404 / UNKNOWN ROUTES */}
-
-          <Route
-            path="*"
-            element={
-              <Navigate
-                to="/"
-                replace
-              />
-            }
-          />
-
-        </Routes>
-
-
-        {/* ================= FOOTER ================= */}
+        {/* =============================================
+            FOOTER — ONLY ONCE
+        ============================================== */}
 
         <Footer />
 
@@ -324,6 +505,8 @@ function App() {
 
     </BrowserRouter>
   );
+
 }
+
 
 export default App;

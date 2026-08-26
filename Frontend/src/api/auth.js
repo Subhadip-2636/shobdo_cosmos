@@ -1,209 +1,301 @@
-// ============================================================
-// SHOBDO AUTH API
-// Authentication / JWT / User Session
-// Vite + React + Flask
-// ============================================================
-
-
-// ============================================================
-// BASE URL
-// ============================================================
-
-const API_BASE_URL =
+const API_URL =
   import.meta.env.VITE_API_URL ||
-  "http://127.0.0.1:5000";
+  "http://127.0.0.1:5000/api";
 
 
-// ============================================================
-// AUTH REQUEST HELPER
-// ============================================================
+const TOKEN_KEY =
+  "shobdo_token";
+
+
+// =========================================================
+// TOKEN HELPERS
+// =========================================================
+
+function getStoredToken() {
+  return localStorage.getItem(
+    TOKEN_KEY
+  );
+}
+
+
+function storeToken(
+  token
+) {
+  if (token) {
+    localStorage.setItem(
+      TOKEN_KEY,
+      token
+    );
+  }
+}
+
+
+function removeStoredToken() {
+  localStorage.removeItem(
+    TOKEN_KEY
+  );
+}
+
+
+// =========================================================
+// RESPONSE HANDLER
+// =========================================================
+
+async function parseResponse(
+  response
+) {
+
+  let data = {};
+
+  try {
+
+    data =
+      await response.json();
+
+  } catch {
+
+    data = {};
+
+  }
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      data.message ||
+      "Something went wrong. Please try again."
+    );
+
+  }
+
+
+  return data;
+}
+
+
+// =========================================================
+// AUTH REQUEST
+// =========================================================
 
 async function authRequest(
   endpoint,
   options = {}
 ) {
 
-  try {
+  const token =
+    getStoredToken();
 
-    const response = await fetch(
-      `${API_BASE_URL}${endpoint}`,
+
+  const headers = {
+    "Content-Type":
+      "application/json",
+
+    ...(options.headers || {}),
+  };
+
+
+  if (token) {
+
+    headers.Authorization =
+      `Bearer ${token}`;
+
+  }
+
+
+  const response =
+    await fetch(
+      `${API_URL}${endpoint}`,
       {
         ...options,
-
-        headers: {
-          "Content-Type": "application/json",
-
-          ...(options.headers || {}),
-        },
-
-        /*
-         * Required when your Flask backend
-         * uses cookies/session authentication.
-         */
-        credentials: "include",
+        headers,
       }
     );
 
 
-    // --------------------------------------------------------
-    // RESPONSE
-    // --------------------------------------------------------
-
-    let data = null;
-
-    const contentType =
-      response.headers.get(
-        "content-type"
-      );
-
-
-    if (
-      contentType &&
-      contentType.includes(
-        "application/json"
-      )
-    ) {
-
-      data =
-        await response.json();
-
-    } else {
-
-      const text =
-        await response.text();
-
-      data = text
-        ? {
-            message: text,
-          }
-        : null;
-    }
-
-
-    // --------------------------------------------------------
-    // ERROR
-    // --------------------------------------------------------
-
-    if (!response.ok) {
-
-      const message =
-        data?.message ||
-        data?.error ||
-        data?.msg ||
-        `Authentication request failed (${response.status})`;
-
-
-      throw new Error(message);
-    }
-
-
-    // --------------------------------------------------------
-    // SUCCESS
-    // --------------------------------------------------------
-
-    return data;
-
-  } catch (error) {
-
-    console.error(
-      `Auth API Error [${endpoint}]:`,
-      error
-    );
-
-
-    throw error;
-  }
+  return parseResponse(
+    response
+  );
 }
 
 
-// ============================================================
+// =========================================================
+// REGISTER
+// =========================================================
+
+export async function registerUser({
+  name,
+  email,
+  password,
+  confirmPassword,
+}) {
+
+  const cleanName =
+    String(
+      name || ""
+    ).trim();
+
+
+  const cleanEmail =
+    String(
+      email || ""
+    )
+      .trim()
+      .toLowerCase();
+
+
+  const cleanPassword =
+    String(
+      password || ""
+    );
+
+
+  const cleanConfirmPassword =
+    String(
+      confirmPassword ??
+      password ??
+      ""
+    );
+
+
+  const data =
+    await authRequest(
+      "/auth/register",
+      {
+        method: "POST",
+
+        body:
+          JSON.stringify({
+            name:
+              cleanName,
+
+            email:
+              cleanEmail,
+
+            password:
+              cleanPassword,
+
+            confirm_password:
+              cleanConfirmPassword,
+          }),
+      }
+    );
+
+
+  const token =
+    data.access_token ||
+    data.token;
+
+
+  if (token) {
+
+    storeToken(
+      token
+    );
+
+  }
+
+
+  return data;
+}
+
+
+// =========================================================
 // LOGIN
-// ============================================================
+// =========================================================
+//
+// Supports BOTH:
+//
+// loginUser({
+//   email,
+//   password,
+// })
+//
+// and:
+//
+// loginUser(
+//   email,
+//   password
+// )
+//
+// This keeps older components compatible.
+// =========================================================
 
 export async function loginUser(
-  email,
-  password
+  credentials,
+  legacyPassword
 ) {
 
-  if (!email || !password) {
+  let email;
+  let password;
 
-    throw new Error(
-      "Email and password are required."
-    );
+
+  if (
+    typeof credentials ===
+    "object"
+    &&
+    credentials !== null
+  ) {
+
+    email =
+      credentials.email;
+
+    password =
+      credentials.password;
+
+  } else {
+
+    email =
+      credentials;
+
+    password =
+      legacyPassword;
+
   }
+
+
+  const cleanEmail =
+    String(
+      email || ""
+    )
+      .trim()
+      .toLowerCase();
+
+
+  const cleanPassword =
+    String(
+      password || ""
+    );
 
 
   const data =
     await authRequest(
-      "/api/auth/login",
+      "/auth/login",
       {
         method: "POST",
 
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        body:
+          JSON.stringify({
+            email:
+              cleanEmail,
+
+            password:
+              cleanPassword,
+          }),
       }
     );
 
 
-  /*
-   * Store JWT if Flask returns one.
-   *
-   * This supports:
-   *
-   * {
-   *   access_token: "...",
-   *   user: {...}
-   * }
-   */
+  const token =
+    data.access_token ||
+    data.token;
 
-  if (data?.access_token) {
 
-    localStorage.setItem(
-      "shobdo_access_token",
-      data.access_token
+  if (token) {
+
+    storeToken(
+      token
     );
-  }
 
-
-  /*
-   * Some Flask backends may return:
-   *
-   * token
-   *
-   * instead of:
-   *
-   * access_token
-   */
-
-  if (
-    !data?.access_token &&
-    data?.token
-  ) {
-
-    localStorage.setItem(
-      "shobdo_access_token",
-      data.token
-    );
-  }
-
-
-  if (data?.refresh_token) {
-
-    localStorage.setItem(
-      "shobdo_refresh_token",
-      data.refresh_token
-    );
-  }
-
-
-  if (data?.user) {
-
-    localStorage.setItem(
-      "shobdo_user",
-      JSON.stringify(data.user)
-    );
   }
 
 
@@ -211,154 +303,20 @@ export async function loginUser(
 }
 
 
-// ============================================================
-// REGISTER
-// ============================================================
-
-export async function registerUser(
-  userData
-) {
-
-  if (!userData) {
-
-    throw new Error(
-      "Registration data is required."
-    );
-  }
-
-
-  const {
-    name,
-    username,
-    email,
-    password,
-  } = userData;
-
-
-  if (
-    !name ||
-    !username ||
-    !email ||
-    !password
-  ) {
-
-    throw new Error(
-      "Name, username, email and password are required."
-    );
-  }
-
-
-  const data =
-    await authRequest(
-      "/api/auth/register",
-      {
-        method: "POST",
-
-        body: JSON.stringify({
-          name,
-          username,
-          email,
-          password,
-        }),
-      }
-    );
-
-
-  // --------------------------------------------------------
-  // SAVE TOKEN
-  // --------------------------------------------------------
-
-  if (data?.access_token) {
-
-    localStorage.setItem(
-      "shobdo_access_token",
-      data.access_token
-    );
-  }
-
-
-  if (
-    !data?.access_token &&
-    data?.token
-  ) {
-
-    localStorage.setItem(
-      "shobdo_access_token",
-      data.token
-    );
-  }
-
-
-  if (data?.refresh_token) {
-
-    localStorage.setItem(
-      "shobdo_refresh_token",
-      data.refresh_token
-    );
-  }
-
-
-  // --------------------------------------------------------
-  // SAVE USER
-  // --------------------------------------------------------
-
-  if (data?.user) {
-
-    localStorage.setItem(
-      "shobdo_user",
-      JSON.stringify(data.user)
-    );
-  }
-
-
-  return data;
-}
-
-
-// ============================================================
-// GET CURRENT USER
-// ============================================================
+// =========================================================
+// CURRENT USER
+// =========================================================
 
 export async function getCurrentUser() {
 
   const token =
-    localStorage.getItem(
-      "shobdo_access_token"
-    );
+    getStoredToken();
 
-
-  /*
-   * If there is no JWT, there is no
-   * authenticated user.
-   */
 
   if (!token) {
 
-    const savedUser =
-      localStorage.getItem(
-        "shobdo_user"
-      );
-
-
-    if (savedUser) {
-
-      try {
-
-        return JSON.parse(
-          savedUser
-        );
-
-      } catch {
-
-        localStorage.removeItem(
-          "shobdo_user"
-        );
-
-      }
-    }
-
-
     return null;
+
   }
 
 
@@ -366,281 +324,287 @@ export async function getCurrentUser() {
 
     const data =
       await authRequest(
-        "/api/auth/me",
+        "/auth/me",
         {
           method: "GET",
-
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
-          },
         }
       );
 
 
-    /*
-     * Flask may return:
-     *
-     * {
-     *   user: {...}
-     * }
-     */
+    return (
+      data.user ||
+      null
+    );
 
-    const user =
-      data?.user ||
-      data;
-
-
-    if (user) {
-
-      localStorage.setItem(
-        "shobdo_user",
-        JSON.stringify(user)
-      );
-    }
-
-
-    return user;
 
   } catch (error) {
 
-    /*
-     * Invalid / expired token.
-     */
+    removeStoredToken();
 
-    if (
-      error.message?.includes(
-        "401"
-      ) ||
-      error.message
-        ?.toLowerCase()
-        .includes("unauthorized")
-    ) {
+    return null;
 
-      clearAuthStorage();
-
-      return null;
-    }
-
-
-    throw error;
   }
+
 }
 
 
-// ============================================================
+// =========================================================
 // LOGOUT
-// ============================================================
+// =========================================================
 
 export async function logoutUser() {
 
   const token =
-    localStorage.getItem(
-      "shobdo_access_token"
-    );
-
-
-  try {
-
-    /*
-     * If your Flask backend has
-     * a logout endpoint, notify it.
-     */
-
-    if (token) {
-
-      await authRequest(
-        "/api/auth/logout",
-        {
-          method: "POST",
-
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
-          },
-        }
-      );
-    }
-
-  } catch (error) {
-
-    /*
-     * Even if backend logout fails,
-     * local authentication should still
-     * be removed.
-     */
-
-    console.warn(
-      "Backend logout failed:",
-      error
-    );
-
-  } finally {
-
-    clearAuthStorage();
-  }
-}
-
-
-// ============================================================
-// CLEAR AUTH STORAGE
-// ============================================================
-
-export function clearAuthStorage() {
-
-  localStorage.removeItem(
-    "shobdo_access_token"
-  );
-
-  localStorage.removeItem(
-    "shobdo_refresh_token"
-  );
-
-  localStorage.removeItem(
-    "shobdo_user"
-  );
-}
-
-
-// ============================================================
-// CHECK LOGIN STATUS
-// ============================================================
-
-export function isAuthenticated() {
-
-  return Boolean(
-    localStorage.getItem(
-      "shobdo_access_token"
-    )
-  );
-}
-
-
-// ============================================================
-// GET ACCESS TOKEN
-// ============================================================
-
-export function getAccessToken() {
-
-  return localStorage.getItem(
-    "shobdo_access_token"
-  );
-}
-
-
-// ============================================================
-// AUTHORIZED HEADERS
-// ============================================================
-
-export function getAuthHeaders() {
-
-  const token =
-    getAccessToken();
+    getStoredToken();
 
 
   if (!token) {
 
+    removeStoredToken();
+
     return {
-      "Content-Type":
-        "application/json",
+      message:
+        "Logged out successfully.",
     };
+
   }
 
 
-  return {
+  try {
 
-    "Content-Type":
-      "application/json",
+    const data =
+      await authRequest(
+        "/auth/logout",
+        {
+          method: "POST",
+        }
+      );
 
-    Authorization:
-      `Bearer ${token}`,
 
-  };
+    removeStoredToken();
+
+
+    return data;
+
+
+  } catch (error) {
+
+    removeStoredToken();
+
+
+    return {
+      message:
+        "Logged out locally.",
+    };
+
+  }
+
 }
 
 
-// ============================================================
-// REFRESH TOKEN
-// ============================================================
+// =========================================================
+// FORGOT PASSWORD
+// =========================================================
+//
+// Supports BOTH:
+//
+// forgotPassword({
+//   email,
+// })
+//
+// and:
+//
+// forgotPassword(
+//   email
+// )
+//
+// =========================================================
 
-export async function refreshAccessToken() {
+export async function forgotPassword(
+  input
+) {
 
-  const refreshToken =
-    localStorage.getItem(
-      "shobdo_refresh_token"
-    );
-
-
-  if (!refreshToken) {
-
-    throw new Error(
-      "No refresh token available."
-    );
-  }
-
-
-  const data =
-    await authRequest(
-      "/api/auth/refresh",
-      {
-        method: "POST",
-
-        headers: {
-          Authorization:
-            `Bearer ${refreshToken}`,
-        },
-      }
-    );
+  const email =
+    typeof input ===
+    "object"
+    &&
+    input !== null
+      ? input.email
+      : input;
 
 
-  const newToken =
-    data?.access_token ||
-    data?.token;
+  const cleanEmail =
+    String(
+      email || ""
+    )
+      .trim()
+      .toLowerCase();
 
 
-  if (!newToken) {
+  return authRequest(
+    "/auth/forgot-password",
+    {
+      method: "POST",
 
-    throw new Error(
-      "No access token returned by server."
-    );
-  }
-
-
-  localStorage.setItem(
-    "shobdo_access_token",
-    newToken
+      body:
+        JSON.stringify({
+          email:
+            cleanEmail,
+        }),
+    }
   );
-
-
-  return newToken;
 }
 
 
-// ============================================================
-// DEFAULT EXPORT
-// ============================================================
+// =========================================================
+// VALIDATE RESET TOKEN
+// =========================================================
 
-const auth = {
+export async function validateResetToken(
+  token
+) {
 
-  loginUser,
+  if (!token) {
 
-  registerUser,
+    throw new Error(
+      "Password reset token is missing."
+    );
 
-  getCurrentUser,
-
-  logoutUser,
-
-  clearAuthStorage,
-
-  isAuthenticated,
-
-  getAccessToken,
-
-  getAuthHeaders,
-
-  refreshAccessToken,
-
-};
+  }
 
 
-export default auth;
+  return authRequest(
+    `/auth/reset-password/${encodeURIComponent(
+      token
+    )}`,
+    {
+      method: "GET",
+    }
+  );
+}
+
+
+// =========================================================
+// RESET PASSWORD
+// =========================================================
+//
+// Supports:
+//
+// resetPassword(
+//   token,
+//   {
+//     password,
+//     confirmPassword,
+//   }
+// )
+//
+// AND old style:
+//
+// resetPassword(
+//   token,
+//   password,
+//   confirmPassword
+// )
+//
+// =========================================================
+
+export async function resetPassword(
+  token,
+  input,
+  legacyConfirmPassword
+) {
+
+  if (!token) {
+
+    throw new Error(
+      "Password reset token is missing."
+    );
+
+  }
+
+
+  let password;
+  let confirmPassword;
+
+
+  if (
+    typeof input ===
+    "object"
+    &&
+    input !== null
+  ) {
+
+    password =
+      input.password;
+
+    confirmPassword =
+      input.confirmPassword ??
+      input.confirm_password ??
+      input.password;
+
+  } else {
+
+    password =
+      input;
+
+    confirmPassword =
+      legacyConfirmPassword ??
+      input;
+
+  }
+
+
+  const cleanPassword =
+    String(
+      password || ""
+    );
+
+
+  const cleanConfirmPassword =
+    String(
+      confirmPassword || ""
+    );
+
+
+  return authRequest(
+    `/auth/reset-password/${encodeURIComponent(
+      token
+    )}`,
+    {
+      method: "POST",
+
+      body:
+        JSON.stringify({
+          password:
+            cleanPassword,
+
+          confirm_password:
+            cleanConfirmPassword,
+        }),
+    }
+  );
+}
+
+
+// =========================================================
+// AUTH UTILITIES
+// =========================================================
+
+export function isAuthenticated() {
+
+  return Boolean(
+    getStoredToken()
+  );
+}
+
+
+export function getAuthToken() {
+
+  return getStoredToken();
+}
+
+
+export function clearAuthToken() {
+
+  removeStoredToken();
+}

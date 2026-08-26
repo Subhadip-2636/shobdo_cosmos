@@ -4,25 +4,27 @@ import {
 } from "react";
 
 import {
+  ArrowLeft,
   ArrowRight,
   Check,
+  CheckCircle2,
   Eye,
   EyeOff,
+  KeyRound,
   Loader2,
   LockKeyhole,
-  Mail,
   ShieldCheck,
-  User,
   X,
 } from "lucide-react";
 
 import {
   Link,
   useNavigate,
+  useParams,
 } from "react-router-dom";
 
 import {
-  registerUser,
+  resetPassword,
 } from "../api/auth";
 
 import {
@@ -30,9 +32,11 @@ import {
 } from "../Language/LanguageContext";
 
 
-function Register({
-  onRegister,
-}) {
+function ResetPassword() {
+
+  const {
+    token,
+  } = useParams();
 
   const navigate =
     useNavigate();
@@ -42,15 +46,9 @@ function Register({
   } = useLanguage();
 
 
-  const [
-    name,
-    setName,
-  ] = useState("");
-
-  const [
-    email,
-    setEmail,
-  ] = useState("");
+  // =====================================================
+  // STATE
+  // =====================================================
 
   const [
     password,
@@ -88,9 +86,14 @@ function Register({
   ] = useState("");
 
 
+  // =====================================================
+  // PASSWORD RULES
+  // =====================================================
+
   const passwordRules =
     useMemo(
       () => ({
+
         length:
           password.length >= 8,
 
@@ -108,10 +111,15 @@ function Register({
           /\d/.test(
             password
           ),
+
       }),
       [password]
     );
 
+
+  // =====================================================
+  // PASSWORD STRENGTH
+  // =====================================================
 
   const passwordScore =
     Object.values(
@@ -119,7 +127,7 @@ function Register({
     ).filter(Boolean).length;
 
 
-  const strength =
+  const passwordStrength =
     passwordScore <= 1
       ? "weak"
       : passwordScore <= 3
@@ -130,10 +138,15 @@ function Register({
   const passwordsMatch =
     Boolean(
       confirmPassword
-    ) &&
+    )
+    &&
     password ===
       confirmPassword;
 
+
+  // =====================================================
+  // SUBMIT
+  // =====================================================
 
   async function handleSubmit(
     event
@@ -145,36 +158,16 @@ function Register({
     setSuccess("");
 
 
-    const cleanName =
-      name.trim();
-
-    const normalizedEmail =
-      email
-        .trim()
-        .toLowerCase();
-
-
-    if (!cleanName) {
+    if (!token) {
 
       setError(
         t(
-          "register.namePlaceholder"
+          "resetPassword.invalidToken"
         )
       );
 
       return;
-    }
 
-
-    if (!normalizedEmail) {
-
-      setError(
-        t(
-          "register.emailPlaceholder"
-        )
-      );
-
-      return;
     }
 
 
@@ -189,6 +182,7 @@ function Register({
       );
 
       return;
+
     }
 
 
@@ -204,6 +198,7 @@ function Register({
       );
 
       return;
+
     }
 
 
@@ -212,31 +207,22 @@ function Register({
 
     try {
 
-      await registerUser({
-        name:
-          cleanName,
-
-        email:
-          normalizedEmail,
-
-        password,
-
-        confirmPassword,
-      });
+      const data =
+        await resetPassword(
+          token,
+          {
+            password,
+            confirmPassword,
+          }
+        );
 
 
       setSuccess(
+        data?.message ||
         t(
-          "register.success"
+          "resetPassword.success"
         )
       );
-
-
-      if (onRegister) {
-
-        await onRegister();
-
-      }
 
 
       window.setTimeout(
@@ -250,16 +236,22 @@ function Register({
           );
 
         },
-        800
+        1000
       );
 
 
     } catch (err) {
 
+      console.error(
+        "RESET PASSWORD ERROR:",
+        err
+      );
+
+
       setError(
         err.message ||
         t(
-          "errors.generic"
+          "resetPassword.invalidToken"
         )
       );
 
@@ -273,6 +265,10 @@ function Register({
   }
 
 
+  // =====================================================
+  // PASSWORD RULE COMPONENT
+  // =====================================================
+
   function PasswordRule({
     passed,
     children,
@@ -282,18 +278,22 @@ function Register({
       <div
         className={
           passed
-            ? "register-rule passed"
-            : "register-rule"
+            ? "password-rule passed"
+            : "password-rule"
         }
       >
 
         {
           passed
             ? (
-              <Check size={12} />
+              <Check
+                size={13}
+              />
             )
             : (
-              <X size={12} />
+              <X
+                size={13}
+              />
             )
         }
 
@@ -307,26 +307,32 @@ function Register({
   }
 
 
+  // =====================================================
+  // UI
+  // =====================================================
+
   return (
-    <main className="shobdo-register-page">
+    <main className="auth-page">
 
-      <div className="shobdo-register-layout">
+      <div className="auth-shell">
 
 
-        {/* LEFT */}
+        {/* ===============================================
+            INTRO
+        ================================================ */}
 
-        <section className="shobdo-register-intro">
+        <section className="auth-intro">
 
-          <div className="shobdo-register-eyebrow">
+          <div className="auth-eyebrow">
 
             <ShieldCheck
-              size={15}
+              size={16}
             />
 
             <span>
 
               {t(
-                "register.eyebrow"
+                "resetPassword.eyebrow"
               )}
 
             </span>
@@ -337,7 +343,7 @@ function Register({
           <h1>
 
             {t(
-              "register.title"
+              "resetPassword.title"
             )}
 
           </h1>
@@ -346,66 +352,36 @@ function Register({
           <p>
 
             {t(
-              "register.description"
+              "resetPassword.description"
             )}
 
           </p>
 
-
-          <div className="shobdo-register-note">
-
-            <span>
-              SHOBDO
-            </span>
-
-            <p>
-              Write in your language.
-              Keep your voice yours.
-            </p>
-
-          </div>
-
         </section>
 
 
-        {/* CARD */}
+        {/* ===============================================
+            CARD
+        ================================================ */}
 
-        <section className="shobdo-register-card">
-
-          <div className="shobdo-register-card-top">
-
-            <div className="shobdo-register-icon">
-
-              <User
-                size={21}
-              />
-
-            </div>
+        <section className="auth-card">
 
 
-            <div>
+          <div className="auth-card-icon">
 
-              <span>
-                SHOBDO
-              </span>
-
-              <h2>
-
-                {t(
-                  "register.createAccount"
-                )}
-
-              </h2>
-
-            </div>
+            <KeyRound
+              size={22}
+            />
 
           </div>
 
+
+          {/* ERROR */}
 
           {error && (
 
             <div
-              className="shobdo-register-message error"
+              className="auth-message error"
               role="alert"
             >
 
@@ -416,157 +392,64 @@ function Register({
           )}
 
 
+          {/* SUCCESS */}
+
           {success && (
 
             <div
-              className="shobdo-register-message success"
+              className="auth-message success"
               role="status"
             >
 
-              {success}
+              <CheckCircle2
+                size={17}
+              />
+
+              <span>
+                {success}
+              </span>
 
             </div>
 
           )}
 
 
+          {/* FORM */}
+
           <form
-            className="shobdo-register-form"
+            className="auth-form"
             onSubmit={
               handleSubmit
             }
           >
 
 
-            {/* NAME */}
+            {/* ===========================================
+                PASSWORD
+            ============================================ */}
 
-            <div className="shobdo-register-field">
+            <div className="auth-field">
 
               <label
-                htmlFor="register-name"
+                htmlFor="reset-password"
               >
 
                 {t(
-                  "register.name"
+                  "resetPassword.password"
                 )}
 
               </label>
 
 
-              <div className="shobdo-register-input">
-
-                <User size={17} />
-
-                <input
-                  id="register-name"
-                  type="text"
-
-                  value={
-                    name
-                  }
-
-                  onChange={(event) =>
-                    setName(
-                      event.target.value
-                    )
-                  }
-
-                  placeholder={
-                    t(
-                      "register.namePlaceholder"
-                    )
-                  }
-
-                  autoComplete="name"
-
-                  disabled={
-                    loading
-                  }
-
-                  required
-                />
-
-              </div>
-
-            </div>
-
-
-            {/* EMAIL */}
-
-            <div className="shobdo-register-field">
-
-              <label
-                htmlFor="register-email"
-              >
-
-                {t(
-                  "register.email"
-                )}
-
-              </label>
-
-
-              <div className="shobdo-register-input">
-
-                <Mail size={17} />
-
-                <input
-                  id="register-email"
-                  type="email"
-
-                  value={
-                    email
-                  }
-
-                  onChange={(event) =>
-                    setEmail(
-                      event.target.value
-                    )
-                  }
-
-                  placeholder={
-                    t(
-                      "register.emailPlaceholder"
-                    )
-                  }
-
-                  autoComplete="email"
-
-                  disabled={
-                    loading
-                  }
-
-                  required
-                />
-
-              </div>
-
-            </div>
-
-
-            {/* PASSWORD */}
-
-            <div className="shobdo-register-field">
-
-              <label
-                htmlFor="register-password"
-              >
-
-                {t(
-                  "register.password"
-                )}
-
-              </label>
-
-
-              <div className="shobdo-register-input">
+              <div className="auth-input-wrap">
 
                 <LockKeyhole
                   size={17}
                 />
 
+
                 <input
-                  id="register-password"
+                  id="reset-password"
 
                   type={
                     showPassword
@@ -586,7 +469,7 @@ function Register({
 
                   placeholder={
                     t(
-                      "register.passwordPlaceholder"
+                      "resetPassword.passwordPlaceholder"
                     )
                   }
 
@@ -602,22 +485,38 @@ function Register({
 
                 <button
                   type="button"
-                  className="shobdo-register-toggle"
+
+                  className="auth-password-toggle"
+
                   onClick={() =>
                     setShowPassword(
                       (current) =>
                         !current
                     )
                   }
+
+                  aria-label={
+                    showPassword
+                      ? t(
+                        "login.hidePassword"
+                      )
+                      : t(
+                        "login.showPassword"
+                      )
+                  }
                 >
 
                   {
                     showPassword
                       ? (
-                        <EyeOff size={17} />
+                        <EyeOff
+                          size={17}
+                        />
                       )
                       : (
-                        <Eye size={17} />
+                        <Eye
+                          size={17}
+                        />
                       )
                   }
 
@@ -628,13 +527,15 @@ function Register({
             </div>
 
 
-            {/* STRENGTH */}
+            {/* ===========================================
+                PASSWORD STRENGTH
+            ============================================ */}
 
             {password && (
 
-              <div className="shobdo-register-strength">
+              <div className="password-strength-panel">
 
-                <div className="register-strength-header">
+                <div className="password-strength-header">
 
                   <span>
 
@@ -644,14 +545,15 @@ function Register({
 
                   </span>
 
+
                   <strong
                     className={
-                      `strength-${strength}`
+                      `password-strength-${passwordStrength}`
                     }
                   >
 
                     {t(
-                      `register.${strength}`
+                      `register.${passwordStrength}`
                     )}
 
                   </strong>
@@ -659,7 +561,7 @@ function Register({
                 </div>
 
 
-                <div className="register-strength-bar">
+                <div className="password-strength-bar">
 
                   <span
                     className={
@@ -670,7 +572,7 @@ function Register({
                 </div>
 
 
-                <div className="register-rules">
+                <div className="password-rules">
 
                   <PasswordRule
                     passed={
@@ -680,28 +582,31 @@ function Register({
                     8+ characters
                   </PasswordRule>
 
+
                   <PasswordRule
                     passed={
                       passwordRules.uppercase
                     }
                   >
-                    Uppercase
+                    A–Z
                   </PasswordRule>
+
 
                   <PasswordRule
                     passed={
                       passwordRules.lowercase
                     }
                   >
-                    Lowercase
+                    a–z
                   </PasswordRule>
+
 
                   <PasswordRule
                     passed={
                       passwordRules.number
                     }
                   >
-                    Number
+                    0–9
                   </PasswordRule>
 
                 </div>
@@ -711,29 +616,32 @@ function Register({
             )}
 
 
-            {/* CONFIRM */}
+            {/* ===========================================
+                CONFIRM PASSWORD
+            ============================================ */}
 
-            <div className="shobdo-register-field">
+            <div className="auth-field">
 
               <label
-                htmlFor="register-confirm-password"
+                htmlFor="reset-confirm-password"
               >
 
                 {t(
-                  "register.confirmPassword"
+                  "resetPassword.confirmPassword"
                 )}
 
               </label>
 
 
-              <div className="shobdo-register-input">
+              <div className="auth-input-wrap">
 
                 <LockKeyhole
                   size={17}
                 />
 
+
                 <input
-                  id="register-confirm-password"
+                  id="reset-confirm-password"
 
                   type={
                     showConfirmPassword
@@ -753,7 +661,7 @@ function Register({
 
                   placeholder={
                     t(
-                      "register.confirmPasswordPlaceholder"
+                      "resetPassword.confirmPasswordPlaceholder"
                     )
                   }
 
@@ -769,22 +677,38 @@ function Register({
 
                 <button
                   type="button"
-                  className="shobdo-register-toggle"
+
+                  className="auth-password-toggle"
+
                   onClick={() =>
                     setShowConfirmPassword(
                       (current) =>
                         !current
                     )
                   }
+
+                  aria-label={
+                    showConfirmPassword
+                      ? t(
+                        "login.hidePassword"
+                      )
+                      : t(
+                        "login.showPassword"
+                      )
+                  }
                 >
 
                   {
                     showConfirmPassword
                       ? (
-                        <EyeOff size={17} />
+                        <EyeOff
+                          size={17}
+                        />
                       )
                       : (
-                        <Eye size={17} />
+                        <Eye
+                          size={17}
+                        />
                       )
                   }
 
@@ -798,26 +722,33 @@ function Register({
                 <div
                   className={
                     passwordsMatch
-                      ? "register-match matched"
-                      : "register-match mismatch"
+                      ? "password-match matched"
+                      : "password-match mismatch"
                   }
                 >
 
                   {
                     passwordsMatch
                       ? (
-                        <Check size={12} />
+                        <Check
+                          size={13}
+                        />
                       )
                       : (
-                        <X size={12} />
+                        <X
+                          size={13}
+                        />
                       )
                   }
+
 
                   <span>
 
                     {
                       passwordsMatch
-                        ? "Passwords match"
+                        ? t(
+                          "register.strong"
+                        )
                         : t(
                           "register.passwordMismatch"
                         )
@@ -832,11 +763,15 @@ function Register({
             </div>
 
 
-            {/* SUBMIT */}
+            {/* ===========================================
+                SUBMIT
+            ============================================ */}
 
             <button
               type="submit"
-              className="shobdo-register-submit"
+
+              className="auth-submit-button"
+
               disabled={
                 loading
               }
@@ -857,13 +792,14 @@ function Register({
                   )
               }
 
+
               {
                 loading
                   ? t(
-                    "register.creatingAccount"
+                    "resetPassword.submitting"
                   )
                   : t(
-                    "register.createAccount"
+                    "resetPassword.submit"
                   )
               }
 
@@ -872,20 +808,23 @@ function Register({
           </form>
 
 
-          <div className="shobdo-register-bottom">
+          {/* =============================================
+              BACK TO LOGIN
+          ============================================== */}
 
-            <span>
+          <div className="auth-bottom">
+
+            <Link
+              to="/login"
+              className="auth-back-link"
+            >
+
+              <ArrowLeft
+                size={15}
+              />
 
               {t(
-                "register.alreadyAccount"
-              )}
-
-            </span>
-
-            <Link to="/login">
-
-              {t(
-                "register.login"
+                "forgotPassword.backToLogin"
               )}
 
             </Link>
@@ -902,4 +841,4 @@ function Register({
 }
 
 
-export default Register;
+export default ResetPassword;
