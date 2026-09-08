@@ -13,6 +13,7 @@ import {
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import ScrollToTop from "./components/ScrollToTop";
 
 import Home from "./pages/Home";
 import Explore from "./pages/Explore";
@@ -36,6 +37,8 @@ import {
 import {
   getCurrentUser,
 } from "./api/auth";
+
+import WriterProfile from "./pages/WriterProfile";
 
 
 // =========================================================
@@ -260,7 +263,7 @@ function App() {
 
   return (
     <BrowserRouter>
-
+      <ScrollToTop />
       <div className="app-shell">
 
 
@@ -315,6 +318,13 @@ function App() {
               path="/writings/:id"
               element={
                 <WritingDetails />
+              }
+            />
+
+            <Route
+              path="/users/:id"
+              element={
+                <WriterProfile />
               }
             />
 

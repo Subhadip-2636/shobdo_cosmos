@@ -15,7 +15,9 @@ import {
   Loader2,
   MessageCircle,
   RefreshCw,
+  Send,
   Share2,
+  Trash2,
   User,
 } from "lucide-react";
 
@@ -27,7 +29,15 @@ import {
 
 import {
   getWriting,
+
+  getWritingLikes,
+  getMyLikeStatus,
   likeWriting,
+  unlikeWriting,
+
+  getComments,
+  addComment,
+  deleteComment,
 } from "../api/api";
 
 import {
@@ -62,30 +72,84 @@ function WritingDetails() {
     setWriting,
   ] = useState(null);
 
+
   const [
     loading,
     setLoading,
   ] = useState(true);
+
 
   const [
     error,
     setError,
   ] = useState("");
 
+
+  // =====================================================
+  // LIKE STATE
+  // =====================================================
+
   const [
     likesCount,
     setLikesCount,
   ] = useState(0);
+
 
   const [
     liked,
     setLiked,
   ] = useState(false);
 
+
   const [
     liking,
     setLiking,
   ] = useState(false);
+
+
+  // =====================================================
+  // COMMENT STATE
+  // =====================================================
+
+  const [
+    comments,
+    setComments,
+  ] = useState([]);
+
+
+  const [
+    commentsLoading,
+    setCommentsLoading,
+  ] = useState(false);
+
+
+  const [
+    commentText,
+    setCommentText,
+  ] = useState("");
+
+
+  const [
+    submittingComment,
+    setSubmittingComment,
+  ] = useState(false);
+
+
+  const [
+    deletingCommentId,
+    setDeletingCommentId,
+  ] = useState(null);
+
+
+  const [
+    commentError,
+    setCommentError,
+  ] = useState("");
+
+
+  // =====================================================
+  // SHARE STATE
+  // =====================================================
 
   const [
     shareSuccess,
@@ -127,6 +191,7 @@ function WritingDetails() {
         t(
           "categories.other"
         ),
+
     };
 
 
@@ -139,6 +204,14 @@ function WritingDetails() {
     );
 
   }
+
+
+  // =====================================================
+  // WRITING ID
+  // =====================================================
+
+  const writingId =
+    Number(id);
 
 
   // =====================================================
@@ -159,9 +232,25 @@ function WritingDetails() {
 
       try {
 
+        if (
+          !Number.isFinite(
+            writingId
+          ) ||
+          writingId <= 0
+        ) {
+
+          throw new Error(
+            t(
+              "writingDetails.notFound"
+            )
+          );
+
+        }
+
+
         const data =
           await getWriting(
-            id
+            writingId
           );
 
 
@@ -172,7 +261,11 @@ function WritingDetails() {
 
         const loadedWriting =
           data?.writing ||
-          null;
+          (
+            data?.id
+              ? data
+              : null
+          );
 
 
         if (!loadedWriting) {
@@ -192,9 +285,11 @@ function WritingDetails() {
 
 
         setLikesCount(
-          loadedWriting
-            ?.likes_count ||
-          0
+          Number(
+            loadedWriting
+              ?.likes_count ||
+            0
+          )
         );
 
 
@@ -226,7 +321,7 @@ function WritingDetails() {
 
 
         setError(
-          err.message ||
+          err?.message ||
           t(
             "writingDetails.unavailable"
           )
@@ -256,7 +351,252 @@ function WritingDetails() {
     };
 
   }, [
-    id,
+    writingId,
+    t,
+  ]);
+
+
+  // =====================================================
+  // LOAD LIKE COUNT
+  // =====================================================
+
+  useEffect(() => {
+
+    if (!writing?.id) {
+      return;
+    }
+
+
+    let mounted = true;
+
+
+    async function loadLikes() {
+
+      try {
+
+        const data =
+          await getWritingLikes(
+            writing.id
+          );
+
+
+        if (!mounted) {
+          return;
+        }
+
+
+        setLikesCount(
+          Number(
+            data?.likes_count ??
+            data?.count ??
+            0
+          )
+        );
+
+
+      } catch (err) {
+
+        console.error(
+          "LOAD LIKES ERROR:",
+          err
+        );
+
+      }
+
+    }
+
+
+    loadLikes();
+
+
+    return () => {
+
+      mounted = false;
+
+    };
+
+  }, [
+    writing?.id,
+  ]);
+
+
+  // =====================================================
+  // LOAD CURRENT USER LIKE STATUS
+  // =====================================================
+
+  useEffect(() => {
+
+    if (!writing?.id) {
+      return;
+    }
+
+
+    let mounted = true;
+
+
+    async function loadLikeStatus() {
+
+      try {
+
+        const data =
+          await getMyLikeStatus(
+            writing.id
+          );
+
+
+        if (!mounted) {
+          return;
+        }
+
+
+        setLiked(
+          Boolean(
+            data?.liked ??
+            data?.is_liked ??
+            data?.has_liked
+          )
+        );
+
+
+        if (
+          typeof data?.likes_count
+          === "number"
+        ) {
+
+          setLikesCount(
+            data.likes_count
+          );
+
+        }
+
+
+      } catch (err) {
+
+        if (mounted) {
+
+          setLiked(false);
+
+        }
+
+      }
+
+    }
+
+
+    loadLikeStatus();
+
+
+    return () => {
+
+      mounted = false;
+
+    };
+
+  }, [
+    writing?.id,
+  ]);
+
+
+  // =====================================================
+  // LOAD COMMENTS
+  // =====================================================
+
+  useEffect(() => {
+
+    if (!writing?.id) {
+      return;
+    }
+
+
+    let mounted = true;
+
+
+    async function loadComments() {
+
+      setCommentsLoading(
+        true
+      );
+
+      setCommentError("");
+
+
+      try {
+
+        const data =
+          await getComments(
+            writing.id
+          );
+
+
+        if (!mounted) {
+          return;
+        }
+
+
+        const loadedComments =
+          Array.isArray(data)
+            ? data
+            : (
+                Array.isArray(
+                  data?.comments
+                )
+                  ? data.comments
+                  : []
+              );
+
+
+        setComments(
+          loadedComments
+        );
+
+
+      } catch (err) {
+
+        console.error(
+          "LOAD COMMENTS ERROR:",
+          err
+        );
+
+
+        if (!mounted) {
+          return;
+        }
+
+
+        setCommentError(
+          err?.message ||
+          t(
+            "writingDetails.commentSection.loadError"
+          )
+        );
+
+
+      } finally {
+
+        if (mounted) {
+
+          setCommentsLoading(
+            false
+          );
+
+        }
+
+      }
+
+    }
+
+
+    loadComments();
+
+
+    return () => {
+
+      mounted = false;
+
+    };
+
+  }, [
+    writing?.id,
     t,
   ]);
 
@@ -293,7 +633,9 @@ function WritingDetails() {
         .filter(Boolean)
         .length;
 
-    }, [writing]);
+    }, [
+      writing,
+    ]);
 
 
   // =====================================================
@@ -309,7 +651,10 @@ function WritingDetails() {
             wordCount / 180
           )
         ),
-      [wordCount]
+
+      [
+        wordCount,
+      ]
     );
 
 
@@ -354,11 +699,19 @@ function WritingDetails() {
       return new Intl.DateTimeFormat(
         undefined,
         {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
+          day:
+            "numeric",
+
+          month:
+            "long",
+
+          year:
+            "numeric",
         }
-      ).format(date);
+      ).format(
+        date
+      );
+
 
     } catch {
 
@@ -371,7 +724,7 @@ function WritingDetails() {
 
 
   // =====================================================
-  // LIKE
+  // LIKE / UNLIKE
   // =====================================================
 
   async function handleLike() {
@@ -386,15 +739,21 @@ function WritingDetails() {
     }
 
 
-    setLiking(true);
+    setLiking(
+      true
+    );
 
 
     try {
 
       const data =
-        await likeWriting(
-          writing.id
-        );
+        liked
+          ? await unlikeWriting(
+              writing.id
+            )
+          : await likeWriting(
+              writing.id
+            );
 
 
       if (
@@ -404,6 +763,12 @@ function WritingDetails() {
 
         setLiked(
           data.liked
+        );
+
+      } else {
+
+        setLiked(
+          !liked
         );
 
       }
@@ -430,9 +795,222 @@ function WritingDetails() {
       );
 
 
+      window.alert(
+        err?.message ||
+        t(
+          "writingDetails.likeError"
+        )
+      );
+
+
     } finally {
 
-      setLiking(false);
+      setLiking(
+        false
+      );
+
+    }
+
+  }
+
+
+  // =====================================================
+  // ADD COMMENT
+  // =====================================================
+
+  async function handleCommentSubmit(
+    event
+  ) {
+
+    event.preventDefault();
+
+
+    if (
+      submittingComment ||
+      !writing?.id
+    ) {
+
+      return;
+
+    }
+
+
+    const content =
+      commentText.trim();
+
+
+    if (!content) {
+
+      return;
+
+    }
+
+
+    if (
+      content.length > 2000
+    ) {
+
+      setCommentError(
+        t(
+          "writingDetails.commentSection.tooLong"
+        )
+      );
+
+      return;
+
+    }
+
+
+    setSubmittingComment(
+      true
+    );
+
+    setCommentError("");
+
+
+    try {
+
+      const data =
+        await addComment(
+          writing.id,
+          content
+        );
+
+
+      const newComment =
+        data?.comment ||
+        data;
+
+
+      if (
+        newComment?.id
+      ) {
+
+        setComments(
+          (
+            currentComments
+          ) => [
+
+            newComment,
+
+            ...currentComments,
+
+          ]
+        );
+
+      }
+
+
+      setCommentText("");
+
+
+    } catch (err) {
+
+      console.error(
+        "ADD COMMENT ERROR:",
+        err
+      );
+
+
+      setCommentError(
+        err?.message ||
+        t(
+          "writingDetails.commentSection.addError"
+        )
+      );
+
+
+    } finally {
+
+      setSubmittingComment(
+        false
+      );
+
+    }
+
+  }
+
+
+  // =====================================================
+  // DELETE COMMENT
+  // =====================================================
+
+  async function handleDeleteComment(
+    commentId
+  ) {
+
+    if (
+      !commentId ||
+      deletingCommentId
+    ) {
+
+      return;
+
+    }
+
+
+    const confirmed =
+      window.confirm(
+        t(
+          "writingDetails.commentSection.deleteConfirm"
+        )
+      );
+
+
+    if (!confirmed) {
+
+      return;
+
+    }
+
+
+    setDeletingCommentId(
+      commentId
+    );
+
+    setCommentError("");
+
+
+    try {
+
+      await deleteComment(
+        commentId
+      );
+
+
+      setComments(
+        (
+          currentComments
+        ) =>
+          currentComments.filter(
+            (comment) =>
+              comment.id !==
+              commentId
+          )
+      );
+
+
+    } catch (err) {
+
+      console.error(
+        "DELETE COMMENT ERROR:",
+        err
+      );
+
+
+      setCommentError(
+        err?.message ||
+        t(
+          "writingDetails.commentSection.deleteError"
+        )
+      );
+
+
+    } finally {
+
+      setDeletingCommentId(
+        null
+      );
 
     }
 
@@ -457,6 +1035,7 @@ function WritingDetails() {
 
       url:
         window.location.href,
+
     };
 
 
@@ -481,13 +1060,17 @@ function WritingDetails() {
         );
 
 
-      setShareSuccess(true);
+      setShareSuccess(
+        true
+      );
 
 
       window.setTimeout(
         () => {
 
-          setShareSuccess(false);
+          setShareSuccess(
+            false
+          );
 
         },
         1800
@@ -520,6 +1103,7 @@ function WritingDetails() {
   if (loading) {
 
     return (
+
       <main className="writing-details-page">
 
         <div className="writing-details-container">
@@ -544,6 +1128,7 @@ function WritingDetails() {
         </div>
 
       </main>
+
     );
 
   }
@@ -559,6 +1144,7 @@ function WritingDetails() {
   ) {
 
     return (
+
       <main className="writing-details-page">
 
         <div className="writing-details-container">
@@ -620,6 +1206,7 @@ function WritingDetails() {
 
               <Link
                 to="/explore"
+
                 className="details-secondary-link"
               >
 
@@ -640,6 +1227,7 @@ function WritingDetails() {
         </div>
 
       </main>
+
     );
 
   }
@@ -651,6 +1239,8 @@ function WritingDetails() {
 
   const authorName =
     writing.author?.name ||
+    writing.user?.name ||
+    writing.author_name ||
     t(
       "common.unknownAuthor"
     );
@@ -683,8 +1273,8 @@ function WritingDetails() {
   const paragraphs =
     writing.content
       ? writing.content.split(
-        "\n"
-      )
+          "\n"
+        )
       : [];
 
 
@@ -693,14 +1283,15 @@ function WritingDetails() {
   // =====================================================
 
   return (
+
     <main className="writing-details-page">
 
       <div className="writing-details-container">
 
 
-        {/* ===============================================
+        {/* =================================================
             BACK
-        ================================================ */}
+        ================================================== */}
 
         <button
           type="button"
@@ -712,7 +1303,9 @@ function WritingDetails() {
           }
         >
 
-          <ArrowLeft size={17} />
+          <ArrowLeft
+            size={17}
+          />
 
           {t(
             "writingDetails.back"
@@ -721,16 +1314,16 @@ function WritingDetails() {
         </button>
 
 
-        {/* ===============================================
+        {/* =================================================
             ARTICLE
-        ================================================ */}
+        ================================================== */}
 
         <article className="writing-details-article">
 
 
-          {/* =============================================
+          {/* ===============================================
               HEADER
-          ============================================== */}
+          ================================================ */}
 
           <header className="writing-details-header">
 
@@ -741,7 +1334,9 @@ function WritingDetails() {
 
               <span className="writing-details-language">
 
-                <Globe2 size={13} />
+                <Globe2
+                  size={13}
+                />
 
                 {languageLabel}
 
@@ -783,7 +1378,9 @@ function WritingDetails() {
                     ?.charAt(0)
                     ?.toUpperCase()
                   ||
-                  <User size={18} />
+                  <User
+                    size={18}
+                  />
                 }
 
               </div>
@@ -810,8 +1407,6 @@ function WritingDetails() {
                 <div className="writing-details-meta">
 
 
-                  {/* DATE */}
-
                   <span>
 
                     <CalendarDays
@@ -822,8 +1417,6 @@ function WritingDetails() {
 
                   </span>
 
-
-                  {/* READING TIME */}
 
                   <span>
 
@@ -841,8 +1434,6 @@ function WritingDetails() {
 
                   </span>
 
-
-                  {/* WORD COUNT */}
 
                   <span>
 
@@ -867,9 +1458,9 @@ function WritingDetails() {
             </div>
 
 
-            {/* ===========================================
+            {/* =============================================
                 ACTION BAR
-            ============================================ */}
+            ============================================== */}
 
             <div className="writing-details-actions">
 
@@ -897,20 +1488,25 @@ function WritingDetails() {
                 {
                   liking
                     ? (
+
                       <Loader2
                         size={16}
                         className="spin"
                       />
+
                     )
                     : (
+
                       <Heart
                         size={16}
+
                         fill={
                           liked
                             ? "currentColor"
                             : "none"
                         }
                       />
+
                     )
                 }
 
@@ -920,18 +1516,20 @@ function WritingDetails() {
                   {
                     liked
                       ? t(
-                        "writingDetails.liked"
-                      )
+                          "writingDetails.liked"
+                        )
                       : t(
-                        "writingDetails.like"
-                      )
+                          "writingDetails.like"
+                        )
                   }
 
                 </span>
 
 
                 <strong>
+
                   {likesCount}
+
                 </strong>
 
               </button>
@@ -939,7 +1537,11 @@ function WritingDetails() {
 
               {/* COMMENTS */}
 
-              <div className="writing-details-action">
+              <a
+                href="#comments"
+
+                className="writing-details-action"
+              >
 
                 <MessageCircle
                   size={16}
@@ -955,15 +1557,11 @@ function WritingDetails() {
 
                 <strong>
 
-                  {
-                    writing
-                      .comments_count ||
-                    0
-                  }
+                  {comments.length}
 
                 </strong>
 
-              </div>
+              </a>
 
 
               {/* SHARE */}
@@ -978,19 +1576,21 @@ function WritingDetails() {
                 }
               >
 
-                <Share2 size={16} />
+                <Share2
+                  size={16}
+                />
 
                 <span>
 
                   {
                     shareSuccess
                       ? t(
-                        "common.saved",
-                        "Copied"
-                      )
+                          "common.saved",
+                          "Copied"
+                        )
                       : t(
-                        "writingDetails.share"
-                      )
+                          "writingDetails.share"
+                        )
                   }
 
                 </span>
@@ -1002,20 +1602,22 @@ function WritingDetails() {
           </header>
 
 
-          {/* =============================================
+          {/* ===============================================
               DIVIDER
-          ============================================== */}
+          ================================================ */}
 
           <div className="writing-details-divider" />
 
 
-          {/* =============================================
-              ORIGINAL LANGUAGE NOTE
-          ============================================== */}
+          {/* ===============================================
+              ORIGINAL LANGUAGE
+          ================================================ */}
 
           <div className="writing-original-language">
 
-            <Globe2 size={14} />
+            <Globe2
+              size={14}
+            />
 
             <span>
 
@@ -1036,9 +1638,9 @@ function WritingDetails() {
           </div>
 
 
-          {/* =============================================
-              ORIGINAL WRITING CONTENT
-          ============================================== */}
+          {/* ===============================================
+              WRITING CONTENT
+          ================================================ */}
 
           <section className="writing-details-content">
 
@@ -1054,18 +1656,22 @@ function WritingDetails() {
                   ) {
 
                     return (
+
                       <div
                         key={
                           `empty-${index}`
                         }
+
                         className="writing-empty-line"
                       />
+
                     );
 
                   }
 
 
                   return (
+
                     <p
                       key={
                         `paragraph-${index}`
@@ -1075,6 +1681,7 @@ function WritingDetails() {
                       {paragraph}
 
                     </p>
+
                   );
 
                 }
@@ -1084,9 +1691,425 @@ function WritingDetails() {
           </section>
 
 
-          {/* =============================================
+          {/* ===============================================
+              COMMENTS
+          ================================================ */}
+
+          <section
+            id="comments"
+
+            className="writing-comments-section"
+          >
+
+            <div className="writing-comments-heading">
+
+              <div>
+
+                <span className="writing-comments-eyebrow">
+
+                  {t(
+                    "writingDetails.commentSection.community"
+                  )}
+
+                </span>
+
+
+                <h2>
+
+                  <MessageCircle
+                    size={22}
+                  />
+
+                  {t(
+                    "writingDetails.commentSection.title"
+                  )}
+
+                </h2>
+
+              </div>
+
+
+              <span className="writing-comments-total">
+
+                {comments.length}
+
+              </span>
+
+            </div>
+
+
+            {/* =============================================
+                COMMENT FORM
+            ============================================== */}
+
+            <form
+              className="writing-comment-form"
+
+              onSubmit={
+                handleCommentSubmit
+              }
+            >
+
+              <div className="writing-comment-input-wrap">
+
+                <div className="writing-comment-avatar writing-comment-avatar-me">
+
+                  <User
+                    size={18}
+                  />
+
+                </div>
+
+
+                <textarea
+                  value={
+                    commentText
+                  }
+
+                  onChange={
+                    (event) => {
+
+                      setCommentText(
+                        event.target.value
+                      );
+
+
+                      if (
+                        commentError
+                      ) {
+
+                        setCommentError("");
+
+                      }
+
+                    }
+                  }
+
+                  placeholder={
+                    t(
+                      "writingDetails.commentSection.placeholder"
+                    )
+                  }
+
+                  rows={4}
+
+                  maxLength={2000}
+                />
+
+              </div>
+
+
+              <div className="writing-comment-form-footer">
+
+                <span className="writing-comment-limit">
+
+                  {commentText.length}/2000
+
+                </span>
+
+
+                <button
+                  type="submit"
+
+                  className="writing-comment-submit"
+
+                  disabled={
+                    submittingComment ||
+                    !commentText.trim()
+                  }
+                >
+
+                  {
+                    submittingComment
+                      ? (
+
+                        <Loader2
+                          size={17}
+                          className="spin"
+                        />
+
+                      )
+                      : (
+
+                        <Send
+                          size={17}
+                        />
+
+                      )
+                  }
+
+
+                  <span>
+
+                    {
+                      submittingComment
+                        ? t(
+                            "writingDetails.commentSection.posting"
+                          )
+                        : t(
+                            "writingDetails.commentSection.post"
+                          )
+                    }
+
+                  </span>
+
+                </button>
+
+              </div>
+
+            </form>
+
+
+            {/* =============================================
+                COMMENT ERROR
+            ============================================== */}
+
+            {
+              commentError && (
+
+                <div className="writing-comment-error">
+
+                  <AlertCircle
+                    size={17}
+                  />
+
+                  <span>
+
+                    {commentError}
+
+                  </span>
+
+                </div>
+
+              )
+            }
+
+
+            {/* =============================================
+                COMMENTS LIST
+            ============================================== */}
+
+            <div className="writing-comments-list">
+
+              {
+                commentsLoading
+                  ? (
+
+                    <div className="writing-comments-loading">
+
+                      <Loader2
+                        size={23}
+                        className="spin"
+                      />
+
+                      <span>
+
+                        {t(
+                          "writingDetails.commentSection.loading"
+                        )}
+
+                      </span>
+
+                    </div>
+
+                  )
+                  : comments.length === 0
+                    ? (
+
+                      <div className="writing-comments-empty">
+
+                        <div className="writing-comments-empty-icon">
+
+                          <MessageCircle
+                            size={27}
+                          />
+
+                        </div>
+
+
+                        <strong>
+
+                          {t(
+                            "writingDetails.commentSection.emptyTitle"
+                          )}
+
+                        </strong>
+
+
+                        <p>
+
+                          {t(
+                            "writingDetails.commentSection.emptyDescription"
+                          )}
+
+                        </p>
+
+                      </div>
+
+                    )
+                    : (
+
+                      comments.map(
+                        (
+                          comment
+                        ) => {
+
+                          const commentAuthor =
+                            comment
+                              ?.author
+                              ?.name ||
+                            comment
+                              ?.user
+                              ?.name ||
+                            comment
+                              ?.author_name ||
+                            t(
+                              "writingDetails.commentSection.unknownUser"
+                            );
+
+
+                          const commentDate =
+                            formatDate(
+                              comment
+                                ?.created_at
+                            );
+
+
+                          return (
+
+                            <article
+                              key={
+                                comment.id
+                              }
+
+                              className="writing-comment-card"
+                            >
+
+                              <div className="writing-comment-avatar">
+
+                                {
+                                  commentAuthor
+                                    ?.trim()
+                                    ?.charAt(0)
+                                    ?.toUpperCase()
+                                  ||
+                                  <User
+                                    size={17}
+                                  />
+                                }
+
+                              </div>
+
+
+                              <div className="writing-comment-body">
+
+                                <div className="writing-comment-header">
+
+                                  <div className="writing-comment-author">
+
+                                    <strong>
+
+                                      {commentAuthor}
+
+                                    </strong>
+
+
+                                    {
+                                      comment
+                                        ?.created_at && (
+
+                                        <span>
+
+                                          {commentDate}
+
+                                        </span>
+
+                                      )
+                                    }
+
+                                  </div>
+
+
+                                  <button
+                                    type="button"
+
+                                    className="writing-comment-delete"
+
+                                    onClick={() =>
+                                      handleDeleteComment(
+                                        comment.id
+                                      )
+                                    }
+
+                                    disabled={
+                                      deletingCommentId ===
+                                      comment.id
+                                    }
+
+                                    title={
+                                      t(
+                                        "writingDetails.commentSection.delete"
+                                      )
+                                    }
+
+                                    aria-label={
+                                      t(
+                                        "writingDetails.commentSection.delete"
+                                      )
+                                    }
+                                  >
+
+                                    {
+                                      deletingCommentId ===
+                                      comment.id
+                                        ? (
+
+                                          <Loader2
+                                            size={15}
+                                            className="spin"
+                                          />
+
+                                        )
+                                        : (
+
+                                          <Trash2
+                                            size={15}
+                                          />
+
+                                        )
+                                    }
+
+                                  </button>
+
+                                </div>
+
+
+                                <p>
+
+                                  {comment.content}
+
+                                </p>
+
+                              </div>
+
+                            </article>
+
+                          );
+
+                        }
+                      )
+
+                    )
+              }
+
+            </div>
+
+          </section>
+
+
+          {/* ===============================================
               FOOTER
-          ============================================== */}
+          ================================================ */}
 
           <footer className="writing-details-footer">
 
@@ -1141,6 +2164,7 @@ function WritingDetails() {
       </div>
 
     </main>
+
   );
 
 }

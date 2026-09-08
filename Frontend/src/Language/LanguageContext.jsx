@@ -28,13 +28,21 @@ const LanguageContext =
 
 
 // =========================================================
-// TRANSLATION LOOKUP
+// NESTED TRANSLATION LOOKUP
 // =========================================================
 
 function getNestedValue(
   object,
   path
 ) {
+
+  if (
+    !object ||
+    !path
+  ) {
+    return undefined;
+  }
+
 
   return path
     .split(".")
@@ -57,6 +65,7 @@ function getNestedValue(
           return current[key];
 
         }
+
 
         return undefined;
 
@@ -87,6 +96,7 @@ export function LanguageProvider({
           STORAGE_KEY
         );
 
+
       if (
         saved &&
         isSupportedUILanguage(
@@ -104,6 +114,7 @@ export function LanguageProvider({
 
     }
 
+
     return DEFAULT_UI_LANGUAGE;
 
   });
@@ -118,22 +129,19 @@ export function LanguageProvider({
     const html =
       document.documentElement;
 
+
     html.lang =
       language;
 
-    if (
+
+    html.dir =
       language === "ur"
-    ) {
+        ? "rtl"
+        : "ltr";
 
-      html.dir = "rtl";
-
-    } else {
-
-      html.dir = "ltr";
-
-    }
-
-  }, [language]);
+  }, [
+    language,
+  ]);
 
 
   // =====================================================
@@ -208,8 +216,8 @@ export function LanguageProvider({
 
 
     if (
-      currentValue !==
-      undefined
+      typeof currentValue ===
+      "string"
     ) {
 
       return currentValue;
@@ -225,8 +233,8 @@ export function LanguageProvider({
 
 
     if (
-      defaultValue !==
-      undefined
+      typeof defaultValue ===
+      "string"
     ) {
 
       return defaultValue;
@@ -252,7 +260,9 @@ export function LanguageProvider({
         getUILanguage(
           language
         ),
-      [language]
+      [
+        language,
+      ]
     );
 
 
@@ -264,11 +274,8 @@ export function LanguageProvider({
     useMemo(
       () => ({
         language,
-
         setLanguage,
-
         t,
-
         currentLanguage,
 
         languages:
@@ -283,7 +290,9 @@ export function LanguageProvider({
 
   return (
     <LanguageContext.Provider
-      value={value}
+      value={
+        value
+      }
     >
 
       {children}

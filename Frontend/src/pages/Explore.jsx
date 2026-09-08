@@ -11,6 +11,7 @@ import {
   Loader2,
   Search,
   SlidersHorizontal,
+  Users,
   X,
 } from "lucide-react";
 
@@ -19,6 +20,8 @@ import {
 } from "react-router-dom";
 
 import {
+  getFollowingFeed,
+  getToken,
   getWritings,
 } from "../api/api";
 
@@ -30,16 +33,12 @@ import {
   useLanguage,
 } from "../Language/LanguageContext";
 
-import WritingCard from "../components/WritingCard";
+import WritingCard
+  from "../components/WritingCard";
 
 
 // =========================================================
 // DATABASE CATEGORY VALUES
-// =========================================================
-//
-// Keep these values stable because they are stored in
-// PostgreSQL and used by the backend filters.
-// Only their visible labels are translated.
 // =========================================================
 
 const CATEGORY_VALUES = [
@@ -52,11 +51,16 @@ const CATEGORY_VALUES = [
 ];
 
 
+// =========================================================
+// EXPLORE PAGE
+// =========================================================
+
 function Explore() {
 
   const {
     t,
   } = useLanguage();
+
 
   const [
     searchParams,
@@ -64,23 +68,43 @@ function Explore() {
   ] = useSearchParams();
 
 
-  // =====================================================
+  // =======================================================
   // INITIAL VALUES FROM URL
-  // =====================================================
+  // =======================================================
 
   const initialSearch =
-    searchParams.get("search") || "";
+    searchParams.get(
+      "search"
+    ) || "";
+
 
   const initialLanguage =
-    searchParams.get("language") || "";
+    searchParams.get(
+      "language"
+    ) || "";
+
 
   const initialCategory =
-    searchParams.get("category") || "";
+    searchParams.get(
+      "category"
+    ) || "";
 
 
-  // =====================================================
+  // =======================================================
+  // FEED MODE
+  // =======================================================
+
+  const [
+    feedMode,
+    setFeedMode,
+  ] = useState(
+    "all"
+  );
+
+
+  // =======================================================
   // FILTER STATE
-  // =====================================================
+  // =======================================================
 
   const [
     search,
@@ -89,12 +113,14 @@ function Explore() {
     initialSearch
   );
 
+
   const [
     submittedSearch,
     setSubmittedSearch,
   ] = useState(
     initialSearch
   );
+
 
   const [
     language,
@@ -103,6 +129,7 @@ function Explore() {
     initialLanguage
   );
 
+
   const [
     category,
     setCategory,
@@ -110,35 +137,42 @@ function Explore() {
     initialCategory
   );
 
+
   const [
     sortBy,
     setSortBy,
-  ] = useState("latest");
+  ] = useState(
+    "latest"
+  );
 
 
-  // =====================================================
+  // =======================================================
   // DATA STATE
-  // =====================================================
+  // =======================================================
 
   const [
     writings,
     setWritings,
   ] = useState([]);
 
+
   const [
     loading,
     setLoading,
   ] = useState(true);
+
 
   const [
     error,
     setError,
   ] = useState("");
 
+
   const [
     page,
     setPage,
   ] = useState(1);
+
 
   const [
     pagination,
@@ -146,9 +180,19 @@ function Explore() {
   ] = useState(null);
 
 
-  // =====================================================
+  // =======================================================
+  // CURRENT AUTH STATE
+  // =======================================================
+
+  const isLoggedIn =
+    Boolean(
+      getToken()
+    );
+
+
+  // =======================================================
   // CATEGORY LABEL
-  // =====================================================
+  // =======================================================
 
   function getCategoryLabel(
     value
@@ -185,6 +229,7 @@ function Explore() {
         t(
           "categories.other"
         ),
+
     };
 
 
@@ -196,17 +241,41 @@ function Explore() {
   }
 
 
-  // =====================================================
+  // =======================================================
   // UPDATE URL QUERY
-  // =====================================================
+  // =======================================================
 
   useEffect(() => {
+
+    /*
+     * The Following feed does not use Explore search
+     * parameters, so keep the URL clean in Following mode.
+     */
+
+    if (
+      feedMode ===
+      "following"
+    ) {
+
+      setSearchParams(
+        {},
+        {
+          replace: true,
+        }
+      );
+
+      return;
+
+    }
+
 
     const params =
       new URLSearchParams();
 
 
-    if (submittedSearch) {
+    if (
+      submittedSearch
+    ) {
 
       params.set(
         "search",
@@ -216,7 +285,9 @@ function Explore() {
     }
 
 
-    if (language) {
+    if (
+      language
+    ) {
 
       params.set(
         "language",
@@ -226,7 +297,9 @@ function Explore() {
     }
 
 
-    if (category) {
+    if (
+      category
+    ) {
 
       params.set(
         "category",
@@ -244,6 +317,7 @@ function Explore() {
     );
 
   }, [
+    feedMode,
     submittedSearch,
     language,
     category,
@@ -251,9 +325,9 @@ function Explore() {
   ]);
 
 
-  // =====================================================
+  // =======================================================
   // LOAD WRITINGS
-  // =====================================================
+  // =======================================================
 
   useEffect(() => {
 
@@ -268,9 +342,114 @@ function Explore() {
 
       try {
 
-        const data =
+        let data;
+
+
+        // ---------------------------------------------------
+        // FOLLOWING
+        // ---------------------------------------------------
+
+        if (
+          feedMode ===
+          "following"
+        ) {
+
+          /*
+           * Do not make an authenticated request if
+           * there is no local JWT.
+           */
+
+          if (
+            !isLoggedIn
+          ) {
+
+            if (
+              mounted
+            ) {
+
+              setWritings(
+                []
+              );
+
+              setPagination(
+                null
+              );
+
+            }
+
+
+            return;
+
+          }
+
+
+          data =
+            await getFollowingFeed({
+              page,
+              limit: 12,
+            });
+
+
+          if (
+            !mounted
+          ) {
+            return;
+          }
+
+
+          setWritings(
+            Array.isArray(
+              data?.writings
+            )
+              ? data.writings
+              : []
+          );
+
+
+          setPagination({
+
+            page:
+              Number(
+                data?.page
+              ) || page,
+
+            pages:
+              Number(
+                data?.pages
+              ) || 0,
+
+            total:
+              Number(
+                data?.total
+              ) || 0,
+
+            has_prev:
+              Boolean(
+                data?.has_prev
+              ),
+
+            has_next:
+              Boolean(
+                data?.has_next
+              ),
+
+          });
+
+
+          return;
+
+        }
+
+
+        // ---------------------------------------------------
+        // ALL WRITINGS
+        // ---------------------------------------------------
+
+        data =
           await getWritings({
+
             page,
+
             limit: 12,
 
             search:
@@ -279,10 +458,13 @@ function Explore() {
             language,
 
             category,
+
           });
 
 
-        if (!mounted) {
+        if (
+          !mounted
+        ) {
           return;
         }
 
@@ -297,11 +479,14 @@ function Explore() {
 
 
         setPagination(
-          data?.pagination || null
+          data?.pagination ||
+          null
         );
 
 
-      } catch (err) {
+      } catch (
+        err
+      ) {
 
         console.error(
           "EXPLORE ERROR:",
@@ -309,13 +494,25 @@ function Explore() {
         );
 
 
-        if (!mounted) {
+        if (
+          !mounted
+        ) {
           return;
         }
 
 
+        setWritings(
+          []
+        );
+
+
+        setPagination(
+          null
+        );
+
+
         setError(
-          err.message ||
+          err?.message ||
           t(
             "explore.loadError"
           )
@@ -324,9 +521,13 @@ function Explore() {
 
       } finally {
 
-        if (mounted) {
+        if (
+          mounted
+        ) {
 
-          setLoading(false);
+          setLoading(
+            false
+          );
 
         }
 
@@ -340,7 +541,8 @@ function Explore() {
 
     return () => {
 
-      mounted = false;
+      mounted =
+        false;
 
     };
 
@@ -349,13 +551,81 @@ function Explore() {
     submittedSearch,
     language,
     category,
+    feedMode,
+    isLoggedIn,
     t,
   ]);
 
 
-  // =====================================================
+  // =======================================================
+  // CHANGE FEED
+  // =======================================================
+
+  function changeFeed(
+    mode
+  ) {
+
+    if (
+      mode ===
+      feedMode
+    ) {
+      return;
+    }
+
+
+    setError(
+      ""
+    );
+
+
+    setPage(
+      1
+    );
+
+
+    if (
+      mode ===
+      "following"
+    ) {
+
+      /*
+       * Following-feed endpoint currently supports
+       * pagination only, so clear Explore-only filters.
+       */
+
+      setSearch(
+        ""
+      );
+
+      setSubmittedSearch(
+        ""
+      );
+
+      setLanguage(
+        ""
+      );
+
+      setCategory(
+        ""
+      );
+
+      setSortBy(
+        "latest"
+      );
+
+    }
+
+
+    setFeedMode(
+      mode
+    );
+
+  }
+
+
+  // =======================================================
   // SEARCH
-  // =====================================================
+  // =======================================================
 
   function handleSearch(
     event
@@ -363,7 +633,19 @@ function Explore() {
 
     event.preventDefault();
 
-    setPage(1);
+
+    if (
+      feedMode !==
+      "all"
+    ) {
+      return;
+    }
+
+
+    setPage(
+      1
+    );
+
 
     setSubmittedSearch(
       search.trim()
@@ -372,138 +654,170 @@ function Explore() {
   }
 
 
-  // =====================================================
-  // CLEAR SEARCH INPUT
-  // =====================================================
+  // =======================================================
+  // CLEAR SEARCH
+  // =======================================================
 
   function clearSearch() {
 
-    setSearch("");
+    setSearch(
+      ""
+    );
 
-    setSubmittedSearch("");
 
-    setPage(1);
+    setSubmittedSearch(
+      ""
+    );
+
+
+    setPage(
+      1
+    );
 
   }
 
 
-  // =====================================================
+  // =======================================================
   // RESET FILTERS
-  // =====================================================
+  // =======================================================
 
   function resetFilters() {
 
-    setSearch("");
+    setSearch(
+      ""
+    );
 
-    setSubmittedSearch("");
 
-    setLanguage("");
+    setSubmittedSearch(
+      ""
+    );
 
-    setCategory("");
 
-    setSortBy("latest");
+    setLanguage(
+      ""
+    );
 
-    setPage(1);
+
+    setCategory(
+      ""
+    );
+
+
+    setSortBy(
+      "latest"
+    );
+
+
+    setPage(
+      1
+    );
 
   }
 
 
-  // =====================================================
+  // =======================================================
   // CLIENT-SIDE SORT
-  // =====================================================
-  //
-  // Backend currently handles filtering and pagination.
-  // Sort is applied to the current page only.
-  // =====================================================
+  // =======================================================
 
   const sortedWritings =
-    useMemo(() => {
+    useMemo(
+      () => {
 
-      const result = [
-        ...writings,
-      ];
+        const result = [
+          ...writings,
+        ];
 
 
-      result.sort(
-        (
-          a,
-          b
-        ) => {
+        result.sort(
+          (
+            a,
+            b
+          ) => {
 
-          // OLD -> NEW
+            // -----------------------------------------------
+            // OLDEST FIRST
+            // -----------------------------------------------
 
-          if (
-            sortBy ===
-            "oldest"
-          ) {
+            if (
+              sortBy ===
+              "oldest"
+            ) {
+
+              return (
+                new Date(
+                  a.published_at ||
+                  a.created_at ||
+                  0
+                )
+                -
+                new Date(
+                  b.published_at ||
+                  b.created_at ||
+                  0
+                )
+              );
+
+            }
+
+
+            // -----------------------------------------------
+            // TITLE A-Z
+            // -----------------------------------------------
+
+            if (
+              sortBy ===
+              "title"
+            ) {
+
+              return (
+                (
+                  a.title ||
+                  ""
+                )
+                  .localeCompare(
+                    b.title ||
+                    ""
+                  )
+              );
+
+            }
+
+
+            // -----------------------------------------------
+            // LATEST FIRST
+            // -----------------------------------------------
 
             return (
-              new Date(
-                a.published_at ||
-                a.created_at ||
-                0
-              )
-              -
               new Date(
                 b.published_at ||
                 b.created_at ||
                 0
               )
-            );
-
-          }
-
-
-          // TITLE A-Z
-
-          if (
-            sortBy ===
-            "title"
-          ) {
-
-            return (
-              (
-                a.title || ""
+              -
+              new Date(
+                a.published_at ||
+                a.created_at ||
+                0
               )
-                .localeCompare(
-                  b.title || ""
-                )
             );
 
           }
+        );
 
 
-          // NEW -> OLD
+        return result;
 
-          return (
-            new Date(
-              b.published_at ||
-              b.created_at ||
-              0
-            )
-            -
-            new Date(
-              a.published_at ||
-              a.created_at ||
-              0
-            )
-          );
-
-        }
-      );
+      },
+      [
+        writings,
+        sortBy,
+      ]
+    );
 
 
-      return result;
-
-    }, [
-      writings,
-      sortBy,
-    ]);
-
-
-  // =====================================================
+  // =======================================================
   // ACTIVE FILTERS
-  // =====================================================
+  // =======================================================
 
   const hasActiveFilters =
     Boolean(
@@ -513,9 +827,9 @@ function Explore() {
     );
 
 
-  // =====================================================
+  // =======================================================
   // SELECTED LANGUAGE
-  // =====================================================
+  // =======================================================
 
   const selectedLanguage =
     LANGUAGES.find(
@@ -525,371 +839,645 @@ function Explore() {
     );
 
 
-  // =====================================================
+  // =======================================================
+  // RESULT TOTAL
+  // =======================================================
+
+  const totalResults =
+    pagination?.total ??
+    sortedWritings.length;
+
+
+  // =======================================================
   // UI
-  // =====================================================
+  // =======================================================
 
   return (
-    <main className="explore-page">
 
-      <div className="explore-shell">
+    <main
+      className="explore-page"
+    >
+
+      <div
+        className="explore-shell"
+      >
 
 
         {/* ===============================================
             HERO
         ================================================ */}
 
-        <header className="explore-hero">
+        <header
+          className="explore-hero"
+        >
 
-          <div className="explore-eyebrow">
+          <div
+            className="explore-eyebrow"
+          >
 
-            <BookOpen size={16} />
+            <BookOpen
+              size={16}
+            />
 
             <span>
-              {t(
-                "explore.eyebrow"
-              )}
+              {
+                t(
+                  "explore.eyebrow"
+                )
+              }
             </span>
 
           </div>
 
 
           <h1>
-            {t(
-              "explore.title"
-            )}
+
+            {
+              t(
+                "explore.title"
+              )
+            }
+
           </h1>
 
 
           <p>
-            {t(
-              "explore.description"
-            )}
+
+            {
+              t(
+                "explore.description"
+              )
+            }
+
           </p>
 
         </header>
 
 
         {/* ===============================================
-            SEARCH
+            ALL WRITINGS / FOLLOWING
         ================================================ */}
 
-        <form
-          className="explore-search"
-          onSubmit={
-            handleSearch
-          }
+        <div
+          className="explore-feed-tabs"
+          role="tablist"
+          aria-label="Explore feed"
         >
 
-          <Search size={18} />
-
-
-          <input
-            type="search"
-
-            value={search}
-
-            onChange={(event) =>
-              setSearch(
-                event.target.value
-              )
-            }
-
-            placeholder={
-              t(
-                "explore.searchPlaceholder"
-              )
-            }
-
-            aria-label={
-              t(
-                "common.search"
-              )
-            }
-          />
-
-
-          {search && (
-
-            <button
-              type="button"
-
-              className="explore-search-clear"
-
-              onClick={
-                clearSearch
-              }
-
-              aria-label={
-                t(
-                  "common.clear"
-                )
-              }
-            >
-
-              <X size={16} />
-
-            </button>
-
-          )}
-
-
           <button
-            type="submit"
-            className="explore-search-submit"
+
+            type="button"
+
+            role="tab"
+
+            aria-selected={
+              feedMode ===
+              "all"
+            }
+
+            className={
+              feedMode ===
+              "all"
+                ? "explore-feed-tab active"
+                : "explore-feed-tab"
+            }
+
+            onClick={() =>
+              changeFeed(
+                "all"
+              )
+            }
+
           >
 
-            {t(
-              "explore.searchButton"
-            )}
-
-          </button>
-
-        </form>
-
-
-        {/* ===============================================
-            FILTER BAR
-        ================================================ */}
-
-        <section className="explore-filters">
-
-
-          {/* LANGUAGE */}
-
-          <div className="explore-filter-control">
-
-            <Globe2 size={16} />
-
-
-            <select
-              value={language}
-
-              onChange={(event) => {
-
-                setLanguage(
-                  event.target.value
-                );
-
-                setPage(1);
-
-              }}
-
-              aria-label={
-                t(
-                  "common.language"
-                )
-              }
-            >
-
-              <option value="">
-
-                {t(
-                  "explore.allLanguages"
-                )}
-
-              </option>
-
-
-              {
-                LANGUAGES.map(
-                  (item) => (
-
-                    <option
-                      key={
-                        item.code
-                      }
-
-                      value={
-                        item.code
-                      }
-                    >
-
-                      {
-                        item.nativeName ===
-                        item.name
-                          ? item.name
-                          : (
-                            `${item.nativeName} — ${item.name}`
-                          )
-                      }
-
-                    </option>
-
-                  )
-                )
-              }
-
-            </select>
-
-          </div>
-
-
-          {/* CATEGORY */}
-
-          <div className="explore-filter-control">
-
-            <Filter size={16} />
-
-
-            <select
-              value={category}
-
-              onChange={(event) => {
-
-                setCategory(
-                  event.target.value
-                );
-
-                setPage(1);
-
-              }}
-
-              aria-label={
-                t(
-                  "common.category"
-                )
-              }
-            >
-
-              {
-                CATEGORY_VALUES.map(
-                  (item) => (
-
-                    <option
-                      key={
-                        item ||
-                        "all"
-                      }
-
-                      value={
-                        item
-                      }
-                    >
-
-                      {
-                        getCategoryLabel(
-                          item
-                        )
-                      }
-
-                    </option>
-
-                  )
-                )
-              }
-
-            </select>
-
-          </div>
-
-
-          {/* SORT */}
-
-          <div className="explore-filter-control">
-
-            <SlidersHorizontal
+            <BookOpen
               size={16}
             />
 
-
-            <select
-              value={sortBy}
-
-              onChange={(event) =>
-                setSortBy(
-                  event.target.value
+            <span>
+              {
+                t(
+                  "explore.allWritings"
                 )
               }
+            </span>
 
-              aria-label="Sort writings"
-            >
-
-              <option value="latest">
-
-                {t(
-                  "explore.latest"
-                )}
-
-              </option>
+          </button>
 
 
-              <option value="oldest">
+          <button
 
-                {t(
-                  "explore.oldest"
-                )}
+            type="button"
 
-              </option>
+            role="tab"
+
+            aria-selected={
+              feedMode ===
+              "following"
+            }
+
+            className={
+              feedMode ===
+              "following"
+                ? "explore-feed-tab active"
+                : "explore-feed-tab"
+            }
+
+            onClick={() =>
+              changeFeed(
+                "following"
+              )
+            }
+
+          >
+
+            <Users
+              size={16}
+            />
+
+            <span>
+              {
+                t(
+                  "explore.following"
+                )
+              }
+            </span>
+
+          </button>
+
+        </div>
 
 
-              <option value="title">
+        {/* ===============================================
+            FOLLOWING DESCRIPTION
+        ================================================ */}
 
-                {t(
-                  "explore.titleAZ"
-                )}
+        {feedMode ===
+          "following" && (
 
-              </option>
+          <div
+            className="explore-following-notice"
+          >
 
-            </select>
+            <Users
+              size={17}
+            />
+
+
+            <span>
+
+              {
+                isLoggedIn
+                  ? t(
+                      "explore.followingDescription"
+                    )
+                  : t(
+                      "explore.signInFollowing"
+                    )
+              }
+
+            </span>
 
           </div>
 
+        )}
 
-          {/* RESET */}
 
-          {hasActiveFilters && (
+        {/* ===============================================
+            SEARCH + FILTERS
 
-            <button
-              type="button"
+            Only relevant to All Writings.
+        ================================================ */}
 
-              className="explore-reset-button"
+        {feedMode ===
+          "all" && (
 
-              onClick={
-                resetFilters
+          <>
+
+            {/* ===========================================
+                SEARCH
+            ============================================ */}
+
+            <form
+
+              className="explore-search"
+
+              onSubmit={
+                handleSearch
               }
+
             >
 
-              <X size={15} />
+              <Search
+                size={18}
+              />
 
-              {t(
-                "explore.clearFilters"
+
+              <input
+
+                type="search"
+
+                value={
+                  search
+                }
+
+                onChange={(
+                  event
+                ) =>
+                  setSearch(
+                    event
+                      .target
+                      .value
+                  )
+                }
+
+                placeholder={
+                  t(
+                    "explore.searchPlaceholder"
+                  )
+                }
+
+                aria-label={
+                  t(
+                    "common.search"
+                  )
+                }
+
+              />
+
+
+              {search && (
+
+                <button
+
+                  type="button"
+
+                  className="explore-search-clear"
+
+                  onClick={
+                    clearSearch
+                  }
+
+                  aria-label={
+                    t(
+                      "common.clear"
+                    )
+                  }
+
+                >
+
+                  <X
+                    size={16}
+                  />
+
+                </button>
+
               )}
 
-            </button>
 
-          )}
+              <button
 
-        </section>
+                type="submit"
+
+                className="explore-search-submit"
+
+              >
+
+                {
+                  t(
+                    "explore.searchButton"
+                  )
+                }
+
+              </button>
+
+            </form>
+
+
+            {/* ===========================================
+                FILTER BAR
+            ============================================ */}
+
+            <section
+              className="explore-filters"
+            >
+
+
+              {/* LANGUAGE */}
+
+              <div
+                className="explore-filter-control"
+              >
+
+                <Globe2
+                  size={16}
+                />
+
+
+                <select
+
+                  value={
+                    language
+                  }
+
+                  onChange={(
+                    event
+                  ) => {
+
+                    setLanguage(
+                      event
+                        .target
+                        .value
+                    );
+
+                    setPage(
+                      1
+                    );
+
+                  }}
+
+                  aria-label={
+                    t(
+                      "common.language"
+                    )
+                  }
+
+                >
+
+                  <option
+                    value=""
+                  >
+
+                    {
+                      t(
+                        "explore.allLanguages"
+                      )
+                    }
+
+                  </option>
+
+
+                  {
+                    LANGUAGES.map(
+                      (
+                        item
+                      ) => (
+
+                        <option
+
+                          key={
+                            item.code
+                          }
+
+                          value={
+                            item.code
+                          }
+
+                        >
+
+                          {
+                            item.nativeName ===
+                            item.name
+                              ? item.name
+                              : `${item.nativeName} — ${item.name}`
+                          }
+
+                        </option>
+
+                      )
+                    )
+                  }
+
+                </select>
+
+              </div>
+
+
+              {/* CATEGORY */}
+
+              <div
+                className="explore-filter-control"
+              >
+
+                <Filter
+                  size={16}
+                />
+
+
+                <select
+
+                  value={
+                    category
+                  }
+
+                  onChange={(
+                    event
+                  ) => {
+
+                    setCategory(
+                      event
+                        .target
+                        .value
+                    );
+
+                    setPage(
+                      1
+                    );
+
+                  }}
+
+                  aria-label={
+                    t(
+                      "common.category"
+                    )
+                  }
+
+                >
+
+                  {
+                    CATEGORY_VALUES.map(
+                      (
+                        item
+                      ) => (
+
+                        <option
+
+                          key={
+                            item ||
+                            "all"
+                          }
+
+                          value={
+                            item
+                          }
+
+                        >
+
+                          {
+                            getCategoryLabel(
+                              item
+                            )
+                          }
+
+                        </option>
+
+                      )
+                    )
+                  }
+
+                </select>
+
+              </div>
+
+
+              {/* SORT */}
+
+              <div
+                className="explore-filter-control"
+              >
+
+                <SlidersHorizontal
+                  size={16}
+                />
+
+
+                <select
+
+                  value={
+                    sortBy
+                  }
+
+                  onChange={(
+                    event
+                  ) =>
+                    setSortBy(
+                      event
+                        .target
+                        .value
+                    )
+                  }
+
+                  aria-label="Sort writings"
+
+                >
+
+                  <option
+                    value="latest"
+                  >
+
+                    {
+                      t(
+                        "explore.latest"
+                      )
+                    }
+
+                  </option>
+
+
+                  <option
+                    value="oldest"
+                  >
+
+                    {
+                      t(
+                        "explore.oldest"
+                      )
+                    }
+
+                  </option>
+
+
+                  <option
+                    value="title"
+                  >
+
+                    {
+                      t(
+                        "explore.titleAZ"
+                      )
+                    }
+
+                  </option>
+
+                </select>
+
+              </div>
+
+
+              {/* RESET */}
+
+              {hasActiveFilters && (
+
+                <button
+
+                  type="button"
+
+                  className="explore-reset-button"
+
+                  onClick={
+                    resetFilters
+                  }
+
+                >
+
+                  <X
+                    size={15}
+                  />
+
+                  {
+                    t(
+                      "explore.clearFilters"
+                    )
+                  }
+
+                </button>
+
+              )}
+
+            </section>
+
+          </>
+
+        )}
 
 
         {/* ===============================================
             RESULTS SUMMARY
         ================================================ */}
 
-        <div className="explore-result-summary">
+        <div
+          className="explore-result-summary"
+        >
 
           <span>
 
-            {
-              pagination?.total ??
-              sortedWritings.length
-            }
+            {totalResults}
 
             {" "}
 
-            {t(
-              "explore.writingsFound"
-            )}
+            {
+              feedMode ===
+              "following"
+                ? t(
+                    "explore.followingWritings"
+                  )
+                : t(
+                    "explore.writingsFound"
+                  )
+            }
 
           </span>
 
 
           {/* SEARCH CHIP */}
 
-          {submittedSearch && (
+          {feedMode ===
+            "all" &&
+          submittedSearch && (
 
-            <span className="explore-active-filter">
+            <span
+              className="explore-active-filter"
+            >
 
               “{submittedSearch}”
 
@@ -900,14 +1488,21 @@ function Explore() {
 
           {/* LANGUAGE CHIP */}
 
-          {selectedLanguage && (
+          {feedMode ===
+            "all" &&
+          selectedLanguage && (
 
-            <span className="explore-active-filter">
+            <span
+              className="explore-active-filter"
+            >
 
-              <Globe2 size={11} />
+              <Globe2
+                size={11}
+              />
 
               {
-                selectedLanguage.nativeName
+                selectedLanguage
+                  .nativeName
               }
 
             </span>
@@ -917,9 +1512,13 @@ function Explore() {
 
           {/* CATEGORY CHIP */}
 
-          {category && (
+          {feedMode ===
+            "all" &&
+          category && (
 
-            <span className="explore-active-filter">
+            <span
+              className="explore-active-filter"
+            >
 
               {
                 getCategoryLabel(
@@ -940,7 +1539,9 @@ function Explore() {
 
         {loading && (
 
-          <div className="explore-loading">
+          <div
+            className="explore-loading"
+          >
 
             <Loader2
               size={30}
@@ -948,9 +1549,13 @@ function Explore() {
             />
 
             <p>
-              {t(
-                "explore.loading"
-              )}
+
+              {
+                t(
+                  "explore.loading"
+                )
+              }
+
             </p>
 
           </div>
@@ -965,12 +1570,23 @@ function Explore() {
         {!loading &&
         error && (
 
-          <section className="explore-state">
+          <section
+            className="explore-state"
+          >
+
+            <BookOpen
+              size={30}
+            />
+
 
             <h2>
-              {t(
-                "explore.loadError"
-              )}
+
+              {
+                t(
+                  "explore.loadError"
+                )
+              }
+
             </h2>
 
 
@@ -980,15 +1596,21 @@ function Explore() {
 
 
             <button
+
               type="button"
+
               onClick={() =>
-                window.location.reload()
+                window.location
+                  .reload()
               }
+
             >
 
-              {t(
-                "explore.retry"
-              )}
+              {
+                t(
+                  "explore.retry"
+                )
+              }
 
             </button>
 
@@ -1003,39 +1625,88 @@ function Explore() {
 
         {!loading &&
         !error &&
-        sortedWritings.length === 0 && (
+        sortedWritings.length ===
+          0 && (
 
-          <section className="explore-state">
+          <section
+            className="explore-state"
+          >
 
-            <Search size={30} />
+            {
+              feedMode ===
+              "following"
+                ? (
+                    <Users
+                      size={32}
+                    />
+                  )
+                : (
+                    <Search
+                      size={30}
+                    />
+                  )
+            }
 
 
             <h2>
-              {t(
-                "explore.noResults"
-              )}
+
+              {
+                feedMode ===
+                "following"
+                  ? isLoggedIn
+                    ? t(
+                        "explore.noFollowing"
+                      )
+                    : t(
+                        "explore.signInFollowingTitle"
+                      )
+                  : t(
+                      "explore.noResults"
+                    )
+              }
+
             </h2>
 
 
             <p>
-              {t(
-                "explore.noResultsDescription"
-              )}
+
+              {
+                feedMode ===
+                "following"
+                  ? isLoggedIn
+                    ? t(
+                        "explore.noFollowingDescription"
+                      )
+                    : t(
+                        "explore.signInFollowing"
+                      )
+                  : t(
+                      "explore.noResultsDescription"
+                    )
+              }
+
             </p>
 
 
-            {hasActiveFilters && (
+            {feedMode ===
+              "all" &&
+            hasActiveFilters && (
 
               <button
+
                 type="button"
+
                 onClick={
                   resetFilters
                 }
+
               >
 
-                {t(
-                  "explore.clearFilters"
-                )}
+                {
+                  t(
+                    "explore.clearFilters"
+                  )
+                }
 
               </button>
 
@@ -1052,15 +1723,21 @@ function Explore() {
 
         {!loading &&
         !error &&
-        sortedWritings.length > 0 && (
+        sortedWritings.length >
+          0 && (
 
-          <section className="explore-writing-grid">
+          <section
+            className="explore-writing-grid"
+          >
 
             {
               sortedWritings.map(
-                (writing) => (
+                (
+                  writing
+                ) => (
 
                   <WritingCard
+
                     key={
                       writing.id
                     }
@@ -1068,6 +1745,7 @@ function Explore() {
                     writing={
                       writing
                     }
+
                   />
 
                 )
@@ -1086,24 +1764,32 @@ function Explore() {
         {!loading &&
         !error &&
         pagination &&
-        pagination.pages > 1 && (
+        pagination.pages >
+          1 && (
 
           <nav
+
             className="explore-pagination"
+
             aria-label="Explore pages"
+
           >
 
             <button
+
               type="button"
 
               disabled={
-                !pagination.has_prev
+                !pagination
+                  .has_prev
               }
 
               onClick={() => {
 
                 setPage(
-                  (current) =>
+                  (
+                    current
+                  ) =>
                     Math.max(
                       1,
                       current - 1
@@ -1113,70 +1799,92 @@ function Explore() {
 
                 window.scrollTo({
                   top: 0,
-                  behavior: "smooth",
+                  behavior:
+                    "smooth",
                 });
 
               }}
+
             >
 
-              {t(
-                "explore.previous"
-              )}
+              {
+                t(
+                  "explore.previous"
+                )
+              }
 
             </button>
 
 
             <span>
 
-              {t(
-                "common.page"
-              )}
+              {
+                t(
+                  "common.page"
+                )
+              }
 
               {" "}
 
               <strong>
-                {pagination.page}
+                {
+                  pagination
+                    .page
+                }
               </strong>
 
               {" "}
 
-              {t(
-                "common.of"
-              )}
+              {
+                t(
+                  "common.of"
+                )
+              }
 
               {" "}
 
-              {pagination.pages}
+              {
+                pagination
+                  .pages
+              }
 
             </span>
 
 
             <button
+
               type="button"
 
               disabled={
-                !pagination.has_next
+                !pagination
+                  .has_next
               }
 
               onClick={() => {
 
                 setPage(
-                  (current) =>
+                  (
+                    current
+                  ) =>
                     current + 1
                 );
 
 
                 window.scrollTo({
                   top: 0,
-                  behavior: "smooth",
+                  behavior:
+                    "smooth",
                 });
 
               }}
+
             >
 
-              {t(
-                "explore.next"
-              )}
+              {
+                t(
+                  "explore.next"
+                )
+              }
 
             </button>
 
@@ -1187,6 +1895,7 @@ function Explore() {
       </div>
 
     </main>
+
   );
 
 }

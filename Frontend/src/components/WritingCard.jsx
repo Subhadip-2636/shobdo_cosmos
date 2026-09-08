@@ -30,6 +30,10 @@ import {
 } from "../Language/LanguageContext";
 
 
+// =========================================================
+// WRITING CARD
+// =========================================================
+
 function WritingCard({
   writing,
 }) {
@@ -47,22 +51,33 @@ function WritingCard({
     likesCount,
     setLikesCount,
   ] = useState(
-    writing?.likes_count || 0
+    Number(
+      writing?.likes_count ??
+      writing?.likes ??
+      0
+    )
   );
+
 
   const [
     liked,
     setLiked,
   ] = useState(
     Boolean(
-      writing?.liked_by_current_user
+      writing?.liked_by_current_user ??
+      writing?.is_liked ??
+      writing?.liked ??
+      false
     )
   );
+
 
   const [
     liking,
     setLiking,
-  ] = useState(false);
+  ] = useState(
+    false
+  );
 
 
   // =====================================================
@@ -99,6 +114,7 @@ function WritingCard({
         t(
           "categories.other"
         ),
+
     };
 
 
@@ -114,15 +130,39 @@ function WritingCard({
 
 
   // =====================================================
-  // BASIC DATA
+  // AUTHOR DATA
   // =====================================================
+
+  const authorId =
+    Number(
+      writing?.author?.id ??
+      writing?.user?.id ??
+      writing?.user_id ??
+      writing?.author_id ??
+      0
+    );
+
+
+  const hasAuthorId =
+    Number.isFinite(
+      authorId
+    ) &&
+    authorId > 0;
+
 
   const authorName =
     writing?.author?.name ||
+    writing?.user?.name ||
+    writing?.author_name ||
+    writing?.user_name ||
     t(
       "common.unknownAuthor"
     );
 
+
+  // =====================================================
+  // CATEGORY / LANGUAGE
+  // =====================================================
 
   const category =
     getCategoryLabel(
@@ -146,42 +186,49 @@ function WritingCard({
   // =====================================================
 
   const preview =
-    useMemo(() => {
+    useMemo(
+      () => {
 
-      const text =
-        writing?.content
-          ?.trim() || "";
+        const text =
+          writing?.content
+            ?.trim() ||
+          "";
 
 
-      if (!text) {
+        if (
+          !text
+        ) {
 
-        return t(
-          "writingCard.previewUnavailable"
+          return t(
+            "writingCard.previewUnavailable"
+          );
+
+        }
+
+
+        if (
+          text.length <=
+          190
+        ) {
+
+          return text;
+
+        }
+
+
+        return (
+          `${text.slice(
+            0,
+            190
+          )}...`
         );
 
-      }
-
-
-      if (
-        text.length <= 190
-      ) {
-
-        return text;
-
-      }
-
-
-      return (
-        `${text.slice(
-          0,
-          190
-        )}...`
-      );
-
-    }, [
-      writing,
-      t,
-    ]);
+      },
+      [
+        writing?.content,
+        t,
+      ]
+    );
 
 
   // =====================================================
@@ -189,28 +236,38 @@ function WritingCard({
   // =====================================================
 
   const wordCount =
-    useMemo(() => {
+    useMemo(
+      () => {
 
-      const content =
-        writing?.content || "";
-
-
-      if (
-        !content.trim()
-      ) {
-
-        return 0;
-
-      }
+        const content =
+          writing?.content ||
+          "";
 
 
-      return content
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .length;
+        if (
+          !content.trim()
+        ) {
 
-    }, [writing]);
+          return 0;
+
+        }
+
+
+        return content
+          .trim()
+          .split(
+            /\s+/
+          )
+          .filter(
+            Boolean
+          )
+          .length;
+
+      },
+      [
+        writing?.content,
+      ]
+    );
 
 
   // =====================================================
@@ -221,7 +278,8 @@ function WritingCard({
     Math.max(
       1,
       Math.ceil(
-        wordCount / 180
+        wordCount /
+        180
       )
     );
 
@@ -234,7 +292,9 @@ function WritingCard({
     dateString
   ) {
 
-    if (!dateString) {
+    if (
+      !dateString
+    ) {
 
       return "";
 
@@ -263,11 +323,18 @@ function WritingCard({
       return new Intl.DateTimeFormat(
         undefined,
         {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
+          day:
+            "numeric",
+
+          month:
+            "short",
+
+          year:
+            "numeric",
         }
-      ).format(date);
+      ).format(
+        date
+      );
 
     } catch {
 
@@ -309,7 +376,9 @@ function WritingCard({
     }
 
 
-    setLiking(true);
+    setLiking(
+      true
+    );
 
 
     try {
@@ -321,20 +390,29 @@ function WritingCard({
 
 
       if (
-        typeof data?.liked
-        === "boolean"
+        typeof data?.liked ===
+        "boolean"
       ) {
 
         setLiked(
           data.liked
         );
 
+      } else if (
+        typeof data?.is_liked ===
+        "boolean"
+      ) {
+
+        setLiked(
+          data.is_liked
+        );
+
       }
 
 
       if (
-        typeof data?.likes_count
-        === "number"
+        typeof data?.likes_count ===
+        "number"
       ) {
 
         setLikesCount(
@@ -343,18 +421,30 @@ function WritingCard({
 
       } else if (
         typeof data?.writing
-          ?.likes_count
-        === "number"
+          ?.likes_count ===
+        "number"
       ) {
 
         setLikesCount(
-          data.writing.likes_count
+          data.writing
+            .likes_count
+        );
+
+      } else if (
+        typeof data?.likes ===
+        "number"
+      ) {
+
+        setLikesCount(
+          data.likes
         );
 
       }
 
 
-    } catch (error) {
+    } catch (
+      error
+    ) {
 
       console.error(
         "LIKE WRITING ERROR:",
@@ -363,7 +453,9 @@ function WritingCard({
 
     } finally {
 
-      setLiking(false);
+      setLiking(
+        false
+      );
 
     }
 
@@ -371,33 +463,104 @@ function WritingCard({
 
 
   // =====================================================
+  // AUTHOR CONTENT
+  // =====================================================
+
+  const authorContent = (
+
+    <>
+
+      <div
+        className="writing-author-avatar"
+      >
+
+        {
+          authorName
+            ?.trim()
+            ?.charAt(0)
+            ?.toUpperCase()
+          ||
+          <User
+            size={15}
+          />
+        }
+
+      </div>
+
+
+      <div
+        className="writing-author-info"
+      >
+
+        <span>
+
+          {
+            t(
+              "writingCard.by"
+            )
+          }
+
+        </span>
+
+
+        <strong>
+
+          {
+            authorName
+          }
+
+        </strong>
+
+      </div>
+
+    </>
+
+  );
+
+
+  // =====================================================
   // UI
   // =====================================================
 
   return (
-    <article className="writing-card">
+
+    <article
+      className="writing-card"
+    >
 
 
       {/* ===============================================
           BADGES
       ================================================ */}
 
-      <div className="writing-card-badges">
+      <div
+        className="writing-card-badges"
+      >
 
-        <span className="writing-language-badge">
+        <span
+          className="writing-language-badge"
+        >
 
-          <Globe2 size={12} />
+          <Globe2
+            size={12}
+          />
 
           <span>
-            {languageLabel}
+            {
+              languageLabel
+            }
           </span>
 
         </span>
 
 
-        <span className="writing-category-badge">
+        <span
+          className="writing-category-badge"
+        >
 
-          {category}
+          {
+            category
+          }
 
         </span>
 
@@ -409,13 +572,18 @@ function WritingCard({
       ================================================ */}
 
       <Link
+
         to={
           `/writings/${writing.id}`
         }
+
         className="writing-card-title-link"
+
       >
 
-        <h2 className="writing-card-title">
+        <h2
+          className="writing-card-title"
+        >
 
           {
             writing?.title ||
@@ -433,9 +601,13 @@ function WritingCard({
           CONTENT PREVIEW
       ================================================ */}
 
-      <p className="writing-card-preview">
+      <p
+        className="writing-card-preview"
+      >
 
-        {preview}
+        {
+          preview
+        }
 
       </p>
 
@@ -444,92 +616,113 @@ function WritingCard({
           AUTHOR
       ================================================ */}
 
-      <div className="writing-card-author">
+      {
+        hasAuthorId
+          ? (
 
-        <div className="writing-author-avatar">
+              <Link
 
-          {
-            authorName
-              ?.trim()
-              ?.charAt(0)
-              ?.toUpperCase()
-            ||
-            <User size={15} />
-          }
+                to={
+                  `/users/${authorId}`
+                }
 
-        </div>
+                className="writing-card-author writing-card-author-link"
 
+                aria-label={
+                  `${authorName} profile`
+                }
 
-        <div className="writing-author-info">
+              >
 
-          <span>
+                {
+                  authorContent
+                }
 
-            {t(
-              "writingCard.by"
-            )}
+              </Link>
 
-          </span>
+            )
+          : (
 
+              <div
+                className="writing-card-author"
+              >
 
-          <strong>
+                {
+                  authorContent
+                }
 
-            {authorName}
+              </div>
 
-          </strong>
-
-        </div>
-
-      </div>
+            )
+      }
 
 
       {/* ===============================================
           META
       ================================================ */}
 
-      <div className="writing-card-meta">
+      <div
+        className="writing-card-meta"
+      >
 
 
-        {publishedDate && (
+        {
+          publishedDate && (
 
-          <span>
+            <span>
 
-            <CalendarDays
-              size={13}
-            />
+              <CalendarDays
+                size={13}
+              />
 
-            {publishedDate}
+              {
+                publishedDate
+              }
 
-          </span>
+            </span>
 
-        )}
+          )
+        }
 
 
         <span>
 
-          <Clock3 size={13} />
+          <Clock3
+            size={13}
+          />
 
-          {readingTime}
+          {
+            readingTime
+          }
 
           {" "}
 
-          {t(
-            "writingCard.minutes"
-          )}
+          {
+            t(
+              "writingCard.minutes"
+            )
+          }
 
         </span>
 
 
         <span>
 
-          <BookOpen size={13} />
+          <BookOpen
+            size={13}
+          />
 
-          {wordCount}
+          {
+            wordCount
+          }
 
           {" "}
 
-          {t(
-            "writingCard.words"
-          )}
+          {
+            t(
+              "writingCard.words"
+            )
+          }
 
         </span>
 
@@ -540,19 +733,24 @@ function WritingCard({
           FOOTER
       ================================================ */}
 
-      <div className="writing-card-footer">
+      <div
+        className="writing-card-footer"
+      >
 
 
         {/* =============================================
             SOCIAL STATS
         ============================================== */}
 
-        <div className="writing-card-social">
+        <div
+          className="writing-card-social"
+        >
 
 
           {/* LIKE */}
 
           <button
+
             type="button"
 
             className={
@@ -580,19 +778,27 @@ function WritingCard({
                 "writingCard.like"
               )
             }
+
           >
 
             <Heart
+
               size={15}
+
               fill={
                 liked
                   ? "currentColor"
                   : "none"
               }
+
             />
 
             <span>
-              {likesCount}
+
+              {
+                likesCount
+              }
+
             </span>
 
           </button>
@@ -601,6 +807,7 @@ function WritingCard({
           {/* COMMENTS */}
 
           <span
+
             className="writing-comment-count"
 
             title={
@@ -608,6 +815,7 @@ function WritingCard({
                 "writingCard.comments"
               )
             }
+
           >
 
             <MessageCircle
@@ -615,9 +823,11 @@ function WritingCard({
             />
 
             {
-              writing
-                ?.comments_count ||
-              0
+              Number(
+                writing?.comments_count ??
+                writing?.comments ??
+                0
+              )
             }
 
           </span>
@@ -630,17 +840,24 @@ function WritingCard({
         ============================================== */}
 
         <Link
+
           to={
             `/writings/${writing.id}`
           }
+
           className="writing-read-link"
+
         >
 
-          {t(
-            "writingCard.read"
-          )}
+          {
+            t(
+              "writingCard.read"
+            )
+          }
 
-          <span aria-hidden="true">
+          <span
+            aria-hidden="true"
+          >
             →
           </span>
 
@@ -649,6 +866,7 @@ function WritingCard({
       </div>
 
     </article>
+
   );
 
 }

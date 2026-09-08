@@ -16,7 +16,6 @@ class Writing(db.Model):
         primary_key=True,
     )
 
-
     # =====================================================
     # WRITING CONTENT
     # =====================================================
@@ -39,12 +38,11 @@ class Writing(db.Model):
         index=True,
     )
 
-
     # =====================================================
     # LANGUAGE
     # =====================================================
-
-    # Store language codes instead of display names.
+    #
+    # Store language codes rather than display names.
     #
     # Examples:
     # bn = Bengali
@@ -54,6 +52,8 @@ class Writing(db.Model):
     # or = Odia
     # ta = Tamil
     # te = Telugu
+    #
+    # =====================================================
 
     language = db.Column(
         db.String(20),
@@ -62,7 +62,6 @@ class Writing(db.Model):
         server_default="bn",
         index=True,
     )
-
 
     # =====================================================
     # DRAFT / PUBLISHED STATUS
@@ -75,7 +74,6 @@ class Writing(db.Model):
         server_default="draft",
         index=True,
     )
-
 
     # =====================================================
     # AUTHOR
@@ -91,7 +89,6 @@ class Writing(db.Model):
         index=True,
     )
 
-
     # =====================================================
     # TIMESTAMPS
     # =====================================================
@@ -99,17 +96,20 @@ class Writing(db.Model):
     created_at = db.Column(
         db.DateTime(timezone=True),
         nullable=False,
-        default=lambda:
-            datetime.now(timezone.utc),
+        default=lambda: datetime.now(
+            timezone.utc
+        ),
     )
 
     updated_at = db.Column(
         db.DateTime(timezone=True),
         nullable=False,
-        default=lambda:
-            datetime.now(timezone.utc),
-        onupdate=lambda:
-            datetime.now(timezone.utc),
+        default=lambda: datetime.now(
+            timezone.utc
+        ),
+        onupdate=lambda: datetime.now(
+            timezone.utc
+        ),
     )
 
     published_at = db.Column(
@@ -117,39 +117,61 @@ class Writing(db.Model):
         nullable=True,
     )
 
+    deleted_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=True,
+    )
+
+    previous_status = db.Column(
+        db.String(20),
+        nullable=True,
+    )
 
     # =====================================================
     # RELATIONSHIPS
     # =====================================================
+
+    # -----------------------------------------------------
+    # Author
+    # -----------------------------------------------------
 
     author = db.relationship(
         "User",
         back_populates="writings",
     )
 
+    # -----------------------------------------------------
+    # Comments
+    # -----------------------------------------------------
+
     comments = db.relationship(
-    "Comment",
-    back_populates="writing",
-    cascade="all, delete-orphan",
-    lazy=True,
+        "Comment",
+        back_populates="writing",
+        cascade="all, delete-orphan",
+        lazy=True,
     )
 
+    # -----------------------------------------------------
+    # Likes
+    # -----------------------------------------------------
 
     likes = db.relationship(
-    "Like",
-    back_populates="writing",
-    cascade="all, delete-orphan",
-    lazy=True,
+        "Like",
+        back_populates="writing",
+        cascade="all, delete-orphan",
+        lazy=True,
     )
 
+    # -----------------------------------------------------
+    # Tags
+    # -----------------------------------------------------
 
     tags = db.relationship(
-    "Tag",
-    secondary="writing_tags",
-    back_populates="writings",
-    lazy="select",
+        "Tag",
+        secondary="writing_tags",
+        back_populates="writings",
+        lazy="select",
     )
-
 
     # =====================================================
     # HELPERS
@@ -157,19 +179,23 @@ class Writing(db.Model):
 
     @property
     def is_draft(self):
-
-        return (
-            self.status == "draft"
-        )
-
+        return self.status == "draft"
 
     @property
     def is_published(self):
+        return self.status == "published"
 
-        return (
-            self.status == "published"
-        )
+    # =====================================================
+    # ENGAGEMENT COUNTS
+    # =====================================================
 
+    @property
+    def likes_count(self):
+        return len(self.likes)
+
+    @property
+    def comments_count(self):
+        return len(self.comments)
 
     # =====================================================
     # SERIALIZATION
@@ -179,65 +205,76 @@ class Writing(db.Model):
 
         return {
 
-            "id":
-                self.id,
+            # -------------------------------------------------
+            # Writing
+            # -------------------------------------------------
 
-            "title":
-                self.title,
+            "id": self.id,
 
-            "content":
-                self.content,
+            "title": self.title,
 
-            "category":
-                self.category,
+            "content": self.content,
 
-            # NEW
-            "language":
-                self.language,
+            "category": self.category,
 
-            "status":
-                self.status,
+            "language": self.language,
 
-            "user_id":
-                self.user_id,
+            "status": self.status,
 
-            "author": {
-                "id":
-                    self.author.id,
+            # -------------------------------------------------
+            # Author
+            # -------------------------------------------------
 
-                "name":
-                    self.author.name,
-            }
-            if self.author
-            else None,
+            "user_id": self.user_id,
 
-            "created_at":
+            "author": (
+                {
+                    "id": self.author.id,
+                    "name": self.author.name,
+                }
+                if self.author
+                else None
+            ),
+
+            # -------------------------------------------------
+            # Dates
+            # -------------------------------------------------
+
+            "created_at": (
                 self.created_at.isoformat()
                 if self.created_at
-                else None,
+                else None
+            ),
 
-            "updated_at":
+            "updated_at": (
                 self.updated_at.isoformat()
                 if self.updated_at
-                else None,
+                else None
+            ),
 
-            "published_at":
+            "published_at": (
                 self.published_at.isoformat()
                 if self.published_at
-                else None,
+                else None
+            ),
 
-            "likes_count":
-                len(self.likes),
+            # -------------------------------------------------
+            # Engagement
+            # -------------------------------------------------
 
-            "comments_count":
-                len(self.comments),
+            "likes_count": self.likes_count,
+
+            "comments_count": self.comments_count,
+
+            # -------------------------------------------------
+            # Tags
+            # -------------------------------------------------
 
             "tags": [
                 tag.to_dict()
                 for tag in self.tags
             ],
         }
-
 
     # =====================================================
     # DEBUG REPRESENTATION

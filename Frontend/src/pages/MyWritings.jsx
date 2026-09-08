@@ -30,7 +30,9 @@ import {
 import {
   deleteWriting,
   getMyWritings,
+  permanentlyDeleteWriting,
   publishWriting,
+  restoreWriting,
   unpublishWriting,
 } from "../api/api";
 
@@ -76,6 +78,11 @@ function MyWritings() {
   const [
     publishedCount,
     setPublishedCount,
+  ] = useState(0);
+
+  const [
+    trashCount,
+    setTrashCount,
   ] = useState(0);
 
 
@@ -156,6 +163,7 @@ function MyWritings() {
         const [
           draftsData,
           publishedData,
+          trashData,
         ] = await Promise.all([
 
           getMyWritings({
@@ -164,6 +172,10 @@ function MyWritings() {
 
           getMyWritings({
             status: "published",
+          }),
+
+          getMyWritings({
+            status: "deleted",
           }),
 
         ]);
@@ -185,6 +197,14 @@ function MyWritings() {
             : [];
 
 
+        const trash =
+          Array.isArray(
+            trashData?.writings
+          )
+            ? trashData.writings
+            : [];
+
+
         setDraftCount(
           drafts.length
         );
@@ -193,6 +213,9 @@ function MyWritings() {
           published.length
         );
 
+        setTrashCount(
+          trash.length
+        );
 
       } catch (err) {
 
@@ -274,6 +297,16 @@ function MyWritings() {
           }
 
 
+          if (
+            status === "deleted"
+          ) {
+
+            setTrashCount(
+              items.length
+            );
+
+          }
+
         } catch (err) {
 
           console.error(
@@ -291,7 +324,6 @@ function MyWritings() {
 
 
           setWritings([]);
-
 
         } finally {
 
@@ -467,10 +499,6 @@ function MyWritings() {
       ];
 
 
-      // -------------------------------------------------
-      // SEARCH
-      // -------------------------------------------------
-
       if (normalizedSearch) {
 
         result =
@@ -481,36 +509,28 @@ function MyWritings() {
                 (
                   writing.title ||
                   ""
-                )
-                  .toLowerCase();
-
+                ).toLowerCase();
 
               const content =
                 (
                   writing.content ||
                   ""
-                )
-                  .toLowerCase();
-
+                ).toLowerCase();
 
               const category =
                 (
                   writing.category ||
                   ""
-                )
-                  .toLowerCase();
-
+                ).toLowerCase();
 
               const languageCode =
                 writing.language ||
                 "bn";
 
-
               const languageLabel =
                 getLanguageLabel(
                   languageCode
-                )
-                  .toLowerCase();
+                ).toLowerCase();
 
 
               return (
@@ -537,10 +557,6 @@ function MyWritings() {
       }
 
 
-      // -------------------------------------------------
-      // LANGUAGE
-      // -------------------------------------------------
-
       if (language) {
 
         result =
@@ -554,10 +570,6 @@ function MyWritings() {
 
       }
 
-
-      // -------------------------------------------------
-      // SORT
-      // -------------------------------------------------
 
       result.sort(
         (a, b) => {
@@ -660,7 +672,6 @@ function MyWritings() {
     );
 
     setError("");
-
     setSuccess("");
 
 
@@ -689,7 +700,6 @@ function MyWritings() {
 
       ]);
 
-
     } catch (err) {
 
       setError(
@@ -698,7 +708,6 @@ function MyWritings() {
           "errors.generic"
         )
       );
-
 
     } finally {
 
@@ -722,7 +731,6 @@ function MyWritings() {
     );
 
     setError("");
-
     setSuccess("");
 
 
@@ -751,7 +759,6 @@ function MyWritings() {
 
       ]);
 
-
     } catch (err) {
 
       setError(
@@ -761,6 +768,186 @@ function MyWritings() {
         )
       );
 
+    } finally {
+
+      setActionId(null);
+
+    }
+
+  }
+
+
+  // =====================================================
+  // RESTORE FROM TRASH
+  // =====================================================
+
+  async function handleRestore(
+    writingId
+  ) {
+
+    setActionId(
+      writingId
+    );
+
+    setError("");
+    setSuccess("");
+
+
+    try {
+
+      const response =
+        await restoreWriting(
+          writingId
+        );
+
+
+      const restoredWriting =
+        response?.writing ||
+        response;
+
+
+      setWritings(
+        (current) =>
+          current.filter(
+            (item) =>
+              item.id !== writingId
+          )
+      );
+
+
+      setTrashCount(
+        (current) =>
+          Math.max(
+            0,
+            current - 1
+          )
+      );
+
+
+      if (
+        restoredWriting?.status ===
+        "published"
+      ) {
+
+        setPublishedCount(
+          (current) =>
+            current + 1
+        );
+
+      } else {
+
+        setDraftCount(
+          (current) =>
+            current + 1
+        );
+
+      }
+
+
+      setSuccess(
+        t(
+          "myWritings.restored"
+        )
+      );
+
+    } catch (err) {
+
+      console.error(
+        "RESTORE WRITING ERROR:",
+        err
+      );
+
+
+      setError(
+        err.message ||
+        t(
+          "errors.generic"
+        )
+      );
+
+    } finally {
+
+      setActionId(null);
+
+    }
+
+  }
+
+
+  // =====================================================
+  // PERMANENT DELETE
+  // =====================================================
+
+  async function handlePermanentDelete(
+    writing
+  ) {
+
+    const confirmed =
+      window.confirm(
+        `Permanently delete "${writing.title}"?\n\nThis action cannot be undone.`
+      );
+
+
+    if (!confirmed) {
+
+      return;
+
+    }
+
+
+    setActionId(
+      writing.id
+    );
+
+    setError("");
+    setSuccess("");
+
+
+    try {
+
+      await permanentlyDeleteWriting(
+        writing.id
+      );
+
+
+      setWritings(
+        (current) =>
+          current.filter(
+            (item) =>
+              item.id !== writing.id
+          )
+      );
+
+
+      setTrashCount(
+        (current) =>
+          Math.max(
+            0,
+            current - 1
+          )
+      );
+
+
+      setSuccess(
+        t(
+          "myWritings.permanentlyDeleted"
+        )
+      );
+
+    } catch (err) {
+
+      console.error(
+        "PERMANENT DELETE ERROR:",
+        err
+      );
+
+
+      setError(
+        err.message ||
+        t(
+          "errors.generic"
+        )
+      );
 
     } finally {
 
@@ -784,7 +971,6 @@ function MyWritings() {
     );
 
     setError("");
-
     setSuccess("");
 
   }
@@ -807,7 +993,7 @@ function MyWritings() {
 
 
   // =====================================================
-  // DELETE
+  // MOVE TO TRASH
   // =====================================================
 
   async function confirmDelete() {
@@ -826,7 +1012,6 @@ function MyWritings() {
     );
 
     setError("");
-
     setSuccess("");
 
 
@@ -859,7 +1044,12 @@ function MyWritings() {
             )
         );
 
-      } else {
+      }
+
+
+      if (
+        activeTab === "published"
+      ) {
 
         setPublishedCount(
           (current) =>
@@ -872,9 +1062,15 @@ function MyWritings() {
       }
 
 
+      setTrashCount(
+        (current) =>
+          current + 1
+      );
+
+
       setSuccess(
         t(
-          "common.delete"
+          "myWritings.movedToTrash"
         )
       );
 
@@ -882,7 +1078,6 @@ function MyWritings() {
       setDeleteTarget(
         null
       );
-
 
     } catch (err) {
 
@@ -892,7 +1087,6 @@ function MyWritings() {
           "errors.generic"
         )
       );
-
 
     } finally {
 
@@ -910,11 +1104,16 @@ function MyWritings() {
   // =====================================================
 
   function handleEdit(
-    writingId
+    writing
   ) {
 
     navigate(
-      `/write/${writingId}`
+      `/write/${writing.id}`,
+      {
+        state: {
+          writing,
+        },
+      }
     );
 
   }
@@ -964,43 +1163,34 @@ function MyWritings() {
   // =====================================================
 
   return (
+
     <main className="my-writings-page">
 
       <div className="my-writings-shell">
 
 
-        {/* ===============================================
-            HEADER
-        ================================================ */}
+        {/* HEADER */}
 
         <header className="my-writings-header">
 
           <div>
 
             <p className="my-writings-eyebrow">
-
               {t(
                 "myWritings.eyebrow"
               )}
-
             </p>
 
-
             <h1>
-
               {t(
                 "myWritings.title"
               )}
-
             </h1>
 
-
             <p>
-
               {t(
                 "myWritings.description"
               )}
-
             </p>
 
           </div>
@@ -1022,22 +1212,17 @@ function MyWritings() {
         </header>
 
 
-        {/* ===============================================
-            SUMMARY
-        ================================================ */}
+        {/* SUMMARY */}
 
         <section className="my-writing-summary">
 
-
           <button
             type="button"
-
             className={
               activeTab === "draft"
                 ? "my-writing-summary-card active"
                 : "my-writing-summary-card"
             }
-
             onClick={() =>
               setActiveTab(
                 "draft"
@@ -1046,20 +1231,15 @@ function MyWritings() {
           >
 
             <span className="my-writing-summary-icon draft">
-
               <FileText size={20} />
-
             </span>
-
 
             <div>
 
               <span>
-
                 {t(
                   "myWritings.drafts"
                 )}
-
               </span>
 
               <strong>
@@ -1073,14 +1253,11 @@ function MyWritings() {
 
           <button
             type="button"
-
             className={
-              activeTab ===
-              "published"
+              activeTab === "published"
                 ? "my-writing-summary-card active"
                 : "my-writing-summary-card"
             }
-
             onClick={() =>
               setActiveTab(
                 "published"
@@ -1089,20 +1266,15 @@ function MyWritings() {
           >
 
             <span className="my-writing-summary-icon published">
-
               <BookOpen size={20} />
-
             </span>
-
 
             <div>
 
               <span>
-
                 {t(
                   "myWritings.published"
                 )}
-
               </span>
 
               <strong>
@@ -1113,12 +1285,45 @@ function MyWritings() {
 
           </button>
 
+
+          <button
+            type="button"
+            className={
+              activeTab === "deleted"
+                ? "my-writing-summary-card active"
+                : "my-writing-summary-card"
+            }
+            onClick={() =>
+              setActiveTab(
+                "deleted"
+              )
+            }
+          >
+
+            <span className="my-writing-summary-icon trash">
+              <Trash2 size={20} />
+            </span>
+
+            <div>
+
+              <span>
+                {t(
+                  "myWritings.trash"
+                )}
+              </span>
+
+              <strong>
+                {trashCount}
+              </strong>
+
+            </div>
+
+          </button>
+
         </section>
 
 
-        {/* ===============================================
-            MESSAGES
-        ================================================ */}
+        {/* MESSAGES */}
 
         {error && (
 
@@ -1126,9 +1331,7 @@ function MyWritings() {
             className="write-message error"
             role="alert"
           >
-
             {error}
-
           </div>
 
         )}
@@ -1154,41 +1357,35 @@ function MyWritings() {
         )}
 
 
-        {/* ===============================================
-            FILTERS
-        ================================================ */}
+        {/* FILTERS */}
 
         <section className="my-writing-controls">
-
-
-          {/* SEARCH */}
 
           <div className="my-writing-search">
 
             <Search size={17} />
 
-
             <input
               type="search"
-
               placeholder={
                 activeTab === "draft"
                   ? t(
-                    "myWritings.searchDrafts"
-                  )
-                  : t(
-                    "myWritings.searchPublished"
-                  )
+                      "myWritings.drafts"
+                    )
+                  : activeTab === "published"
+                    ? t(
+                        "myWritings.published"
+                      )
+                    : t(
+                        "myWritings.trash"
+                      )
               }
-
               value={search}
-
               onChange={(event) =>
                 setSearch(
                   event.target.value
                 )
               }
-
               aria-label={
                 t(
                   "common.search"
@@ -1201,11 +1398,9 @@ function MyWritings() {
 
               <button
                 type="button"
-
                 onClick={() =>
                   setSearch("")
                 }
-
                 aria-label={
                   t(
                     "common.clear"
@@ -1222,22 +1417,17 @@ function MyWritings() {
           </div>
 
 
-          {/* LANGUAGE */}
-
           <div className="my-writing-language-filter">
 
             <Globe2 size={16} />
 
-
             <select
               value={language}
-
               onChange={(event) =>
                 setLanguage(
                   event.target.value
                 )
               }
-
               aria-label={
                 t(
                   "common.language"
@@ -1246,47 +1436,38 @@ function MyWritings() {
             >
 
               <option value="">
-
                 {t(
                   "myWritings.allLanguages"
                 )}
-
               </option>
 
+              {LANGUAGES.map(
+                (item) => (
 
-              {
-                LANGUAGES.map(
-                  (item) => (
+                  <option
+                    key={
+                      item.code
+                    }
+                    value={
+                      item.code
+                    }
+                  >
 
-                    <option
-                      key={
-                        item.code
-                      }
+                    {item.nativeName ===
+                    item.name
+                      ? item.name
+                      : `${item.nativeName} — ${item.name}`
+                    }
 
-                      value={
-                        item.code
-                      }
-                    >
+                  </option>
 
-                      {
-                        item.nativeName ===
-                        item.name
-                          ? item.name
-                          : `${item.nativeName} — ${item.name}`
-                      }
-
-                    </option>
-
-                  )
                 )
-              }
+              )}
 
             </select>
 
           </div>
 
-
-          {/* SORT */}
 
           <div className="my-writing-sort">
 
@@ -1294,10 +1475,8 @@ function MyWritings() {
               size={16}
             />
 
-
             <select
               value={sortBy}
-
               onChange={(event) =>
                 setSortBy(
                   event.target.value
@@ -1306,38 +1485,27 @@ function MyWritings() {
             >
 
               <option value="recent">
-
                 {t(
                   "myWritings.recentlyUpdated"
                 )}
-
               </option>
 
-
               <option value="created">
-
                 {t(
                   "myWritings.recentlyCreated"
                 )}
-
               </option>
 
-
               <option value="oldest">
-
                 {t(
                   "myWritings.oldestFirst"
                 )}
-
               </option>
 
-
               <option value="title">
-
                 {t(
                   "myWritings.titleAZ"
                 )}
-
               </option>
 
             </select>
@@ -1345,17 +1513,12 @@ function MyWritings() {
           </div>
 
 
-          {/* REFRESH */}
-
           <button
             type="button"
-
             className="my-writing-refresh"
-
             onClick={
               handleRefresh
             }
-
             disabled={
               refreshing ||
               loading
@@ -1364,7 +1527,6 @@ function MyWritings() {
 
             <RefreshCw
               size={16}
-
               className={
                 refreshing
                   ? "spin"
@@ -1373,11 +1535,9 @@ function MyWritings() {
             />
 
             <span>
-
               {t(
                 "myWritings.refresh"
               )}
-
             </span>
 
           </button>
@@ -1385,9 +1545,7 @@ function MyWritings() {
         </section>
 
 
-        {/* ===============================================
-            RESULT INFO
-        ================================================ */}
+        {/* RESULT INFO */}
 
         <div className="my-writings-toolbar">
 
@@ -1395,27 +1553,26 @@ function MyWritings() {
 
             <span>
 
-              {
-                activeTab === "draft"
-                  ? t(
+              {activeTab === "draft"
+                ? t(
                     "myWritings.drafts"
                   )
+                : activeTab === "published"
+                  ? t(
+                      "myWritings.published"
+                    )
                   : t(
-                    "myWritings.published"
-                  )
+                      "myWritings.trash"
+                    )
               }
 
               {" · "}
 
-              {
-                filteredWritings.length
-              }
+              {filteredWritings.length}
 
-
-              {
-                search || language
-                  ? ` / ${writings.length}`
-                  : ""
+              {search || language
+                ? ` / ${writings.length}`
+                : ""
               }
 
             </span>
@@ -1427,11 +1584,9 @@ function MyWritings() {
 
                 <Globe2 size={12} />
 
-                {
-                  getLanguageLabel(
-                    language
-                  )
-                }
+                {getLanguageLabel(
+                  language
+                )}
 
               </span>
 
@@ -1444,9 +1599,7 @@ function MyWritings() {
 
             <button
               type="button"
-
               className="my-writing-clear-filters"
-
               onClick={
                 clearFilters
               }
@@ -1465,9 +1618,7 @@ function MyWritings() {
         </div>
 
 
-        {/* ===============================================
-            LOADING
-        ================================================ */}
+        {/* LOADING */}
 
         {loading && (
 
@@ -1479,11 +1630,9 @@ function MyWritings() {
             />
 
             <p>
-
               {t(
                 "myWritings.loading"
               )}
-
             </p>
 
           </div>
@@ -1491,9 +1640,7 @@ function MyWritings() {
         )}
 
 
-        {/* ===============================================
-            EMPTY
-        ================================================ */}
+        {/* EMPTY */}
 
         {!loading &&
         filteredWritings.length === 0 && (
@@ -1502,45 +1649,44 @@ function MyWritings() {
 
             <div className="my-writings-empty-icon">
 
-              {
-                search ||
-                language
-                  ? (
-                    <Search
-                      size={30}
-                    />
-                  )
-                  : activeTab === "draft"
-                    ? (
-                      <FileText
-                        size={30}
-                      />
-                    )
-                    : (
-                      <BookOpen
-                        size={30}
-                      />
-                    )
-              }
+              {search || language ? (
+
+                <Search size={30} />
+
+              ) : activeTab === "draft" ? (
+
+                <FileText size={30} />
+
+              ) : activeTab === "deleted" ? (
+
+                <Trash2 size={30} />
+
+              ) : (
+
+                <BookOpen size={30} />
+
+              )}
 
             </div>
 
 
             <h2>
 
-              {
-                search ||
-                language
-                  ? t(
+              {search || language
+                ? t(
                     "myWritings.noResults"
                   )
-                  : activeTab === "draft"
-                    ? t(
+                : activeTab === "draft"
+                  ? t(
                       "myWritings.noDrafts"
                     )
+                  : activeTab === "deleted"
+                    ? t(
+                        "myWritings.noTrash"
+                      )
                     : t(
-                      "myWritings.noPublished"
-                    )
+                        "myWritings.noPublished"
+                      )
               }
 
             </h2>
@@ -1548,338 +1694,350 @@ function MyWritings() {
 
             <p>
 
-              {
-                search ||
-                language
-                  ? t(
+              {search || language
+                ? t(
                     "myWritings.noResultsDescription"
                   )
-                  : activeTab === "draft"
-                    ? t(
+                : activeTab === "draft"
+                  ? t(
                       "myWritings.noDraftsDescription"
                     )
+                  : activeTab === "deleted"
+                    ? t(
+                        "myWritings.noTrashDescription"
+                      )
                     : t(
-                      "myWritings.noPublishedDescription"
-                    )
+                        "myWritings.noPublishedDescription"
+                      )
               }
 
             </p>
 
 
-            {
-              search ||
-              language
-                ? (
+            {search || language ? (
 
-                  <button
-                    type="button"
+              <button
+                type="button"
+                className="my-writings-new-button"
+                onClick={
+                  clearFilters
+                }
+              >
 
-                    className="my-writings-new-button"
+                {t(
+                  "myWritings.clearFilters"
+                )}
 
-                    onClick={
-                      clearFilters
-                    }
-                  >
+              </button>
 
-                    {t(
-                      "myWritings.clearFilters"
-                    )}
+            ) : activeTab !== "deleted" ? (
 
-                  </button>
+              <Link
+                to="/write"
+                className="my-writings-new-button"
+              >
 
-                )
-                : (
+                <Edit3 size={17} />
 
-                  <Link
-                    to="/write"
-                    className="my-writings-new-button"
-                  >
+                {t(
+                  "myWritings.startWriting"
+                )}
 
-                    <Edit3 size={17} />
+              </Link>
 
-                    {t(
-                      "myWritings.startWriting"
-                    )}
-
-                  </Link>
-
-                )
-            }
+            ) : null}
 
           </section>
 
         )}
 
 
-        {/* ===============================================
-            WRITINGS GRID
-        ================================================ */}
+        {/* WRITINGS GRID */}
 
         {!loading &&
         filteredWritings.length > 0 && (
 
           <section className="my-writings-grid">
 
-            {
-              filteredWritings.map(
-                (writing) => {
+            {filteredWritings.map(
+              (writing) => {
 
-                  const busy =
-                    actionId ===
-                    writing.id;
+                const busy =
+                  actionId ===
+                  writing.id;
 
+                const wordCount =
+                  getWordCount(
+                    writing.content
+                  );
 
-                  const wordCount =
-                    getWordCount(
-                      writing.content
-                    );
+                const readingTime =
+                  getReadingTime(
+                    writing.content
+                  );
 
-
-                  const readingTime =
-                    getReadingTime(
-                      writing.content
-                    );
-
-
-                  const languageCode =
-                    writing.language ||
-                    "bn";
+                const languageCode =
+                  writing.language ||
+                  "bn";
 
 
-                  return (
-                    <article
-                      key={
-                        writing.id
-                      }
+                return (
 
-                      className="my-writing-card"
-                    >
+                  <article
+                    key={
+                      writing.id
+                    }
+                    className="my-writing-card"
+                  >
 
+                    <div className="my-writing-card-top">
 
-                      {/* =================================
-                          TOP
-                      ================================== */}
+                      <div className="my-writing-card-badges">
 
-                      <div className="my-writing-card-top">
-
-                        <div className="my-writing-card-badges">
-
-
-                          <span
-                            className={
-                              writing.status ===
-                              "published"
-                                ? "my-writing-status published"
+                        <span
+                          className={
+                            writing.status === "published"
+                              ? "my-writing-status published"
+                              : writing.status === "deleted"
+                                ? "my-writing-status deleted"
                                 : "my-writing-status draft"
-                            }
-                          >
-
-                            {
-                              writing.status ===
-                              "published"
-                                ? t(
-                                  "myWritings.published"
-                                )
-                                : t(
-                                  "myWritings.drafts"
-                                )
-                            }
-
-                          </span>
-
-
-                          <span className="my-writing-language-badge">
-
-                            <Globe2
-                              size={11}
-                            />
-
-                            {
-                              getLanguageLabel(
-                                languageCode
-                              )
-                            }
-
-                          </span>
-
-                        </div>
-
-
-                        <span className="my-writing-category">
-
-                          {
-                            writing.category ||
-                            t(
-                              "categories.other"
-                            )
                           }
-
-                        </span>
-
-                      </div>
-
-
-                      {/* =================================
-                          TITLE
-                      ================================== */}
-
-                      <h2>
-
-                        {
-                          writing.title ||
-                          t(
-                            "common.untitled"
-                          )
-                        }
-
-                      </h2>
-
-
-                      {/* =================================
-                          PREVIEW
-                      ================================== */}
-
-                      <p className="my-writing-preview">
-
-                        {
-                          writing.content
-                            ?.trim()
-                            ?.slice(
-                              0,
-                              180
-                            )
-                          ||
-                          t(
-                            "common.noData"
-                          )
-                        }
-
-
-                        {
-                          writing.content
-                            ?.length >
-                          180
-                            ? "..."
-                            : ""
-                        }
-
-                      </p>
-
-
-                      {/* =================================
-                          STATS
-                      ================================== */}
-
-                      <div className="my-writing-card-stats">
-
-                        <span>
-
-                          <FileText
-                            size={13}
-                          />
-
-                          {wordCount}
-
-                          {" "}
-
-                          {t(
-                            "myWritings.words"
-                          )}
-
-                        </span>
-
-
-                        <span>
-
-                          <BookOpen
-                            size={13}
-                          />
-
-                          {readingTime}
-
-                          {" "}
-
-                          {t(
-                            "myWritings.readTime"
-                          )}
-
-                        </span>
-
-
-                        <span>
-
-                          <Globe2
-                            size={13}
-                          />
-
-                          {
-                            getLanguageLabel(
-                              languageCode
-                            )
-                          }
-
-                        </span>
-
-                      </div>
-
-
-                      {/* =================================
-                          DATE
-                      ================================== */}
-
-                      <div className="my-writing-meta">
-
-                        <span>
-
-                          {t(
-                            "myWritings.updated"
-                          )}
-
-                        </span>
-
-                        <strong>
-
-                          {
-                            formatDate(
-                              writing.updated_at
-                            )
-                          }
-
-                        </strong>
-
-                      </div>
-
-
-                      {/* =================================
-                          ACTIONS
-                      ================================== */}
-
-                      <div className="my-writing-actions">
-
-
-                        <button
-                          type="button"
-
-                          onClick={() =>
-                            handleEdit(
-                              writing.id
-                            )
-                          }
-
-                          disabled={busy}
                         >
 
-                          <Edit3 size={16} />
+                          {writing.status === "published"
+                            ? t(
+                                "myWritings.published"
+                              )
+                            : writing.status === "deleted"
+                              ? t(
+                                  "myWritings.trash"
+                                )
+                              : t(
+                                  "myWritings.drafts"
+                                )
+                          }
 
-                          {t(
-                            "myWritings.edit"
+                        </span>
+
+
+                        <span className="my-writing-language-badge">
+
+                          <Globe2
+                            size={11}
+                          />
+
+                          {getLanguageLabel(
+                            languageCode
                           )}
 
-                        </button>
+                        </span>
+
+                      </div>
 
 
-                        {
-                          writing.status ===
+                      <span className="my-writing-category">
+
+                        {writing.category ||
+                          t(
+                            "categories.other"
+                          )
+                        }
+
+                      </span>
+
+                    </div>
+
+
+                    <h2>
+
+                      {writing.title ||
+                        t(
+                          "common.untitled"
+                        )
+                      }
+
+                    </h2>
+
+
+                    <p className="my-writing-preview">
+
+                      {writing.content
+                        ?.trim()
+                        ?.slice(
+                          0,
+                          180
+                        )
+                        ||
+                        t(
+                          "common.noData"
+                        )
+                      }
+
+                      {writing.content
+                        ?.length > 180
+                          ? "..."
+                          : ""
+                      }
+
+                    </p>
+
+
+                    <div className="my-writing-card-stats">
+
+                      <span>
+
+                        <FileText
+                          size={13}
+                        />
+
+                        {wordCount}
+
+                        {" "}
+
+                        {t(
+                          "myWritings.words"
+                        )}
+
+                      </span>
+
+
+                      <span>
+
+                        <BookOpen
+                          size={13}
+                        />
+
+                        {readingTime}
+
+                        {" "}
+
+                        {t(
+                          "myWritings.readTime"
+                        )}
+
+                      </span>
+
+
+                      <span>
+
+                        <Globe2
+                          size={13}
+                        />
+
+                        {getLanguageLabel(
+                          languageCode
+                        )}
+
+                      </span>
+
+                    </div>
+
+
+                    <div className="my-writing-meta">
+
+                      <span>
+                        {t(
+                          "myWritings.updated"
+                        )}
+                      </span>
+
+                      <strong>
+                        {formatDate(
+                          writing.updated_at
+                        )}
+                      </strong>
+
+                    </div>
+
+
+                    {/* ACTIONS */}
+
+                    <div className="my-writing-actions">
+
+                      {writing.status === "deleted" ? (
+
+                        <>
+
+                          <button
+                            type="button"
+                            className="primary"
+                            onClick={() =>
+                              handleRestore(
+                                writing.id
+                              )
+                            }
+                            disabled={busy}
+                          >
+
+                            {busy ? (
+
+                              <Loader2
+                                size={16}
+                                className="spin"
+                              />
+
+                            ) : (
+
+                              <RotateCcw
+                                size={16}
+                              />
+
+                            )}
+
+                            {t(
+                              "myWritings.restore"
+                            )}
+
+                          </button>
+
+
+                          <button
+                            type="button"
+                            className="danger"
+                            onClick={() =>
+                              handlePermanentDelete(
+                                writing
+                              )
+                            }
+                            disabled={busy}
+                          >
+
+                            <Trash2
+                              size={16}
+                            />
+
+                            {t(
+                              "myWritings.deletePermanently"
+                            )}
+
+                          </button>
+
+                        </>
+
+                      ) : (
+
+                        <>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleEdit(
+                                writing
+                              )
+                            }
+                            disabled={busy}
+                          >
+
+                            <Edit3 size={16} />
+
+                            {t(
+                              "myWritings.edit"
+                            )}
+
+                          </button>
+
+
+                          {writing.status ===
                           "published" && (
 
                             <Link
@@ -1896,42 +2054,37 @@ function MyWritings() {
 
                             </Link>
 
-                          )
-                        }
+                          )}
 
 
-                        {
-                          writing.status ===
+                          {writing.status ===
                           "draft" && (
 
                             <button
                               type="button"
-
                               className="primary"
-
                               onClick={() =>
                                 handlePublish(
                                   writing.id
                                 )
                               }
-
                               disabled={busy}
                             >
 
-                              {
-                                busy
-                                  ? (
-                                    <Loader2
-                                      size={16}
-                                      className="spin"
-                                    />
-                                  )
-                                  : (
-                                    <Send
-                                      size={16}
-                                    />
-                                  )
-                              }
+                              {busy ? (
+
+                                <Loader2
+                                  size={16}
+                                  className="spin"
+                                />
+
+                              ) : (
+
+                                <Send
+                                  size={16}
+                                />
+
+                              )}
 
                               {t(
                                 "myWritings.publish"
@@ -1939,40 +2092,36 @@ function MyWritings() {
 
                             </button>
 
-                          )
-                        }
+                          )}
 
 
-                        {
-                          writing.status ===
+                          {writing.status ===
                           "published" && (
 
                             <button
                               type="button"
-
                               onClick={() =>
                                 handleUnpublish(
                                   writing.id
                                 )
                               }
-
                               disabled={busy}
                             >
 
-                              {
-                                busy
-                                  ? (
-                                    <Loader2
-                                      size={16}
-                                      className="spin"
-                                    />
-                                  )
-                                  : (
-                                    <RotateCcw
-                                      size={16}
-                                    />
-                                  )
-                              }
+                              {busy ? (
+
+                                <Loader2
+                                  size={16}
+                                  className="spin"
+                                />
+
+                              ) : (
+
+                                <RotateCcw
+                                  size={16}
+                                />
+
+                              )}
 
                               {t(
                                 "myWritings.moveToDraft"
@@ -1980,42 +2129,42 @@ function MyWritings() {
 
                             </button>
 
-                          )
-                        }
-
-
-                        <button
-                          type="button"
-
-                          className="danger"
-
-                          onClick={() =>
-                            openDeleteModal(
-                              writing
-                            )
-                          }
-
-                          disabled={busy}
-                        >
-
-                          <Trash2
-                            size={16}
-                          />
-
-                          {t(
-                            "myWritings.delete"
                           )}
 
-                        </button>
 
-                      </div>
+                          <button
+                            type="button"
+                            className="danger"
+                            onClick={() =>
+                              openDeleteModal(
+                                writing
+                              )
+                            }
+                            disabled={busy}
+                          >
 
-                    </article>
-                  );
+                            <Trash2
+                              size={16}
+                            />
 
-                }
-              )
-            }
+                            {t(
+                              "myWritings.delete"
+                            )}
+
+                          </button>
+
+                        </>
+
+                      )}
+
+                    </div>
+
+                  </article>
+
+                );
+
+              }
+            )}
 
           </section>
 
@@ -2024,17 +2173,13 @@ function MyWritings() {
       </div>
 
 
-      {/* =================================================
-          DELETE MODAL
-      ================================================== */}
+      {/* DELETE / MOVE TO TRASH MODAL */}
 
       {deleteTarget && (
 
         <div
           className="delete-modal-overlay"
-
           role="presentation"
-
           onMouseDown={
             closeDeleteModal
           }
@@ -2042,18 +2187,13 @@ function MyWritings() {
 
           <section
             className="delete-modal"
-
             role="dialog"
-
             aria-modal="true"
-
             aria-labelledby="delete-modal-title"
-
             onMouseDown={(event) =>
               event.stopPropagation()
             }
           >
-
 
             <div className="delete-modal-icon">
 
@@ -2064,17 +2204,13 @@ function MyWritings() {
 
             <button
               type="button"
-
               className="delete-modal-close"
-
               onClick={
                 closeDeleteModal
               }
-
               disabled={
                 deleting
               }
-
               aria-label={
                 t(
                   "common.close"
@@ -2135,12 +2271,10 @@ function MyWritings() {
 
               <span>
 
-                {
-                  getLanguageLabel(
-                    deleteTarget.language ||
-                    "bn"
-                  )
-                }
+                {getLanguageLabel(
+                  deleteTarget.language ||
+                  "bn"
+                )}
 
               </span>
 
@@ -2150,8 +2284,7 @@ function MyWritings() {
 
               <span>
 
-                {
-                  deleteTarget.category ||
+                {deleteTarget.category ||
                   t(
                     "categories.other"
                   )
@@ -2166,13 +2299,10 @@ function MyWritings() {
 
               <button
                 type="button"
-
                 className="delete-modal-cancel"
-
                 onClick={
                   closeDeleteModal
                 }
-
                 disabled={
                   deleting
                 }
@@ -2187,40 +2317,36 @@ function MyWritings() {
 
               <button
                 type="button"
-
                 className="delete-modal-confirm"
-
                 onClick={
                   confirmDelete
                 }
-
                 disabled={
                   deleting
                 }
               >
 
-                {
-                  deleting
-                    ? (
-                      <Loader2
-                        size={17}
-                        className="spin"
-                      />
-                    )
-                    : (
-                      <Trash2
-                        size={17}
-                      />
-                    )
-                }
+                {deleting ? (
+
+                  <Loader2
+                    size={17}
+                    className="spin"
+                  />
+
+                ) : (
+
+                  <Trash2
+                    size={17}
+                  />
+
+                )}
 
 
-                {
-                  deleting
-                    ? t(
+                {deleting
+                  ? t(
                       "myWritings.deleting"
                     )
-                    : t(
+                  : t(
                       "myWritings.deleteWriting"
                     )
                 }
@@ -2236,6 +2362,7 @@ function MyWritings() {
       )}
 
     </main>
+
   );
 
 }

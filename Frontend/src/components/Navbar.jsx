@@ -530,7 +530,11 @@ function Navbar({
               {/* USER */}
 
               <Link
-                to="/my-writings"
+                to={
+                  user?.id
+                    ? `/users/${user.id}`
+                    : "/my-writings"
+                }
                 className="shobdo-navbar-user"
                 onClick={closeMenus}
               >
@@ -798,37 +802,28 @@ function Navbar({
 
             <>
 
-              <div className="shobdo-mobile-user">
-
+              <Link
+                to={
+                  user?.id
+                    ? `/users/${user.id}`
+                    : "/my-writings"
+                }
+                className="shobdo-mobile-user"
+                onClick={closeMenus}
+              >
                 <span className="shobdo-navbar-avatar">
-
                   {userInitial}
-
                 </span>
 
-
                 <div>
-
                   <small>
-
-                    {t(
-                      "navbar.signedInAs"
-                    )}
-
+                    {t("navbar.signedInAs")}
                   </small>
-
                   <strong>
-
-                    {
-                      user?.name ||
-                      "Writer"
-                    }
-
+                    {user?.name || "Writer"}
                   </strong>
-
                 </div>
-
-              </div>
+              </Link>
 
 
               <button

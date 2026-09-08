@@ -248,6 +248,9 @@ def create_app():
     from routes.writing_routes import (
         writings_bp,
     )
+    from routes.like_routes import like_bp
+    from routes.comment_routes import comment_bp
+    from routes.user_routes import user_bp
 
 
     app.register_blueprint(
@@ -261,7 +264,19 @@ def create_app():
         url_prefix="/api/writings",
     )
 
+    app.register_blueprint(
+        like_bp,
+        url_prefix="/api/likes",
+    )
 
+    app.register_blueprint(
+        comment_bp,
+        url_prefix="/api/comments",
+    )
+
+    app.register_blueprint(user_bp)
+
+    
     # =====================================================
     # ROOT API
     # =====================================================
@@ -454,7 +469,7 @@ app = create_app()
 if __name__ == "__main__":
 
     app.run(
-        host="127.0.0.1",
+        host="0.0.0.0",
         port=5000,
         debug=True,
     )

@@ -1,63 +1,180 @@
 import {
-  useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
 
 import {
-  AlertCircle,
-  BookOpen,
-  Check,
-  CheckCircle2,
-  Cloud,
-  CloudOff,
-  FileText,
-  Feather,
-  Globe2,
-  Loader2,
-  Save,
-  Send,
-  Tag,
-  Type,
-} from "lucide-react";
-
-import {
+  useLocation,
   useNavigate,
   useParams,
 } from "react-router-dom";
 
 import {
-  createDraft,
-  createWriting,
-  getMyWriting,
-  publishWriting,
-  updateWriting,
-} from "../api/api";
+  AlertCircle,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  FileImage,
+  FileText,
+  LoaderCircle,
+  PenLine,
+  Save,
+  ScanText,
+  Send,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 
 import {
-  DEFAULT_LANGUAGE,
-  LANGUAGES,
-  getLanguageLabel,
-} from "../config/languages";
+  createDraft,
+  createWriting,
+  extractScannedText,
+  publishWriting,
+  unpublishWriting,
+  updateWriting,
+} from "../api/api";
 
 import {
   useLanguage,
 } from "../Language/LanguageContext";
 
+import "./Write.css";
+
 
 // =========================================================
-// DATABASE CATEGORY VALUES
-// =========================================================
-//
-// Do NOT translate these values.
-//
-// These are the actual values stored in PostgreSQL.
-// Only the visible labels should change.
+// CONSTANTS
 // =========================================================
 
-const CATEGORY_VALUES = [
+const MAX_FILE_SIZE =
+  10 * 1024 * 1024;
+
+
+const ALLOWED_FILE_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+];
+
+
+const ALLOWED_FILE_EXTENSIONS = [
+  ".pdf",
+  ".jpg",
+  ".jpeg",
+  ".png",
+];
+
+
+const WRITING_LANGUAGES = [
+  {
+    code: "bn",
+    nativeName: "বাংলা",
+    englishName: "Bengali",
+    shortName: "BN",
+  },
+  {
+    code: "hi",
+    nativeName: "हिन्दी",
+    englishName: "Hindi",
+    shortName: "HI",
+  },
+  {
+    code: "en",
+    nativeName: "English",
+    englishName: "English",
+    shortName: "EN",
+  },
+  {
+    code: "as",
+    nativeName: "অসমীয়া",
+    englishName: "Assamese",
+    shortName: "AS",
+  },
+  {
+    code: "or",
+    nativeName: "ଓଡ଼ିଆ",
+    englishName: "Odia",
+    shortName: "OR",
+  },
+  {
+    code: "mr",
+    nativeName: "मराठी",
+    englishName: "Marathi",
+    shortName: "MR",
+  },
+  {
+    code: "gu",
+    nativeName: "ગુજરાતી",
+    englishName: "Gujarati",
+    shortName: "GU",
+  },
+  {
+    code: "pa",
+    nativeName: "ਪੰਜਾਬੀ",
+    englishName: "Punjabi",
+    shortName: "PA",
+  },
+  {
+    code: "ta",
+    nativeName: "தமிழ்",
+    englishName: "Tamil",
+    shortName: "TA",
+  },
+  {
+    code: "te",
+    nativeName: "తెలుగు",
+    englishName: "Telugu",
+    shortName: "TE",
+  },
+  {
+    code: "kn",
+    nativeName: "ಕನ್ನಡ",
+    englishName: "Kannada",
+    shortName: "KN",
+  },
+  {
+    code: "ml",
+    nativeName: "മലയാളം",
+    englishName: "Malayalam",
+    shortName: "ML",
+  },
+  {
+    code: "ur",
+    nativeName: "اردو",
+    englishName: "Urdu",
+    shortName: "UR",
+    rtl: true,
+  },
+  {
+    code: "ne",
+    nativeName: "नेपाली",
+    englishName: "Nepali",
+    shortName: "NE",
+  },
+  {
+    code: "other",
+    nativeName: "Other",
+    englishName: "Other",
+    shortName: "OT",
+  },
+];
+
+
+// Languages whose OCR/text-extraction support depends on the
+// backend having the matching Tesseract traineddata installed.
+// bn / en / hi are the only ones guaranteed to work out of the box.
+const OCR_SUPPORTED_LANGUAGES = [
+  "bn",
+  "en",
+  "hi",
+];
+
+
+// Database category values stay in Bengali — only the
+// displayed label is translated (see categoryLabel below).
+const CATEGORIES = [
   "কবিতা",
   "গল্প",
   "অনুভূতি",
@@ -66,165 +183,144 @@ const CATEGORY_VALUES = [
 ];
 
 
-const AUTOSAVE_DELAY = 2000;
-
-const TITLE_LIMIT = 200;
+const CONTENT_PLACEHOLDERS = {
+  bn: "এখানে আপনার লেখা শুরু করুন...",
+  hi: "यहाँ अपना लेखन शुरू करें...",
+  en: "Start writing here...",
+  as: "ইয়াতে আপোনাৰ লিখা আৰম্ভ কৰক...",
+  or: "ଏଠାରେ ଲେଖିବା ଆରମ୍ଭ କରନ୍ତୁ...",
+  mr: "इथे लिहायला सुरुवात करा...",
+  gu: "અહીં લખવાનું શરૂ કરો...",
+  pa: "ਇੱਥੇ ਲਿਖਣਾ ਸ਼ੁਰੂ ਕਰੋ...",
+  ta: "இங்கே எழுதத் தொடங்குங்கள்...",
+  te: "ఇక్కడ రాయడం ప్రారంభించండి...",
+  kn: "ಇಲ್ಲಿ ಬರೆಯಲು ಪ್ರಾರಂಭಿಸಿ...",
+  ml: "ഇവിടെ എഴുതാൻ തുടങ്ങുക...",
+  ur: "یہاں لکھنا شروع کریں...",
+  ne: "यहाँ लेख्न सुरु गर्नुहोस्...",
+  other: "Start writing here...",
+};
 
 
 // =========================================================
-// COMPONENT
+// HELPERS
+// =========================================================
+
+function getFileExtension(
+  fileName = ""
+) {
+
+  const dotIndex =
+    fileName.lastIndexOf(".");
+
+
+  if (dotIndex === -1) {
+
+    return "";
+
+  }
+
+
+  return fileName
+    .slice(dotIndex)
+    .toLowerCase();
+
+}
+
+
+function isAllowedFile(
+  file
+) {
+
+  if (!file) {
+
+    return false;
+
+  }
+
+
+  const extension =
+    getFileExtension(
+      file.name
+    );
+
+
+  return (
+    ALLOWED_FILE_TYPES.includes(
+      file.type
+    ) ||
+    ALLOWED_FILE_EXTENSIONS.includes(
+      extension
+    )
+  );
+
+}
+
+
+function formatFileSize(
+  bytes
+) {
+
+  if (!bytes) {
+
+    return "0 KB";
+
+  }
+
+
+  const sizeInMB =
+    bytes / (1024 * 1024);
+
+
+  if (sizeInMB >= 1) {
+
+    return `${sizeInMB.toFixed(2)} MB`;
+
+  }
+
+
+  return `${(
+    bytes / 1024
+  ).toFixed(1)} KB`;
+
+}
+
+
+// =========================================================
+// WRITE PAGE
 // =========================================================
 
 function Write({
   user,
-  onWritingCreated,
+  onPublished,
 }) {
 
   const navigate =
     useNavigate();
-
+  const location =
+    useLocation();
   const {
     id,
   } = useParams();
+  const editingWriting =
+    location.state?.writing || null;
+  const isEditMode =
+    Boolean(id);
 
   const {
     t,
   } = useLanguage();
 
 
-  const isEditMode =
-    Boolean(id);
-
-
-  // =====================================================
-  // FORM STATE
-  // =====================================================
-
-  const [
-    title,
-    setTitle,
-  ] = useState("");
-
-  const [
-    category,
-    setCategory,
-  ] = useState(
-    "কবিতা"
-  );
-
-  const [
-    language,
-    setLanguage,
-  ] = useState(
-    DEFAULT_LANGUAGE
-  );
-
-  const [
-    content,
-    setContent,
-  ] = useState("");
-
-
-  // =====================================================
-  // WRITING STATE
-  // =====================================================
-
-  const [
-    writingId,
-    setWritingId,
-  ] = useState(
-    id || null
-  );
-
-  const [
-    writingStatus,
-    setWritingStatus,
-  ] = useState("new");
-
-
-  // =====================================================
-  // SAVE STATE
-  // =====================================================
-
-  const [
-    saveStatus,
-    setSaveStatus,
-  ] = useState("idle");
-
-  const [
-    lastSavedAt,
-    setLastSavedAt,
-  ] = useState(null);
-
-  const [
-    isDirty,
-    setIsDirty,
-  ] = useState(false);
-
-
-  // =====================================================
-  // UI STATE
-  // =====================================================
-
-  const [
-    loadingWriting,
-    setLoadingWriting,
-  ] = useState(
-    isEditMode
-  );
-
-  const [
-    publishing,
-    setPublishing,
-  ] = useState(false);
-
-  const [
-    manualSaving,
-    setManualSaving,
-  ] = useState(false);
-
-  const [
-    error,
-    setError,
-  ] = useState("");
-
-  const [
-    success,
-    setSuccess,
-  ] = useState("");
-
-
-  // =====================================================
-  // REFS
-  // =====================================================
-
-  const initializedRef =
-    useRef(false);
-
-  const autosaveTimerRef =
+  const fileInputRef =
     useRef(null);
 
-  const savingRef =
-    useRef(false);
 
-  const creatingDraftRef =
-    useRef(false);
+  // =======================================================
+  // CATEGORY LABEL (translated display, raw db value)
+  // =======================================================
 
-  const latestFormRef =
-    useRef({
-      title: "",
-      category: "কবিতা",
-      language:
-        DEFAULT_LANGUAGE,
-      content: "",
-    });
-
-
-  // =====================================================
-  // CATEGORY LABEL
-  // =====================================================
-
-  function getCategoryLabel(
+  function categoryLabel(
     value
   ) {
 
@@ -265,813 +361,378 @@ function Write({
   }
 
 
-  // =====================================================
-  // KEEP LATEST FORM
-  // =====================================================
+  // =======================================================
+  // FORM STATE
+  // =======================================================
 
-  useEffect(() => {
-
-    latestFormRef.current = {
-      title,
-      category,
-      language,
-      content,
-    };
-
-  }, [
+  const [
     title,
-    category,
-    language,
+    setTitle,
+  ] = useState("");
+
+
+  const [
     content,
-  ]);
+    setContent,
+  ] = useState("");
 
 
-  // =====================================================
-  // LOAD EXISTING WRITING
-  // =====================================================
-
-  useEffect(() => {
-
-    if (!isEditMode) {
-
-      initializedRef.current =
-        true;
-
-      return;
-
-    }
-
-
-    let mounted = true;
-
-
-    async function loadWriting() {
-
-      setLoadingWriting(
-        true
-      );
-
-      setError("");
-
-
-      try {
-
-        const data =
-          await getMyWriting(
-            id
-          );
-
-
-        const writing =
-          data?.writing;
-
-
-        if (!writing) {
-
-          throw new Error(
-            t(
-              "writingDetails.notFound"
-            )
-          );
-
-        }
-
-
-        if (!mounted) {
-          return;
-        }
-
-
-        const loadedTitle =
-          writing.title ===
-          "Untitled"
-            ? ""
-            : (
-              writing.title ||
-              ""
-            );
-
-
-        const loadedCategory =
-          writing.category ||
-          "অন্যান্য";
-
-
-        const loadedLanguage =
-          writing.language ||
-          DEFAULT_LANGUAGE;
-
-
-        const loadedContent =
-          writing.content ||
-          "";
-
-
-        setWritingId(
-          writing.id
-        );
-
-        setWritingStatus(
-          writing.status ||
-          "draft"
-        );
-
-        setTitle(
-          loadedTitle
-        );
-
-        setCategory(
-          loadedCategory
-        );
-
-        setLanguage(
-          loadedLanguage
-        );
-
-        setContent(
-          loadedContent
-        );
-
-
-        latestFormRef.current = {
-          title:
-            loadedTitle,
-
-          category:
-            loadedCategory,
-
-          language:
-            loadedLanguage,
-
-          content:
-            loadedContent,
-        };
-
-
-        setIsDirty(false);
-
-        setSaveStatus(
-          "saved"
-        );
-
-        initializedRef.current =
-          true;
-
-
-      } catch (err) {
-
-        console.error(
-          "LOAD WRITING ERROR:",
-          err
-        );
-
-
-        if (!mounted) {
-          return;
-        }
-
-
-        setError(
-          err.message ||
-          t(
-            "errors.generic"
-          )
-        );
-
-
-      } finally {
-
-        if (mounted) {
-
-          setLoadingWriting(
-            false
-          );
-
-        }
-
-      }
-
-    }
-
-
-    loadWriting();
-
-
-    return () => {
-
-      mounted = false;
-
-    };
-
-  }, [
-    id,
-    isEditMode,
-    t,
-  ]);
-
-
-  // =====================================================
-  // MARK DIRTY
-  // =====================================================
-
-  useEffect(() => {
-
-    if (
-      !initializedRef.current ||
-      loadingWriting
-    ) {
-
-      return;
-
-    }
-
-
-    setIsDirty(true);
-
-    setSaveStatus(
-      "unsaved"
-    );
-
-    setSuccess("");
-
-  }, [
-    title,
+  const [
     category,
-    language,
-    content,
-    loadingWriting,
-  ]);
+    setCategory,
+  ] = useState(
+    "কবিতা"
+  );
 
 
-  // =====================================================
-  // BUILD PAYLOAD
-  // =====================================================
+  const [
+    writingLanguage,
+    setWritingLanguage,
+  ] = useState(
+    "bn"
+  );
 
-  const buildPayload =
-    useCallback(() => {
+  // =======================================================
+// EDIT MODE PREFILL
+// =======================================================
 
-      const form =
-        latestFormRef.current;
+useEffect(() => {
 
+  if (
+    !isEditMode ||
+    !editingWriting
+  ) {
+    return;
+  }
 
-      return {
+  setTitle(
+    editingWriting.title || ""
+  );
 
-        title:
-          form.title.trim(),
+  setContent(
+    editingWriting.content || ""
+  );
 
-        category:
-          form.category,
+  setCategory(
+    editingWriting.category ||
+    "কবিতা"
+  );
 
-        language:
-          form.language,
+  setWritingLanguage(
+    editingWriting.language ||
+    "bn"
+  );
 
-        content:
-          form.content.trim(),
-      };
+}, [
+  id,
+  isEditMode,
+  editingWriting,
+]);
 
-    }, []);
 
+  const [
+    languageMenuOpen,
+    setLanguageMenuOpen,
+  ] = useState(false);
 
-  // =====================================================
-  // SAVE TO DATABASE
-  // =====================================================
 
-  const saveToDatabase =
-    useCallback(
-      async ({
-        manual = false,
-      } = {}) => {
+  const languageMenuRef =
+    useRef(null);
 
-        if (
-          savingRef.current ||
-          creatingDraftRef.current
-        ) {
-
-          return null;
-
-        }
-
-
-        const payload =
-          buildPayload();
-
-
-        if (
-          !writingId &&
-          !payload.title &&
-          !payload.content
-        ) {
-
-          return null;
-
-        }
-
-
-        savingRef.current =
-          true;
-
-        setSaveStatus(
-          "saving"
-        );
-
-        setError("");
-
-
-        if (manual) {
-
-          setManualSaving(
-            true
-          );
-
-        }
-
-
-        try {
-
-          let data;
-
-
-          // =============================================
-          // UPDATE EXISTING
-          // =============================================
-
-          if (writingId) {
-
-            data =
-              await updateWriting(
-                writingId,
-                payload
-              );
-
-
-            if (
-              data?.writing?.status
-            ) {
-
-              setWritingStatus(
-                data.writing.status
-              );
-
-            }
-
-
-          } else {
-
-            // ===========================================
-            // CREATE INITIAL DRAFT
-            // ===========================================
-
-            creatingDraftRef.current =
-              true;
-
-
-            data =
-              await createDraft(
-                payload
-              );
-
-
-            const newId =
-              data?.writing?.id;
-
-
-            if (!newId) {
-
-              throw new Error(
-                t(
-                  "errors.generic"
-                )
-              );
-
-            }
-
-
-            setWritingId(
-              newId
-            );
-
-            setWritingStatus(
-              data?.writing?.status ||
-              "draft"
-            );
-
-
-            navigate(
-              `/write/${newId}`,
-              {
-                replace: true,
-              }
-            );
-
-          }
-
-
-          setIsDirty(false);
-
-          setSaveStatus(
-            "saved"
-          );
-
-          setLastSavedAt(
-            new Date()
-          );
-
-
-          if (manual) {
-
-            setSuccess(
-              t(
-                "write.draftSaved"
-              )
-            );
-
-          }
-
-
-          return data;
-
-
-        } catch (err) {
-
-          console.error(
-            "SAVE WRITING ERROR:",
-            err
-          );
-
-
-          setSaveStatus(
-            "error"
-          );
-
-
-          if (manual) {
-
-            setError(
-              err.message ||
-              t(
-                "errors.generic"
-              )
-            );
-
-          }
-
-
-          throw err;
-
-
-        } finally {
-
-          savingRef.current =
-            false;
-
-          creatingDraftRef.current =
-            false;
-
-
-          if (manual) {
-
-            setManualSaving(
-              false
-            );
-
-          }
-
-        }
-
-      },
-      [
-        buildPayload,
-        navigate,
-        t,
-        writingId,
-      ]
-    );
-
-
-  // =====================================================
-  // AUTOSAVE
-  // =====================================================
 
   useEffect(() => {
 
-    if (
-      !initializedRef.current ||
-      loadingWriting ||
-      publishing ||
-      !isDirty
-    ) {
-
-      return;
-
-    }
-
-
-    if (
-      autosaveTimerRef.current
-    ) {
-
-      clearTimeout(
-        autosaveTimerRef.current
-      );
-
-    }
-
-
-    autosaveTimerRef.current =
-      setTimeout(
-        async () => {
-
-          try {
-
-            await saveToDatabase();
-
-          } catch {
-
-            // save status is already updated.
-
-          }
-
-        },
-        AUTOSAVE_DELAY
-      );
-
-
-    return () => {
-
-      if (
-        autosaveTimerRef.current
-      ) {
-
-        clearTimeout(
-          autosaveTimerRef.current
-        );
-
-      }
-
-    };
-
-  }, [
-    title,
-    category,
-    language,
-    content,
-    isDirty,
-    loadingWriting,
-    publishing,
-    saveToDatabase,
-  ]);
-
-
-  // =====================================================
-  // BROWSER EXIT PROTECTION
-  // =====================================================
-
-  useEffect(() => {
-
-    function handleBeforeUnload(
+    function handleOutsideClick(
       event
     ) {
 
-      if (!isDirty) {
-        return;
+      if (
+        languageMenuRef.current &&
+        !languageMenuRef.current.contains(
+          event.target
+        )
+      ) {
+
+        setLanguageMenuOpen(
+          false
+        );
+
       }
-
-
-      event.preventDefault();
-
-      event.returnValue = "";
 
     }
 
 
-    window.addEventListener(
-      "beforeunload",
-      handleBeforeUnload
+    function handleEscapeKey(
+      event
+    ) {
+
+      if (
+        event.key === "Escape"
+      ) {
+
+        setLanguageMenuOpen(
+          false
+        );
+
+      }
+
+    }
+
+
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick
+    );
+
+    document.addEventListener(
+      "keydown",
+      handleEscapeKey
     );
 
 
     return () => {
 
-      window.removeEventListener(
-        "beforeunload",
-        handleBeforeUnload
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick
+      );
+
+      document.removeEventListener(
+        "keydown",
+        handleEscapeKey
       );
 
     };
 
-  }, [isDirty]);
+  }, []);
 
 
-  // =====================================================
-  // WORD COUNT
-  // =====================================================
-
-  const wordCount =
-    useMemo(() => {
-
-      if (!content.trim()) {
-
-        return 0;
-
-      }
-
-
-      return content
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .length;
-
-    }, [content]);
-
-
-  // =====================================================
-  // CHARACTER COUNT
-  // =====================================================
-
-  const characterCount =
-    content.length;
-
-
-  // =====================================================
-  // READING TIME
-  // =====================================================
-
-  const readingTime =
-    useMemo(
-      () =>
-        Math.max(
-          1,
-          Math.ceil(
-            wordCount / 180
-          )
-        ),
-      [wordCount]
-    );
-
-
-  // =====================================================
-  // LAST SAVED TEXT
-  // =====================================================
-
-  const lastSavedText =
-    useMemo(() => {
-
-      if (!lastSavedAt) {
-
-        return "";
-
-      }
-
-
-      return lastSavedAt
-        .toLocaleTimeString(
-          [],
-          {
-            hour: "2-digit",
-            minute: "2-digit",
-          }
-        );
-
-    }, [lastSavedAt]);
-
-
-  // =====================================================
-  // VALIDATION
-  // =====================================================
-
-  function validateForPublish() {
-
-    const cleanTitle =
-      title.trim();
-
-    const cleanContent =
-      content.trim();
-
-
-    if (!cleanTitle) {
-
-      return t(
-        "write.titleRequired"
-      );
-
-    }
-
+  function languageLabel(
+    language
+  ) {
 
     if (
-      cleanTitle.length >
-      TITLE_LIMIT
+      !language ||
+      language.nativeName ===
+        language.englishName
     ) {
 
       return (
-        `${t(
-          "write.titleTooLong"
-        )} (${TITLE_LIMIT})`
+        language?.englishName ||
+        ""
       );
 
     }
 
 
-    if (!language) {
+    return (
+      `${language.nativeName} — ${language.englishName}`
+    );
 
-      return t(
-        "write.languageRequired"
-      );
+  }
+
+
+  // =======================================================
+  // FILE AND OCR STATE
+  // =======================================================
+
+  const [
+    selectedFile,
+    setSelectedFile,
+  ] = useState(null);
+
+
+  const [
+    isDragging,
+    setIsDragging,
+  ] = useState(false);
+
+
+  const [
+    extracting,
+    setExtracting,
+  ] = useState(false);
+
+
+  // =======================================================
+  // FORM STATUS
+  // =======================================================
+
+  const [
+    publishing,
+    setPublishing,
+  ] = useState(false);
+
+
+  const [
+    error,
+    setError,
+  ] = useState("");
+
+
+  const [
+    success,
+    setSuccess,
+  ] = useState("");
+
+
+  // =======================================================
+  // FILE VALIDATION
+  // =======================================================
+
+  function validateAndSelectFile(
+    file
+  ) {
+
+    setError("");
+    setSuccess("");
+
+
+    if (!file) {
+
+      return;
 
     }
 
 
-    if (!cleanContent) {
+    if (!isAllowedFile(file)) {
 
-      return t(
-        "write.contentRequired"
+      setSelectedFile(null);
+
+      setError(
+        t(
+          "write.invalidFile"
+        )
       );
+
+      return;
 
     }
 
 
     if (
-      cleanContent.length < 10
+      file.size >
+      MAX_FILE_SIZE
     ) {
 
-      return t(
-        "write.contentTooShort"
+      setSelectedFile(null);
+
+      setError(
+        t(
+          "write.fileTooLarge"
+        )
       );
 
+      return;
+
     }
 
 
-    return "";
+    setSelectedFile(file);
 
   }
 
 
-  // =====================================================
-  // MANUAL SAVE
-  // =====================================================
+  function handleFileChange(
+    event
+  ) {
 
-  async function handleManualSave() {
+    const file =
+      event.target.files?.[0];
 
+
+    validateAndSelectFile(
+      file
+    );
+
+
+    event.target.value = "";
+
+  }
+
+
+  function removeSelectedFile() {
+
+    setSelectedFile(null);
+    setError("");
     setSuccess("");
 
-    setError("");
 
+    if (
+      fileInputRef.current
+    ) {
 
-    try {
-
-      const result =
-        await saveToDatabase({
-          manual: true,
-        });
-
-
-      if (
-        !result &&
-        !title.trim() &&
-        !content.trim()
-      ) {
-
-        setError(
-          t(
-            "write.draftEmptyError"
-          )
-        );
-
-      }
-
-
-    } catch {
-
-      // saveToDatabase already handles the error.
+      fileInputRef.current.value =
+        "";
 
     }
 
   }
 
 
-  // =====================================================
-  // PUBLISH
-  // =====================================================
+  // =======================================================
+  // DRAG AND DROP
+  // =======================================================
 
-  async function handlePublish(
+  function handleDragOver(
     event
   ) {
 
     event.preventDefault();
 
-    setError("");
+    setIsDragging(true);
 
+  }
+
+
+  function handleDragLeave(
+    event
+  ) {
+
+    event.preventDefault();
+
+    setIsDragging(false);
+
+  }
+
+
+  function handleDrop(
+    event
+  ) {
+
+    event.preventDefault();
+
+    setIsDragging(false);
+
+
+    const file =
+      event.dataTransfer
+        .files?.[0];
+
+
+    validateAndSelectFile(
+      file
+    );
+
+  }
+
+
+  // =======================================================
+  // OCR EXTRACTION
+  // =======================================================
+
+  async function handleExtractText() {
+
+    setError("");
     setSuccess("");
 
 
-    const validationError =
-      validateForPublish();
-
-
-    if (validationError) {
+    if (!selectedFile) {
 
       setError(
-        validationError
+        t(
+          "write.chooseFileFirst"
+        )
       );
 
       return;
@@ -1080,847 +741,1338 @@ function Write({
 
 
     if (
-      autosaveTimerRef.current
+      !OCR_SUPPORTED_LANGUAGES.includes(
+        writingLanguage
+      )
     ) {
 
-      clearTimeout(
-        autosaveTimerRef.current
+      const languageInfo =
+        WRITING_LANGUAGES.find(
+          (item) =>
+            item.code ===
+            writingLanguage
+        );
+
+
+      setError(
+        t(
+          "write.ocrLanguageUnsupported",
+          `OCR isn't available yet for ${
+            languageInfo?.englishName ||
+            "this language"
+          }. Try Bengali, English or Hindi, or type your writing directly.`
+        )
       );
+
+      return;
 
     }
 
 
-    setPublishing(
-      true
-    );
-
-
     try {
 
-      let finalWritingId =
-        writingId;
-
-      let data;
+      setExtracting(true);
 
 
-      // ===============================================
-      // EXISTING WRITING
-      // ===============================================
-
-      if (finalWritingId) {
-
-        await updateWriting(
-          finalWritingId,
-          buildPayload()
+      const response =
+        await extractScannedText(
+          selectedFile,
+          writingLanguage
         );
 
 
-        setIsDirty(false);
+      const extractedText =
+        typeof response === "string"
+          ? response
+          : response?.text ||
+            response?.content ||
+            response?.extracted_text ||
+            "";
 
 
-        if (
-          writingStatus ===
-          "published"
-        ) {
+      if (
+        !extractedText.trim()
+      ) {
 
-          data = {
+        setError(
+          t(
+            "write.noTextFound"
+          )
+        );
 
-            message:
-              t(
-                "write.updatedSuccess"
-              ),
-
-            writing: {
-              id:
-                finalWritingId,
-
-              status:
-                "published",
-            },
-          };
-
-
-        } else {
-
-          data =
-            await publishWriting(
-              finalWritingId
-            );
-
-        }
-
-
-      } else {
-
-        // =============================================
-        // BRAND NEW PUBLISHED WRITING
-        // =============================================
-
-        data =
-          await createWriting(
-            buildPayload()
-          );
-
-
-        finalWritingId =
-          data?.writing?.id;
-
-
-        if (!finalWritingId) {
-
-          throw new Error(
-            t(
-              "errors.generic"
-            )
-          );
-
-        }
+        return;
 
       }
 
 
-      setWritingId(
-        finalWritingId
-      );
+      setContent(
+        (previousContent) => {
 
-      setWritingStatus(
-        "published"
-      );
+          if (
+            !previousContent.trim()
+          ) {
 
-      setIsDirty(false);
+            return extractedText.trim();
 
-      setSaveStatus(
-        "saved"
-      );
+          }
 
-      setLastSavedAt(
-        new Date()
+
+          return (
+            `${previousContent.trim()}\n\n` +
+            extractedText.trim()
+          );
+
+        }
       );
 
 
       setSuccess(
-        writingStatus ===
-        "published"
-          ? t(
-            "write.updatedSuccess"
-          )
-          : t(
-            "write.publishedSuccess"
-          )
+        t(
+          "write.extractionSuccess"
+        )
       );
 
 
-      if (
-        onWritingCreated
-      ) {
-
-        await onWritingCreated();
-
-      }
+      setSelectedFile(null);
 
 
-      navigate(
-        `/writings/${finalWritingId}`
-      );
-
-
-    } catch (err) {
+    } catch (requestError) {
 
       console.error(
-        "PUBLISH ERROR:",
-        err
+        "OCR extraction failed:",
+        requestError
       );
 
 
       setError(
-        err.message ||
+        requestError?.message ||
         t(
-          "errors.generic"
+          "write.extractionFailed"
         )
       );
 
 
     } finally {
 
-      setPublishing(
-        false
-      );
+      setExtracting(false);
 
     }
 
   }
 
 
-  // =====================================================
-  // SAVE STATUS
-  // =====================================================
+ // =======================================================
+// SAVE DRAFT TO DATABASE
+// =======================================================
 
-  function renderSaveStatus() {
+async function handleSaveDraft() {
 
-    if (
-      saveStatus ===
-      "saving"
-    ) {
-
-      return (
-        <div className="editor-save-status saving">
-
-          <Loader2
-            size={14}
-            className="spin"
-          />
-
-          <span>
-
-            {t(
-              "write.saving"
-            )}
-
-          </span>
-
-        </div>
-      );
-
-    }
+  setError("");
+  setSuccess("");
 
 
-    if (
-      saveStatus ===
-      "saved"
-    ) {
+  if (!user) {
 
-      return (
-        <div className="editor-save-status saved">
-
-          <Check size={14} />
-
-          <span>
-
-            {t(
-              "write.saved"
-            )}
-
-            {
-              lastSavedText
-                ? (
-                  ` ${t(
-                    "write.savedAt"
-                  )} ${lastSavedText}`
-                )
-                : ""
-            }
-
-          </span>
-
-        </div>
-      );
-
-    }
-
-
-    if (
-      saveStatus ===
-      "error"
-    ) {
-
-      return (
-        <div className="editor-save-status error">
-
-          <CloudOff size={14} />
-
-          <span>
-
-            {t(
-              "write.autosaveFailed"
-            )}
-
-          </span>
-
-        </div>
-      );
-
-    }
-
-
-    if (
-      saveStatus ===
-      "unsaved"
-    ) {
-
-      return (
-        <div className="editor-save-status unsaved">
-
-          <Cloud size={14} />
-
-          <span>
-
-            {t(
-              "write.unsavedChanges"
-            )}
-
-          </span>
-
-        </div>
-      );
-
-    }
-
-
-    return (
-      <div className="editor-save-status">
-
-        <Cloud size={14} />
-
-        <span>
-
-          {t(
-            "write.autosaveReady"
-          )}
-
-        </span>
-
-      </div>
+    setError(
+      t(
+        "write.loginRequired"
+      )
     );
 
+    return;
+
   }
 
 
-  // =====================================================
-  // STATUS LABEL
-  // =====================================================
+  if (
+    !title.trim() &&
+    !content.trim()
+  ) {
 
-  function getStatusLabel() {
+    setError(
+      t(
+        "write.draftEmpty"
+      )
+    );
+
+    return;
+
+  }
+
+
+  const payload = {
+
+    title:
+      title.trim(),
+
+    content:
+      content.trim(),
+
+    category,
+
+    language:
+      writingLanguage,
+
+  };
+
+
+  try {
+
+    setPublishing(true);
+
+
+    let savedDraft;
+
+
+    // ===================================================
+    // EXISTING WRITING
+    // ===================================================
+
+    if (isEditMode && id) {
+
+      const updated =
+        await updateWriting(
+          id,
+          payload
+        );
+
+
+      const updatedWriting =
+        updated?.writing ||
+        updated;
+
+
+      // If this writing was published,
+      // Save Draft should move it back to Drafts.
+      if (
+        updatedWriting?.status === "published"
+      ) {
+
+        const unpublished =
+          await unpublishWriting(
+            id
+          );
+
+
+        savedDraft =
+          unpublished?.writing ||
+          unpublished;
+
+      } else {
+
+        savedDraft =
+          updatedWriting;
+
+      }
+
+    }
+
+    // ===================================================
+    // NEW WRITING
+    // ===================================================
+
+    else {
+
+      const created =
+        await createDraft(
+          payload
+        );
+
+
+      savedDraft =
+        created?.writing ||
+        created;
+
+    }
+
+
+    const draftId =
+      savedDraft?.id ||
+      id;
+
+
+    if (!draftId) {
+
+      throw new Error(
+        "Draft was saved but no writing ID was returned."
+      );
+
+    }
+
+
+    localStorage.removeItem(
+      "shobdo_writing_draft"
+    );
+
+
+    setSuccess(
+      t(
+        "write.draftSaved"
+      )
+    );
+
+
+    // Switch the editor to the database-backed draft URL.
+    // This prevents another Save Draft from creating a duplicate.
+    if (!isEditMode) {
+
+      navigate(
+        `/write/${draftId}`,
+        {
+          replace: true,
+
+          state: {
+            writing: {
+              ...savedDraft,
+              status: "draft",
+            },
+          },
+        }
+      );
+
+    }
+
+
+  } catch (requestError) {
+
+    console.error(
+      "SAVE DRAFT ERROR:",
+      requestError
+    );
+
+
+    setError(
+      requestError?.message ||
+      t(
+        "errors.generic"
+      )
+    );
+
+
+  } finally {
+
+    setPublishing(false);
+
+  }
+
+}
+
+
+  // =======================================================
+  // PUBLISH WRITING
+  // =======================================================
+
+  async function handleSubmit(
+    event
+  ) {
+
+    event.preventDefault();
+
+    setError("");
+    setSuccess("");
+
+
+    if (!user) {
+
+      setError(
+        t(
+          "write.loginRequired"
+        )
+      );
+
+
+      setTimeout(() => {
+
+        navigate("/login");
+
+      }, 1000);
+
+
+      return;
+
+    }
+
+
+    if (!title.trim()) {
+
+      setError(
+        t(
+          "write.titleRequired"
+        )
+      );
+
+      return;
+
+    }
+
+
+    if (!content.trim()) {
+
+      setError(
+        t(
+          "write.contentRequired"
+        )
+      );
+
+      return;
+
+    }
+
 
     if (
-      writingStatus ===
-      "published"
+      title.trim().length >
+      200
     ) {
 
-      return t(
-        "write.publishedStatus"
+      setError(
+        t(
+          "write.titleTooLong"
+        )
       );
+
+      return;
 
     }
 
 
-    if (writingId) {
+    try {
 
-      return t(
-        "write.draftStatus"
+      setPublishing(true);
+
+
+      const payload = {
+        title:
+          title.trim(),
+
+        content:
+          content.trim(),
+
+        category,
+
+        language:
+          writingLanguage,
+      };
+
+
+      let savedWriting;
+
+      if (isEditMode && id) {
+
+        // First save the latest title/content/category/language.
+        savedWriting = await updateWriting(
+          id,
+          payload
+        );
+        // Then actually change status to "published".
+        const published =
+          await publishWriting(id);
+        savedWriting =
+          published?.writing ||
+          published;
+
+        } else {
+
+          savedWriting =
+            await createWriting(
+              payload
+            );
+
+        }
+
+      localStorage.removeItem(
+        "shobdo_writing_draft"
       );
+
+
+      setSuccess(
+        t(
+          "write.publishedSuccess"
+        )
+      );
+
+
+      setTitle("");
+      setContent("");
+      setCategory("কবিতা");
+      setWritingLanguage("bn");
+      setSelectedFile(null);
+
+
+      if (
+        typeof onPublished ===
+        "function"
+      ) {
+
+        onPublished(
+          savedWriting
+        );
+
+      }
+
+
+      const writingId =
+        savedWriting?.id ||
+        savedWriting?.writing?.id ||
+        id;
+
+      const writingStatus =
+        savedWriting?.status ||
+        savedWriting?.writing?.status;
+
+      setTimeout(() => {
+
+        if (
+          writingId &&
+          writingStatus === "published"
+        ) {
+
+          navigate(
+            `/writings/${writingId}`
+          );
+
+        } else {
+
+          navigate(
+            "/my-writings"
+          );
+
+        }
+
+      }, 900);
+
+
+    } catch (requestError) {
+
+      console.error(
+        "Writing publication failed:",
+        requestError
+      );
+
+
+      setError(
+        requestError?.message ||
+        t(
+          "write.publishFailed"
+        )
+      );
+
+
+    } finally {
+
+      setPublishing(false);
 
     }
 
-
-    return t(
-      "write.newStatus"
-    );
-
   }
 
 
-  // =====================================================
-  // LOADING
-  // =====================================================
+  // =======================================================
+  // WORD AND CHARACTER COUNT
+  // =======================================================
 
-  if (loadingWriting) {
+  const characterCount =
+    content.length;
 
-    return (
-      <main className="write-page">
 
-        <div className="write-shell">
+  const wordCount =
+    content.trim()
+      ? content
+          .trim()
+          .split(/\s+/)
+          .length
+      : 0;
 
-          <section className="write-editor-card">
 
-            <div className="my-writings-loading">
-
-              <Loader2
-                size={30}
-                className="spin"
-              />
-
-              <p>
-
-                {t(
-                  "common.loading"
-                )}
-
-              </p>
-
-            </div>
-
-          </section>
-
-        </div>
-
-      </main>
+  const currentLanguage =
+    WRITING_LANGUAGES.find(
+      (item) =>
+        item.code ===
+        writingLanguage
     );
 
-  }
 
-
-  // =====================================================
+  // =======================================================
   // UI
-  // =====================================================
+  // =======================================================
 
   return (
+
     <main className="write-page">
 
-      <div className="write-shell">
+      <section className="write-hero">
+
+        <div className="write-hero-content">
+
+          <div className="write-hero-icon">
+
+            <PenLine
+              size={25}
+            />
+
+          </div>
 
 
-        {/* ===============================================
-            HEADER
-        ================================================ */}
+          <div>
 
-        <header className="write-hero">
+            <span className="write-eyebrow">
 
-          <div className="write-eyebrow">
-
-            <Feather size={16} />
-
-            <span>
-
-              {
-                isEditMode
-                  ? t(
-                    "write.eyebrowEdit"
-                  )
-                  : t(
-                    "write.eyebrowCreate"
-                  )
-              }
+              {t(
+                "write.eyebrow"
+              )}
 
             </span>
 
-          </div>
+
+            <h1>
+
+              {t(
+                "write.title"
+              )}
+
+            </h1>
 
 
-          <h1>
+            <p>
 
-            {
-              isEditMode
-                ? t(
-                  "write.editTitle"
-                )
-                : t(
-                  "write.newTitle"
-                )
-            }
+              {t(
+                "write.subtitle"
+              )}
 
-          </h1>
-
-
-          <p>
-
-            {
-              isEditMode
-                ? t(
-                  "write.editDescription"
-                )
-                : t(
-                  "write.description"
-                )
-            }
-
-          </p>
-
-        </header>
-
-
-        {/* ===============================================
-            EDITOR
-        ================================================ */}
-
-        <section className="write-editor-card">
-
-
-          {/* =============================================
-              AUTHOR / SAVE STATUS
-          ============================================== */}
-
-          <div className="write-author-strip">
-
-            <div className="write-author-avatar">
-
-              {
-                user?.name
-                  ?.charAt(0)
-                  ?.toUpperCase()
-                || "S"
-              }
-
-            </div>
-
-
-            <div className="write-author-details">
-
-              <span>
-
-                {t(
-                  "write.writingAs"
-                )}
-
-              </span>
-
-              <strong>
-
-                {
-                  user?.name ||
-                  "SHOBDO"
-                }
-
-              </strong>
-
-            </div>
-
-
-            <div className="write-save-area">
-
-              {renderSaveStatus()}
-
-
-              <span
-                className={
-                  writingStatus ===
-                  "published"
-                    ? (
-                      "write-status-badge published"
-                    )
-                    : (
-                      "write-status-badge"
-                    )
-                }
-              >
-
-                {getStatusLabel()}
-
-              </span>
-
-            </div>
+            </p>
 
           </div>
 
+        </div>
 
-          {/* =============================================
-              ERROR
-          ============================================== */}
+      </section>
+
+
+      <section className="write-container">
+
+        <form
+          className="write-form-card"
+          onSubmit={handleSubmit}
+        >
+
+          {/* ============================================= */}
+          {/* STATUS MESSAGES                               */}
+          {/* ============================================= */}
 
           {error && (
 
             <div
-              className="write-message error"
+              className="form-message form-message-error"
               role="alert"
             >
 
               <AlertCircle
-                size={18}
+                size={20}
               />
 
               <span>
                 {error}
               </span>
 
+              <button
+                type="button"
+                aria-label={
+                  t(
+                    "common.close"
+                  )
+                }
+                onClick={() =>
+                  setError("")
+                }
+              >
+
+                <X
+                  size={18}
+                />
+
+              </button>
+
             </div>
 
           )}
 
 
-          {/* =============================================
-              SUCCESS
-          ============================================== */}
-
           {success && (
 
             <div
-              className="write-message success"
+              className="form-message form-message-success"
               role="status"
             >
 
               <CheckCircle2
-                size={18}
+                size={20}
               />
 
               <span>
                 {success}
               </span>
 
+              <button
+                type="button"
+                aria-label={
+                  t(
+                    "common.close"
+                  )
+                }
+                onClick={() =>
+                  setSuccess("")
+                }
+              >
+
+                <X
+                  size={18}
+                />
+
+              </button>
+
             </div>
 
           )}
 
 
-          {/* =============================================
-              FORM
-          ============================================== */}
+          {/* ============================================= */}
+          {/* LANGUAGE                                      */}
+          {/* ============================================= */}
 
-          <form
-            className="write-form"
-            onSubmit={
-              handlePublish
-            }
-          >
+          <div className="write-section">
 
+            <div className="write-section-heading">
 
-            {/* ===========================================
-                TITLE
-            ============================================ */}
+              <div>
 
-            <div className="write-field">
-
-              <div className="write-field-header">
-
-                <label htmlFor="writing-title">
-
-                  <Type size={17} />
+                <span className="write-step">
 
                   {t(
-                    "write.titleLabel"
+                    "write.languageStep"
                   )}
 
-                </label>
-
-
-                <span>
-
-                  {title.length}
-                  /
-                  {TITLE_LIMIT}
-
                 </span>
+
+
+                <h2>
+
+                  {t(
+                    "write.languageTitle"
+                  )}
+
+                </h2>
 
               </div>
 
 
-              <input
-                id="writing-title"
+              <p>
 
-                className="write-title-input"
+                {t(
+                  "write.languageDescription"
+                )}
 
-                type="text"
-
-                placeholder={
-                  t(
-                    "write.titlePlaceholder"
-                  )
-                }
-
-                value={title}
-
-                onChange={(event) =>
-                  setTitle(
-                    event.target.value
-                  )
-                }
-
-                maxLength={
-                  TITLE_LIMIT
-                }
-
-                disabled={
-                  publishing
-                }
-
-                autoComplete="off"
-              />
+              </p>
 
             </div>
 
 
-            {/* ===========================================
-                CATEGORY + LANGUAGE
-            ============================================ */}
+            <div
+              className="language-select-wrap"
+              ref={languageMenuRef}
+            >
 
-            <div className="write-meta-grid write-meta-grid-language">
+              <button
+                type="button"
+                className="language-select-trigger"
+                aria-haspopup="listbox"
+                aria-expanded={
+                  languageMenuOpen
+                }
+                onClick={() =>
+                  setLanguageMenuOpen(
+                    (current) =>
+                      !current
+                  )
+                }
+              >
 
-
-              {/* CATEGORY */}
-
-              <div className="write-field">
-
-                <label htmlFor="writing-category">
-
-                  <Tag size={17} />
-
-                  {t(
-                    "write.categoryLabel"
-                  )}
-
-                </label>
-
-
-                <select
-                  id="writing-category"
-
-                  className="write-select"
-
-                  value={
-                    category
-                  }
-
-                  onChange={(event) =>
-                    setCategory(
-                      event.target.value
-                    )
-                  }
-
-                  disabled={
-                    publishing
-                  }
-                >
+                <span className="language-short-name">
 
                   {
-                    CATEGORY_VALUES.map(
-                      (item) => (
+                    currentLanguage?.shortName ||
+                    "?"
+                  }
 
-                        <option
-                          key={
-                            item
-                          }
+                </span>
 
-                          value={
-                            item
-                          }
-                        >
 
-                          {
-                            getCategoryLabel(
-                              item
-                            )
-                          }
+                <span className="language-select-trigger-label">
 
-                        </option>
-
-                      )
+                  {
+                    languageLabel(
+                      currentLanguage
                     )
                   }
 
-                </select>
+                </span>
+
+
+                <ChevronDown
+                  size={18}
+                  className={
+                    languageMenuOpen
+                      ? "language-select-chevron open"
+                      : "language-select-chevron"
+                  }
+                />
+
+              </button>
+
+
+              {languageMenuOpen && (
+
+                <ul
+                  className="language-dropdown"
+                  role="listbox"
+                >
+
+                  {WRITING_LANGUAGES.map(
+                    (language) => (
+
+                      <li
+                        key={
+                          language.code
+                        }
+                        role="option"
+                        aria-selected={
+                          writingLanguage ===
+                          language.code
+                        }
+                      >
+
+                        <button
+                          type="button"
+                          className={
+                            writingLanguage ===
+                            language.code
+                              ? "language-dropdown-item active"
+                              : "language-dropdown-item"
+                          }
+                          onClick={() => {
+
+                            setWritingLanguage(
+                              language.code
+                            );
+
+                            setError("");
+                            setSuccess("");
+
+                            setLanguageMenuOpen(
+                              false
+                            );
+
+                          }}
+                        >
+
+                          <span>
+
+                            {
+                              languageLabel(
+                                language
+                              )
+                            }
+
+                          </span>
+
+
+                          {writingLanguage ===
+                          language.code && (
+
+                            <Check
+                              size={16}
+                            />
+
+                          )}
+
+                        </button>
+
+                      </li>
+
+                    )
+                  )}
+
+                </ul>
+
+              )}
+
+            </div>
+
+
+            {!OCR_SUPPORTED_LANGUAGES.includes(
+              writingLanguage
+            ) && (
+
+              <p className="language-ocr-note">
+
+                {t(
+                  "write.ocrLanguageNote",
+                  "Scanning (OCR) currently supports Bengali, English and Hindi only — you can still type your writing directly in this language."
+                )}
+
+              </p>
+
+            )}
+
+          </div>
+
+
+          {/* ============================================= */}
+          {/* SCAN DOCUMENT                                 */}
+          {/* ============================================= */}
+
+          <div className="write-section scan-section">
+
+            <div className="write-section-heading">
+
+              <div>
+
+                <span className="write-step">
+
+                  {t(
+                    "write.scanStep"
+                  )}
+
+                </span>
+
+
+                <h2>
+
+                  {t(
+                    "write.scanTitle"
+                  )}
+
+                </h2>
 
               </div>
 
 
-              {/* =========================================
-                  WRITING LANGUAGE
-              ========================================== */}
+              <span className="optional-badge">
 
-              <div className="write-field">
+                {t(
+                  "write.scanOptional"
+                )}
 
-                <label htmlFor="writing-language">
+              </span>
 
-                  <Globe2 size={17} />
+            </div>
+
+
+            <p className="scan-description">
+
+              {t(
+                "write.scanDescription"
+              )}
+
+            </p>
+
+
+            {!selectedFile ? (
+
+              <div
+                className={
+                  isDragging
+                    ? "scan-drop-zone dragging"
+                    : "scan-drop-zone"
+                }
+                onDragOver={
+                  handleDragOver
+                }
+                onDragLeave={
+                  handleDragLeave
+                }
+                onDrop={
+                  handleDrop
+                }
+              >
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  id="writing-document"
+                  className="scan-file-input"
+                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                  onChange={
+                    handleFileChange
+                  }
+                />
+
+
+                <div className="scan-upload-icon">
+
+                  <Upload
+                    size={28}
+                  />
+
+                </div>
+
+
+                <h3>
 
                   {t(
-                    "write.writingLanguageLabel"
+                    "write.dropTitle"
                   )}
 
-                </label>
+                </h3>
 
 
-                <select
-                  id="writing-language"
+                <p>
 
-                  className="write-select"
+                  {t(
+                    "write.dropSubtitle"
+                  )}
 
-                  value={
-                    language
-                  }
+                </p>
 
-                  onChange={(event) =>
-                    setLanguage(
-                      event.target.value
-                    )
-                  }
 
-                  disabled={
-                    publishing
+                <button
+                  type="button"
+                  className="scan-select-button"
+                  onClick={() =>
+                    fileInputRef.current?.click()
                   }
                 >
 
-                  {
-                    LANGUAGES.map(
-                      (item) => (
-
-                        <option
-                          key={
-                            item.code
-                          }
-
-                          value={
-                            item.code
-                          }
-                        >
-
-                          {
-                            item.nativeName ===
-                            item.name
-                              ? item.name
-                              : (
-                                `${item.nativeName} — ${item.name}`
-                              )
-                          }
-
-                        </option>
-
-                      )
-                    )
-                  }
-
-                </select>
-
-
-                <small className="write-field-help">
+                  <FileImage
+                    size={18}
+                  />
 
                   {t(
-                    "write.writingLanguageHelp"
+                    "write.selectFile"
+                  )}
+
+                </button>
+
+
+                <small>
+
+                  {t(
+                    "write.supportedFiles"
                   )}
 
                 </small>
 
               </div>
 
+            ) : (
 
-              {/* =========================================
-                  STATS
-              ========================================== */}
+              <div className="selected-file-card">
 
-              <div className="write-stats-card">
+                <div className="selected-file-icon">
 
-                <div>
+                  {selectedFile.type ===
+                  "application/pdf" ? (
 
-                  <BookOpen
-                    size={17}
-                  />
+                    <FileText
+                      size={28}
+                    />
+
+                  ) : (
+
+                    <FileImage
+                      size={28}
+                    />
+
+                  )}
+
+                </div>
+
+
+                <div className="selected-file-info">
+
+                  <strong>
+
+                    {
+                      selectedFile.name
+                    }
+
+                  </strong>
+
 
                   <span>
 
-                    {wordCount}
+                    {
+                      formatFileSize(
+                        selectedFile.size
+                      )
+                    }
+
+                    {" • "}
+
+                    {
+                      currentLanguage
+                        ? currentLanguage.englishName
+                        : ""
+                    }
 
                     {" "}
 
+                    {t(
+                      "write.ocrLabel"
+                    )}
+
+                  </span>
+
+                </div>
+
+
+                <button
+                  type="button"
+                  className="remove-file-button"
+                  aria-label={
+                    t(
+                      "write.removeFile"
+                    )
+                  }
+                  disabled={extracting}
+                  onClick={
+                    removeSelectedFile
+                  }
+                >
+
+                  <Trash2
+                    size={19}
+                  />
+
+                </button>
+
+              </div>
+
+            )}
+
+
+            <button
+              type="button"
+              className="extract-text-button"
+              disabled={
+                !selectedFile ||
+                extracting ||
+                publishing
+              }
+              onClick={
+                handleExtractText
+              }
+            >
+
+              {extracting ? (
+
+                <LoaderCircle
+                  className="spin"
+                  size={20}
+                />
+
+              ) : (
+
+                <ScanText
+                  size={20}
+                />
+
+              )}
+
+
+              {extracting
+                ? t(
+                  "write.extracting"
+                )
+                : t(
+                  "write.extractButton"
+                )}
+
+            </button>
+
+          </div>
+
+
+          {/* ============================================= */}
+          {/* WRITING DETAILS                               */}
+          {/* ============================================= */}
+
+          <div className="write-section">
+
+            <div className="write-section-heading">
+
+              <div>
+
+                <span className="write-step">
+
+                  {t(
+                    "write.editorStep"
+                  )}
+
+                </span>
+
+
+                <h2>
+
+                  {t(
+                    "write.editorTitle"
+                  )}
+
+                </h2>
+
+              </div>
+
+            </div>
+
+
+            <div className="write-field">
+
+              <label htmlFor="writing-title">
+
+                {t(
+                  "write.titleLabel"
+                )}
+
+                <span aria-hidden="true">
+
+                  *
+
+                </span>
+
+              </label>
+
+
+              <input
+                id="writing-title"
+                type="text"
+                value={title}
+                maxLength={200}
+                placeholder={
+                  t(
+                    "write.titlePlaceholder"
+                  )
+                }
+                disabled={
+                  publishing
+                }
+                onChange={(event) =>
+                  setTitle(
+                    event.target.value
+                  )
+                }
+              />
+
+
+              <div className="field-meta">
+
+                <span>
+
+                  {t(
+                    "write.titleHelp"
+                  )}
+
+                </span>
+
+
+                <span>
+
+                  {title.length}/200
+
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div className="write-field">
+
+              <label htmlFor="writing-category">
+
+                {t(
+                  "write.categoryLabel"
+                )}
+
+                <span aria-hidden="true">
+
+                  *
+
+                </span>
+
+              </label>
+
+
+              <select
+                id="writing-category"
+                value={category}
+                disabled={
+                  publishing
+                }
+                onChange={(event) =>
+                  setCategory(
+                    event.target.value
+                  )
+                }
+              >
+
+                {CATEGORIES.map(
+                  (item) => (
+
+                    <option
+                      key={item}
+                      value={item}
+                    >
+
+                      {
+                        categoryLabel(
+                          item
+                        )
+                      }
+
+                    </option>
+
+                  )
+                )}
+
+              </select>
+
+            </div>
+
+
+            <div className="write-field content-field">
+
+              <div className="content-label-row">
+
+                <label htmlFor="writing-content">
+
+                  {t(
+                    "write.contentLabel"
+                  )}
+
+                  <span aria-hidden="true">
+
+                    *
+
+                  </span>
+
+                </label>
+
+
+                <div className="content-stats">
+
+                  <span>
+
+                    {wordCount}{" "}
                     {t(
                       "write.wordCount"
                     )}
 
                   </span>
 
-                </div>
-
-
-                <div>
-
-                  <FileText
-                    size={17}
-                  />
 
                   <span>
 
-                    {readingTime}
-
-                    {" "}
-
+                    {characterCount}{" "}
                     {t(
-                      "write.readingTime"
+                      "write.characterCount"
                     )}
 
                   </span>
@@ -1929,329 +2081,118 @@ function Write({
 
               </div>
 
-            </div>
-
-
-            {/* ===========================================
-                SELECTED WRITING LANGUAGE
-            ============================================ */}
-
-            <div className="write-language-info">
-
-              <Globe2 size={15} />
-
-              <span>
-
-                {t(
-                  "write.selectedLanguage"
-                )}:
-
-              </span>
-
-              <strong>
-
-                {
-                  getLanguageLabel(
-                    language
-                  )
-                }
-
-              </strong>
-
-            </div>
-
-
-            {/* ===========================================
-                CONTENT
-            ============================================ */}
-
-            <div className="write-field">
-
-              <div className="write-field-header">
-
-                <label htmlFor="writing-content">
-
-                  <Feather size={17} />
-
-                  {t(
-                    "write.contentLabel"
-                  )}
-
-                </label>
-
-
-                <span>
-
-                  {characterCount}
-
-                  {" "}
-
-                  {t(
-                    "write.characterCount"
-                  )}
-
-                </span>
-
-              </div>
-
 
               <textarea
                 id="writing-content"
-
-                className="write-content-input"
-
+                value={content}
+                rows={18}
+                dir={
+                  currentLanguage?.rtl
+                    ? "rtl"
+                    : "ltr"
+                }
                 placeholder={
-                  t(
-                    "write.contentPlaceholderExtended"
-                  )
+                  CONTENT_PLACEHOLDERS[
+                    writingLanguage
+                  ] ||
+                  CONTENT_PLACEHOLDERS.en
                 }
-
-                value={
-                  content
+                disabled={
+                  publishing
                 }
-
                 onChange={(event) =>
                   setContent(
                     event.target.value
                   )
                 }
-
-                disabled={
-                  publishing
-                }
               />
 
-            </div>
 
+              <p className="editor-help">
 
-            {/* ===========================================
-                FOOTER
-            ============================================ */}
+                {t(
+                  "write.editorHelp"
+                )}
 
-            <div className="write-editor-footer">
-
-              <div className="write-document-info">
-
-                <span>
-
-                  {
-                    getLanguageLabel(
-                      language
-                    )
-                  }
-
-                </span>
-
-                <span>
-                  •
-                </span>
-
-
-                <span>
-
-                  {wordCount}
-
-                  {" "}
-
-                  {t(
-                    "write.wordCount"
-                  )}
-
-                </span>
-
-
-                <span>
-                  •
-                </span>
-
-
-                <span>
-
-                  {characterCount}
-
-                  {" "}
-
-                  {t(
-                    "write.characterCount"
-                  )}
-
-                </span>
-
-
-                <span>
-                  •
-                </span>
-
-
-                <span>
-
-                  ~{readingTime}
-
-                  {" "}
-
-                  {t(
-                    "write.readingTime"
-                  )}
-
-                </span>
-
-              </div>
-
-
-              <div className="write-actions">
-
-
-                {/* =======================================
-                    SAVE DRAFT
-                ======================================== */}
-
-                <button
-                  type="button"
-
-                  className="write-draft-button"
-
-                  onClick={
-                    handleManualSave
-                  }
-
-                  disabled={
-                    manualSaving ||
-                    publishing ||
-                    saveStatus ===
-                    "saving"
-                  }
-                >
-
-                  {
-                    manualSaving
-                      ? (
-                        <Loader2
-                          size={18}
-                          className="spin"
-                        />
-                      )
-                      : (
-                        <Save
-                          size={18}
-                        />
-                      )
-                  }
-
-
-                  {
-                    manualSaving
-                      ? t(
-                        "write.savingDraft"
-                      )
-                      : t(
-                        "write.saveDraft"
-                      )
-                  }
-
-                </button>
-
-
-                {/* =======================================
-                    PUBLISH / UPDATE
-                ======================================== */}
-
-                <button
-                  type="submit"
-
-                  className="write-publish-button"
-
-                  disabled={
-                    publishing ||
-                    manualSaving ||
-                    saveStatus ===
-                    "saving"
-                  }
-                >
-
-                  {
-                    publishing
-                      ? (
-                        <Loader2
-                          size={18}
-                          className="spin"
-                        />
-                      )
-                      : (
-                        <Send
-                          size={18}
-                        />
-                      )
-                  }
-
-
-                  {
-                    publishing
-                      ? (
-                        writingStatus ===
-                        "published"
-                          ? t(
-                            "write.updating"
-                          )
-                          : t(
-                            "write.publishing"
-                          )
-                      )
-                      : (
-                        writingStatus ===
-                        "published"
-                          ? t(
-                            "write.updatePublished"
-                          )
-                          : t(
-                            "write.publish"
-                          )
-                      )
-                  }
-
-                </button>
-
-              </div>
+              </p>
 
             </div>
 
-          </form>
-
-        </section>
+          </div>
 
 
-        {/* ===============================================
-            AUTOSAVE NOTE
-        ================================================ */}
+          {/* ============================================= */}
+          {/* FORM ACTIONS                                  */}
+          {/* ============================================= */}
 
-        <div className="write-note">
+          <div className="write-form-actions">
 
-          <Cloud size={14} />
-
-          <span>
-
-            {t(
-              "write.autosaveNote"
-            )}
-
-            {" "}
-
-            <strong>
-
-              {
-                getLanguageLabel(
-                  language
-                )
+            <button
+              type="button"
+              className="draft-button"
+              disabled={
+                publishing ||
+                extracting
               }
+              onClick={
+                handleSaveDraft
+              }
+            >
 
-            </strong>
+              <Save
+                size={19}
+              />
 
-          </span>
+              {t(
+                "write.saveDraft"
+              )}
 
-        </div>
+            </button>
 
-      </div>
+
+            <button
+              type="submit"
+              className="publish-button"
+              disabled={
+                publishing ||
+                extracting
+              }
+            >
+
+              {publishing ? (
+
+                <LoaderCircle
+                  className="spin"
+                  size={20}
+                />
+
+              ) : (
+
+                <Send
+                  size={19}
+                />
+
+              )}
+
+
+              {publishing
+                ? t(
+                  "write.publishing"
+                )
+                : t(
+                  "write.publish"
+                )}
+
+            </button>
+
+          </div>
+
+        </form>
+
+      </section>
 
     </main>
+
   );
 
 }
