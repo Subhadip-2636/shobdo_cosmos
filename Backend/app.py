@@ -56,6 +56,12 @@ def create_app():
     ] = False
 
 
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    }
+
+
     # =====================================================
     # JWT CONFIG
     # =====================================================
