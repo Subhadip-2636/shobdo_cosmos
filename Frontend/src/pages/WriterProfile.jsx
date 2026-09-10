@@ -920,7 +920,7 @@ function WriterProfile() {
                   />
 
                   <span>
-                    Edit Profile
+                    {t("profile.editProfile")}
                   </span>
 
                 </Link>
@@ -1025,9 +1025,7 @@ function WriterProfile() {
 
                   <span>
 
-                    Member since {
-                      memberSince
-                    }
+                    {t("writerProfile.memberSince").replace("{{date}}", memberSince)}
 
                   </span>
 
@@ -1067,7 +1065,7 @@ function WriterProfile() {
             </strong>
 
             <span>
-              Followers
+              {t("writerProfile.followers")}
             </span>
 
           </Link>
@@ -1092,7 +1090,7 @@ function WriterProfile() {
             </strong>
 
             <span>
-              Following
+              {t("writerProfile.following")}
             </span>
 
           </Link>
@@ -1128,7 +1126,7 @@ function WriterProfile() {
               </strong>
 
               <span>
-                Published Writings
+                {t("writerProfile.publishedWritings")}
               </span>
 
             </div>
@@ -1156,7 +1154,7 @@ function WriterProfile() {
               </strong>
 
               <span>
-                Likes Received
+                {t("writerProfile.likesReceived")}
               </span>
 
             </div>
@@ -1184,7 +1182,7 @@ function WriterProfile() {
               </strong>
 
               <span>
-                Comments
+                {t("writerProfile.comments")}
               </span>
 
             </div>
@@ -1205,14 +1203,12 @@ function WriterProfile() {
             <div>
 
               <p className="writer-profile-eyebrow">
-                Published Works
+                {t("writerProfile.publishedWorks")}
               </p>
 
               <h2>
 
-                Writings by {
-                  profile.name
-                }
+                {t("writerProfile.writingsBy").replace("{{name}}", profile.name)}
 
               </h2>
 
@@ -1243,7 +1239,7 @@ function WriterProfile() {
               />
 
               <h3>
-                No published writings yet
+                {t("writerProfile.noWritings")}
               </h3>
 
               <p>
