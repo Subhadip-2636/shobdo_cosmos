@@ -1,3 +1,4 @@
+import re
 from flask import (
     Blueprint,
     jsonify,
@@ -76,14 +77,23 @@ def public_user_dict(user):
     """
     Public-safe representation of a user.
 
-    IMPORTANT:
-    Email and other private account information
-    are deliberately excluded.
+    Private account information such as
+    email and password data is excluded.
     """
 
     return {
         "id": user.id,
         "name": user.name,
+
+        "username": user.username,
+
+        "bio": user.bio,
+
+        "avatar_url": user.avatar_url,
+
+        "location": user.location,
+
+        "website": user.website,
 
         "created_at": (
             user.created_at.isoformat()
@@ -91,7 +101,6 @@ def public_user_dict(user):
             else None
         ),
     }
-
 
 def get_followers_count(user_id):
     """
@@ -204,6 +213,291 @@ def get_writer_stats(user_id):
                 user_id
             ),
     }
+
+
+# ============================================================
+# UPDATE OWN PROFILE
+# PATCH /api/users/me/profile
+# ============================================================
+
+@user_bp.route(
+    "/me/profile",
+    methods=["PATCH"],
+)
+@jwt_required()
+def update_my_profile():
+
+    # --------------------------------------------------------
+    # AUTHENTICATED USER
+    # --------------------------------------------------------
+
+    current_user_id = (
+        get_current_user_id()
+    )
+
+    if current_user_id is None:
+        return jsonify({
+            "message":
+                "Invalid authentication identity."
+        }), 401
+
+
+    user = get_active_user(
+        current_user_id
+    )
+
+    if not user:
+        return jsonify({
+            "message":
+                "Authenticated user not found."
+        }), 404
+
+
+    # --------------------------------------------------------
+    # REQUEST BODY
+    # --------------------------------------------------------
+
+    data = request.get_json(
+        silent=True
+    )
+
+    if not isinstance(data, dict):
+        return jsonify({
+            "message":
+                "Invalid request body."
+        }), 400
+
+
+    # --------------------------------------------------------
+    # NAME
+    # --------------------------------------------------------
+
+    if "name" in data:
+
+        name = str(
+            data.get("name") or ""
+        ).strip()
+
+        if len(name) < 2:
+            return jsonify({
+                "message":
+                    "Name must contain at least 2 characters."
+            }), 400
+
+        if len(name) > 120:
+            return jsonify({
+                "message":
+                    "Name cannot exceed 120 characters."
+            }), 400
+
+        user.name = name
+
+
+    # --------------------------------------------------------
+    # USERNAME
+    # --------------------------------------------------------
+
+    if "username" in data:
+
+        username = str(
+            data.get("username") or ""
+        ).strip().lower()
+
+        # Allow users to type @username
+        if username.startswith("@"):
+            username = username[1:]
+
+        if username:
+
+            if len(username) < 3:
+                return jsonify({
+                    "message":
+                        "Username must contain at least 3 characters."
+                }), 400
+
+            if len(username) > 30:
+                return jsonify({
+                    "message":
+                        "Username cannot exceed 30 characters."
+                }), 400
+
+            if not re.fullmatch(
+                r"[a-z0-9][a-z0-9._]*",
+                username,
+            ):
+                return jsonify({
+                    "message":
+                        "Username may contain lowercase letters, numbers, dots and underscores."
+                }), 400
+
+
+            existing_user = (
+                User.query
+                .filter(
+                    User.username == username,
+                    User.id != user.id,
+                )
+                .first()
+            )
+
+            if existing_user:
+                return jsonify({
+                    "message":
+                        "This username is already taken."
+                }), 409
+
+            user.username = username
+
+        else:
+            user.username = None
+
+
+    # --------------------------------------------------------
+    # BIO
+    # --------------------------------------------------------
+
+    if "bio" in data:
+
+        bio = str(
+            data.get("bio") or ""
+        ).strip()
+
+        if len(bio) > 500:
+            return jsonify({
+                "message":
+                    "Bio cannot exceed 500 characters."
+            }), 400
+
+        user.bio = (
+            bio
+            if bio
+            else None
+        )
+
+
+    # --------------------------------------------------------
+    # LOCATION
+    # --------------------------------------------------------
+
+    if "location" in data:
+
+        location = str(
+            data.get("location") or ""
+        ).strip()
+
+        if len(location) > 100:
+            return jsonify({
+                "message":
+                    "Location cannot exceed 100 characters."
+            }), 400
+
+        user.location = (
+            location
+            if location
+            else None
+        )
+
+
+    # --------------------------------------------------------
+    # WEBSITE
+    # --------------------------------------------------------
+
+    if "website" in data:
+
+        website = str(
+            data.get("website") or ""
+        ).strip()
+
+        if len(website) > 255:
+            return jsonify({
+                "message":
+                    "Website URL is too long."
+            }), 400
+
+        if (
+            website
+            and not (
+                website.startswith("https://")
+                or website.startswith("http://")
+            )
+        ):
+            return jsonify({
+                "message":
+                    "Website must start with http:// or https://."
+            }), 400
+
+        user.website = (
+            website
+            if website
+            else None
+        )
+
+
+    # --------------------------------------------------------
+    # AVATAR URL
+    # --------------------------------------------------------
+
+    if "avatar_url" in data:
+
+        avatar_url = str(
+            data.get("avatar_url") or ""
+        ).strip()
+
+        if len(avatar_url) > 500:
+            return jsonify({
+                "message":
+                    "Avatar URL is too long."
+            }), 400
+
+        if (
+            avatar_url
+            and not (
+                avatar_url.startswith("https://")
+                or avatar_url.startswith("http://")
+            )
+        ):
+            return jsonify({
+                "message":
+                    "Avatar URL must start with http:// or https://."
+            }), 400
+
+        user.avatar_url = (
+            avatar_url
+            if avatar_url
+            else None
+        )
+
+
+    # --------------------------------------------------------
+    # SAVE
+    # --------------------------------------------------------
+
+    try:
+
+        db.session.commit()
+
+    except Exception as error:
+
+        db.session.rollback()
+
+        print(
+            "PROFILE UPDATE ERROR:",
+            error,
+        )
+
+        return jsonify({
+            "message":
+                "Unable to update profile."
+        }), 500
+
+
+    return jsonify({
+        "message":
+            "Profile updated successfully.",
+
+        "user":
+            user.to_dict(),
+    }), 200
 
 
 # ============================================================
@@ -1135,9 +1429,9 @@ def get_user_following(user_id):
         "pages":
             pagination.pages,
 
+
         "has_next":
             pagination.has_next,
-
         "has_prev":
             pagination.has_prev,
 

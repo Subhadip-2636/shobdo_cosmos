@@ -1,0 +1,6 @@
+
+# Local database backups
+*_backup.csv
+
+# Vite production build
+Frontend/dist/

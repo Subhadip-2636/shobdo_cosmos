@@ -22,7 +22,7 @@ class User(db.Model):
     )
 
     name = db.Column(
-        db.String(100),
+        db.String(120),
         nullable=False,
     )
 
@@ -36,6 +36,38 @@ class User(db.Model):
     password_hash = db.Column(
         db.String(255),
         nullable=False,
+    )
+
+
+    # =====================================================
+    # PUBLIC PROFILE
+    # =====================================================
+
+    username = db.Column(
+        db.String(50),
+        unique=True,
+        nullable=True,
+        index=True,
+    )
+
+    bio = db.Column(
+        db.Text,
+        nullable=True,
+    )
+
+    avatar_url = db.Column(
+        db.String(500),
+        nullable=True,
+    )
+
+    location = db.Column(
+        db.String(100),
+        nullable=True,
+    )
+
+    website = db.Column(
+        db.String(255),
+        nullable=True,
     )
 
 
@@ -71,7 +103,7 @@ class User(db.Model):
     # =====================================================
 
     created_at = db.Column(
-        db.DateTime,
+        db.DateTime(timezone=True),
         default=datetime.utcnow,
         nullable=False,
     )
@@ -134,7 +166,6 @@ class User(db.Model):
         """
 
         self.password_reset_token = None
-
         self.password_reset_expires = None
 
 
@@ -144,7 +175,7 @@ class User(db.Model):
 
     def to_dict(self):
         """
-        Safe user data for API responses.
+        Safe user data for authenticated API responses.
 
         Password hashes and reset tokens are
         intentionally excluded.
@@ -154,6 +185,16 @@ class User(db.Model):
             "id": self.id,
 
             "name": self.name,
+
+            "username": self.username,
+
+            "bio": self.bio,
+
+            "avatar_url": self.avatar_url,
+
+            "location": self.location,
+
+            "website": self.website,
 
             "email": self.email,
 

@@ -7,9 +7,13 @@ import {
 import {
   BookOpen,
   CalendarDays,
+  ExternalLink,
+  Globe2,
   Heart,
   Loader2,
+  MapPin,
   MessageCircle,
+  Pencil,
   UserCheck,
   UserPlus,
   Users,
@@ -54,7 +58,6 @@ function WriterProfile() {
 
   const {
     t,
-    language,
   } = useLanguage();
 
 
@@ -186,6 +189,7 @@ function WriterProfile() {
             getWriterProfile(
               userId
             ),
+
             getWriterWritings(
               userId
             ),
@@ -284,7 +288,6 @@ function WriterProfile() {
               })
             );
 
-
           } catch (
             followError
           ) {
@@ -368,9 +371,7 @@ function WriterProfile() {
         if (
           !profile?.created_at
         ) {
-
           return "";
-
         }
 
 
@@ -385,26 +386,17 @@ function WriterProfile() {
             date.getTime()
           )
         ) {
-
           return "";
-
         }
 
 
         try {
 
           return new Intl.DateTimeFormat(
-            language === "bn"
-              ? "bn-BD"
-              : language === "hi"
-                ? "hi-IN"
-                : "en-IN",
+            undefined,
             {
-              month:
-                "long",
-
-              year:
-                "numeric",
+              month: "long",
+              year: "numeric",
             }
           ).format(
             date
@@ -420,7 +412,45 @@ function WriterProfile() {
       },
       [
         profile?.created_at,
-        language,
+      ]
+    );
+
+
+  // =====================================================
+  // PROFILE INITIALS
+  // =====================================================
+
+  const profileInitials =
+    useMemo(
+      () => {
+
+        const name =
+          profile?.name
+            ?.trim() ||
+          "";
+
+
+        if (
+          !name
+        ) {
+          return "?";
+        }
+
+
+        return name
+          .split(/\s+/)
+          .slice(0, 2)
+          .map(
+            (part) =>
+              part
+                .charAt(0)
+                .toUpperCase()
+          )
+          .join("");
+
+      },
+      [
+        profile?.name,
       ]
     );
 
@@ -435,9 +465,7 @@ function WriterProfile() {
       followLoading ||
       !validUserId
     ) {
-
       return;
-
     }
 
 
@@ -457,9 +485,7 @@ function WriterProfile() {
     if (
       isSelf
     ) {
-
       return;
-
     }
 
 
@@ -479,7 +505,8 @@ function WriterProfile() {
     );
 
 
-    // Optimistic UI
+    // Optimistic update
+
     setFollowing(
       !previousFollowing
     );
@@ -560,7 +587,8 @@ function WriterProfile() {
       );
 
 
-      // rollback
+      // Roll back optimistic update
+
       setFollowing(
         previousFollowing
       );
@@ -722,25 +750,61 @@ function WriterProfile() {
 
         <section className="writer-profile-header">
 
+
+          {/* =============================================
+              AVATAR
+          ============================================== */}
+
           <div className="writer-profile-avatar">
 
-            {
-              profile?.name
-                ?.trim()
-                ?.charAt(0)
-                ?.toUpperCase()
-              ||
-              "?"
-            }
+            <span className="writer-profile-avatar-initial">
+
+              {
+                profileInitials
+              }
+
+            </span>
+
+
+            {profile?.avatar_url && (
+
+              <img
+                src={
+                  profile.avatar_url
+                }
+                alt={
+                  `${profile.name} profile`
+                }
+                className="writer-profile-avatar-image"
+                onError={
+                  (
+                    event
+                  ) => {
+
+                    event
+                      .currentTarget
+                      .style
+                      .display =
+                      "none";
+
+                  }
+                }
+              />
+
+            )}
 
           </div>
 
+
+          {/* =============================================
+              MAIN PROFILE INFO
+          ============================================== */}
 
           <div className="writer-profile-main">
 
             <div className="writer-profile-heading-row">
 
-              <div>
+              <div className="writer-profile-heading-content">
 
                 <p className="writer-profile-eyebrow">
 
@@ -752,6 +816,7 @@ function WriterProfile() {
 
                 </p>
 
+
                 <h1>
 
                   {
@@ -760,8 +825,26 @@ function WriterProfile() {
 
                 </h1>
 
+
+                {profile?.username && (
+
+                  <p className="writer-profile-username">
+
+                    @
+                    {
+                      profile.username
+                    }
+
+                  </p>
+
+                )}
+
               </div>
 
+
+              {/* =========================================
+                  FOLLOW BUTTON
+              ========================================== */}
 
               {!isSelf && (
 
@@ -801,6 +884,7 @@ function WriterProfile() {
                           )
                   }
 
+
                   <span>
 
                     {
@@ -820,47 +904,138 @@ function WriterProfile() {
               )}
 
 
+              {/* =========================================
+                  EDIT OWN PROFILE
+              ========================================== */}
+
               {isSelf && (
 
-                <span className="writer-profile-self-badge">
+                <Link
+                  to="/profile/edit"
+                  className="writer-profile-edit-button"
+                >
 
-                  {
-                    t(
-                      "writerProfile.yourProfile"
-                    )
-                  }
+                  <Pencil
+                    size={16}
+                  />
 
-                </span>
+                  <span>
+                    Edit Profile
+                  </span>
+
+                </Link>
 
               )}
 
             </div>
 
 
-            {memberSince && (
+            {/* =========================================
+                BIO
+            ========================================== */}
 
-              <div className="writer-profile-member">
+            {profile?.bio && (
 
-                <CalendarDays
-                  size={15}
-                />
+              <p className="writer-profile-bio">
 
-                <span>
+                {
+                  profile.bio
+                }
 
-                  {
-                    t(
-                      "writerProfile.memberSince"
-                    ).replace(
-                      "{{date}}",
-                      memberSince
-                    )
-                  }
-
-                </span>
-
-              </div>
+              </p>
 
             )}
+
+
+            {/* =========================================
+                PROFILE META
+            ========================================== */}
+
+            <div className="writer-profile-meta">
+
+
+              {profile?.location && (
+
+                <div className="writer-profile-meta-item">
+
+                  <MapPin
+                    size={16}
+                  />
+
+                  <span>
+
+                    {
+                      profile.location
+                    }
+
+                  </span>
+
+                </div>
+
+              )}
+
+
+              {profile?.website && (
+
+                <a
+                  href={
+                    profile.website
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="writer-profile-meta-item writer-profile-website"
+                >
+
+                  <Globe2
+                    size={16}
+                  />
+
+                  <span>
+
+                    {
+                      profile.website
+                        .replace(
+                          /^https?:\/\//,
+                          ""
+                        )
+                        .replace(
+                          /\/$/,
+                          ""
+                        )
+                    }
+
+                  </span>
+
+                  <ExternalLink
+                    size={13}
+                  />
+
+                </a>
+
+              )}
+
+
+              {memberSince && (
+
+                <div className="writer-profile-meta-item">
+
+                  <CalendarDays
+                    size={16}
+                  />
+
+                  <span>
+
+                    Member since {
+                      memberSince
+                    }
+
+                  </span>
+
+                </div>
+
+              )}
+
+            </div>
 
           </div>
 
@@ -874,7 +1049,9 @@ function WriterProfile() {
         <section className="writer-follow-stats">
 
           <Link
-            to={`/users/${userId}/followers`}
+            to={
+              `/users/${userId}/followers`
+            }
             className="writer-follow-stat"
           >
 
@@ -890,20 +1067,16 @@ function WriterProfile() {
             </strong>
 
             <span>
-
-              {
-                t(
-                  "writerProfile.followers"
-                )
-              }
-
+              Followers
             </span>
 
           </Link>
 
 
           <Link
-            to={`/users/${userId}/following`}
+            to={
+              `/users/${userId}/following`
+            }
             className="writer-follow-stat"
           >
 
@@ -919,13 +1092,7 @@ function WriterProfile() {
             </strong>
 
             <span>
-
-              {
-                t(
-                  "writerProfile.following"
-                )
-              }
-
+              Following
             </span>
 
           </Link>
@@ -938,6 +1105,7 @@ function WriterProfile() {
         ================================================ */}
 
         <section className="writer-profile-stats">
+
 
           <div className="writer-profile-stat">
 
@@ -960,13 +1128,7 @@ function WriterProfile() {
               </strong>
 
               <span>
-
-                {
-                  t(
-                    "writerProfile.publishedWritings"
-                  )
-                }
-
+                Published Writings
               </span>
 
             </div>
@@ -994,13 +1156,7 @@ function WriterProfile() {
               </strong>
 
               <span>
-
-                {
-                  t(
-                    "writerProfile.likesReceived"
-                  )
-                }
-
+                Likes Received
               </span>
 
             </div>
@@ -1028,13 +1184,7 @@ function WriterProfile() {
               </strong>
 
               <span>
-
-                {
-                  t(
-                    "writerProfile.comments"
-                  )
-                }
-
+                Comments
               </span>
 
             </div>
@@ -1055,24 +1205,13 @@ function WriterProfile() {
             <div>
 
               <p className="writer-profile-eyebrow">
-
-                {
-                  t(
-                    "writerProfile.publishedWorks"
-                  )
-                }
-
+                Published Works
               </p>
 
               <h2>
 
-                {
-                  t(
-                    "writerProfile.writingsBy"
-                  ).replace(
-                    "{{name}}",
-                    profile.name
-                  )
+                Writings by {
+                  profile.name
                 }
 
               </h2>
@@ -1088,11 +1227,7 @@ function WriterProfile() {
 
               {" "}
 
-              {
-                t(
-                  "writerProfile.writings"
-                )
-              }
+              writings
 
             </span>
 
@@ -1108,23 +1243,12 @@ function WriterProfile() {
               />
 
               <h3>
-
-                {
-                  t(
-                    "writerProfile.noWritings"
-                  )
-                }
-
+                No published writings yet
               </h3>
 
               <p>
-
-                {
-                  t(
-                    "writerProfile.noWritingsDescription"
-                  )
-                }
-
+                This writer has not published
+                any writings yet.
               </p>
 
             </div>
@@ -1155,27 +1279,24 @@ function WriterProfile() {
 
                           {
                             writing.category ||
-                            t(
-                              "writerProfile.writing"
-                            )
+                            "Writing"
                           }
 
                         </span>
 
-                        {
-                          writing.language && (
 
-                            <small>
+                        {writing.language && (
 
-                              {
-                                writing.language
-                                  .toUpperCase()
-                              }
+                          <small>
 
-                            </small>
+                            {
+                              writing.language
+                                .toUpperCase()
+                            }
 
-                          )
-                        }
+                          </small>
+
+                        )}
 
                       </div>
 
@@ -1184,9 +1305,7 @@ function WriterProfile() {
 
                         {
                           writing.title ||
-                          t(
-                            "common.untitled"
-                          )
+                          "Untitled"
                         }
 
                       </h3>

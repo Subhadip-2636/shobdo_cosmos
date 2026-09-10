@@ -1131,6 +1131,39 @@ function validateUserId(
 
 
 // =========================================================
+// AUTH — UPDATE MY PROFILE
+// PATCH /api/users/me/profile
+// =========================================================
+
+export async function updateMyProfile(
+  profileData
+) {
+
+  if (
+    !profileData ||
+    typeof profileData !== "object" ||
+    Array.isArray(profileData)
+  ) {
+
+    throw new Error(
+      "Invalid profile data."
+    );
+
+  }
+
+
+  return apiRequest(
+    "/api/users/me/profile",
+    {
+      method: "PATCH",
+      body: profileData,
+    }
+  );
+
+}
+
+
+// =========================================================
 // PUBLIC — GET WRITER PROFILE
 // GET /api/users/<user_id>
 // =========================================================
@@ -1372,6 +1405,8 @@ const writingApi = {
   extractScannedText,
   scanWriting,
   extractTextFromFile,
+
+  updateMyProfile,
 
   getWriterProfile,
   getWriterWritings,

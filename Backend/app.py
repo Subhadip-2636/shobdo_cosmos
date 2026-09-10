@@ -2,6 +2,7 @@ import os
 
 from flask import (
     Flask,
+    app,
     jsonify,
 )
 
@@ -12,6 +13,7 @@ from extensions import (
     db,
     jwt,
     mail,
+    migrate,
 )
 
 
@@ -181,12 +183,17 @@ def create_app():
     )
 
 
-    # =====================================================
-    # INITIALIZE EXTENSIONS
-    # =====================================================
+   # =====================================================
+   # INITIALIZE EXTENSIONS
+   # =====================================================
 
     db.init_app(
         app
+    )
+
+    migrate.init_app(
+        app,
+        db
     )
 
     jwt.init_app(

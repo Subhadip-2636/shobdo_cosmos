@@ -39,6 +39,7 @@ import {
 } from "./api/auth";
 
 import WriterProfile from "./pages/WriterProfile";
+import EditProfile from "./pages/EditProfile";
 
 
 // =========================================================
@@ -456,6 +457,23 @@ function App() {
                 </PrivateRoute>
               }
             />
+
+            <Route
+      path="/profile/edit"
+      element={
+           <PrivateRoute
+                user={user}
+                authLoading={authLoading}
+           >
+                <EditProfile
+                   user={user}
+                   onProfileUpdated={
+                        loadCurrentUser
+                   }
+                 />
+            </PrivateRoute>
+              }
+         />
 
 
             {/* =========================================
