@@ -1,18 +1,23 @@
-// =========================================================
-// SHOBDO NOTIFICATIONS API
-// =========================================================
+const RAW_API_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://127.0.0.1:5000";
+
+const CLEAN_API_URL =
+  RAW_API_URL
+    .trim()
+    .replace(/\/+$/, "");
 
 const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://127.0.0.1:5000/api";
-
+  CLEAN_API_URL.endsWith("/api")
+    ? CLEAN_API_URL
+    : `${CLEAN_API_URL}/api`;
 
 const TOKEN_KEY =
   "shobdo_token";
 
 
 // =========================================================
-// GET TOKEN
+// TOKEN
 // =========================================================
 
 function getToken() {
@@ -25,30 +30,34 @@ function getToken() {
 
 
 // =========================================================
-// AUTH HEADERS
+// HEADERS
 // =========================================================
 
 function getAuthHeaders() {
 
-  const token = getToken();
+  const token =
+    getToken();
 
-  return {
-    "Content-Type":
-      "application/json",
-
-    ...(token
-      ? {
-          Authorization:
-            `Bearer ${token}`,
-        }
-      : {}),
+  const headers = {
+    Accept: "application/json",
   };
+
+
+  if (token) {
+
+    headers.Authorization =
+      `Bearer ${token}`;
+
+  }
+
+
+  return headers;
 
 }
 
 
 // =========================================================
-// HANDLE RESPONSE
+// RESPONSE HANDLER
 // =========================================================
 
 async function handleResponse(
@@ -57,30 +66,37 @@ async function handleResponse(
 
   let data = null;
 
+
   try {
 
-    data = await response.json();
+    data =
+      await response.json();
 
   } catch {
 
-    data = {};
+    data = null;
 
   }
 
 
   if (!response.ok) {
 
+    const message =
+      data?.message ||
+      data?.error ||
+      `Request failed with status ${response.status}.`;
+
+
     const error =
-      new Error(
-        data?.message ||
-        "Notification request failed."
-      );
+      new Error(message);
+
 
     error.status =
       response.status;
 
     error.data =
       data;
+
 
     throw error;
 
@@ -95,16 +111,6 @@ async function handleResponse(
 // =========================================================
 // GET NOTIFICATIONS
 // =========================================================
-//
-// Example:
-//
-// getNotifications({
-//   page: 1,
-//   perPage: 20,
-//   unreadOnly: false,
-// })
-//
-// =========================================================
 
 export async function getNotifications({
   page = 1,
@@ -114,6 +120,7 @@ export async function getNotifications({
 
   const params =
     new URLSearchParams();
+
 
   params.set(
     "page",
@@ -155,11 +162,7 @@ export async function getNotifications({
 
 
 // =========================================================
-// GET UNREAD COUNT
-// =========================================================
-//
-// Used by the Navbar notification bell.
-//
+// UNREAD COUNT
 // =========================================================
 
 export async function getUnreadNotificationCount() {
@@ -183,7 +186,7 @@ export async function getUnreadNotificationCount() {
 
 
 // =========================================================
-// MARK ONE NOTIFICATION AS READ
+// MARK ONE AS READ
 // =========================================================
 
 export async function markNotificationRead(
@@ -218,7 +221,7 @@ export async function markNotificationRead(
 
 
 // =========================================================
-// MARK ALL NOTIFICATIONS AS READ
+// MARK ALL AS READ
 // =========================================================
 
 export async function markAllNotificationsRead() {
@@ -272,5 +275,16 @@ export async function deleteNotification(
   return handleResponse(
     response
   );
+
+}
+
+
+// =========================================================
+// DEBUG
+// =========================================================
+
+export function getNotificationApiUrl() {
+
+  return API_URL;
 
 }
