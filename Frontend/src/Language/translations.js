@@ -91,6 +91,7 @@ export const translations = {
       lightMode: "লাইট মোড",
       darkMode: "ডার্ক মোড",
       signedInAs: "সাইন ইন করেছেন",
+      notifications: "বিজ্ঞপ্তি",
     },
 
     writerProfile: {
@@ -862,6 +863,7 @@ export const translations = {
       lightMode: "Light mode",
       darkMode: "Dark mode",
       signedInAs: "Signed in as",
+      notifications: "Notifications",
     },
 
     writerProfile: {
@@ -1639,6 +1641,7 @@ export const translations = {
       lightMode: "लाइट मोड",
       darkMode: "डार्क मोड",
       signedInAs: "साइन इन किया गया",
+      notifications: "सूचनाएँ",
     },
 
     writerProfile: {

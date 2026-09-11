@@ -5,62 +5,102 @@ import {
 } from "react";
 
 import {
-  ArrowLeft,
-  AtSign,
+  BookOpen,
+  CalendarDays,
+  ExternalLink,
   Globe2,
-  Image,
+  Heart,
   Loader2,
   MapPin,
-  Save,
-  User,
+  MessageCircle,
+  Pencil,
+  UserCheck,
+  UserPlus,
+  Users,
 } from "lucide-react";
 
 import {
+  Link,
   useNavigate,
+  useParams,
 } from "react-router-dom";
 
 import {
-  updateMyProfile,
+  followUser,
+  getFollowStatus,
+  getToken,
+  getWriterProfile,
+  getWriterWritings,
+  unfollowUser,
 } from "../api/api";
 
-import "./EditProfile.css";
+import {
+  useLanguage,
+} from "../Language/LanguageContext";
+
+import "./WriterProfile.css";
 
 
-// =========================================================
-// EDIT PROFILE
-// =========================================================
-
-function EditProfile({
-  user,
-  onProfileUpdated,
-}) {
+function WriterProfile() {
+  const { id } = useParams();
 
   const navigate =
     useNavigate();
 
+  const { t } =
+    useLanguage();
+
+  const userId =
+    Number(id);
+
+  const isLoggedIn =
+    Boolean(getToken());
+
 
   // =====================================================
-  // FORM STATE
+  // STATE
   // =====================================================
 
   const [
-    form,
-    setForm,
+    profile,
+    setProfile,
+  ] = useState(null);
+
+  const [
+    stats,
+    setStats,
   ] = useState({
-    name: "",
-    username: "",
-    bio: "",
-    location: "",
-    website: "",
-    avatar_url: "",
+    writings_count: 0,
+    likes_count: 0,
+    comments_count: 0,
+    followers_count: 0,
+    following_count: 0,
   });
 
+  const [
+    writings,
+    setWritings,
+  ] = useState([]);
 
   const [
-    saving,
-    setSaving,
+    following,
+    setFollowing,
   ] = useState(false);
 
+  const [
+    isSelf,
+    setIsSelf,
+  ] = useState(false);
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
+
+  const [
+    followLoading,
+    setFollowLoading,
+  ] = useState(false);
 
   const [
     error,
@@ -68,191 +108,472 @@ function EditProfile({
   ] = useState("");
 
 
-  const [
-    success,
-    setSuccess,
-  ] = useState("");
+  // =====================================================
+  // VALID USER ID
+  // =====================================================
+
+  const validUserId =
+    Number.isFinite(userId) &&
+    userId > 0;
 
 
   // =====================================================
-  // LOAD CURRENT USER INTO FORM
+  // LOAD PROFILE
   // =====================================================
 
   useEffect(() => {
+    let mounted = true;
 
-    if (!user) {
-      return;
+    async function loadProfile() {
+      if (!validUserId) {
+        setError(
+          t(
+            "writerProfile.invalidId"
+          )
+        );
+
+        setLoading(false);
+
+        return;
+      }
+
+      setLoading(true);
+      setError("");
+
+      try {
+        const [
+          profileData,
+          writingsData,
+        ] =
+          await Promise.all([
+            getWriterProfile(
+              userId
+            ),
+
+            getWriterWritings(
+              userId
+            ),
+          ]);
+
+        if (!mounted) {
+          return;
+        }
+
+        setProfile(
+          profileData?.user ||
+            null
+        );
+
+        setStats(
+          profileData?.stats || {
+            writings_count: 0,
+            likes_count: 0,
+            comments_count: 0,
+            followers_count: 0,
+            following_count: 0,
+          }
+        );
+
+        setWritings(
+          Array.isArray(
+            writingsData?.writings
+          )
+            ? writingsData.writings
+            : []
+        );
+
+
+        // ===============================================
+        // FOLLOW STATUS
+        // ===============================================
+
+        if (isLoggedIn) {
+          try {
+            const followData =
+              await getFollowStatus(
+                userId
+              );
+
+            if (!mounted) {
+              return;
+            }
+
+            setFollowing(
+              Boolean(
+                followData?.following
+              )
+            );
+
+            setIsSelf(
+              Boolean(
+                followData?.is_self
+              )
+            );
+
+            setStats(
+              (current) => ({
+                ...current,
+
+                followers_count:
+                  Number(
+                    followData
+                      ?.followers_count ??
+                      current
+                        .followers_count ??
+                      0
+                  ),
+
+                following_count:
+                  Number(
+                    followData
+                      ?.following_count ??
+                      current
+                        .following_count ??
+                      0
+                  ),
+              })
+            );
+          } catch (
+            followError
+          ) {
+            console.error(
+              "FOLLOW STATUS ERROR:",
+              followError
+            );
+          }
+        }
+      } catch (err) {
+        console.error(
+          "WRITER PROFILE ERROR:",
+          err
+        );
+
+        if (mounted) {
+          setError(
+            err?.message ||
+              t(
+                "writerProfile.loadError"
+              )
+          );
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
     }
 
+    loadProfile();
 
-    setForm({
-      name:
-        user.name || "",
-
-      username:
-        user.username || "",
-
-      bio:
-        user.bio || "",
-
-      location:
-        user.location || "",
-
-      website:
-        user.website || "",
-
-      avatar_url:
-        user.avatar_url || "",
-    });
-
-  }, [user]);
+    return () => {
+      mounted = false;
+    };
+  }, [
+    userId,
+    validUserId,
+    isLoggedIn,
+  ]);
 
 
   // =====================================================
-  // INITIALS
+  // MEMBER DATE
+  // =====================================================
+
+  const memberSince =
+    useMemo(() => {
+      if (
+        !profile?.created_at
+      ) {
+        return "";
+      }
+
+      const date =
+        new Date(
+          profile.created_at
+        );
+
+      if (
+        Number.isNaN(
+          date.getTime()
+        )
+      ) {
+        return "";
+      }
+
+      try {
+        return new Intl.DateTimeFormat(
+          undefined,
+          {
+            month: "long",
+            year: "numeric",
+          }
+        ).format(date);
+      } catch {
+        return date
+          .toLocaleDateString();
+      }
+    }, [
+      profile?.created_at,
+    ]);
+
+
+  // =====================================================
+  // PROFILE INITIALS
   // =====================================================
 
   const initials =
-    useMemo(
-      () => {
+    useMemo(() => {
+      const name =
+        profile?.name
+          ?.trim();
 
-        const name =
-          form.name.trim();
+      if (!name) {
+        return "?";
+      }
 
-        if (!name) {
-          return "S";
-        }
-
-
-        return name
+      const parts =
+        name
           .split(/\s+/)
-          .slice(0, 2)
-          .map(
-            (part) =>
-              part.charAt(0)
-                .toUpperCase()
-          )
-          .join("");
+          .filter(Boolean);
 
-      },
-      [form.name]
-    );
+      if (
+        parts.length === 1
+      ) {
+        return parts[0]
+          .charAt(0)
+          .toUpperCase();
+      }
 
-
-  // =====================================================
-  // CHANGE HANDLER
-  // =====================================================
-
-  function handleChange(
-    event
-  ) {
-
-    const {
-      name,
-      value,
-    } = event.target;
-
-
-    setForm(
-      (current) => ({
-        ...current,
-        [name]: value,
-      })
-    );
-
-
-    setError("");
-    setSuccess("");
-
-  }
+      return (
+        parts[0]
+          .charAt(0) +
+        parts[1]
+          .charAt(0)
+      ).toUpperCase();
+    }, [
+      profile?.name,
+    ]);
 
 
   // =====================================================
-  // SUBMIT
+  // FOLLOW / UNFOLLOW
   // =====================================================
 
-  async function handleSubmit(
-    event
-  ) {
-
-    event.preventDefault();
-
-
+  async function handleFollow() {
     if (
-      form.name.trim().length < 2
+      followLoading ||
+      !validUserId
     ) {
-
-      setError(
-        "Name must contain at least 2 characters."
-      );
-
       return;
     }
 
+    if (!isLoggedIn) {
+      navigate("/login");
+      return;
+    }
 
-    setSaving(true);
-    setError("");
-    setSuccess("");
+    if (isSelf) {
+      return;
+    }
 
+    const previousFollowing =
+      following;
 
-    try {
-
-      const data =
-        await updateMyProfile({
-          name:
-            form.name.trim(),
-
-          username:
-            form.username.trim(),
-
-          bio:
-            form.bio.trim(),
-
-          location:
-            form.location.trim(),
-
-          website:
-            form.website.trim(),
-
-          avatar_url:
-            form.avatar_url.trim(),
-        });
-
-
-      setSuccess(
-        data?.message ||
-        "Profile updated successfully."
+    const previousFollowers =
+      Number(
+        stats
+          ?.followers_count ||
+          0
       );
 
+    setFollowLoading(true);
+
+
+    // ===============================================
+    // OPTIMISTIC UI
+    // ===============================================
+
+    setFollowing(
+      !previousFollowing
+    );
+
+    setStats(
+      (current) => ({
+        ...current,
+
+        followers_count:
+          Math.max(
+            0,
+            previousFollowers +
+              (
+                previousFollowing
+                  ? -1
+                  : 1
+              )
+          ),
+      })
+    );
+
+    try {
+      const data =
+        previousFollowing
+          ? await unfollowUser(
+              userId
+            )
+          : await followUser(
+              userId
+            );
+
+      setFollowing(
+        Boolean(
+          data?.following
+        )
+      );
 
       if (
-        typeof onProfileUpdated ===
-        "function"
+        typeof data
+          ?.followers_count ===
+        "number"
       ) {
+        setStats(
+          (current) => ({
+            ...current,
 
-        await onProfileUpdated();
+            followers_count:
+              data.followers_count,
 
+            following_count:
+              Number(
+                data
+                  ?.following_count ??
+                  current
+                    .following_count ??
+                  0
+              ),
+          })
+        );
       }
-
     } catch (err) {
-
       console.error(
-        "PROFILE UPDATE ERROR:",
+        "FOLLOW ACTION ERROR:",
         err
       );
 
 
-      setError(
-        err?.message ||
-        "Unable to update profile."
+      // ===============================================
+      // ROLLBACK
+      // ===============================================
+
+      setFollowing(
+        previousFollowing
       );
 
+      setStats(
+        (current) => ({
+          ...current,
+
+          followers_count:
+            previousFollowers,
+        })
+      );
+
+      window.alert(
+        err?.message ||
+          t(
+            "writerProfile.followError"
+          )
+      );
     } finally {
-
-      setSaving(false);
-
+      setFollowLoading(false);
     }
+  }
 
+
+  // =====================================================
+  // LOADING
+  // =====================================================
+
+  if (loading) {
+    return (
+      <main className="writer-profile-page">
+
+        <div className="writer-profile-shell">
+
+          <div className="writer-profile-state">
+
+            <Loader2
+              size={34}
+              className="spin"
+            />
+
+            <p>
+              {
+                t(
+                  "writerProfile.loading"
+                )
+              }
+            </p>
+
+          </div>
+
+        </div>
+
+      </main>
+    );
+  }
+
+
+  // =====================================================
+  // ERROR
+  // =====================================================
+
+  if (
+    error ||
+    !profile
+  ) {
+    return (
+      <main className="writer-profile-page">
+
+        <div className="writer-profile-shell">
+
+          <section className="writer-profile-state">
+
+            <Users size={38} />
+
+            <h1>
+              {
+                t(
+                  "writerProfile.notFound"
+                )
+              }
+            </h1>
+
+            <p>
+              {
+                error ||
+                t(
+                  "writerProfile.unavailable"
+                )
+              }
+            </p>
+
+            <Link
+              to="/explore"
+              className="writer-profile-primary-link"
+            >
+              {
+                t(
+                  "writerProfile.exploreWritings"
+                )
+              }
+            </Link>
+
+          </section>
+
+        </div>
+
+      </main>
+    );
   }
 
 
@@ -261,351 +582,668 @@ function EditProfile({
   // =====================================================
 
   return (
-    <main className="edit-profile-page">
+    <main className="writer-profile-page">
 
-      <div className="edit-profile-container">
-
-
-        <button
-          type="button"
-          className="edit-profile-back"
-          onClick={() =>
-            navigate(-1)
-          }
-        >
-          <ArrowLeft size={18} />
-          Back
-        </button>
+      <div className="writer-profile-shell">
 
 
-        <section className="edit-profile-header">
+        {/* =================================================
+            PROFILE HEADER
+        ================================================= */}
 
-          <p className="edit-profile-eyebrow">
-            YOUR PROFILE
-          </p>
+        <section className="writer-profile-header">
 
-          <h1>
-            Edit Profile
-          </h1>
+          <div className="writer-profile-avatar">
 
-          <p>
-            Personalize how readers see
-            you across SHOBDO.
-          </p>
+            {
+              profile.avatar_url
+                ? (
+                  <img
+                    src={
+                      profile.avatar_url
+                    }
+                    alt={
+                      profile.name
+                    }
+                    onError={(
+                      event
+                    ) => {
+                      event
+                        .currentTarget
+                        .style
+                        .display =
+                        "none";
+                    }}
+                  />
+                )
+                : (
+                  <span>
+                    {initials}
+                  </span>
+                )
+            }
+
+          </div>
+
+
+          <div className="writer-profile-main">
+
+            <div className="writer-profile-heading-row">
+
+              <div className="writer-profile-heading">
+
+                <p className="writer-profile-eyebrow">
+                  {
+                    t(
+                      "writerProfile.title"
+                    )
+                  }
+                </p>
+
+                <h1>
+                  {
+                    profile.name
+                  }
+                </h1>
+
+
+                {/* USERNAME */}
+
+                {
+                  profile.username && (
+                    <p className="writer-profile-username">
+                      @
+                      {
+                        profile.username
+                      }
+                    </p>
+                  )
+                }
+
+              </div>
+
+
+              {/* =========================================
+                  PROFILE ACTION
+              ========================================== */}
+
+              {
+                isSelf
+                  ? (
+                    <Link
+                      to="/profile/edit"
+                      className="writer-profile-edit-button"
+                    >
+
+                      <Pencil
+                        size={17}
+                      />
+
+                      <span>
+                        {
+                          t(
+                            "profile.editProfile"
+                          )
+                        }
+                      </span>
+
+                    </Link>
+                  )
+                  : (
+                    <button
+                      type="button"
+                      className={
+                        following
+                          ? "writer-follow-button following"
+                          : "writer-follow-button"
+                      }
+                      onClick={
+                        handleFollow
+                      }
+                      disabled={
+                        followLoading
+                      }
+                    >
+
+                      {
+                        followLoading
+                          ? (
+                            <Loader2
+                              size={17}
+                              className="spin"
+                            />
+                          )
+                          : following
+                            ? (
+                              <UserCheck
+                                size={17}
+                              />
+                            )
+                            : (
+                              <UserPlus
+                                size={17}
+                              />
+                            )
+                      }
+
+                      <span>
+                        {
+                          following
+                            ? t(
+                                "writerProfile.following"
+                              )
+                            : t(
+                                "writerProfile.follow"
+                              )
+                        }
+                      </span>
+
+                    </button>
+                  )
+              }
+
+            </div>
+
+
+            {/* =========================================
+                BIO
+            ========================================== */}
+
+            {
+              profile.bio && (
+                <p className="writer-profile-bio">
+                  {
+                    profile.bio
+                  }
+                </p>
+              )
+            }
+
+
+            {/* =========================================
+                PROFILE META
+            ========================================== */}
+
+            <div className="writer-profile-meta">
+
+
+              {/* LOCATION */}
+
+              {
+                profile.location && (
+                  <span className="writer-profile-meta-item">
+
+                    <MapPin
+                      size={16}
+                    />
+
+                    {
+                      profile.location
+                    }
+
+                  </span>
+                )
+              }
+
+
+              {/* WEBSITE */}
+
+              {
+                profile.website && (
+                  <a
+                    href={
+                      profile.website
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="writer-profile-meta-item writer-profile-website"
+                  >
+
+                    <Globe2
+                      size={16}
+                    />
+
+                    <span>
+                      {
+                        (() => {
+                          try {
+                            return new URL(
+                              profile.website
+                            ).hostname;
+                          } catch {
+                            return profile.website;
+                          }
+                        })()
+                      }
+                    </span>
+
+                    <ExternalLink
+                      size={13}
+                    />
+
+                  </a>
+                )
+              }
+
+
+              {/* MEMBER SINCE */}
+
+              {
+                memberSince && (
+                  <span className="writer-profile-meta-item">
+
+                    <CalendarDays
+                      size={16}
+                    />
+
+                    {
+                      t(
+                        "writerProfile.memberSince"
+                      ).replace(
+                        "{{date}}",
+                        memberSince
+                      )
+                    }
+
+                  </span>
+                )
+              }
+
+            </div>
+
+          </div>
 
         </section>
 
 
-        <div className="edit-profile-layout">
+        {/* =================================================
+            FOLLOW STATS
+        ================================================= */}
 
+        <section className="writer-follow-stats">
 
-          {/* ============================================
-              PROFILE PREVIEW
-          ============================================= */}
-
-          <aside className="edit-profile-preview">
-
-            <div className="profile-avatar-preview">
-
-              {form.avatar_url ? (
-
-                <img
-                  src={form.avatar_url}
-                  alt={form.name || "Profile"}
-                  onError={(event) => {
-                    event.currentTarget.style.display =
-                      "none";
-                  }}
-                />
-
-              ) : (
-
-                <span>
-                  {initials}
-                </span>
-
-              )}
-
-            </div>
-
-
-            <h2>
-              {form.name ||
-                "Your name"}
-            </h2>
-
-
-            {form.username && (
-
-              <p className="profile-preview-username">
-                @{form.username
-                  .replace(/^@/, "")
-                  .toLowerCase()}
-              </p>
-
-            )}
-
-
-            {form.bio ? (
-
-              <p className="profile-preview-bio">
-                {form.bio}
-              </p>
-
-            ) : (
-
-              <p className="profile-preview-placeholder">
-                Your bio will appear here.
-              </p>
-
-            )}
-
-
-            {form.location && (
-
-              <div className="profile-preview-meta">
-                <MapPin size={16} />
-                <span>
-                  {form.location}
-                </span>
-              </div>
-
-            )}
-
-
-            {form.website && (
-
-              <div className="profile-preview-meta">
-                <Globe2 size={16} />
-                <span>
-                  {form.website}
-                </span>
-              </div>
-
-            )}
-
-          </aside>
-
-
-          {/* ============================================
-              FORM
-          ============================================= */}
-
-          <form
-            className="edit-profile-form"
-            onSubmit={handleSubmit}
+          <Link
+            to={
+              `/users/${userId}/followers`
+            }
+            className="writer-follow-stat"
           >
 
-            <div className="edit-profile-field">
+            <strong>
+              {
+                Number(
+                  stats
+                    .followers_count ||
+                  0
+                )
+              }
+            </strong>
 
-              <label htmlFor="name">
-                <User size={17} />
-                Display name
-              </label>
+            <span>
+              {
+                t(
+                  "writerProfile.followers"
+                )
+              }
+            </span>
 
-              <input
-                id="name"
-                name="name"
-                type="text"
-                value={form.name}
-                onChange={handleChange}
-                maxLength={120}
-                autoComplete="name"
-                required
-                placeholder="Your name"
-              />
-
-            </div>
-
-
-            <div className="edit-profile-field">
-
-              <label htmlFor="username">
-                <AtSign size={17} />
-                Username
-              </label>
-
-              <div className="username-input-wrapper">
-
-                <span>
-                  @
-                </span>
-
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  value={form.username}
-                  onChange={handleChange}
-                  maxLength={30}
-                  autoComplete="username"
-                  placeholder="your.username"
-                />
-
-              </div>
-
-              <small>
-                3–30 characters. Use letters,
-                numbers, dots or underscores.
-              </small>
-
-            </div>
+          </Link>
 
 
-            <div className="edit-profile-field">
+          <Link
+            to={
+              `/users/${userId}/following`
+            }
+            className="writer-follow-stat"
+          >
 
-              <label htmlFor="bio">
-                Bio
-              </label>
+            <strong>
+              {
+                Number(
+                  stats
+                    .following_count ||
+                  0
+                )
+              }
+            </strong>
 
-              <textarea
-                id="bio"
-                name="bio"
-                value={form.bio}
-                onChange={handleChange}
-                maxLength={500}
-                rows={6}
-                placeholder="Tell readers a little about yourself..."
-              />
+            <span>
+              {
+                t(
+                  "writerProfile.following"
+                )
+              }
+            </span>
 
-              <small className="field-counter">
-                {form.bio.length}/500
-              </small>
+          </Link>
 
-            </div>
-
-
-            <div className="edit-profile-field">
-
-              <label htmlFor="location">
-                <MapPin size={17} />
-                Location
-              </label>
-
-              <input
-                id="location"
-                name="location"
-                type="text"
-                value={form.location}
-                onChange={handleChange}
-                maxLength={100}
-                placeholder="Kolkata, West Bengal"
-              />
-
-            </div>
+        </section>
 
 
-            <div className="edit-profile-field">
+        {/* =================================================
+            COMMUNITY STATS
+        ================================================= */}
 
-              <label htmlFor="website">
-                <Globe2 size={17} />
-                Website
-              </label>
-
-              <input
-                id="website"
-                name="website"
-                type="url"
-                value={form.website}
-                onChange={handleChange}
-                maxLength={255}
-                placeholder="https://example.com"
-              />
-
-            </div>
+        <section className="writer-profile-stats">
 
 
-            <div className="edit-profile-field">
+          {/* PUBLISHED WRITINGS */}
 
-              <label htmlFor="avatar_url">
-                <Image size={17} />
-                Profile picture URL
-              </label>
+          <div className="writer-profile-stat">
 
-              <input
-                id="avatar_url"
-                name="avatar_url"
-                type="url"
-                value={form.avatar_url}
-                onChange={handleChange}
-                maxLength={500}
-                placeholder="https://example.com/photo.jpg"
-              />
+            <BookOpen
+              size={20}
+            />
 
-              <small>
-                We will add direct image upload
-                later.
-              </small>
+            <div>
 
-            </div>
-
-
-            {error && (
-
-              <div
-                className="edit-profile-message error"
-                role="alert"
-              >
-                {error}
-              </div>
-
-            )}
-
-
-            {success && (
-
-              <div
-                className="edit-profile-message success"
-                role="status"
-              >
-                {success}
-              </div>
-
-            )}
-
-
-            <div className="edit-profile-actions">
-
-              <button
-                type="button"
-                className="profile-cancel-button"
-                disabled={saving}
-                onClick={() =>
-                  navigate(-1)
+              <strong>
+                {
+                  Number(
+                    stats
+                      .writings_count ||
+                    writings.length ||
+                    0
+                  )
                 }
-              >
-                Cancel
-              </button>
+              </strong>
 
-
-              <button
-                type="submit"
-                className="profile-save-button"
-                disabled={saving}
-              >
-
-                {saving ? (
-                  <>
-                    <Loader2
-                      size={18}
-                      className="profile-spinner"
-                    />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save size={18} />
-                    Save Profile
-                  </>
-                )}
-
-              </button>
+              <span>
+                {
+                  t(
+                    "writerProfile.publishedWritings"
+                  )
+                }
+              </span>
 
             </div>
 
-          </form>
+          </div>
 
-        </div>
+
+          {/* LIKES */}
+
+          <div className="writer-profile-stat">
+
+            <Heart
+              size={20}
+            />
+
+            <div>
+
+              <strong>
+                {
+                  Number(
+                    stats
+                      .likes_count ||
+                    0
+                  )
+                }
+              </strong>
+
+              <span>
+                {
+                  t(
+                    "writerProfile.likesReceived"
+                  )
+                }
+              </span>
+
+            </div>
+
+          </div>
+
+
+          {/* COMMENTS */}
+
+          <div className="writer-profile-stat">
+
+            <MessageCircle
+              size={20}
+            />
+
+            <div>
+
+              <strong>
+                {
+                  Number(
+                    stats
+                      .comments_count ||
+                    0
+                  )
+                }
+              </strong>
+
+              <span>
+                {
+                  t(
+                    "writerProfile.comments"
+                  )
+                }
+              </span>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        {/* =================================================
+            WRITINGS
+        ================================================= */}
+
+        <section className="writer-profile-writings">
+
+          <div className="writer-profile-section-heading">
+
+            <div>
+
+              <p className="writer-profile-eyebrow">
+                {
+                  t(
+                    "writerProfile.publishedWorks"
+                  )
+                }
+              </p>
+
+              <h2>
+                {
+                  t(
+                    "writerProfile.writingsBy"
+                  ).replace(
+                    "{{name}}",
+                    profile.name
+                  )
+                }
+              </h2>
+
+            </div>
+
+
+            <span className="writer-writing-count">
+
+              {
+                writings.length
+              }
+
+              {" "}
+
+              {
+                t(
+                  "writerProfile.writings"
+                )
+              }
+
+            </span>
+
+          </div>
+
+
+          {/* ===============================================
+              EMPTY WRITINGS
+          ================================================ */}
+
+          {
+            writings.length === 0
+              ? (
+                <div className="writer-profile-empty">
+
+                  <BookOpen
+                    size={34}
+                  />
+
+                  <h3>
+                    {
+                      t(
+                        "writerProfile.noWritings"
+                      )
+                    }
+                  </h3>
+
+                  <p>
+                    {
+                      t(
+                        "writerProfile.noWritingsDescription"
+                      )
+                    }
+                  </p>
+
+                </div>
+              )
+              : (
+
+                /* =========================================
+                   WRITING GRID
+                ========================================== */
+
+                <div className="writer-profile-writing-grid">
+
+                  {
+                    writings.map(
+                      (writing) => (
+
+                        <Link
+                          key={
+                            writing.id
+                          }
+                          to={
+                            `/writings/${writing.id}`
+                          }
+                          className="writer-profile-writing-card"
+                        >
+
+                          <div className="writer-profile-writing-top">
+
+                            <span>
+                              {
+                                writing.category ||
+                                t(
+                                  "common.category"
+                                )
+                              }
+                            </span>
+
+                            {
+                              writing.language && (
+                                <small>
+                                  {
+                                    writing
+                                      .language
+                                      .toUpperCase()
+                                  }
+                                </small>
+                              )
+                            }
+
+                          </div>
+
+
+                          <h3>
+                            {
+                              writing.title ||
+                              t(
+                                "common.untitled"
+                              )
+                            }
+                          </h3>
+
+
+                          <p>
+                            {
+                              (
+                                writing.content ||
+                                ""
+                              )
+                                .trim()
+                                .slice(
+                                  0,
+                                  180
+                                )
+                            }
+
+                            {
+                              (
+                                writing.content ||
+                                ""
+                              )
+                                .trim()
+                                .length >
+                              180
+                                ? "..."
+                                : ""
+                            }
+                          </p>
+
+
+                          <div className="writer-profile-writing-meta">
+
+                            <span>
+
+                              <Heart
+                                size={14}
+                              />
+
+                              {
+                                Number(
+                                  writing
+                                    .likes_count ||
+                                  0
+                                )
+                              }
+
+                            </span>
+
+
+                            <span>
+
+                              <MessageCircle
+                                size={14}
+                              />
+
+                              {
+                                Number(
+                                  writing
+                                    .comments_count ||
+                                  0
+                                )
+                              }
+
+                            </span>
+
+                          </div>
+
+                        </Link>
+
+                      )
+                    )
+                  }
+
+                </div>
+              )
+          }
+
+        </section>
 
       </div>
 
@@ -614,4 +1252,4 @@ function EditProfile({
 }
 
 
-export default EditProfile;
+export default WriterProfile;

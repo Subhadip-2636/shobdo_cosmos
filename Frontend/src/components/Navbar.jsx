@@ -1,4 +1,5 @@
 import {
+  Bell,
   BookOpen,
   Check,
   ChevronDown,
@@ -14,6 +15,7 @@ import {
 import {
   Link,
   NavLink,
+  useLocation,
   useNavigate,
 } from "react-router-dom";
 
@@ -28,6 +30,10 @@ import {
 } from "../api/auth";
 
 import {
+  getUnreadNotificationCount,
+} from "../api/notifications";
+
+import {
   useLanguage,
 } from "../Language/LanguageContext";
 
@@ -39,6 +45,9 @@ function Navbar({
 
   const navigate =
     useNavigate();
+
+  const location =
+    useLocation();
 
   const {
     t,
@@ -63,6 +72,11 @@ function Navbar({
     setLanguageOpen,
   ] = useState(false);
 
+  const [
+    unreadNotificationCount,
+    setUnreadNotificationCount,
+  ] = useState(0);
+
 
   const languageMenuRef =
     useRef(null);
@@ -77,6 +91,7 @@ function Navbar({
     setMobileOpen(false);
 
     setLanguageOpen(false);
+
   }
 
 
@@ -91,6 +106,7 @@ function Navbar({
     setLanguage(code);
 
     setLanguageOpen(false);
+
   }
 
 
@@ -137,6 +153,180 @@ function Navbar({
 
 
   // =====================================================
+  // NOTIFICATION COUNT
+  // =====================================================
+
+  useEffect(() => {
+
+    let cancelled = false;
+
+
+    // ---------------------------------------------------
+    // LOGGED OUT
+    // ---------------------------------------------------
+
+    if (!user) {
+
+      setUnreadNotificationCount(0);
+
+      return undefined;
+
+    }
+
+
+    // ---------------------------------------------------
+    // LOAD UNREAD COUNT
+    // ---------------------------------------------------
+
+    async function loadUnreadCount() {
+
+      try {
+
+        const data =
+          await getUnreadNotificationCount();
+
+
+        if (cancelled) {
+          return;
+        }
+
+
+        const count =
+          Number(
+            data?.unread_count
+          );
+
+
+        setUnreadNotificationCount(
+          Number.isFinite(count)
+            ? Math.max(
+                0,
+                count
+              )
+            : 0
+        );
+
+      } catch (error) {
+
+        if (cancelled) {
+          return;
+        }
+
+
+        if (
+          error?.status === 401 ||
+          error?.status === 422
+        ) {
+
+          setUnreadNotificationCount(0);
+
+          return;
+
+        }
+
+
+        console.error(
+          "NOTIFICATION COUNT ERROR:",
+          error
+        );
+
+      }
+
+    }
+
+
+    // ---------------------------------------------------
+    // INITIAL LOAD
+    // ---------------------------------------------------
+
+    loadUnreadCount();
+
+
+    // ---------------------------------------------------
+    // WINDOW FOCUS
+    // ---------------------------------------------------
+
+    function handleWindowFocus() {
+
+      loadUnreadCount();
+
+    }
+
+
+    // ---------------------------------------------------
+    // CUSTOM NOTIFICATION REFRESH EVENT
+    // ---------------------------------------------------
+    //
+    // Notifications.jsx can later call:
+    //
+    // window.dispatchEvent(
+    //   new Event(
+    //     "shobdo:notifications-changed"
+    //   )
+    // );
+    //
+    // ---------------------------------------------------
+
+    function handleNotificationChange() {
+
+      loadUnreadCount();
+
+    }
+
+
+    window.addEventListener(
+      "focus",
+      handleWindowFocus
+    );
+
+    window.addEventListener(
+      "shobdo:notifications-changed",
+      handleNotificationChange
+    );
+
+
+    // ---------------------------------------------------
+    // POLLING
+    // ---------------------------------------------------
+    //
+    // Refresh once every 60 seconds.
+    //
+    // ---------------------------------------------------
+
+    const intervalId =
+      window.setInterval(
+        loadUnreadCount,
+        60000
+      );
+
+
+    return () => {
+
+      cancelled = true;
+
+      window.removeEventListener(
+        "focus",
+        handleWindowFocus
+      );
+
+      window.removeEventListener(
+        "shobdo:notifications-changed",
+        handleNotificationChange
+      );
+
+      window.clearInterval(
+        intervalId
+      );
+
+    };
+
+  }, [
+    user?.id,
+    location.pathname,
+  ]);
+
+
+  // =====================================================
   // LOGOUT
   // =====================================================
 
@@ -156,10 +346,17 @@ function Navbar({
     } finally {
 
       if (setUser) {
+
         setUser(null);
+
       }
 
+
+      setUnreadNotificationCount(0);
+
+
       closeMenus();
+
 
       navigate(
         "/",
@@ -186,10 +383,21 @@ function Navbar({
 
 
   // =====================================================
+  // NOTIFICATION BADGE VALUE
+  // =====================================================
+
+  const notificationBadge =
+    unreadNotificationCount > 9
+      ? "9+"
+      : unreadNotificationCount;
+
+
+  // =====================================================
   // UI
   // =====================================================
 
   return (
+
     <header className="shobdo-navbar-header">
 
       <div className="shobdo-navbar-container">
@@ -239,7 +447,9 @@ function Navbar({
           <NavLink
             to="/"
             end
-            className={({ isActive }) =>
+            className={({
+              isActive,
+            }) =>
               isActive
                 ? "shobdo-nav-link active"
                 : "shobdo-nav-link"
@@ -255,7 +465,9 @@ function Navbar({
 
           <NavLink
             to="/explore"
-            className={({ isActive }) =>
+            className={({
+              isActive,
+            }) =>
               isActive
                 ? "shobdo-nav-link active"
                 : "shobdo-nav-link"
@@ -271,7 +483,9 @@ function Navbar({
 
           <NavLink
             to="/about"
-            className={({ isActive }) =>
+            className={({
+              isActive,
+            }) =>
               isActive
                 ? "shobdo-nav-link active"
                 : "shobdo-nav-link"
@@ -289,7 +503,9 @@ function Navbar({
 
             <NavLink
               to="/my-writings"
-              className={({ isActive }) =>
+              className={({
+                isActive,
+              }) =>
                 isActive
                   ? "shobdo-nav-link active"
                   : "shobdo-nav-link"
@@ -299,7 +515,11 @@ function Navbar({
               <BookOpen size={15} />
 
               <span>
-                {t("navbar.myWritings")}
+
+                {t(
+                  "navbar.myWritings"
+                )}
+
               </span>
 
             </NavLink>
@@ -313,7 +533,9 @@ function Navbar({
 
             <NavLink
               to="/write"
-              className={({ isActive }) =>
+              className={({
+                isActive,
+              }) =>
                 isActive
                   ? "shobdo-nav-link active"
                   : "shobdo-nav-link"
@@ -323,7 +545,11 @@ function Navbar({
               <PenLine size={15} />
 
               <span>
-                {t("navbar.write")}
+
+                {t(
+                  "navbar.write"
+                )}
+
               </span>
 
             </NavLink>
@@ -357,6 +583,60 @@ function Navbar({
             <Search size={19} />
 
           </Link>
+
+
+          {/* =============================================
+              NOTIFICATIONS
+          ============================================== */}
+
+          {user && (
+
+            <Link
+              to="/notifications"
+              className={
+                location.pathname ===
+                "/notifications"
+                  ? "shobdo-navbar-notification active"
+                  : "shobdo-navbar-notification"
+              }
+              aria-label={
+                unreadNotificationCount > 0
+                  ? `${t(
+                      "navbar.notifications"
+                    )} (${unreadNotificationCount})`
+                  : t(
+                      "navbar.notifications"
+                    )
+              }
+              title={
+                t(
+                  "navbar.notifications"
+                )
+              }
+              onClick={closeMenus}
+            >
+
+              <Bell size={19} />
+
+
+              {
+                unreadNotificationCount > 0 && (
+
+                  <span
+                    className="shobdo-notification-badge"
+                    aria-hidden="true"
+                  >
+
+                    {notificationBadge}
+
+                  </span>
+
+                )
+              }
+
+            </Link>
+
+          )}
 
 
           {/* =============================================
@@ -497,7 +777,9 @@ function Navbar({
                               item.name && (
 
                               <small>
+
                                 {item.name}
+
                               </small>
 
                             )
@@ -616,11 +898,11 @@ function Navbar({
             aria-label={
               mobileOpen
                 ? t(
-                  "navbar.closeMenu"
-                )
+                    "navbar.closeMenu"
+                  )
                 : t(
-                  "navbar.openMenu"
-                )
+                    "navbar.openMenu"
+                  )
             }
           >
 
@@ -732,6 +1014,52 @@ function Navbar({
 
 
           {/* =============================================
+              MOBILE NOTIFICATIONS
+          ============================================== */}
+
+          {user && (
+
+            <NavLink
+              to="/notifications"
+              className={
+                "shobdo-mobile-notification"
+              }
+              onClick={closeMenus}
+            >
+
+              <Bell size={16} />
+
+              <span>
+
+                {t(
+                  "navbar.notifications"
+                )}
+
+              </span>
+
+
+              {
+                unreadNotificationCount > 0 && (
+
+                  <span
+                    className={
+                      "shobdo-mobile-notification-badge"
+                    }
+                  >
+
+                    {notificationBadge}
+
+                  </span>
+
+                )
+              }
+
+            </NavLink>
+
+          )}
+
+
+          {/* =============================================
               MOBILE LANGUAGE
           ============================================== */}
 
@@ -774,9 +1102,11 @@ function Navbar({
                     {
                       language ===
                         item.code && (
+
                         <Check
                           size={12}
                         />
+
                       )
                     }
 
@@ -811,18 +1141,35 @@ function Navbar({
                 className="shobdo-mobile-user"
                 onClick={closeMenus}
               >
+
                 <span className="shobdo-navbar-avatar">
+
                   {userInitial}
+
                 </span>
 
+
                 <div>
+
                   <small>
-                    {t("navbar.signedInAs")}
+
+                    {t(
+                      "navbar.signedInAs"
+                    )}
+
                   </small>
+
                   <strong>
-                    {user?.name || "Writer"}
+
+                    {
+                      user?.name ||
+                      "Writer"
+                    }
+
                   </strong>
+
                 </div>
+
               </Link>
 
 
@@ -865,6 +1212,7 @@ function Navbar({
       )}
 
     </header>
+
   );
 
 }

@@ -11,9 +11,19 @@ import {
   useState,
 } from "react";
 
+
+// =========================================================
+// COMPONENTS
+// =========================================================
+
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
+
+
+// =========================================================
+// MAIN PAGES
+// =========================================================
 
 import Home from "./pages/Home";
 import Explore from "./pages/Explore";
@@ -21,14 +31,44 @@ import Write from "./pages/Write";
 import WritingDetails from "./pages/WritingDetails";
 import MyWritings from "./pages/MyWritings";
 
+
+// =========================================================
+// NOTIFICATIONS
+// =========================================================
+
+import Notifications from "./pages/Notifications";
+
+
+// =========================================================
+// AUTH PAGES
+// =========================================================
+
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 
+
+// =========================================================
+// INFORMATION / LEGAL
+// =========================================================
+
 import About from "./pages/About";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+
+
+// =========================================================
+// USER PAGES
+// =========================================================
+
+import WriterProfile from "./pages/WriterProfile";
+import EditProfile from "./pages/EditProfile";
+
+
+// =========================================================
+// API
+// =========================================================
 
 import {
   getWritings,
@@ -37,9 +77,6 @@ import {
 import {
   getCurrentUser,
 } from "./api/auth";
-
-import WriterProfile from "./pages/WriterProfile";
-import EditProfile from "./pages/EditProfile";
 
 
 // =========================================================
@@ -52,32 +89,49 @@ function PrivateRoute({
   children,
 }) {
 
+  // -------------------------------------------------------
+  // WAIT FOR AUTH CHECK
+  // -------------------------------------------------------
+
   if (authLoading) {
 
     return (
+
       <div className="app-route-loading">
 
         Loading...
 
       </div>
+
     );
 
   }
 
+
+  // -------------------------------------------------------
+  // NOT LOGGED IN
+  // -------------------------------------------------------
 
   if (!user) {
 
     return (
+
       <Navigate
         to="/login"
         replace
       />
+
     );
 
   }
 
 
+  // -------------------------------------------------------
+  // AUTHENTICATED
+  // -------------------------------------------------------
+
   return children;
+
 }
 
 
@@ -138,7 +192,6 @@ function App() {
 
           return currentUser;
 
-
         } catch (error) {
 
           console.error(
@@ -149,8 +202,8 @@ function App() {
 
           setUser(null);
 
-          return null;
 
+          return null;
 
         } finally {
 
@@ -195,7 +248,6 @@ function App() {
               : []
           );
 
-
         } catch (error) {
 
           console.error(
@@ -205,7 +257,6 @@ function App() {
 
 
           setWritings([]);
-
 
         } finally {
 
@@ -263,8 +314,12 @@ function App() {
   // =====================================================
 
   return (
+
     <BrowserRouter>
+
       <ScrollToTop />
+
+
       <div className="app-shell">
 
 
@@ -294,15 +349,16 @@ function App() {
             <Route
               path="/"
               element={
+
                 <Home
                   writings={
                     writings
                   }
-
                   loading={
                     writingsLoading
                   }
                 />
+
               }
             />
 
@@ -322,6 +378,7 @@ function App() {
               }
             />
 
+
             <Route
               path="/users/:id"
               element={
@@ -337,20 +394,26 @@ function App() {
             <Route
               path="/login"
               element={
+
                 user
                   ? (
+
                     <Navigate
                       to="/"
                       replace
                     />
+
                   )
                   : (
+
                     <Login
                       onLogin={
                         handleAuthSuccess
                       }
                     />
+
                   )
+
               }
             />
 
@@ -358,20 +421,26 @@ function App() {
             <Route
               path="/register"
               element={
+
                 user
                   ? (
+
                     <Navigate
                       to="/"
                       replace
                     />
+
                   )
                   : (
+
                     <Register
                       onRegister={
                         handleAuthSuccess
                       }
                     />
+
                   )
+
               }
             />
 
@@ -393,12 +462,13 @@ function App() {
 
 
             {/* =========================================
-                PROTECTED
+                PROTECTED — WRITE
             ========================================== */}
 
             <Route
               path="/write"
               element={
+
                 <PrivateRoute
                   user={user}
                   authLoading={
@@ -408,20 +478,25 @@ function App() {
 
                   <Write
                     user={user}
-
                     onWritingCreated={
                       handleWritingChanged
                     }
                   />
 
                 </PrivateRoute>
+
               }
             />
 
+
+            {/* =========================================
+                PROTECTED — EDIT WRITING
+            ========================================== */}
 
             <Route
               path="/write/:id"
               element={
+
                 <PrivateRoute
                   user={user}
                   authLoading={
@@ -431,20 +506,25 @@ function App() {
 
                   <Write
                     user={user}
-
                     onWritingCreated={
                       handleWritingChanged
                     }
                   />
 
                 </PrivateRoute>
+
               }
             />
 
 
+            {/* =========================================
+                PROTECTED — MY WRITINGS
+            ========================================== */}
+
             <Route
               path="/my-writings"
               element={
+
                 <PrivateRoute
                   user={user}
                   authLoading={
@@ -455,25 +535,60 @@ function App() {
                   <MyWritings />
 
                 </PrivateRoute>
+
               }
             />
 
+
+            {/* =========================================
+                PROTECTED — NOTIFICATIONS
+            ========================================== */}
+
             <Route
-      path="/profile/edit"
-      element={
-           <PrivateRoute
-                user={user}
-                authLoading={authLoading}
-           >
-                <EditProfile
-                   user={user}
-                   onProfileUpdated={
-                        loadCurrentUser
-                   }
-                 />
-            </PrivateRoute>
+              path="/notifications"
+              element={
+
+                <PrivateRoute
+                  user={user}
+                  authLoading={
+                    authLoading
+                  }
+                >
+
+                  <Notifications />
+
+                </PrivateRoute>
+
               }
-         />
+            />
+
+
+            {/* =========================================
+                PROTECTED — EDIT PROFILE
+            ========================================== */}
+
+            <Route
+              path="/profile/edit"
+              element={
+
+                <PrivateRoute
+                  user={user}
+                  authLoading={
+                    authLoading
+                  }
+                >
+
+                  <EditProfile
+                    user={user}
+                    onProfileUpdated={
+                      loadCurrentUser
+                    }
+                  />
+
+                </PrivateRoute>
+
+              }
+            />
 
 
             {/* =========================================
@@ -511,10 +626,12 @@ function App() {
             <Route
               path="*"
               element={
+
                 <Navigate
                   to="/"
                   replace
                 />
+
               }
             />
 
@@ -529,9 +646,11 @@ function App() {
 
         <Footer />
 
+
       </div>
 
     </BrowserRouter>
+
   );
 
 }

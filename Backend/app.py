@@ -2,7 +2,6 @@ import os
 
 from flask import (
     Flask,
-    app,
     jsonify,
 )
 
@@ -15,6 +14,7 @@ from extensions import (
     mail,
     migrate,
 )
+
 
 
 # =========================================================
@@ -248,7 +248,7 @@ def create_app():
 
     from models.user import User
     from models.writing import Writing
-
+    from models.notification import Notification
 
     # =====================================================
     # REGISTER BLUEPRINTS
@@ -264,7 +264,9 @@ def create_app():
     from routes.like_routes import like_bp
     from routes.comment_routes import comment_bp
     from routes.user_routes import user_bp
-
+    from routes.notification_routes import (
+        notification_bp,
+    )
 
     app.register_blueprint(
         auth_bp,
@@ -289,7 +291,8 @@ def create_app():
 
     app.register_blueprint(user_bp)
 
-    
+    app.register_blueprint(notification_bp)
+
     # =====================================================
     # ROOT API
     # =====================================================

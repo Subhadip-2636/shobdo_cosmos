@@ -15,6 +15,10 @@ from extensions import db
 from models.user import User
 from models.writing import Writing
 from models.follow import Follow
+from services.notification_service import (
+    create_notification,
+    delete_notification,
+)
 
 
 # ============================================================
@@ -713,6 +717,10 @@ def follow_user(user_id):
                 "Writer not found."
         }), 404
 
+    # --------------------------------------------------------
+    # PREVENT SELF FOLLOW
+    # --------------------------------------------------------
+
     if (
         current_user.id
         == target_user.id
@@ -734,6 +742,10 @@ def follow_user(user_id):
                     target_user.id
                 ),
         }), 400
+
+    # --------------------------------------------------------
+    # CHECK EXISTING FOLLOW
+    # --------------------------------------------------------
 
     existing_follow = (
         Follow.query
@@ -770,6 +782,10 @@ def follow_user(user_id):
                 ),
         }), 200
 
+    # --------------------------------------------------------
+    # CREATE FOLLOW
+    # --------------------------------------------------------
+
     follow = Follow(
         follower_id=
             current_user.id,
@@ -779,9 +795,34 @@ def follow_user(user_id):
     )
 
     try:
+
         db.session.add(
             follow
         )
+
+        # ----------------------------------------------------
+        # CREATE FOLLOW NOTIFICATION
+        # ----------------------------------------------------
+        #
+        # recipient = user being followed
+        # actor     = user who followed
+        #
+        # ----------------------------------------------------
+
+        create_notification(
+            recipient_id=
+                target_user.id,
+
+            actor_id=
+                current_user.id,
+
+            notification_type=
+                "follow",
+        )
+
+        # ----------------------------------------------------
+        # COMMIT FOLLOW + NOTIFICATION TOGETHER
+        # ----------------------------------------------------
 
         db.session.commit()
 
@@ -816,7 +857,6 @@ def follow_user(user_id):
                 target_user.id
             ),
     }), 201
-
 
 # ============================================================
 # UNFOLLOW WRITER
@@ -864,6 +904,10 @@ def unfollow_user(user_id):
                 "Writer not found."
         }), 404
 
+    # --------------------------------------------------------
+    # PREVENT SELF UNFOLLOW
+    # --------------------------------------------------------
+
     if (
         current_user.id
         == target_user.id
@@ -885,6 +929,10 @@ def unfollow_user(user_id):
                     target_user.id
                 ),
         }), 400
+
+    # --------------------------------------------------------
+    # FIND FOLLOW RELATIONSHIP
+    # --------------------------------------------------------
 
     follow = (
         Follow.query
@@ -922,9 +970,33 @@ def unfollow_user(user_id):
         }), 200
 
     try:
+
+        # ----------------------------------------------------
+        # DELETE FOLLOW NOTIFICATION
+        # ----------------------------------------------------
+
+        delete_notification(
+            recipient_id=
+                target_user.id,
+
+            actor_id=
+                current_user.id,
+
+            notification_type=
+                "follow",
+        )
+
+        # ----------------------------------------------------
+        # DELETE FOLLOW RELATIONSHIP
+        # ----------------------------------------------------
+
         db.session.delete(
             follow
         )
+
+        # ----------------------------------------------------
+        # COMMIT BOTH TOGETHER
+        # ----------------------------------------------------
 
         db.session.commit()
 
