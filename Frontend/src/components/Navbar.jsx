@@ -83,6 +83,42 @@ function Navbar({
 
 
   // =====================================================
+  // TRANSLATION FALLBACK
+  // =====================================================
+
+  function getNotificationLabel() {
+
+    const translated =
+      t("navbar.notifications");
+
+    if (
+      translated &&
+      translated !==
+        "navbar.notifications"
+    ) {
+
+      return translated;
+
+    }
+
+    if (language === "bn") {
+      return "বিজ্ঞপ্তি";
+    }
+
+    if (language === "hi") {
+      return "सूचनाएँ";
+    }
+
+    return "Notifications";
+
+  }
+
+
+  const notificationLabel =
+    getNotificationLabel();
+
+
+  // =====================================================
   // CLOSE MENUS
   // =====================================================
 
@@ -161,10 +197,6 @@ function Navbar({
     let cancelled = false;
 
 
-    // ---------------------------------------------------
-    // LOGGED OUT
-    // ---------------------------------------------------
-
     if (!user) {
 
       setUnreadNotificationCount(0);
@@ -173,10 +205,6 @@ function Navbar({
 
     }
 
-
-    // ---------------------------------------------------
-    // LOAD UNREAD COUNT
-    // ---------------------------------------------------
 
     async function loadUnreadCount() {
 
@@ -235,16 +263,8 @@ function Navbar({
     }
 
 
-    // ---------------------------------------------------
-    // INITIAL LOAD
-    // ---------------------------------------------------
-
     loadUnreadCount();
 
-
-    // ---------------------------------------------------
-    // WINDOW FOCUS
-    // ---------------------------------------------------
 
     function handleWindowFocus() {
 
@@ -252,20 +272,6 @@ function Navbar({
 
     }
 
-
-    // ---------------------------------------------------
-    // CUSTOM NOTIFICATION REFRESH EVENT
-    // ---------------------------------------------------
-    //
-    // Notifications.jsx can later call:
-    //
-    // window.dispatchEvent(
-    //   new Event(
-    //     "shobdo:notifications-changed"
-    //   )
-    // );
-    //
-    // ---------------------------------------------------
 
     function handleNotificationChange() {
 
@@ -279,19 +285,12 @@ function Navbar({
       handleWindowFocus
     );
 
+
     window.addEventListener(
       "shobdo:notifications-changed",
       handleNotificationChange
     );
 
-
-    // ---------------------------------------------------
-    // POLLING
-    // ---------------------------------------------------
-    //
-    // Refresh once every 60 seconds.
-    //
-    // ---------------------------------------------------
 
     const intervalId =
       window.setInterval(
@@ -304,15 +303,18 @@ function Navbar({
 
       cancelled = true;
 
+
       window.removeEventListener(
         "focus",
         handleWindowFocus
       );
 
+
       window.removeEventListener(
         "shobdo:notifications-changed",
         handleNotificationChange
       );
+
 
       window.clearInterval(
         intervalId
@@ -346,14 +348,11 @@ function Navbar({
     } finally {
 
       if (setUser) {
-
         setUser(null);
-
       }
 
 
       setUnreadNotificationCount(0);
-
 
       closeMenus();
 
@@ -383,7 +382,7 @@ function Navbar({
 
 
   // =====================================================
-  // NOTIFICATION BADGE VALUE
+  // NOTIFICATION BADGE
   // =====================================================
 
   const notificationBadge =
@@ -441,9 +440,6 @@ function Navbar({
 
         <nav className="shobdo-navbar-links">
 
-
-          {/* HOME */}
-
           <NavLink
             to="/"
             end
@@ -461,8 +457,6 @@ function Navbar({
           </NavLink>
 
 
-          {/* EXPLORE */}
-
           <NavLink
             to="/explore"
             className={({
@@ -478,8 +472,6 @@ function Navbar({
 
           </NavLink>
 
-
-          {/* ABOUT */}
 
           <NavLink
             to="/about"
@@ -497,8 +489,6 @@ function Navbar({
           </NavLink>
 
 
-          {/* MY WRITINGS */}
-
           {user && (
 
             <NavLink
@@ -515,19 +505,13 @@ function Navbar({
               <BookOpen size={15} />
 
               <span>
-
-                {t(
-                  "navbar.myWritings"
-                )}
-
+                {t("navbar.myWritings")}
               </span>
 
             </NavLink>
 
           )}
 
-
-          {/* WRITE */}
 
           {user && (
 
@@ -545,11 +529,7 @@ function Navbar({
               <PenLine size={15} />
 
               <span>
-
-                {t(
-                  "navbar.write"
-                )}
-
+                {t("navbar.write")}
               </span>
 
             </NavLink>
@@ -586,7 +566,7 @@ function Navbar({
 
 
           {/* =============================================
-              NOTIFICATIONS
+              DESKTOP NOTIFICATION BELL
           ============================================== */}
 
           {user && (
@@ -601,17 +581,11 @@ function Navbar({
               }
               aria-label={
                 unreadNotificationCount > 0
-                  ? `${t(
-                      "navbar.notifications"
-                    )} (${unreadNotificationCount})`
-                  : t(
-                      "navbar.notifications"
-                    )
+                  ? `${notificationLabel} (${unreadNotificationCount})`
+                  : notificationLabel
               }
               title={
-                t(
-                  "navbar.notifications"
-                )
+                notificationLabel
               }
               onClick={closeMenus}
             >
@@ -619,20 +593,18 @@ function Navbar({
               <Bell size={19} />
 
 
-              {
-                unreadNotificationCount > 0 && (
+              {unreadNotificationCount > 0 && (
 
-                  <span
-                    className="shobdo-notification-badge"
-                    aria-hidden="true"
-                  >
+                <span
+                  className="shobdo-notification-badge"
+                  aria-hidden="true"
+                >
 
-                    {notificationBadge}
+                  {notificationBadge}
 
-                  </span>
+                </span>
 
-                )
-              }
+              )}
 
             </Link>
 
@@ -673,7 +645,6 @@ function Navbar({
             >
 
               <Globe2 size={15} />
-
 
               <span>
 
@@ -764,11 +735,7 @@ function Navbar({
                         <span>
 
                           <strong>
-
-                            {
-                              item.nativeName
-                            }
-
+                            {item.nativeName}
                           </strong>
 
 
@@ -777,9 +744,7 @@ function Navbar({
                               item.name && (
 
                               <small>
-
                                 {item.name}
-
                               </small>
 
                             )
@@ -808,8 +773,6 @@ function Navbar({
           {user ? (
 
             <>
-
-              {/* USER */}
 
               <Link
                 to={
@@ -840,8 +803,6 @@ function Navbar({
               </Link>
 
 
-              {/* LOGOUT */}
-
               <button
                 type="button"
                 className="shobdo-navbar-logout"
@@ -853,11 +814,7 @@ function Navbar({
                 <LogOut size={15} />
 
                 <span>
-
-                  {t(
-                    "navbar.logout"
-                  )}
-
+                  {t("navbar.logout")}
                 </span>
 
               </button>
@@ -873,6 +830,42 @@ function Navbar({
             >
 
               {t("navbar.login")}
+
+            </Link>
+
+          )}
+
+
+          {/* =============================================
+              MOBILE TOP NOTIFICATION BELL
+          ============================================== */}
+
+          {user && (
+
+            <Link
+              to="/notifications"
+              className="shobdo-mobile-top-notification"
+              aria-label={
+                notificationLabel
+              }
+              title={
+                notificationLabel
+              }
+              onClick={closeMenus}
+            >
+
+              <Bell size={20} />
+
+
+              {unreadNotificationCount > 0 && (
+
+                <span className="shobdo-mobile-top-notification-badge">
+
+                  {notificationBadge}
+
+                </span>
+
+              )}
 
             </Link>
 
@@ -952,9 +945,7 @@ function Navbar({
             onClick={closeMenus}
           >
 
-            {t(
-              "navbar.explore"
-            )}
+            {t("navbar.explore")}
 
           </NavLink>
 
@@ -966,9 +957,7 @@ function Navbar({
             onClick={closeMenus}
           >
 
-            {t(
-              "navbar.about"
-            )}
+            {t("navbar.about")}
 
           </NavLink>
 
@@ -1021,38 +1010,34 @@ function Navbar({
 
             <NavLink
               to="/notifications"
-              className={
-                "shobdo-mobile-notification"
+              className={({
+                isActive,
+              }) =>
+                isActive
+                  ? "shobdo-mobile-notification active"
+                  : "shobdo-mobile-notification"
               }
               onClick={closeMenus}
             >
 
-              <Bell size={16} />
+              <Bell size={17} />
 
-              <span>
+              <span className="shobdo-mobile-notification-label">
 
-                {t(
-                  "navbar.notifications"
-                )}
+                {notificationLabel}
 
               </span>
 
 
-              {
-                unreadNotificationCount > 0 && (
+              {unreadNotificationCount > 0 && (
 
-                  <span
-                    className={
-                      "shobdo-mobile-notification-badge"
-                    }
-                  >
+                <span className="shobdo-mobile-notification-badge">
 
-                    {notificationBadge}
+                  {notificationBadge}
 
-                  </span>
+                </span>
 
-                )
-              }
+              )}
 
             </NavLink>
 
@@ -1110,9 +1095,7 @@ function Navbar({
                       )
                     }
 
-                    {
-                      item.nativeName
-                    }
+                    {item.nativeName}
 
                   </button>
 
