@@ -1,16 +1,41 @@
+// =========================================================
+// SHOBDO - NOTIFICATIONS API
+// =========================================================
+
+
+// =========================================================
+// API CONFIGURATION
+// =========================================================
+//
+// Works with BOTH:
+//
+// VITE_API_URL=https://shobdo-cosmos.onrender.com
+//
+// and:
+//
+// VITE_API_URL=https://shobdo-cosmos.onrender.com/api
+//
+// Final API URL will always become:
+// https://shobdo-cosmos.onrender.com/api
+//
+// =========================================================
+
 const RAW_API_URL =
   import.meta.env.VITE_API_URL ||
   "http://127.0.0.1:5000";
+
 
 const CLEAN_API_URL =
   RAW_API_URL
     .trim()
     .replace(/\/+$/, "");
 
+
 const API_URL =
   CLEAN_API_URL.endsWith("/api")
     ? CLEAN_API_URL
     : `${CLEAN_API_URL}/api`;
+
 
 const TOKEN_KEY =
   "shobdo_token";
@@ -30,7 +55,7 @@ function getToken() {
 
 
 // =========================================================
-// HEADERS
+// AUTH HEADERS
 // =========================================================
 
 function getAuthHeaders() {
@@ -38,8 +63,15 @@ function getAuthHeaders() {
   const token =
     getToken();
 
+
   const headers = {
-    Accept: "application/json",
+
+    Accept:
+      "application/json",
+
+    "Content-Type":
+      "application/json",
+
   };
 
 
@@ -88,7 +120,9 @@ async function handleResponse(
 
 
     const error =
-      new Error(message);
+      new Error(
+        message
+      );
 
 
     error.status =
@@ -109,7 +143,19 @@ async function handleResponse(
 
 
 // =========================================================
-// GET NOTIFICATIONS
+// GET ALL / UNREAD NOTIFICATIONS
+// =========================================================
+//
+// Example:
+//
+// getNotifications()
+//
+// getNotifications({
+//   page: 1,
+//   perPage: 20,
+//   unreadOnly: true,
+// });
+//
 // =========================================================
 
 export async function getNotifications({
@@ -127,6 +173,7 @@ export async function getNotifications({
     String(page)
   );
 
+
   params.set(
     "per_page",
     String(perPage)
@@ -143,11 +190,16 @@ export async function getNotifications({
   }
 
 
+  const url =
+    `${API_URL}/notifications?${params.toString()}`;
+
+
   const response =
     await fetch(
-      `${API_URL}/notifications?${params.toString()}`,
+      url,
       {
         method: "GET",
+
         headers:
           getAuthHeaders(),
       }
@@ -162,7 +214,7 @@ export async function getNotifications({
 
 
 // =========================================================
-// UNREAD COUNT
+// GET UNREAD NOTIFICATION COUNT
 // =========================================================
 
 export async function getUnreadNotificationCount() {
@@ -172,6 +224,7 @@ export async function getUnreadNotificationCount() {
       `${API_URL}/notifications/unread-count`,
       {
         method: "GET",
+
         headers:
           getAuthHeaders(),
       }
@@ -186,14 +239,17 @@ export async function getUnreadNotificationCount() {
 
 
 // =========================================================
-// MARK ONE AS READ
+// MARK ONE NOTIFICATION AS READ
 // =========================================================
 
 export async function markNotificationRead(
   notificationId
 ) {
 
-  if (!notificationId) {
+  if (
+    notificationId === undefined ||
+    notificationId === null
+  ) {
 
     throw new Error(
       "Notification ID is required."
@@ -207,6 +263,7 @@ export async function markNotificationRead(
       `${API_URL}/notifications/${notificationId}/read`,
       {
         method: "PATCH",
+
         headers:
           getAuthHeaders(),
       }
@@ -221,7 +278,7 @@ export async function markNotificationRead(
 
 
 // =========================================================
-// MARK ALL AS READ
+// MARK ALL NOTIFICATIONS AS READ
 // =========================================================
 
 export async function markAllNotificationsRead() {
@@ -231,6 +288,7 @@ export async function markAllNotificationsRead() {
       `${API_URL}/notifications/read-all`,
       {
         method: "PATCH",
+
         headers:
           getAuthHeaders(),
       }
@@ -245,14 +303,17 @@ export async function markAllNotificationsRead() {
 
 
 // =========================================================
-// DELETE NOTIFICATION
+// DELETE ONE NOTIFICATION
 // =========================================================
 
 export async function deleteNotification(
   notificationId
 ) {
 
-  if (!notificationId) {
+  if (
+    notificationId === undefined ||
+    notificationId === null
+  ) {
 
     throw new Error(
       "Notification ID is required."
@@ -266,6 +327,7 @@ export async function deleteNotification(
       `${API_URL}/notifications/${notificationId}`,
       {
         method: "DELETE",
+
         headers:
           getAuthHeaders(),
       }
@@ -280,7 +342,17 @@ export async function deleteNotification(
 
 
 // =========================================================
-// DEBUG
+// DEBUG HELPER
+// =========================================================
+//
+// You can temporarily use:
+//
+// console.log(getNotificationApiUrl());
+//
+// Expected production result:
+//
+// https://shobdo-cosmos.onrender.com/api
+//
 // =========================================================
 
 export function getNotificationApiUrl() {
