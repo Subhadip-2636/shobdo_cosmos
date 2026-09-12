@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -12,12 +13,16 @@ import {
 
 import {
   AlertCircle,
+  BookOpen,
   Check,
   CheckCircle2,
   ChevronDown,
+  Download,
   FileImage,
   FileText,
+  Image,
   LoaderCircle,
+  Lock,
   PenLine,
   Save,
   ScanText,
@@ -44,6 +49,25 @@ import "./Write.css";
 
 
 // =========================================================
+// API CONFIGURATION
+// =========================================================
+
+const RAW_API_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://127.0.0.1:5000";
+
+const CLEAN_API_URL =
+  RAW_API_URL
+    .trim()
+    .replace(/\/+$/, "");
+
+const API_URL =
+  CLEAN_API_URL.endsWith("/api")
+    ? CLEAN_API_URL
+    : `${CLEAN_API_URL}/api`;
+
+
+// =========================================================
 // CONSTANTS
 // =========================================================
 
@@ -51,7 +75,7 @@ const MAX_FILE_SIZE =
   10 * 1024 * 1024;
 
 
-const ALLOWED_FILE_TYPES = [
+const WRITING_SCAN_FILE_TYPES = [
   "application/pdf",
   "image/jpeg",
   "image/jpg",
@@ -59,7 +83,7 @@ const ALLOWED_FILE_TYPES = [
 ];
 
 
-const ALLOWED_FILE_EXTENSIONS = [
+const WRITING_SCAN_EXTENSIONS = [
   ".pdf",
   ".jpg",
   ".jpeg",
@@ -162,9 +186,38 @@ const WRITING_LANGUAGES = [
 ];
 
 
-// Languages whose OCR/text-extraction support depends on the
-// backend having the matching Tesseract traineddata installed.
-// bn / en / hi are the only ones guaranteed to work out of the box.
+const DOCUMENT_LANGUAGES = [
+  {
+    code: "bn",
+    label: "বাংলা — Bengali",
+  },
+  {
+    code: "en",
+    label: "English",
+  },
+  {
+    code: "hi",
+    label: "हिन्दी — Hindi",
+  },
+  {
+    code: "as",
+    label: "অসমীয়া — Assamese",
+  },
+  {
+    code: "or",
+    label: "ଓଡ଼ିଆ — Odia",
+  },
+  {
+    code: "ta",
+    label: "தமிழ் — Tamil",
+  },
+  {
+    code: "te",
+    label: "తెలుగు — Telugu",
+  },
+];
+
+
 const OCR_SUPPORTED_LANGUAGES = [
   "bn",
   "en",
@@ -172,8 +225,6 @@ const OCR_SUPPORTED_LANGUAGES = [
 ];
 
 
-// Database category values stay in Bengali — only the
-// displayed label is translated (see categoryLabel below).
 const CATEGORIES = [
   "কবিতা",
   "গল্প",
@@ -213,47 +264,52 @@ function getFileExtension(
   const dotIndex =
     fileName.lastIndexOf(".");
 
-
   if (dotIndex === -1) {
-
     return "";
-
   }
-
 
   return fileName
     .slice(dotIndex)
     .toLowerCase();
-
 }
 
 
-function isAllowedFile(
+function isAllowedScanFile(
   file
 ) {
 
   if (!file) {
-
     return false;
-
   }
-
 
   const extension =
     getFileExtension(
       file.name
     );
 
-
   return (
-    ALLOWED_FILE_TYPES.includes(
+    WRITING_SCAN_FILE_TYPES.includes(
       file.type
     ) ||
-    ALLOWED_FILE_EXTENSIONS.includes(
+    WRITING_SCAN_EXTENSIONS.includes(
       extension
     )
   );
+}
 
+
+function isPdfFile(
+  file
+) {
+
+  if (!file) {
+    return false;
+  }
+
+  return (
+    file.type === "application/pdf" ||
+    getFileExtension(file.name) === ".pdf"
+  );
 }
 
 
@@ -262,27 +318,138 @@ function formatFileSize(
 ) {
 
   if (!bytes) {
-
     return "0 KB";
-
   }
 
-
-  const sizeInMB =
+  const mb =
     bytes / (1024 * 1024);
 
-
-  if (sizeInMB >= 1) {
-
-    return `${sizeInMB.toFixed(2)} MB`;
-
+  if (mb >= 1) {
+    return `${mb.toFixed(2)} MB`;
   }
-
 
   return `${(
     bytes / 1024
   ).toFixed(1)} KB`;
+}
 
+
+function getToken() {
+
+  return localStorage.getItem(
+    "shobdo_token"
+  );
+}
+
+
+// =========================================================
+// DOCUMENT API
+// =========================================================
+
+async function createDocumentRequest({
+  file,
+  title,
+  description,
+  category,
+  language,
+  visibility,
+  allowDownload,
+  status,
+}) {
+
+  const token =
+    getToken();
+
+  if (!token) {
+    throw new Error(
+      "Please log in before publishing a document."
+    );
+  }
+
+
+  const formData =
+    new FormData();
+
+  formData.append(
+    "document",
+    file
+  );
+
+  formData.append(
+    "title",
+    title
+  );
+
+  formData.append(
+    "description",
+    description
+  );
+
+  formData.append(
+    "category",
+    category
+  );
+
+  formData.append(
+    "language",
+    language
+  );
+
+  formData.append(
+    "visibility",
+    visibility
+  );
+
+  formData.append(
+    "allow_download",
+    allowDownload
+      ? "true"
+      : "false"
+  );
+
+  formData.append(
+    "status",
+    status
+  );
+
+
+  const response =
+    await fetch(
+      `${API_URL}/documents`,
+      {
+        method: "POST",
+
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
+        },
+
+        body:
+          formData,
+      }
+    );
+
+
+  let data = null;
+
+  try {
+    data =
+      await response.json();
+  } catch {
+    data = null;
+  }
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      data?.message ||
+      `Document request failed (${response.status}).`
+    );
+  }
+
+
+  return data;
 }
 
 
@@ -297,27 +464,83 @@ function Write({
 
   const navigate =
     useNavigate();
+
   const location =
     useLocation();
+
   const {
     id,
   } = useParams();
-  const editingWriting =
-    location.state?.writing || null;
-  const isEditMode =
-    Boolean(id);
 
   const {
     t,
   } = useLanguage();
 
 
-  const fileInputRef =
-    useRef(null);
+  const editingWriting =
+    location.state?.writing ||
+    null;
+
+  const isEditMode =
+    Boolean(id);
 
 
   // =======================================================
-  // CATEGORY LABEL (translated display, raw db value)
+  // PUBLISH MODE
+  // =======================================================
+
+  const [
+    publishMode,
+    setPublishMode,
+  ] = useState("writing");
+
+
+  useEffect(() => {
+
+    if (isEditMode) {
+      setPublishMode("writing");
+    }
+
+  }, [
+    isEditMode,
+  ]);
+
+
+  // =======================================================
+  // COMMON STATUS
+  // =======================================================
+
+  const [
+    error,
+    setError,
+  ] = useState("");
+
+
+  const [
+    success,
+    setSuccess,
+  ] = useState("");
+
+
+  function changeMode(
+    mode
+  ) {
+
+    if (
+      isEditMode &&
+      mode !== "writing"
+    ) {
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+    setPublishMode(mode);
+  }
+
+
+  // =======================================================
+  // CATEGORY LABEL
   // =======================================================
 
   function categoryLabel(
@@ -357,12 +580,11 @@ function Write({
       map[value] ||
       value
     );
-
   }
 
 
   // =======================================================
-  // FORM STATE
+  // WRITING STATE
   // =======================================================
 
   const [
@@ -392,43 +614,56 @@ function Write({
     "bn"
   );
 
+
+  const [
+    publishing,
+    setPublishing,
+  ] = useState(false);
+
+
   // =======================================================
-// EDIT MODE PREFILL
-// =======================================================
+  // EDIT WRITING PREFILL
+  // =======================================================
 
-useEffect(() => {
+  useEffect(() => {
 
-  if (
-    !isEditMode ||
-    !editingWriting
-  ) {
-    return;
-  }
+    if (
+      !isEditMode ||
+      !editingWriting
+    ) {
+      return;
+    }
 
-  setTitle(
-    editingWriting.title || ""
-  );
+    setTitle(
+      editingWriting.title ||
+      ""
+    );
 
-  setContent(
-    editingWriting.content || ""
-  );
+    setContent(
+      editingWriting.content ||
+      ""
+    );
 
-  setCategory(
-    editingWriting.category ||
-    "কবিতা"
-  );
+    setCategory(
+      editingWriting.category ||
+      "কবিতা"
+    );
 
-  setWritingLanguage(
-    editingWriting.language ||
-    "bn"
-  );
+    setWritingLanguage(
+      editingWriting.language ||
+      "bn"
+    );
 
-}, [
-  id,
-  isEditMode,
-  editingWriting,
-]);
+  }, [
+    id,
+    isEditMode,
+    editingWriting,
+  ]);
 
+
+  // =======================================================
+  // WRITING LANGUAGE MENU
+  // =======================================================
 
   const [
     languageMenuOpen,
@@ -456,13 +691,11 @@ useEffect(() => {
         setLanguageMenuOpen(
           false
         );
-
       }
-
     }
 
 
-    function handleEscapeKey(
+    function handleEscape(
       event
     ) {
 
@@ -473,9 +706,7 @@ useEffect(() => {
         setLanguageMenuOpen(
           false
         );
-
       }
-
     }
 
 
@@ -486,7 +717,7 @@ useEffect(() => {
 
     document.addEventListener(
       "keydown",
-      handleEscapeKey
+      handleEscape
     );
 
 
@@ -499,9 +730,8 @@ useEffect(() => {
 
       document.removeEventListener(
         "keydown",
-        handleEscapeKey
+        handleEscape
       );
-
     };
 
   }, []);
@@ -511,30 +741,38 @@ useEffect(() => {
     language
   ) {
 
-    if (
-      !language ||
-      language.nativeName ===
-        language.englishName
-    ) {
-
-      return (
-        language?.englishName ||
-        ""
-      );
-
+    if (!language) {
+      return "";
     }
 
+    if (
+      language.nativeName ===
+      language.englishName
+    ) {
+      return language.englishName;
+    }
 
     return (
       `${language.nativeName} — ${language.englishName}`
     );
-
   }
 
 
+  const currentLanguage =
+    WRITING_LANGUAGES.find(
+      (item) =>
+        item.code ===
+        writingLanguage
+    );
+
+
   // =======================================================
-  // FILE AND OCR STATE
+  // WRITING OCR STATE
   // =======================================================
+
+  const scanFileInputRef =
+    useRef(null);
+
 
   const [
     selectedFile,
@@ -554,33 +792,7 @@ useEffect(() => {
   ] = useState(false);
 
 
-  // =======================================================
-  // FORM STATUS
-  // =======================================================
-
-  const [
-    publishing,
-    setPublishing,
-  ] = useState(false);
-
-
-  const [
-    error,
-    setError,
-  ] = useState("");
-
-
-  const [
-    success,
-    setSuccess,
-  ] = useState("");
-
-
-  // =======================================================
-  // FILE VALIDATION
-  // =======================================================
-
-  function validateAndSelectFile(
+  function validateAndSelectScanFile(
     file
   ) {
 
@@ -589,24 +801,22 @@ useEffect(() => {
 
 
     if (!file) {
-
       return;
-
     }
 
 
-    if (!isAllowedFile(file)) {
+    if (!isAllowedScanFile(file)) {
 
       setSelectedFile(null);
 
       setError(
         t(
-          "write.invalidFile"
+          "write.invalidFile",
+          "Please select a PDF, JPG, JPEG or PNG file."
         )
       );
 
       return;
-
     }
 
 
@@ -619,73 +829,72 @@ useEffect(() => {
 
       setError(
         t(
-          "write.fileTooLarge"
+          "write.fileTooLarge",
+          "File size cannot exceed 10 MB."
         )
       );
 
       return;
-
     }
 
 
-    setSelectedFile(file);
-
+    setSelectedFile(
+      file
+    );
   }
 
 
-  function handleFileChange(
+  function handleScanFileChange(
     event
   ) {
 
-    const file =
-      event.target.files?.[0];
-
-
-    validateAndSelectFile(
-      file
+    validateAndSelectScanFile(
+      event.target.files?.[0]
     );
 
-
-    event.target.value = "";
-
+    event.target.value =
+      "";
   }
 
 
   function removeSelectedFile() {
 
     setSelectedFile(null);
+
     setError("");
     setSuccess("");
 
-
     if (
-      fileInputRef.current
+      scanFileInputRef.current
     ) {
 
-      fileInputRef.current.value =
+      scanFileInputRef.current.value =
         "";
-
     }
-
   }
 
 
-  // =======================================================
-  // DRAG AND DROP
-  // =======================================================
-
-  function handleDragOver(
+  function handleScanDragOver(
     event
   ) {
 
     event.preventDefault();
 
     setIsDragging(true);
-
   }
 
 
-  function handleDragLeave(
+  function handleScanDragLeave(
+    event
+  ) {
+
+    event.preventDefault();
+
+    setIsDragging(false);
+  }
+
+
+  function handleScanDrop(
     event
   ) {
 
@@ -693,33 +902,12 @@ useEffect(() => {
 
     setIsDragging(false);
 
-  }
-
-
-  function handleDrop(
-    event
-  ) {
-
-    event.preventDefault();
-
-    setIsDragging(false);
-
-
-    const file =
+    validateAndSelectScanFile(
       event.dataTransfer
-        .files?.[0];
-
-
-    validateAndSelectFile(
-      file
+        .files?.[0]
     );
-
   }
 
-
-  // =======================================================
-  // OCR EXTRACTION
-  // =======================================================
 
   async function handleExtractText() {
 
@@ -731,12 +919,12 @@ useEffect(() => {
 
       setError(
         t(
-          "write.chooseFileFirst"
+          "write.chooseFileFirst",
+          "Choose a document or image first."
         )
       );
 
       return;
-
     }
 
 
@@ -746,26 +934,11 @@ useEffect(() => {
       )
     ) {
 
-      const languageInfo =
-        WRITING_LANGUAGES.find(
-          (item) =>
-            item.code ===
-            writingLanguage
-        );
-
-
       setError(
-        t(
-          "write.ocrLanguageUnsupported",
-          `OCR isn't available yet for ${
-            languageInfo?.englishName ||
-            "this language"
-          }. Try Bengali, English or Hindi, or type your writing directly.`
-        )
+        "OCR currently supports Bengali, English and Hindi only."
       );
 
       return;
-
     }
 
 
@@ -796,47 +969,51 @@ useEffect(() => {
 
         setError(
           t(
-            "write.noTextFound"
+            "write.noTextFound",
+            "No readable text was found."
           )
         );
 
         return;
-
       }
 
 
       setContent(
-        (previousContent) => {
+        (previous) => {
 
           if (
-            !previousContent.trim()
+            !previous.trim()
           ) {
 
-            return extractedText.trim();
-
+            return (
+              extractedText.trim()
+            );
           }
 
 
           return (
-            `${previousContent.trim()}\n\n` +
-            extractedText.trim()
+            `${previous.trim()}\n\n${extractedText.trim()}`
           );
-
         }
       );
 
 
       setSuccess(
         t(
-          "write.extractionSuccess"
+          "write.extractionSuccess",
+          "Text extracted successfully."
         )
       );
 
 
-      setSelectedFile(null);
+      setSelectedFile(
+        null
+      );
 
 
-    } catch (requestError) {
+    } catch (
+      requestError
+    ) {
 
       console.error(
         "OCR extraction failed:",
@@ -847,7 +1024,8 @@ useEffect(() => {
       setError(
         requestError?.message ||
         t(
-          "write.extractionFailed"
+          "write.extractionFailed",
+          "Unable to extract text."
         )
       );
 
@@ -855,214 +1033,198 @@ useEffect(() => {
     } finally {
 
       setExtracting(false);
+    }
+  }
 
+
+  // =======================================================
+  // WRITING DRAFT
+  // =======================================================
+
+  async function handleSaveDraft() {
+
+    setError("");
+    setSuccess("");
+
+
+    if (!user) {
+
+      setError(
+        t(
+          "write.loginRequired",
+          "Please log in first."
+        )
+      );
+
+      return;
     }
 
-  }
+
+    if (
+      !title.trim() &&
+      !content.trim()
+    ) {
+
+      setError(
+        t(
+          "write.draftEmpty",
+          "Write something before saving a draft."
+        )
+      );
+
+      return;
+    }
 
 
- // =======================================================
-// SAVE DRAFT TO DATABASE
-// =======================================================
+    const payload = {
 
-async function handleSaveDraft() {
+      title:
+        title.trim(),
 
-  setError("");
-  setSuccess("");
+      content:
+        content.trim(),
 
+      category,
 
-  if (!user) {
-
-    setError(
-      t(
-        "write.loginRequired"
-      )
-    );
-
-    return;
-
-  }
+      language:
+        writingLanguage,
+    };
 
 
-  if (
-    !title.trim() &&
-    !content.trim()
-  ) {
+    try {
 
-    setError(
-      t(
-        "write.draftEmpty"
-      )
-    );
-
-    return;
-
-  }
+      setPublishing(true);
 
 
-  const payload = {
-
-    title:
-      title.trim(),
-
-    content:
-      content.trim(),
-
-    category,
-
-    language:
-      writingLanguage,
-
-  };
+      let savedDraft;
 
 
-  try {
-
-    setPublishing(true);
-
-
-    let savedDraft;
-
-
-    // ===================================================
-    // EXISTING WRITING
-    // ===================================================
-
-    if (isEditMode && id) {
-
-      const updated =
-        await updateWriting(
-          id,
-          payload
-        );
-
-
-      const updatedWriting =
-        updated?.writing ||
-        updated;
-
-
-      // If this writing was published,
-      // Save Draft should move it back to Drafts.
       if (
-        updatedWriting?.status === "published"
+        isEditMode &&
+        id
       ) {
 
-        const unpublished =
-          await unpublishWriting(
-            id
+        const updated =
+          await updateWriting(
+            id,
+            payload
           );
 
 
-        savedDraft =
-          unpublished?.writing ||
-          unpublished;
+        const updatedWriting =
+          updated?.writing ||
+          updated;
+
+
+        if (
+          updatedWriting?.status ===
+          "published"
+        ) {
+
+          const unpublished =
+            await unpublishWriting(
+              id
+            );
+
+          savedDraft =
+            unpublished?.writing ||
+            unpublished;
+
+        } else {
+
+          savedDraft =
+            updatedWriting;
+        }
+
 
       } else {
 
-        savedDraft =
-          updatedWriting;
+        const created =
+          await createDraft(
+            payload
+          );
 
+        savedDraft =
+          created?.writing ||
+          created;
       }
 
-    }
 
-    // ===================================================
-    // NEW WRITING
-    // ===================================================
+      const draftId =
+        savedDraft?.id ||
+        id;
 
-    else {
 
-      const created =
-        await createDraft(
-          payload
+      if (!draftId) {
+
+        throw new Error(
+          "Draft saved, but no writing ID was returned."
         );
+      }
 
 
-      savedDraft =
-        created?.writing ||
-        created;
-
-    }
-
-
-    const draftId =
-      savedDraft?.id ||
-      id;
-
-
-    if (!draftId) {
-
-      throw new Error(
-        "Draft was saved but no writing ID was returned."
+      localStorage.removeItem(
+        "shobdo_writing_draft"
       );
 
-    }
+
+      setSuccess(
+        t(
+          "write.draftSaved",
+          "Draft saved successfully."
+        )
+      );
 
 
-    localStorage.removeItem(
-      "shobdo_writing_draft"
-    );
+      if (!isEditMode) {
 
+        navigate(
+          `/write/${draftId}`,
+          {
+            replace: true,
 
-    setSuccess(
-      t(
-        "write.draftSaved"
-      )
-    );
-
-
-    // Switch the editor to the database-backed draft URL.
-    // This prevents another Save Draft from creating a duplicate.
-    if (!isEditMode) {
-
-      navigate(
-        `/write/${draftId}`,
-        {
-          replace: true,
-
-          state: {
-            writing: {
-              ...savedDraft,
-              status: "draft",
+            state: {
+              writing: {
+                ...savedDraft,
+                status: "draft",
+              },
             },
-          },
-        }
+          }
+        );
+      }
+
+
+    } catch (
+      requestError
+    ) {
+
+      console.error(
+        "SAVE DRAFT ERROR:",
+        requestError
       );
 
+
+      setError(
+        requestError?.message ||
+        t(
+          "errors.generic",
+          "Something went wrong."
+        )
+      );
+
+
+    } finally {
+
+      setPublishing(false);
     }
-
-
-  } catch (requestError) {
-
-    console.error(
-      "SAVE DRAFT ERROR:",
-      requestError
-    );
-
-
-    setError(
-      requestError?.message ||
-      t(
-        "errors.generic"
-      )
-    );
-
-
-  } finally {
-
-    setPublishing(false);
-
   }
-
-}
 
 
   // =======================================================
   // PUBLISH WRITING
   // =======================================================
 
-  async function handleSubmit(
+  async function handleWritingSubmit(
     event
   ) {
 
@@ -1076,20 +1238,22 @@ async function handleSaveDraft() {
 
       setError(
         t(
-          "write.loginRequired"
+          "write.loginRequired",
+          "Please log in first."
         )
       );
 
 
-      setTimeout(() => {
-
-        navigate("/login");
-
-      }, 1000);
-
+      setTimeout(
+        () => {
+          navigate(
+            "/login"
+          );
+        },
+        1000
+      );
 
       return;
-
     }
 
 
@@ -1097,12 +1261,12 @@ async function handleSaveDraft() {
 
       setError(
         t(
-          "write.titleRequired"
+          "write.titleRequired",
+          "Title is required."
         )
       );
 
       return;
-
     }
 
 
@@ -1110,12 +1274,12 @@ async function handleSaveDraft() {
 
       setError(
         t(
-          "write.contentRequired"
+          "write.contentRequired",
+          "Writing content is required."
         )
       );
 
       return;
-
     }
 
 
@@ -1126,12 +1290,12 @@ async function handleSaveDraft() {
 
       setError(
         t(
-          "write.titleTooLong"
+          "write.titleTooLong",
+          "Title cannot exceed 200 characters."
         )
       );
 
       return;
-
     }
 
 
@@ -1141,6 +1305,7 @@ async function handleSaveDraft() {
 
 
       const payload = {
+
         title:
           title.trim(),
 
@@ -1156,28 +1321,37 @@ async function handleSaveDraft() {
 
       let savedWriting;
 
-      if (isEditMode && id) {
 
-        // First save the latest title/content/category/language.
-        savedWriting = await updateWriting(
+      if (
+        isEditMode &&
+        id
+      ) {
+
+        await updateWriting(
           id,
           payload
         );
-        // Then actually change status to "published".
+
+
         const published =
-          await publishWriting(id);
+          await publishWriting(
+            id
+          );
+
+
         savedWriting =
           published?.writing ||
           published;
 
-        } else {
 
-          savedWriting =
-            await createWriting(
-              payload
-            );
+      } else {
 
-        }
+        savedWriting =
+          await createWriting(
+            payload
+          );
+      }
+
 
       localStorage.removeItem(
         "shobdo_writing_draft"
@@ -1186,16 +1360,10 @@ async function handleSaveDraft() {
 
       setSuccess(
         t(
-          "write.publishedSuccess"
+          "write.publishedSuccess",
+          "Writing published successfully."
         )
       );
-
-
-      setTitle("");
-      setContent("");
-      setCategory("কবিতা");
-      setWritingLanguage("bn");
-      setSelectedFile(null);
 
 
       if (
@@ -1206,7 +1374,6 @@ async function handleSaveDraft() {
         onPublished(
           savedWriting
         );
-
       }
 
 
@@ -1215,33 +1382,31 @@ async function handleSaveDraft() {
         savedWriting?.writing?.id ||
         id;
 
-      const writingStatus =
-        savedWriting?.status ||
-        savedWriting?.writing?.status;
 
-      setTimeout(() => {
+      setTimeout(
+        () => {
 
-        if (
-          writingId &&
-          writingStatus === "published"
-        ) {
+          if (writingId) {
 
-          navigate(
-            `/writings/${writingId}`
-          );
+            navigate(
+              `/writings/${writingId}`
+            );
 
-        } else {
+          } else {
 
-          navigate(
-            "/my-writings"
-          );
+            navigate(
+              "/my-writings"
+            );
+          }
 
-        }
-
-      }, 900);
+        },
+        800
+      );
 
 
-    } catch (requestError) {
+    } catch (
+      requestError
+    ) {
 
       console.error(
         "Writing publication failed:",
@@ -1252,7 +1417,8 @@ async function handleSaveDraft() {
       setError(
         requestError?.message ||
         t(
-          "write.publishFailed"
+          "write.publishFailed",
+          "Unable to publish writing."
         )
       );
 
@@ -1260,14 +1426,445 @@ async function handleSaveDraft() {
     } finally {
 
       setPublishing(false);
-
     }
-
   }
 
 
   // =======================================================
-  // WORD AND CHARACTER COUNT
+  // DOCUMENT STATE
+  // =======================================================
+
+  const documentInputRef =
+    useRef(null);
+
+
+  const [
+    documentFile,
+    setDocumentFile,
+  ] = useState(null);
+
+
+  const [
+    documentDragging,
+    setDocumentDragging,
+  ] = useState(false);
+
+
+  const [
+    documentTitle,
+    setDocumentTitle,
+  ] = useState("");
+
+
+  const [
+    documentDescription,
+    setDocumentDescription,
+  ] = useState("");
+
+
+  const [
+    documentCategory,
+    setDocumentCategory,
+  ] = useState(
+    "প্রবন্ধ"
+  );
+
+
+  const [
+    documentLanguage,
+    setDocumentLanguage,
+  ] = useState(
+    "bn"
+  );
+
+
+  const [
+    documentVisibility,
+    setDocumentVisibility,
+  ] = useState(
+    "public"
+  );
+
+
+  const [
+    allowDownload,
+    setAllowDownload,
+  ] = useState(
+    true
+  );
+
+
+  const [
+    documentPublishing,
+    setDocumentPublishing,
+  ] = useState(
+    false
+  );
+
+
+  const [
+    lastPublishedDocument,
+    setLastPublishedDocument,
+  ] = useState(null);
+
+
+  const documentPreviewUrl =
+    useMemo(
+      () => {
+
+        if (!documentFile) {
+          return "";
+        }
+
+        return URL.createObjectURL(
+          documentFile
+        );
+
+      },
+      [
+        documentFile,
+      ]
+    );
+
+
+  useEffect(() => {
+
+    return () => {
+
+      if (
+        documentPreviewUrl
+      ) {
+
+        URL.revokeObjectURL(
+          documentPreviewUrl
+        );
+      }
+    };
+
+  }, [
+    documentPreviewUrl,
+  ]);
+
+
+  function validateDocumentFile(
+    file
+  ) {
+
+    setError("");
+    setSuccess("");
+
+
+    if (!file) {
+      return;
+    }
+
+
+    if (!isPdfFile(file)) {
+
+      setDocumentFile(null);
+
+      setError(
+        "Only PDF documents can be published in Document mode."
+      );
+
+      return;
+    }
+
+
+    if (
+      file.size >
+      MAX_FILE_SIZE
+    ) {
+
+      setDocumentFile(null);
+
+      setError(
+        "PDF size cannot exceed 10 MB."
+      );
+
+      return;
+    }
+
+
+    setDocumentFile(
+      file
+    );
+
+
+    if (
+      !documentTitle.trim()
+    ) {
+
+      const titleFromFile =
+        file.name
+          .replace(
+            /\.pdf$/i,
+            ""
+          )
+          .replace(
+            /[_-]+/g,
+            " "
+          )
+          .trim();
+
+
+      setDocumentTitle(
+        titleFromFile.slice(
+          0,
+          200
+        )
+      );
+    }
+  }
+
+
+  function handleDocumentFileChange(
+    event
+  ) {
+
+    validateDocumentFile(
+      event.target.files?.[0]
+    );
+
+    event.target.value =
+      "";
+  }
+
+
+  function handleDocumentDragOver(
+    event
+  ) {
+
+    event.preventDefault();
+
+    setDocumentDragging(
+      true
+    );
+  }
+
+
+  function handleDocumentDragLeave(
+    event
+  ) {
+
+    event.preventDefault();
+
+    setDocumentDragging(
+      false
+    );
+  }
+
+
+  function handleDocumentDrop(
+    event
+  ) {
+
+    event.preventDefault();
+
+    setDocumentDragging(
+      false
+    );
+
+
+    validateDocumentFile(
+      event.dataTransfer
+        .files?.[0]
+    );
+  }
+
+
+  function removeDocumentFile() {
+
+    setDocumentFile(
+      null
+    );
+
+    setError("");
+    setSuccess("");
+
+    if (
+      documentInputRef.current
+    ) {
+
+      documentInputRef.current.value =
+        "";
+    }
+  }
+
+
+  async function submitDocument(
+    status
+  ) {
+
+    setError("");
+    setSuccess("");
+
+
+    if (!user) {
+
+      setError(
+        "Please log in before publishing a document."
+      );
+
+      return;
+    }
+
+
+    if (!documentFile) {
+
+      setError(
+        "Select a PDF document first."
+      );
+
+      return;
+    }
+
+
+    if (!documentTitle.trim()) {
+
+      setError(
+        "Document title is required."
+      );
+
+      return;
+    }
+
+
+    if (
+      documentTitle.trim().length >
+      200
+    ) {
+
+      setError(
+        "Document title cannot exceed 200 characters."
+      );
+
+      return;
+    }
+
+
+    if (
+      documentDescription.length >
+      5000
+    ) {
+
+      setError(
+        "Description cannot exceed 5000 characters."
+      );
+
+      return;
+    }
+
+
+    try {
+
+      setDocumentPublishing(
+        true
+      );
+
+
+      const response =
+        await createDocumentRequest({
+          file:
+            documentFile,
+
+          title:
+            documentTitle.trim(),
+
+          description:
+            documentDescription.trim(),
+
+          category:
+            documentCategory,
+
+          language:
+            documentLanguage,
+
+          visibility:
+            documentVisibility,
+
+          allowDownload,
+
+          status,
+        });
+
+
+      const savedDocument =
+        response?.document ||
+        null;
+
+
+      setLastPublishedDocument(
+        savedDocument
+      );
+
+
+      setSuccess(
+        status === "published"
+          ? "PDF document published successfully."
+          : "PDF document saved as draft."
+      );
+
+
+      setDocumentFile(
+        null
+      );
+
+      setDocumentTitle("");
+      setDocumentDescription("");
+      setDocumentCategory(
+        "প্রবন্ধ"
+      );
+      setDocumentLanguage(
+        "bn"
+      );
+      setDocumentVisibility(
+        "public"
+      );
+      setAllowDownload(
+        true
+      );
+
+
+    } catch (
+      requestError
+    ) {
+
+      console.error(
+        "DOCUMENT PUBLISH ERROR:",
+        requestError
+      );
+
+
+      setError(
+        requestError?.message ||
+        "Unable to publish PDF document."
+      );
+
+
+    } finally {
+
+      setDocumentPublishing(
+        false
+      );
+    }
+  }
+
+
+  function handleDocumentSubmit(
+    event
+  ) {
+
+    event.preventDefault();
+
+    submitDocument(
+      "published"
+    );
+  }
+
+
+  // =======================================================
+  // COUNTS
   // =======================================================
 
   const characterCount =
@@ -1283,12 +1880,83 @@ async function handleSaveDraft() {
       : 0;
 
 
-  const currentLanguage =
-    WRITING_LANGUAGES.find(
-      (item) =>
-        item.code ===
-        writingLanguage
+  // =======================================================
+  // STATUS MESSAGE COMPONENT
+  // =======================================================
+
+  function StatusMessages() {
+
+    return (
+      <>
+        {error && (
+
+          <div
+            className="form-message form-message-error"
+            role="alert"
+          >
+
+            <AlertCircle
+              size={20}
+            />
+
+            <span>
+              {error}
+            </span>
+
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={() =>
+                setError("")
+              }
+            >
+
+              <X
+                size={18}
+              />
+
+            </button>
+
+          </div>
+
+        )}
+
+
+        {success && (
+
+          <div
+            className="form-message form-message-success"
+            role="status"
+          >
+
+            <CheckCircle2
+              size={20}
+            />
+
+            <span>
+              {success}
+            </span>
+
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={() =>
+                setSuccess("")
+              }
+            >
+
+              <X
+                size={18}
+              />
+
+            </button>
+
+          </div>
+
+        )}
+      </>
     );
+  }
 
 
   // =======================================================
@@ -1299,15 +1967,30 @@ async function handleSaveDraft() {
 
     <main className="write-page">
 
+      {/* ================================================= */}
+      {/* HERO                                              */}
+      {/* ================================================= */}
+
       <section className="write-hero">
 
         <div className="write-hero-content">
 
           <div className="write-hero-icon">
 
-            <PenLine
-              size={25}
-            />
+            {publishMode ===
+            "document" ? (
+
+              <FileText
+                size={25}
+              />
+
+            ) : (
+
+              <PenLine
+                size={25}
+              />
+
+            )}
 
           </div>
 
@@ -1316,27 +1999,25 @@ async function handleSaveDraft() {
 
             <span className="write-eyebrow">
 
-              {t(
-                "write.eyebrow"
-              )}
+              SHOBDO Creator Studio
 
             </span>
 
 
             <h1>
 
-              {t(
-                "write.title"
-              )}
+              {isEditMode
+                ? "Edit your writing"
+                : "Create and publish"}
 
             </h1>
 
 
             <p>
 
-              {t(
-                "write.subtitle"
-              )}
+              Share original writing or publish
+              a PDF document with the SHOBDO
+              community.
 
             </p>
 
@@ -1349,852 +2030,1643 @@ async function handleSaveDraft() {
 
       <section className="write-container">
 
-        <form
-          className="write-form-card"
-          onSubmit={handleSubmit}
-        >
+        {/* ================================================= */}
+        {/* CONTENT TYPE SELECTOR                             */}
+        {/* ================================================= */}
 
-          {/* ============================================= */}
-          {/* STATUS MESSAGES                               */}
-          {/* ============================================= */}
+        {!isEditMode && (
 
-          {error && (
+          <div className="publish-type-card">
 
-            <div
-              className="form-message form-message-error"
-              role="alert"
-            >
-
-              <AlertCircle
-                size={20}
-              />
+            <div className="publish-type-heading">
 
               <span>
-                {error}
+                CREATE
               </span>
 
-              <button
-                type="button"
-                aria-label={
-                  t(
-                    "common.close"
-                  )
-                }
-                onClick={() =>
-                  setError("")
-                }
-              >
-
-                <X
-                  size={18}
-                />
-
-              </button>
-
-            </div>
-
-          )}
-
-
-          {success && (
-
-            <div
-              className="form-message form-message-success"
-              role="status"
-            >
-
-              <CheckCircle2
-                size={20}
-              />
-
-              <span>
-                {success}
-              </span>
-
-              <button
-                type="button"
-                aria-label={
-                  t(
-                    "common.close"
-                  )
-                }
-                onClick={() =>
-                  setSuccess("")
-                }
-              >
-
-                <X
-                  size={18}
-                />
-
-              </button>
-
-            </div>
-
-          )}
-
-
-          {/* ============================================= */}
-          {/* LANGUAGE                                      */}
-          {/* ============================================= */}
-
-          <div className="write-section">
-
-            <div className="write-section-heading">
-
-              <div>
-
-                <span className="write-step">
-
-                  {t(
-                    "write.languageStep"
-                  )}
-
-                </span>
-
-
-                <h2>
-
-                  {t(
-                    "write.languageTitle"
-                  )}
-
-                </h2>
-
-              </div>
-
+              <h2>
+                What would you like to publish?
+              </h2>
 
               <p>
-
-                {t(
-                  "write.languageDescription"
-                )}
-
+                Choose the format that best fits
+                your work.
               </p>
 
             </div>
 
 
             <div
-              className="language-select-wrap"
-              ref={languageMenuRef}
+              className="publish-type-tabs"
+              role="tablist"
+              aria-label="Publishing type"
             >
 
               <button
                 type="button"
-                className="language-select-trigger"
-                aria-haspopup="listbox"
-                aria-expanded={
-                  languageMenuOpen
+                role="tab"
+                aria-selected={
+                  publishMode ===
+                  "writing"
+                }
+                className={
+                  publishMode ===
+                  "writing"
+                    ? "publish-type-tab active"
+                    : "publish-type-tab"
                 }
                 onClick={() =>
-                  setLanguageMenuOpen(
-                    (current) =>
-                      !current
+                  changeMode(
+                    "writing"
                   )
                 }
               >
 
-                <span className="language-short-name">
+                <span className="publish-type-icon">
 
-                  {
-                    currentLanguage?.shortName ||
-                    "?"
-                  }
-
-                </span>
-
-
-                <span className="language-select-trigger-label">
-
-                  {
-                    languageLabel(
-                      currentLanguage
-                    )
-                  }
+                  <PenLine
+                    size={22}
+                  />
 
                 </span>
 
+                <span>
 
-                <ChevronDown
-                  size={18}
-                  className={
-                    languageMenuOpen
-                      ? "language-select-chevron open"
-                      : "language-select-chevron"
-                  }
-                />
+                  <strong>
+                    Writing
+                  </strong>
+
+                  <small>
+                    Poetry, stories, essays
+                    and thoughts
+                  </small>
+
+                </span>
 
               </button>
 
 
-              {languageMenuOpen && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={
+                  publishMode ===
+                  "document"
+                }
+                className={
+                  publishMode ===
+                  "document"
+                    ? "publish-type-tab active"
+                    : "publish-type-tab"
+                }
+                onClick={() =>
+                  changeMode(
+                    "document"
+                  )
+                }
+              >
 
-                <ul
-                  className="language-dropdown"
-                  role="listbox"
-                >
+                <span className="publish-type-icon">
 
-                  {WRITING_LANGUAGES.map(
-                    (language) => (
+                  <FileText
+                    size={22}
+                  />
 
-                      <li
-                        key={
-                          language.code
-                        }
-                        role="option"
-                        aria-selected={
-                          writingLanguage ===
-                          language.code
-                        }
-                      >
+                </span>
 
-                        <button
-                          type="button"
-                          className={
-                            writingLanguage ===
-                            language.code
-                              ? "language-dropdown-item active"
-                              : "language-dropdown-item"
-                          }
-                          onClick={() => {
+                <span>
 
-                            setWritingLanguage(
-                              language.code
-                            );
+                  <strong>
+                    PDF Document
+                  </strong>
 
-                            setError("");
-                            setSuccess("");
+                  <small>
+                    Publish complete PDF files
+                  </small>
 
-                            setLanguageMenuOpen(
-                              false
-                            );
+                </span>
 
-                          }}
-                        >
-
-                          <span>
-
-                            {
-                              languageLabel(
-                                language
-                              )
-                            }
-
-                          </span>
+              </button>
 
 
-                          {writingLanguage ===
-                          language.code && (
+              <button
+                type="button"
+                className="publish-type-tab disabled"
+                disabled
+                title="Artwork publishing will be added next."
+              >
 
-                            <Check
-                              size={16}
-                            />
+                <span className="publish-type-icon">
 
-                          )}
+                  <Image
+                    size={22}
+                  />
 
-                        </button>
+                </span>
 
-                      </li>
+                <span>
 
-                    )
-                  )}
+                  <strong>
+                    Artwork
+                  </strong>
 
-                </ul>
+                  <small>
+                    Coming soon
+                  </small>
 
-              )}
+                </span>
+
+              </button>
 
             </div>
-
-
-            {!OCR_SUPPORTED_LANGUAGES.includes(
-              writingLanguage
-            ) && (
-
-              <p className="language-ocr-note">
-
-                {t(
-                  "write.ocrLanguageNote",
-                  "Scanning (OCR) currently supports Bengali, English and Hindi only — you can still type your writing directly in this language."
-                )}
-
-              </p>
-
-            )}
 
           </div>
 
-
-          {/* ============================================= */}
-          {/* SCAN DOCUMENT                                 */}
-          {/* ============================================= */}
-
-          <div className="write-section scan-section">
-
-            <div className="write-section-heading">
-
-              <div>
-
-                <span className="write-step">
-
-                  {t(
-                    "write.scanStep"
-                  )}
-
-                </span>
+        )}
 
 
-                <h2>
+        {/* ================================================= */}
+        {/* WRITING MODE                                     */}
+        {/* ================================================= */}
 
-                  {t(
-                    "write.scanTitle"
-                  )}
+        {publishMode ===
+        "writing" && (
 
-                </h2>
+          <form
+            className="write-form-card"
+            onSubmit={
+              handleWritingSubmit
+            }
+          >
 
-              </div>
-
-
-              <span className="optional-badge">
-
-                {t(
-                  "write.scanOptional"
-                )}
-
-              </span>
-
-            </div>
+            <StatusMessages />
 
 
-            <p className="scan-description">
+            {/* ============================================= */}
+            {/* LANGUAGE                                      */}
+            {/* ============================================= */}
 
-              {t(
-                "write.scanDescription"
-              )}
+            <div className="write-section">
 
-            </p>
+              <div className="write-section-heading">
 
+                <div>
 
-            {!selectedFile ? (
+                  <span className="write-step">
+                    01
+                  </span>
 
-              <div
-                className={
-                  isDragging
-                    ? "scan-drop-zone dragging"
-                    : "scan-drop-zone"
-                }
-                onDragOver={
-                  handleDragOver
-                }
-                onDragLeave={
-                  handleDragLeave
-                }
-                onDrop={
-                  handleDrop
-                }
-              >
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  id="writing-document"
-                  className="scan-file-input"
-                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                  onChange={
-                    handleFileChange
-                  }
-                />
-
-
-                <div className="scan-upload-icon">
-
-                  <Upload
-                    size={28}
-                  />
+                  <h2>
+                    Writing language
+                  </h2>
 
                 </div>
 
 
-                <h3>
-
-                  {t(
-                    "write.dropTitle"
-                  )}
-
-                </h3>
-
-
                 <p>
-
-                  {t(
-                    "write.dropSubtitle"
-                  )}
-
+                  Choose the language of your
+                  writing.
                 </p>
 
+              </div>
+
+
+              <div
+                className="language-select-wrap"
+                ref={
+                  languageMenuRef
+                }
+              >
 
                 <button
                   type="button"
-                  className="scan-select-button"
+                  className="language-select-trigger"
+                  aria-haspopup="listbox"
+                  aria-expanded={
+                    languageMenuOpen
+                  }
                   onClick={() =>
-                    fileInputRef.current?.click()
+                    setLanguageMenuOpen(
+                      (current) =>
+                        !current
+                    )
                   }
                 >
 
-                  <FileImage
-                    size={18}
-                  />
+                  <span className="language-short-name">
 
-                  {t(
-                    "write.selectFile"
-                  )}
+                    {
+                      currentLanguage
+                        ?.shortName ||
+                      "?"
+                    }
+
+                  </span>
+
+
+                  <span className="language-select-trigger-label">
+
+                    {
+                      languageLabel(
+                        currentLanguage
+                      )
+                    }
+
+                  </span>
+
+
+                  <ChevronDown
+                    size={18}
+                    className={
+                      languageMenuOpen
+                        ? "language-select-chevron open"
+                        : "language-select-chevron"
+                    }
+                  />
 
                 </button>
 
 
-                <small>
+                {languageMenuOpen && (
 
-                  {t(
-                    "write.supportedFiles"
-                  )}
+                  <ul
+                    className="language-dropdown"
+                    role="listbox"
+                  >
 
-                </small>
+                    {WRITING_LANGUAGES.map(
+                      (
+                        language
+                      ) => (
+
+                        <li
+                          key={
+                            language.code
+                          }
+                          role="option"
+                          aria-selected={
+                            writingLanguage ===
+                            language.code
+                          }
+                        >
+
+                          <button
+                            type="button"
+                            className={
+                              writingLanguage ===
+                              language.code
+                                ? "language-dropdown-item active"
+                                : "language-dropdown-item"
+                            }
+                            onClick={() => {
+
+                              setWritingLanguage(
+                                language.code
+                              );
+
+                              setLanguageMenuOpen(
+                                false
+                              );
+
+                              setError("");
+                              setSuccess("");
+
+                            }}
+                          >
+
+                            <span>
+
+                              {
+                                languageLabel(
+                                  language
+                                )
+                              }
+
+                            </span>
+
+
+                            {writingLanguage ===
+                            language.code && (
+
+                              <Check
+                                size={16}
+                              />
+
+                            )}
+
+                          </button>
+
+                        </li>
+
+                      )
+                    )}
+
+                  </ul>
+
+                )}
 
               </div>
 
-            ) : (
 
-              <div className="selected-file-card">
+              {!OCR_SUPPORTED_LANGUAGES.includes(
+                writingLanguage
+              ) && (
 
-                <div className="selected-file-icon">
+                <p className="language-ocr-note">
 
-                  {selectedFile.type ===
-                  "application/pdf" ? (
+                  OCR currently supports
+                  Bengali, English and Hindi.
+                  You can still type directly
+                  in this language.
 
-                    <FileText
-                      size={28}
-                    />
+                </p>
 
-                  ) : (
+              )}
 
-                    <FileImage
-                      size={28}
-                    />
+            </div>
 
-                  )}
+
+            {/* ============================================= */}
+            {/* OCR IMPORT                                    */}
+            {/* ============================================= */}
+
+            <div className="write-section scan-section">
+
+              <div className="write-section-heading">
+
+                <div>
+
+                  <span className="write-step">
+                    02
+                  </span>
+
+                  <h2>
+                    Import text from document
+                  </h2>
 
                 </div>
 
 
-                <div className="selected-file-info">
+                <span className="optional-badge">
+                  Optional
+                </span>
 
-                  <strong>
+              </div>
 
-                    {
-                      selectedFile.name
+
+              <p className="scan-description">
+
+                Upload a scanned PDF or image
+                and extract its text into your
+                writing editor. This does not
+                publish the original PDF.
+
+              </p>
+
+
+              {!selectedFile ? (
+
+                <div
+                  className={
+                    isDragging
+                      ? "scan-drop-zone dragging"
+                      : "scan-drop-zone"
+                  }
+                  onDragOver={
+                    handleScanDragOver
+                  }
+                  onDragLeave={
+                    handleScanDragLeave
+                  }
+                  onDrop={
+                    handleScanDrop
+                  }
+                >
+
+                  <input
+                    ref={
+                      scanFileInputRef
                     }
-
-                  </strong>
-
-
-                  <span>
-
-                    {
-                      formatFileSize(
-                        selectedFile.size
-                      )
+                    type="file"
+                    id="writing-document"
+                    className="scan-file-input"
+                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                    onChange={
+                      handleScanFileChange
                     }
+                  />
 
-                    {" • "}
 
-                    {
-                      currentLanguage
-                        ? currentLanguage.englishName
-                        : ""
+                  <div className="scan-upload-icon">
+
+                    <ScanText
+                      size={28}
+                    />
+
+                  </div>
+
+
+                  <h3>
+                    Scan document to text
+                  </h3>
+
+
+                  <p>
+                    Drag a PDF or image here,
+                    or choose a file.
+                  </p>
+
+
+                  <button
+                    type="button"
+                    className="scan-select-button"
+                    onClick={() =>
+                      scanFileInputRef
+                        .current
+                        ?.click()
                     }
+                  >
 
-                    {" "}
+                    <FileImage
+                      size={18}
+                    />
 
-                    {t(
-                      "write.ocrLabel"
+                    Select scan
+
+                  </button>
+
+
+                  <small>
+                    PDF, JPG, JPEG or PNG ·
+                    Maximum 10 MB
+                  </small>
+
+                </div>
+
+              ) : (
+
+                <div className="selected-file-card">
+
+                  <div className="selected-file-icon">
+
+                    {isPdfFile(
+                      selectedFile
+                    ) ? (
+
+                      <FileText
+                        size={28}
+                      />
+
+                    ) : (
+
+                      <FileImage
+                        size={28}
+                      />
+
                     )}
 
+                  </div>
+
+
+                  <div className="selected-file-info">
+
+                    <strong>
+                      {
+                        selectedFile.name
+                      }
+                    </strong>
+
+                    <span>
+
+                      {
+                        formatFileSize(
+                          selectedFile.size
+                        )
+                      }
+
+                      {" • OCR import"}
+
+                    </span>
+
+                  </div>
+
+
+                  <button
+                    type="button"
+                    className="remove-file-button"
+                    disabled={
+                      extracting
+                    }
+                    onClick={
+                      removeSelectedFile
+                    }
+                  >
+
+                    <Trash2
+                      size={19}
+                    />
+
+                  </button>
+
+                </div>
+
+              )}
+
+
+              <button
+                type="button"
+                className="extract-text-button"
+                disabled={
+                  !selectedFile ||
+                  extracting ||
+                  publishing
+                }
+                onClick={
+                  handleExtractText
+                }
+              >
+
+                {extracting ? (
+
+                  <LoaderCircle
+                    className="spin"
+                    size={20}
+                  />
+
+                ) : (
+
+                  <ScanText
+                    size={20}
+                  />
+
+                )}
+
+
+                {extracting
+                  ? "Extracting text..."
+                  : "Extract text"}
+
+              </button>
+
+            </div>
+
+
+            {/* ============================================= */}
+            {/* WRITING DETAILS                               */}
+            {/* ============================================= */}
+
+            <div className="write-section">
+
+              <div className="write-section-heading">
+
+                <div>
+
+                  <span className="write-step">
+                    03
+                  </span>
+
+                  <h2>
+                    Writing details
+                  </h2>
+
+                </div>
+
+              </div>
+
+
+              <div className="write-field">
+
+                <label htmlFor="writing-title">
+
+                  Title
+
+                  <span aria-hidden="true">
+                    *
+                  </span>
+
+                </label>
+
+
+                <input
+                  id="writing-title"
+                  type="text"
+                  value={title}
+                  maxLength={200}
+                  placeholder="Give your writing a title"
+                  disabled={
+                    publishing
+                  }
+                  onChange={
+                    (
+                      event
+                    ) =>
+                      setTitle(
+                        event.target
+                          .value
+                      )
+                  }
+                />
+
+
+                <div className="field-meta">
+
+                  <span>
+                    Make it memorable.
+                  </span>
+
+                  <span>
+                    {title.length}/200
                   </span>
 
                 </div>
 
+              </div>
 
-                <button
-                  type="button"
-                  className="remove-file-button"
-                  aria-label={
-                    t(
-                      "write.removeFile"
-                    )
+
+              <div className="write-field">
+
+                <label htmlFor="writing-category">
+
+                  Category
+
+                  <span aria-hidden="true">
+                    *
+                  </span>
+
+                </label>
+
+
+                <select
+                  id="writing-category"
+                  value={category}
+                  disabled={
+                    publishing
                   }
-                  disabled={extracting}
-                  onClick={
-                    removeSelectedFile
+                  onChange={
+                    (
+                      event
+                    ) =>
+                      setCategory(
+                        event.target
+                          .value
+                      )
                   }
                 >
 
-                  <Trash2
-                    size={19}
-                  />
+                  {CATEGORIES.map(
+                    (
+                      item
+                    ) => (
 
-                </button>
+                      <option
+                        key={item}
+                        value={item}
+                      >
+
+                        {
+                          categoryLabel(
+                            item
+                          )
+                        }
+
+                      </option>
+
+                    )
+                  )}
+
+                </select>
 
               </div>
 
-            )}
+
+              <div className="write-field content-field">
+
+                <div className="content-label-row">
+
+                  <label htmlFor="writing-content">
+
+                    Your writing
+
+                    <span aria-hidden="true">
+                      *
+                    </span>
+
+                  </label>
 
 
-            <button
-              type="button"
-              className="extract-text-button"
-              disabled={
-                !selectedFile ||
-                extracting ||
-                publishing
-              }
-              onClick={
-                handleExtractText
-              }
-            >
+                  <div className="content-stats">
 
-              {extracting ? (
+                    <span>
+                      {wordCount} words
+                    </span>
 
-                <LoaderCircle
-                  className="spin"
-                  size={20}
+                    <span>
+                      {characterCount} characters
+                    </span>
+
+                  </div>
+
+                </div>
+
+
+                <textarea
+                  id="writing-content"
+                  value={content}
+                  rows={18}
+                  dir={
+                    currentLanguage?.rtl
+                      ? "rtl"
+                      : "ltr"
+                  }
+                  placeholder={
+                    CONTENT_PLACEHOLDERS[
+                      writingLanguage
+                    ] ||
+                    CONTENT_PLACEHOLDERS.en
+                  }
+                  disabled={
+                    publishing
+                  }
+                  onChange={
+                    (
+                      event
+                    ) =>
+                      setContent(
+                        event.target
+                          .value
+                      )
+                  }
                 />
-
-              ) : (
-
-                <ScanText
-                  size={20}
-                />
-
-              )}
-
-
-              {extracting
-                ? t(
-                  "write.extracting"
-                )
-                : t(
-                  "write.extractButton"
-                )}
-
-            </button>
-
-          </div>
-
-
-          {/* ============================================= */}
-          {/* WRITING DETAILS                               */}
-          {/* ============================================= */}
-
-          <div className="write-section">
-
-            <div className="write-section-heading">
-
-              <div>
-
-                <span className="write-step">
-
-                  {t(
-                    "write.editorStep"
-                  )}
-
-                </span>
-
-
-                <h2>
-
-                  {t(
-                    "write.editorTitle"
-                  )}
-
-                </h2>
 
               </div>
 
             </div>
 
 
-            <div className="write-field">
+            {/* ============================================= */}
+            {/* WRITING ACTIONS                               */}
+            {/* ============================================= */}
 
-              <label htmlFor="writing-title">
+            <div className="write-form-actions">
 
-                {t(
-                  "write.titleLabel"
-                )}
-
-                <span aria-hidden="true">
-
-                  *
-
-                </span>
-
-              </label>
-
-
-              <input
-                id="writing-title"
-                type="text"
-                value={title}
-                maxLength={200}
-                placeholder={
-                  t(
-                    "write.titlePlaceholder"
-                  )
-                }
+              <button
+                type="button"
+                className="draft-button"
                 disabled={
-                  publishing
+                  publishing ||
+                  extracting
                 }
-                onChange={(event) =>
-                  setTitle(
-                    event.target.value
-                  )
-                }
-              />
-
-
-              <div className="field-meta">
-
-                <span>
-
-                  {t(
-                    "write.titleHelp"
-                  )}
-
-                </span>
-
-
-                <span>
-
-                  {title.length}/200
-
-                </span>
-
-              </div>
-
-            </div>
-
-
-            <div className="write-field">
-
-              <label htmlFor="writing-category">
-
-                {t(
-                  "write.categoryLabel"
-                )}
-
-                <span aria-hidden="true">
-
-                  *
-
-                </span>
-
-              </label>
-
-
-              <select
-                id="writing-category"
-                value={category}
-                disabled={
-                  publishing
-                }
-                onChange={(event) =>
-                  setCategory(
-                    event.target.value
-                  )
+                onClick={
+                  handleSaveDraft
                 }
               >
 
-                {CATEGORIES.map(
-                  (item) => (
+                <Save
+                  size={19}
+                />
 
-                    <option
-                      key={item}
-                      value={item}
-                    >
+                Save Draft
 
-                      {
-                        categoryLabel(
-                          item
-                        )
-                      }
+              </button>
 
-                    </option>
 
-                  )
+              <button
+                type="submit"
+                className="publish-button"
+                disabled={
+                  publishing ||
+                  extracting
+                }
+              >
+
+                {publishing ? (
+
+                  <LoaderCircle
+                    className="spin"
+                    size={20}
+                  />
+
+                ) : (
+
+                  <Send
+                    size={19}
+                  />
+
                 )}
 
-              </select>
+
+                {publishing
+                  ? "Publishing..."
+                  : "Publish Writing"}
+
+              </button>
+
+            </div>
+
+          </form>
+
+        )}
+
+
+        {/* ================================================= */}
+        {/* PDF DOCUMENT MODE                                */}
+        {/* ================================================= */}
+
+        {publishMode ===
+        "document" && (
+
+          <form
+            className="write-form-card document-publish-form"
+            onSubmit={
+              handleDocumentSubmit
+            }
+          >
+
+            <StatusMessages />
+
+
+            {/* ============================================= */}
+            {/* PDF UPLOAD                                    */}
+            {/* ============================================= */}
+
+            <div className="write-section">
+
+              <div className="write-section-heading">
+
+                <div>
+
+                  <span className="write-step">
+                    01
+                  </span>
+
+                  <h2>
+                    Upload your PDF
+                  </h2>
+
+                </div>
+
+
+                <span className="document-format-badge">
+
+                  <FileText
+                    size={15}
+                  />
+
+                  PDF
+
+                </span>
+
+              </div>
+
+
+              <p className="scan-description">
+
+                The original PDF will be stored
+                securely and published as a
+                document on SHOBDO.
+
+              </p>
+
+
+              {!documentFile ? (
+
+                <div
+                  className={
+                    documentDragging
+                      ? "document-drop-zone dragging"
+                      : "document-drop-zone"
+                  }
+                  onDragOver={
+                    handleDocumentDragOver
+                  }
+                  onDragLeave={
+                    handleDocumentDragLeave
+                  }
+                  onDrop={
+                    handleDocumentDrop
+                  }
+                >
+
+                  <input
+                    ref={
+                      documentInputRef
+                    }
+                    type="file"
+                    id="publish-pdf-document"
+                    className="scan-file-input"
+                    accept=".pdf,application/pdf"
+                    onChange={
+                      handleDocumentFileChange
+                    }
+                  />
+
+
+                  <div className="document-upload-icon">
+
+                    <Upload
+                      size={30}
+                    />
+
+                  </div>
+
+
+                  <h3>
+                    Drop your PDF here
+                  </h3>
+
+
+                  <p>
+                    Upload manuscripts,
+                    essays, research,
+                    magazines or other
+                    literary documents.
+                  </p>
+
+
+                  <button
+                    type="button"
+                    className="scan-select-button"
+                    onClick={() =>
+                      documentInputRef
+                        .current
+                        ?.click()
+                    }
+                  >
+
+                    <FileText
+                      size={18}
+                    />
+
+                    Choose PDF
+
+                  </button>
+
+
+                  <small>
+                    PDF only · Maximum 10 MB ·
+                    Maximum 30 pages
+                  </small>
+
+                </div>
+
+              ) : (
+
+                <>
+
+                  <div className="document-selected-card">
+
+                    <div className="document-selected-icon">
+
+                      <FileText
+                        size={30}
+                      />
+
+                    </div>
+
+
+                    <div className="document-selected-info">
+
+                      <strong>
+                        {
+                          documentFile.name
+                        }
+                      </strong>
+
+                      <span>
+
+                        {
+                          formatFileSize(
+                            documentFile.size
+                          )
+                        }
+
+                        {" • Ready to publish"}
+
+                      </span>
+
+                    </div>
+
+
+                    <button
+                      type="button"
+                      className="remove-file-button"
+                      disabled={
+                        documentPublishing
+                      }
+                      onClick={
+                        removeDocumentFile
+                      }
+                    >
+
+                      <Trash2
+                        size={19}
+                      />
+
+                    </button>
+
+                  </div>
+
+
+                  {documentPreviewUrl && (
+
+                    <div className="document-preview">
+
+                      <div className="document-preview-header">
+
+                        <div>
+
+                          <FileText
+                            size={18}
+                          />
+
+                          <span>
+                            PDF Preview
+                          </span>
+
+                        </div>
+
+
+                        <a
+                          href={
+                            documentPreviewUrl
+                          }
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+
+                          Open preview
+
+                        </a>
+
+                      </div>
+
+
+                      <iframe
+                        src={
+                          documentPreviewUrl
+                        }
+                        title="PDF preview"
+                      />
+
+                    </div>
+
+                  )}
+
+                </>
+
+              )}
 
             </div>
 
 
-            <div className="write-field content-field">
+            {/* ============================================= */}
+            {/* DOCUMENT INFORMATION                          */}
+            {/* ============================================= */}
 
-              <div className="content-label-row">
+            <div className="write-section">
 
-                <label htmlFor="writing-content">
+              <div className="write-section-heading">
 
-                  {t(
-                    "write.contentLabel"
-                  )}
+                <div>
+
+                  <span className="write-step">
+                    02
+                  </span>
+
+                  <h2>
+                    Document information
+                  </h2>
+
+                </div>
+
+              </div>
+
+
+              <div className="write-field">
+
+                <label htmlFor="document-title">
+
+                  Document title
 
                   <span aria-hidden="true">
-
                     *
+                  </span>
+
+                </label>
+
+
+                <input
+                  id="document-title"
+                  type="text"
+                  maxLength={200}
+                  value={
+                    documentTitle
+                  }
+                  placeholder="Enter the document title"
+                  disabled={
+                    documentPublishing
+                  }
+                  onChange={
+                    (
+                      event
+                    ) =>
+                      setDocumentTitle(
+                        event.target
+                          .value
+                      )
+                  }
+                />
+
+
+                <div className="field-meta">
+
+                  <span>
+                    This title will appear
+                    publicly on SHOBDO.
+                  </span>
+
+                  <span>
+                    {
+                      documentTitle
+                        .length
+                    }/200
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              <div className="document-field-grid">
+
+                <div className="write-field">
+
+                  <label htmlFor="document-category">
+                    Category
+                  </label>
+
+
+                  <select
+                    id="document-category"
+                    value={
+                      documentCategory
+                    }
+                    disabled={
+                      documentPublishing
+                    }
+                    onChange={
+                      (
+                        event
+                      ) =>
+                        setDocumentCategory(
+                          event.target
+                            .value
+                        )
+                    }
+                  >
+
+                    {CATEGORIES.map(
+                      (
+                        item
+                      ) => (
+
+                        <option
+                          key={item}
+                          value={item}
+                        >
+
+                          {
+                            categoryLabel(
+                              item
+                            )
+                          }
+
+                        </option>
+
+                      )
+                    )}
+
+                  </select>
+
+                </div>
+
+
+                <div className="write-field">
+
+                  <label htmlFor="document-language">
+                    Language
+                  </label>
+
+
+                  <select
+                    id="document-language"
+                    value={
+                      documentLanguage
+                    }
+                    disabled={
+                      documentPublishing
+                    }
+                    onChange={
+                      (
+                        event
+                      ) =>
+                        setDocumentLanguage(
+                          event.target
+                            .value
+                        )
+                    }
+                  >
+
+                    {DOCUMENT_LANGUAGES.map(
+                      (
+                        language
+                      ) => (
+
+                        <option
+                          key={
+                            language.code
+                          }
+                          value={
+                            language.code
+                          }
+                        >
+
+                          {
+                            language.label
+                          }
+
+                        </option>
+
+                      )
+                    )}
+
+                  </select>
+
+                </div>
+
+              </div>
+
+
+              <div className="write-field">
+
+                <label htmlFor="document-description">
+                  Description
+                </label>
+
+
+                <textarea
+                  id="document-description"
+                  value={
+                    documentDescription
+                  }
+                  rows={6}
+                  maxLength={5000}
+                  placeholder="Tell readers what this document is about..."
+                  disabled={
+                    documentPublishing
+                  }
+                  onChange={
+                    (
+                      event
+                    ) =>
+                      setDocumentDescription(
+                        event.target
+                          .value
+                      )
+                  }
+                />
+
+
+                <div className="field-meta">
+
+                  <span>
+                    Optional, but recommended.
+                  </span>
+
+                  <span>
+                    {
+                      documentDescription
+                        .length
+                    }/5000
+                  </span>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* ============================================= */}
+            {/* DOCUMENT SETTINGS                             */}
+            {/* ============================================= */}
+
+            <div className="write-section">
+
+              <div className="write-section-heading">
+
+                <div>
+
+                  <span className="write-step">
+                    03
+                  </span>
+
+                  <h2>
+                    Publishing settings
+                  </h2>
+
+                </div>
+
+              </div>
+
+
+              <div className="document-settings-grid">
+
+                <label
+                  className={
+                    documentVisibility ===
+                    "public"
+                      ? "document-setting-card active"
+                      : "document-setting-card"
+                  }
+                >
+
+                  <input
+                    type="radio"
+                    name="document-visibility"
+                    value="public"
+                    checked={
+                      documentVisibility ===
+                      "public"
+                    }
+                    disabled={
+                      documentPublishing
+                    }
+                    onChange={() =>
+                      setDocumentVisibility(
+                        "public"
+                      )
+                    }
+                  />
+
+
+                  <BookOpen
+                    size={21}
+                  />
+
+
+                  <span>
+
+                    <strong>
+                      Public
+                    </strong>
+
+                    <small>
+                      Anyone can discover
+                      and read this document.
+                    </small>
 
                   </span>
 
                 </label>
 
 
-                <div className="content-stats">
+                <label
+                  className={
+                    documentVisibility ===
+                    "unlisted"
+                      ? "document-setting-card active"
+                      : "document-setting-card"
+                  }
+                >
+
+                  <input
+                    type="radio"
+                    name="document-visibility"
+                    value="unlisted"
+                    checked={
+                      documentVisibility ===
+                      "unlisted"
+                    }
+                    disabled={
+                      documentPublishing
+                    }
+                    onChange={() =>
+                      setDocumentVisibility(
+                        "unlisted"
+                      )
+                    }
+                  />
+
+
+                  <Lock
+                    size={21}
+                  />
+
 
                   <span>
 
-                    {wordCount}{" "}
-                    {t(
-                      "write.wordCount"
-                    )}
+                    <strong>
+                      Unlisted
+                    </strong>
+
+                    <small>
+                      Accessible by direct
+                      link but not publicly
+                      listed.
+                    </small>
 
                   </span>
 
-
-                  <span>
-
-                    {characterCount}{" "}
-                    {t(
-                      "write.characterCount"
-                    )}
-
-                  </span>
-
-                </div>
+                </label>
 
               </div>
 
 
-              <textarea
-                id="writing-content"
-                value={content}
-                rows={18}
-                dir={
-                  currentLanguage?.rtl
-                    ? "rtl"
-                    : "ltr"
-                }
-                placeholder={
-                  CONTENT_PLACEHOLDERS[
-                    writingLanguage
-                  ] ||
-                  CONTENT_PLACEHOLDERS.en
-                }
-                disabled={
-                  publishing
-                }
-                onChange={(event) =>
-                  setContent(
-                    event.target.value
-                  )
-                }
-              />
+              <label className="document-download-toggle">
+
+                <input
+                  type="checkbox"
+                  checked={
+                    allowDownload
+                  }
+                  disabled={
+                    documentPublishing
+                  }
+                  onChange={
+                    (
+                      event
+                    ) =>
+                      setAllowDownload(
+                        event.target
+                          .checked
+                      )
+                  }
+                />
 
 
-              <p className="editor-help">
+                <span className="document-toggle-icon">
 
-                {t(
-                  "write.editorHelp"
-                )}
+                  <Download
+                    size={19}
+                  />
 
-              </p>
+                </span>
+
+
+                <span>
+
+                  <strong>
+                    Allow readers to download
+                  </strong>
+
+                  <small>
+                    Readers can save the
+                    original PDF file.
+                  </small>
+
+                </span>
+
+              </label>
 
             </div>
 
-          </div>
 
+            {/* ============================================= */}
+            {/* DOCUMENT ACTIONS                              */}
+            {/* ============================================= */}
 
-          {/* ============================================= */}
-          {/* FORM ACTIONS                                  */}
-          {/* ============================================= */}
+            <div className="write-form-actions">
 
-          <div className="write-form-actions">
+              <button
+                type="button"
+                className="draft-button"
+                disabled={
+                  documentPublishing ||
+                  !documentFile
+                }
+                onClick={() =>
+                  submitDocument(
+                    "draft"
+                  )
+                }
+              >
 
-            <button
-              type="button"
-              className="draft-button"
-              disabled={
-                publishing ||
-                extracting
-              }
-              onClick={
-                handleSaveDraft
-              }
-            >
+                {documentPublishing ? (
 
-              <Save
-                size={19}
-              />
+                  <LoaderCircle
+                    className="spin"
+                    size={19}
+                  />
 
-              {t(
-                "write.saveDraft"
-              )}
+                ) : (
 
-            </button>
+                  <Save
+                    size={19}
+                  />
 
-
-            <button
-              type="submit"
-              className="publish-button"
-              disabled={
-                publishing ||
-                extracting
-              }
-            >
-
-              {publishing ? (
-
-                <LoaderCircle
-                  className="spin"
-                  size={20}
-                />
-
-              ) : (
-
-                <Send
-                  size={19}
-                />
-
-              )}
-
-
-              {publishing
-                ? t(
-                  "write.publishing"
-                )
-                : t(
-                  "write.publish"
                 )}
 
-            </button>
+                Save Document Draft
 
-          </div>
+              </button>
 
-        </form>
+
+              <button
+                type="submit"
+                className="publish-button"
+                disabled={
+                  documentPublishing ||
+                  !documentFile
+                }
+              >
+
+                {documentPublishing ? (
+
+                  <LoaderCircle
+                    className="spin"
+                    size={20}
+                  />
+
+                ) : (
+
+                  <Send
+                    size={19}
+                  />
+
+                )}
+
+
+                {documentPublishing
+                  ? "Publishing PDF..."
+                  : "Publish PDF"}
+
+              </button>
+
+            </div>
+
+
+            {/* ============================================= */}
+            {/* LAST PUBLISHED DOCUMENT                       */}
+            {/* ============================================= */}
+
+            {lastPublishedDocument && (
+
+              <div className="document-published-result">
+
+                <CheckCircle2
+                  size={22}
+                />
+
+
+                <div>
+
+                  <strong>
+                    {
+                      lastPublishedDocument
+                        .title
+                    }
+                  </strong>
+
+                  <span>
+                    Your document was stored
+                    successfully.
+                  </span>
+
+                </div>
+
+
+                {lastPublishedDocument
+                  .file_url && (
+
+                  <a
+                    href={
+                      lastPublishedDocument
+                        .file_url
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+
+                    View PDF
+
+                  </a>
+
+                )}
+
+              </div>
+
+            )}
+
+          </form>
+
+        )}
 
       </section>
 
     </main>
 
   );
-
 }
 
 

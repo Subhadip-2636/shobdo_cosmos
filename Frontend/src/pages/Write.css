@@ -1070,3 +1070,483 @@
 .dark .content-label-row label {
   color: #f6eff8;
 }
+
+/* =========================================================
+   SHOBDO CREATOR — CONTENT TYPE SELECTOR
+   ========================================================= */
+
+.publish-type-card {
+  width: 100%;
+  margin-bottom: 24px;
+  padding: 24px;
+  border: 1px solid var(--border-color, #e6e6e6);
+  border-radius: 22px;
+  background: var(--surface-color, #ffffff);
+}
+
+.publish-type-heading {
+  margin-bottom: 20px;
+}
+
+.publish-type-heading > span {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  color: var(--primary-color, #7057ff);
+}
+
+.publish-type-heading h2 {
+  margin: 0 0 6px;
+  font-size: 1.35rem;
+}
+
+.publish-type-heading p {
+  margin: 0;
+  opacity: 0.7;
+}
+
+.publish-type-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.publish-type-tab {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 86px;
+  padding: 16px;
+  border: 1px solid var(--border-color, #e5e5e5);
+  border-radius: 16px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.publish-type-tab:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--primary-color, #7057ff);
+}
+
+.publish-type-tab.active {
+  border-color: var(--primary-color, #7057ff);
+  background: color-mix(
+    in srgb,
+    var(--primary-color, #7057ff) 8%,
+    transparent
+  );
+}
+
+.publish-type-tab.disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.publish-type-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: color-mix(
+    in srgb,
+    var(--primary-color, #7057ff) 11%,
+    transparent
+  );
+}
+
+.publish-type-tab > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.publish-type-tab strong {
+  font-size: 0.98rem;
+}
+
+.publish-type-tab small {
+  line-height: 1.35;
+  opacity: 0.65;
+}
+
+
+/* =========================================================
+   PDF DOCUMENT UPLOAD
+   ========================================================= */
+
+.document-format-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  background: color-mix(
+    in srgb,
+    var(--primary-color, #7057ff) 10%,
+    transparent
+  );
+}
+
+.document-drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+  padding: 32px;
+  border: 2px dashed var(--border-color, #d8d8d8);
+  border-radius: 18px;
+  text-align: center;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.document-drop-zone.dragging {
+  border-color: var(--primary-color, #7057ff);
+  background: color-mix(
+    in srgb,
+    var(--primary-color, #7057ff) 6%,
+    transparent
+  );
+}
+
+.document-drop-zone h3 {
+  margin: 15px 0 7px;
+  font-size: 1.1rem;
+}
+
+.document-drop-zone p {
+  max-width: 500px;
+  margin: 0 0 20px;
+  line-height: 1.6;
+  opacity: 0.68;
+}
+
+.document-drop-zone small {
+  display: block;
+  margin-top: 13px;
+  opacity: 0.6;
+}
+
+.document-upload-icon {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 18px;
+  background: color-mix(
+    in srgb,
+    var(--primary-color, #7057ff) 11%,
+    transparent
+  );
+  color: var(--primary-color, #7057ff);
+}
+
+
+/* =========================================================
+   SELECTED PDF
+   ========================================================= */
+
+.document-selected-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border-color, #e2e2e2);
+  border-radius: 16px;
+  background: color-mix(
+    in srgb,
+    var(--primary-color, #7057ff) 3%,
+    transparent
+  );
+}
+
+.document-selected-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  background: color-mix(
+    in srgb,
+    var(--primary-color, #7057ff) 11%,
+    transparent
+  );
+  color: var(--primary-color, #7057ff);
+}
+
+.document-selected-info {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.document-selected-info strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.document-selected-info span {
+  font-size: 0.86rem;
+  opacity: 0.65;
+}
+
+
+/* =========================================================
+   PDF PREVIEW
+   ========================================================= */
+
+.document-preview {
+  margin-top: 18px;
+  overflow: hidden;
+  border: 1px solid var(--border-color, #dedede);
+  border-radius: 16px;
+}
+
+.document-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border-color, #dedede);
+}
+
+.document-preview-header > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.document-preview-header a {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--primary-color, #7057ff);
+  text-decoration: none;
+}
+
+.document-preview iframe {
+  display: block;
+  width: 100%;
+  height: 520px;
+  border: 0;
+  background: #f4f4f4;
+}
+
+
+/* =========================================================
+   DOCUMENT FORM GRID
+   ========================================================= */
+
+.document-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+
+/* =========================================================
+   VISIBILITY SETTINGS
+   ========================================================= */
+
+.document-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.document-setting-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  min-height: 100px;
+  padding: 17px;
+  border: 1px solid var(--border-color, #dddddd);
+  border-radius: 16px;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.document-setting-card.active {
+  border-color: var(--primary-color, #7057ff);
+  background: color-mix(
+    in srgb,
+    var(--primary-color, #7057ff) 6%,
+    transparent
+  );
+}
+
+.document-setting-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.document-setting-card > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--primary-color, #7057ff);
+}
+
+.document-setting-card > span {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.document-setting-card strong {
+  font-size: 0.96rem;
+}
+
+.document-setting-card small {
+  line-height: 1.45;
+  opacity: 0.66;
+}
+
+
+/* =========================================================
+   DOWNLOAD PERMISSION
+   ========================================================= */
+
+.document-download-toggle {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 16px;
+  border: 1px solid var(--border-color, #dddddd);
+  border-radius: 16px;
+  cursor: pointer;
+}
+
+.document-download-toggle > input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color, #7057ff);
+}
+
+.document-toggle-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: color-mix(
+    in srgb,
+    var(--primary-color, #7057ff) 10%,
+    transparent
+  );
+  color: var(--primary-color, #7057ff);
+}
+
+.document-download-toggle > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.document-download-toggle small {
+  opacity: 0.65;
+}
+
+
+/* =========================================================
+   PUBLISHED RESULT
+   ========================================================= */
+
+.document-published-result {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-top: 20px;
+  padding: 15px 17px;
+  border: 1px solid rgba(46, 160, 67, 0.32);
+  border-radius: 14px;
+  background: rgba(46, 160, 67, 0.07);
+}
+
+.document-published-result > svg {
+  flex: 0 0 auto;
+}
+
+.document-published-result > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.document-published-result span {
+  font-size: 0.84rem;
+  opacity: 0.68;
+}
+
+.document-published-result a {
+  font-weight: 700;
+  color: inherit;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 820px) {
+
+  .publish-type-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .document-field-grid,
+  .document-settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .document-preview iframe {
+    height: 420px;
+  }
+}
+
+
+@media (max-width: 520px) {
+
+  .publish-type-card {
+    padding: 18px;
+    border-radius: 17px;
+  }
+
+  .document-drop-zone {
+    min-height: 230px;
+    padding: 24px 16px;
+  }
+
+  .document-preview iframe {
+    height: 330px;
+  }
+
+  .document-published-result {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
