@@ -308,7 +308,9 @@ function isPdfFile(
 
   return (
     file.type === "application/pdf" ||
-    getFileExtension(file.name) === ".pdf"
+    getFileExtension(
+      file.name
+    ) === ".pdf"
   );
 }
 
@@ -355,14 +357,17 @@ async function createDocumentRequest({
   visibility,
   allowDownload,
   status,
+  authErrorMessage,
+  requestErrorMessage,
 }) {
 
   const token =
     getToken();
 
   if (!token) {
+
     throw new Error(
-      "Please log in before publishing a document."
+      authErrorMessage
     );
   }
 
@@ -433,19 +438,30 @@ async function createDocumentRequest({
   let data = null;
 
   try {
+
     data =
       await response.json();
+
   } catch {
+
     data = null;
   }
 
 
   if (!response.ok) {
 
-    throw new Error(
-      data?.message ||
-      `Document request failed (${response.status}).`
-    );
+    const requestError =
+      new Error(
+        requestErrorMessage
+      );
+
+    requestError.status =
+      response.status;
+
+    requestError.serverMessage =
+      data?.message || "";
+
+    throw requestError;
   }
 
 
@@ -492,13 +508,18 @@ function Write({
   const [
     publishMode,
     setPublishMode,
-  ] = useState("writing");
+  ] = useState(
+    "writing"
+  );
 
 
   useEffect(() => {
 
     if (isEditMode) {
-      setPublishMode("writing");
+
+      setPublishMode(
+        "writing"
+      );
     }
 
   }, [
@@ -530,12 +551,16 @@ function Write({
       isEditMode &&
       mode !== "writing"
     ) {
+
       return;
     }
 
     setError("");
     setSuccess("");
-    setPublishMode(mode);
+
+    setPublishMode(
+      mode
+    );
   }
 
 
@@ -551,27 +576,32 @@ function Write({
 
       "কবিতা":
         t(
-          "categories.poetry"
+          "categories.poetry",
+          "Poetry"
         ),
 
       "গল্প":
         t(
-          "categories.story"
+          "categories.story",
+          "Story"
         ),
 
       "অনুভূতি":
         t(
-          "categories.reflection"
+          "categories.reflection",
+          "Feelings"
         ),
 
       "প্রবন্ধ":
         t(
-          "categories.essay"
+          "categories.essay",
+          "Essay"
         ),
 
       "অন্যান্য":
         t(
-          "categories.other"
+          "categories.other",
+          "Other"
         ),
     };
 
@@ -622,7 +652,7 @@ function Write({
 
 
   // =======================================================
-  // EDIT WRITING PREFILL
+  // EDIT PREFILL
   // =======================================================
 
   useEffect(() => {
@@ -631,8 +661,10 @@ function Write({
       !isEditMode ||
       !editingWriting
     ) {
+
       return;
     }
+
 
     setTitle(
       editingWriting.title ||
@@ -700,7 +732,8 @@ function Write({
     ) {
 
       if (
-        event.key === "Escape"
+        event.key ===
+        "Escape"
       ) {
 
         setLanguageMenuOpen(
@@ -749,7 +782,10 @@ function Write({
       language.nativeName ===
       language.englishName
     ) {
-      return language.englishName;
+
+      return (
+        language.englishName
+      );
     }
 
     return (
@@ -767,7 +803,7 @@ function Write({
 
 
   // =======================================================
-  // WRITING OCR STATE
+  // OCR STATE
   // =======================================================
 
   const scanFileInputRef =
@@ -805,9 +841,15 @@ function Write({
     }
 
 
-    if (!isAllowedScanFile(file)) {
+    if (
+      !isAllowedScanFile(
+        file
+      )
+    ) {
 
-      setSelectedFile(null);
+      setSelectedFile(
+        null
+      );
 
       setError(
         t(
@@ -825,7 +867,9 @@ function Write({
       MAX_FILE_SIZE
     ) {
 
-      setSelectedFile(null);
+      setSelectedFile(
+        null
+      );
 
       setError(
         t(
@@ -859,10 +903,13 @@ function Write({
 
   function removeSelectedFile() {
 
-    setSelectedFile(null);
+    setSelectedFile(
+      null
+    );
 
     setError("");
     setSuccess("");
+
 
     if (
       scanFileInputRef.current
@@ -880,7 +927,9 @@ function Write({
 
     event.preventDefault();
 
-    setIsDragging(true);
+    setIsDragging(
+      true
+    );
   }
 
 
@@ -890,7 +939,9 @@ function Write({
 
     event.preventDefault();
 
-    setIsDragging(false);
+    setIsDragging(
+      false
+    );
   }
 
 
@@ -900,7 +951,9 @@ function Write({
 
     event.preventDefault();
 
-    setIsDragging(false);
+    setIsDragging(
+      false
+    );
 
     validateAndSelectScanFile(
       event.dataTransfer
@@ -935,7 +988,10 @@ function Write({
     ) {
 
       setError(
-        "OCR currently supports Bengali, English and Hindi only."
+        t(
+          "write.ocrLanguageUnsupported",
+          "OCR currently supports Bengali, English and Hindi only."
+        )
       );
 
       return;
@@ -944,7 +1000,9 @@ function Write({
 
     try {
 
-      setExtracting(true);
+      setExtracting(
+        true
+      );
 
 
       const response =
@@ -955,7 +1013,8 @@ function Write({
 
 
       const extractedText =
-        typeof response === "string"
+        typeof response ===
+        "string"
           ? response
           : response?.text ||
             response?.content ||
@@ -1032,13 +1091,15 @@ function Write({
 
     } finally {
 
-      setExtracting(false);
+      setExtracting(
+        false
+      );
     }
   }
 
 
   // =======================================================
-  // WRITING DRAFT
+  // SAVE WRITING DRAFT
   // =======================================================
 
   async function handleSaveDraft() {
@@ -1093,7 +1154,9 @@ function Write({
 
     try {
 
-      setPublishing(true);
+      setPublishing(
+        true
+      );
 
 
       let savedDraft;
@@ -1126,6 +1189,7 @@ function Write({
               id
             );
 
+
           savedDraft =
             unpublished?.writing ||
             unpublished;
@@ -1144,6 +1208,7 @@ function Write({
             payload
           );
 
+
         savedDraft =
           created?.writing ||
           created;
@@ -1158,7 +1223,10 @@ function Write({
       if (!draftId) {
 
         throw new Error(
-          "Draft saved, but no writing ID was returned."
+          t(
+            "write.draftIdMissing",
+            "Draft saved, but no writing ID was returned."
+          )
         );
       }
 
@@ -1215,7 +1283,9 @@ function Write({
 
     } finally {
 
-      setPublishing(false);
+      setPublishing(
+        false
+      );
     }
   }
 
@@ -1246,9 +1316,11 @@ function Write({
 
       setTimeout(
         () => {
+
           navigate(
             "/login"
           );
+
         },
         1000
       );
@@ -1301,7 +1373,9 @@ function Write({
 
     try {
 
-      setPublishing(true);
+      setPublishing(
+        true
+      );
 
 
       const payload = {
@@ -1425,7 +1499,9 @@ function Write({
 
     } finally {
 
-      setPublishing(false);
+      setPublishing(
+        false
+      );
     }
   }
 
@@ -1516,10 +1592,10 @@ function Write({
           return "";
         }
 
+
         return URL.createObjectURL(
           documentFile
         );
-
       },
       [
         documentFile,
@@ -1561,10 +1637,15 @@ function Write({
 
     if (!isPdfFile(file)) {
 
-      setDocumentFile(null);
+      setDocumentFile(
+        null
+      );
 
       setError(
-        "Only PDF documents can be published in Document mode."
+        t(
+          "write.documentOnlyPdf",
+          "Only PDF documents can be published in Document mode."
+        )
       );
 
       return;
@@ -1576,10 +1657,15 @@ function Write({
       MAX_FILE_SIZE
     ) {
 
-      setDocumentFile(null);
+      setDocumentFile(
+        null
+      );
 
       setError(
-        "PDF size cannot exceed 10 MB."
+        t(
+          "write.documentFileTooLarge",
+          "PDF size cannot exceed 10 MB."
+        )
       );
 
       return;
@@ -1682,6 +1768,7 @@ function Write({
     setError("");
     setSuccess("");
 
+
     if (
       documentInputRef.current
     ) {
@@ -1703,7 +1790,10 @@ function Write({
     if (!user) {
 
       setError(
-        "Please log in before publishing a document."
+        t(
+          "write.documentLoginRequired",
+          "Please log in before publishing a document."
+        )
       );
 
       return;
@@ -1713,17 +1803,10 @@ function Write({
     if (!documentFile) {
 
       setError(
-        "Select a PDF document first."
-      );
-
-      return;
-    }
-
-
-    if (!documentTitle.trim()) {
-
-      setError(
-        "Document title is required."
+        t(
+          "write.documentFileRequired",
+          "Select a PDF document first."
+        )
       );
 
       return;
@@ -1731,12 +1814,32 @@ function Write({
 
 
     if (
-      documentTitle.trim().length >
+      !documentTitle.trim()
+    ) {
+
+      setError(
+        t(
+          "write.documentTitleRequired",
+          "Document title is required."
+        )
+      );
+
+      return;
+    }
+
+
+    if (
+      documentTitle
+        .trim()
+        .length >
       200
     ) {
 
       setError(
-        "Document title cannot exceed 200 characters."
+        t(
+          "write.documentTitleTooLong",
+          "Document title cannot exceed 200 characters."
+        )
       );
 
       return;
@@ -1749,7 +1852,10 @@ function Write({
     ) {
 
       setError(
-        "Description cannot exceed 5000 characters."
+        t(
+          "write.documentDescriptionTooLong",
+          "Description cannot exceed 5000 characters."
+        )
       );
 
       return;
@@ -1765,6 +1871,7 @@ function Write({
 
       const response =
         await createDocumentRequest({
+
           file:
             documentFile,
 
@@ -1786,6 +1893,18 @@ function Write({
           allowDownload,
 
           status,
+
+          authErrorMessage:
+            t(
+              "write.documentLoginRequired",
+              "Please log in before publishing a document."
+            ),
+
+          requestErrorMessage:
+            t(
+              "write.documentPublishFailed",
+              "Unable to publish PDF document."
+            ),
         });
 
 
@@ -1801,8 +1920,14 @@ function Write({
 
       setSuccess(
         status === "published"
-          ? "PDF document published successfully."
-          : "PDF document saved as draft."
+          ? t(
+              "write.documentPublished",
+              "PDF document published successfully."
+            )
+          : t(
+              "write.documentDraftSaved",
+              "PDF document saved as draft."
+            )
       );
 
 
@@ -1812,15 +1937,19 @@ function Write({
 
       setDocumentTitle("");
       setDocumentDescription("");
+
       setDocumentCategory(
         "প্রবন্ধ"
       );
+
       setDocumentLanguage(
         "bn"
       );
+
       setDocumentVisibility(
         "public"
       );
+
       setAllowDownload(
         true
       );
@@ -1838,7 +1967,10 @@ function Write({
 
       setError(
         requestError?.message ||
-        "Unable to publish PDF document."
+        t(
+          "write.documentPublishFailed",
+          "Unable to publish PDF document."
+        )
       );
 
 
@@ -1881,13 +2013,14 @@ function Write({
 
 
   // =======================================================
-  // STATUS MESSAGE COMPONENT
+  // STATUS MESSAGES
   // =======================================================
 
   function StatusMessages() {
 
     return (
       <>
+
         {error && (
 
           <div
@@ -1905,7 +2038,12 @@ function Write({
 
             <button
               type="button"
-              aria-label="Close"
+              aria-label={
+                t(
+                  "common.close",
+                  "Close"
+                )
+              }
               onClick={() =>
                 setError("")
               }
@@ -1939,7 +2077,12 @@ function Write({
 
             <button
               type="button"
-              aria-label="Close"
+              aria-label={
+                t(
+                  "common.close",
+                  "Close"
+                )
+              }
               onClick={() =>
                 setSuccess("")
               }
@@ -1954,6 +2097,7 @@ function Write({
           </div>
 
         )}
+
       </>
     );
   }
@@ -1999,7 +2143,10 @@ function Write({
 
             <span className="write-eyebrow">
 
-              SHOBDO Creator Studio
+              {t(
+                "write.creatorEyebrow",
+                "SHOBDO Creator Studio"
+              )}
 
             </span>
 
@@ -2007,17 +2154,24 @@ function Write({
             <h1>
 
               {isEditMode
-                ? "Edit your writing"
-                : "Create and publish"}
+                ? t(
+                    "write.creatorEditTitle",
+                    "Edit your writing"
+                  )
+                : t(
+                    "write.creatorTitle",
+                    "Create and publish"
+                  )}
 
             </h1>
 
 
             <p>
 
-              Share original writing or publish
-              a PDF document with the SHOBDO
-              community.
+              {t(
+                "write.creatorSubtitle",
+                "Share original writing or publish a PDF document with the SHOBDO community."
+              )}
 
             </p>
 
@@ -2041,16 +2195,32 @@ function Write({
             <div className="publish-type-heading">
 
               <span>
-                CREATE
+
+                {t(
+                  "write.createStep",
+                  "CREATE"
+                )}
+
               </span>
 
+
               <h2>
-                What would you like to publish?
+
+                {t(
+                  "write.createQuestion",
+                  "What would you like to publish?"
+                )}
+
               </h2>
 
+
               <p>
-                Choose the format that best fits
-                your work.
+
+                {t(
+                  "write.createDescription",
+                  "Choose the format that best fits your work."
+                )}
+
               </p>
 
             </div>
@@ -2059,7 +2229,12 @@ function Write({
             <div
               className="publish-type-tabs"
               role="tablist"
-              aria-label="Publishing type"
+              aria-label={
+                t(
+                  "write.publishingTypeAria",
+                  "Publishing type"
+                )
+              }
             >
 
               <button
@@ -2090,15 +2265,26 @@ function Write({
 
                 </span>
 
+
                 <span>
 
                   <strong>
-                    Writing
+
+                    {t(
+                      "write.writingMode",
+                      "Writing"
+                    )}
+
                   </strong>
 
+
                   <small>
-                    Poetry, stories, essays
-                    and thoughts
+
+                    {t(
+                      "write.writingModeDescription",
+                      "Poetry, stories, essays and thoughts"
+                    )}
+
                   </small>
 
                 </span>
@@ -2134,14 +2320,26 @@ function Write({
 
                 </span>
 
+
                 <span>
 
                   <strong>
-                    PDF Document
+
+                    {t(
+                      "write.documentMode",
+                      "PDF Document"
+                    )}
+
                   </strong>
 
+
                   <small>
-                    Publish complete PDF files
+
+                    {t(
+                      "write.documentModeDescription",
+                      "Publish complete PDF files"
+                    )}
+
                   </small>
 
                 </span>
@@ -2153,7 +2351,12 @@ function Write({
                 type="button"
                 className="publish-type-tab disabled"
                 disabled
-                title="Artwork publishing will be added next."
+                title={
+                  t(
+                    "write.artworkComingSoonTitle",
+                    "Artwork publishing will be added next."
+                  )
+                }
               >
 
                 <span className="publish-type-icon">
@@ -2164,14 +2367,26 @@ function Write({
 
                 </span>
 
+
                 <span>
 
                   <strong>
-                    Artwork
+
+                    {t(
+                      "write.artworkMode",
+                      "Artwork"
+                    )}
+
                   </strong>
 
+
                   <small>
-                    Coming soon
+
+                    {t(
+                      "write.comingSoon",
+                      "Coming soon"
+                    )}
+
                   </small>
 
                 </span>
@@ -2213,19 +2428,34 @@ function Write({
                 <div>
 
                   <span className="write-step">
-                    01
+
+                    {t(
+                      "write.languageStep",
+                      "01"
+                    )}
+
                   </span>
 
+
                   <h2>
-                    Writing language
+
+                    {t(
+                      "write.writingLanguageTitle",
+                      "Writing language"
+                    )}
+
                   </h2>
 
                 </div>
 
 
                 <p>
-                  Choose the language of your
-                  writing.
+
+                  {t(
+                    "write.writingLanguageDescription",
+                    "Choose the language of your writing."
+                  )}
+
                 </p>
 
               </div>
@@ -2374,10 +2604,10 @@ function Write({
 
                 <p className="language-ocr-note">
 
-                  OCR currently supports
-                  Bengali, English and Hindi.
-                  You can still type directly
-                  in this language.
+                  {t(
+                    "write.ocrLanguageNote",
+                    "Scanning currently supports Bengali, English and Hindi only. You can still type directly in this language."
+                  )}
 
                 </p>
 
@@ -2397,18 +2627,34 @@ function Write({
                 <div>
 
                   <span className="write-step">
-                    02
+
+                    {t(
+                      "write.scanStep",
+                      "02"
+                    )}
+
                   </span>
 
+
                   <h2>
-                    Import text from document
+
+                    {t(
+                      "write.ocrImportTitle",
+                      "Import text from document"
+                    )}
+
                   </h2>
 
                 </div>
 
 
                 <span className="optional-badge">
-                  Optional
+
+                  {t(
+                    "common.optional",
+                    "Optional"
+                  )}
+
                 </span>
 
               </div>
@@ -2416,10 +2662,10 @@ function Write({
 
               <p className="scan-description">
 
-                Upload a scanned PDF or image
-                and extract its text into your
-                writing editor. This does not
-                publish the original PDF.
+                {t(
+                  "write.ocrImportDescription",
+                  "Upload a scanned PDF or image and extract its text into your writing editor. This does not publish the original PDF."
+                )}
 
               </p>
 
@@ -2467,13 +2713,22 @@ function Write({
 
 
                   <h3>
-                    Scan document to text
+
+                    {t(
+                      "write.scanDocumentToText",
+                      "Scan document to text"
+                    )}
+
                   </h3>
 
 
                   <p>
-                    Drag a PDF or image here,
-                    or choose a file.
+
+                    {t(
+                      "write.scanDocumentSubtitle",
+                      "Drag a PDF or image here, or choose a file."
+                    )}
+
                   </p>
 
 
@@ -2491,14 +2746,22 @@ function Write({
                       size={18}
                     />
 
-                    Select scan
+
+                    {t(
+                      "write.selectScan",
+                      "Select scan"
+                    )}
 
                   </button>
 
 
                   <small>
-                    PDF, JPG, JPEG or PNG ·
-                    Maximum 10 MB
+
+                    {t(
+                      "write.scanSupported",
+                      "PDF, JPG, JPEG or PNG • Maximum 10 MB"
+                    )}
+
                   </small>
 
                 </div>
@@ -2536,6 +2799,7 @@ function Write({
                       }
                     </strong>
 
+
                     <span>
 
                       {
@@ -2544,7 +2808,12 @@ function Write({
                         )
                       }
 
-                      {" • OCR import"}
+                      {" • "}
+
+                      {t(
+                        "write.ocrImportReady",
+                        "OCR import"
+                      )}
 
                     </span>
 
@@ -2554,6 +2823,12 @@ function Write({
                   <button
                     type="button"
                     className="remove-file-button"
+                    aria-label={
+                      t(
+                        "write.removeFile",
+                        "Remove selected file"
+                      )
+                    }
                     disabled={
                       extracting
                     }
@@ -2603,8 +2878,14 @@ function Write({
 
 
                 {extracting
-                  ? "Extracting text..."
-                  : "Extract text"}
+                  ? t(
+                      "write.extractingText",
+                      "Extracting text..."
+                    )
+                  : t(
+                      "write.extractText",
+                      "Extract text"
+                    )}
 
               </button>
 
@@ -2622,11 +2903,22 @@ function Write({
                 <div>
 
                   <span className="write-step">
-                    03
+
+                    {t(
+                      "write.editorStep",
+                      "03"
+                    )}
+
                   </span>
 
+
                   <h2>
-                    Writing details
+
+                    {t(
+                      "write.writingDetailsTitle",
+                      "Writing details"
+                    )}
+
                   </h2>
 
                 </div>
@@ -2638,7 +2930,10 @@ function Write({
 
                 <label htmlFor="writing-title">
 
-                  Title
+                  {t(
+                    "write.titleLabel",
+                    "Title"
+                  )}
 
                   <span aria-hidden="true">
                     *
@@ -2652,7 +2947,12 @@ function Write({
                   type="text"
                   value={title}
                   maxLength={200}
-                  placeholder="Give your writing a title"
+                  placeholder={
+                    t(
+                      "write.writingTitlePlaceholder",
+                      "Give your writing a title"
+                    )
+                  }
                   disabled={
                     publishing
                   }
@@ -2671,8 +2971,14 @@ function Write({
                 <div className="field-meta">
 
                   <span>
-                    Make it memorable.
+
+                    {t(
+                      "write.makeMemorable",
+                      "Make it memorable."
+                    )}
+
                   </span>
+
 
                   <span>
                     {title.length}/200
@@ -2687,7 +2993,10 @@ function Write({
 
                 <label htmlFor="writing-category">
 
-                  Category
+                  {t(
+                    "write.categoryLabel",
+                    "Category"
+                  )}
 
                   <span aria-hidden="true">
                     *
@@ -2745,7 +3054,10 @@ function Write({
 
                   <label htmlFor="writing-content">
 
-                    Your writing
+                    {t(
+                      "write.contentLabel",
+                      "Your writing"
+                    )}
 
                     <span aria-hidden="true">
                       *
@@ -2757,11 +3069,26 @@ function Write({
                   <div className="content-stats">
 
                     <span>
-                      {wordCount} words
+
+                      {wordCount}{" "}
+
+                      {t(
+                        "write.wordCount",
+                        "words"
+                      )}
+
                     </span>
 
+
                     <span>
-                      {characterCount} characters
+
+                      {characterCount}{" "}
+
+                      {t(
+                        "write.characterCount",
+                        "characters"
+                      )}
+
                     </span>
 
                   </div>
@@ -2825,7 +3152,11 @@ function Write({
                   size={19}
                 />
 
-                Save Draft
+
+                {t(
+                  "write.saveDraft",
+                  "Save draft"
+                )}
 
               </button>
 
@@ -2856,8 +3187,14 @@ function Write({
 
 
                 {publishing
-                  ? "Publishing..."
-                  : "Publish Writing"}
+                  ? t(
+                      "write.publishing",
+                      "Publishing..."
+                    )
+                  : t(
+                      "write.publishWritingButton",
+                      "Publish writing"
+                    )}
 
               </button>
 
@@ -2869,7 +3206,7 @@ function Write({
 
 
         {/* ================================================= */}
-        {/* PDF DOCUMENT MODE                                */}
+        {/* PDF DOCUMENT MODE                                 */}
         {/* ================================================= */}
 
         {publishMode ===
@@ -2896,11 +3233,22 @@ function Write({
                 <div>
 
                   <span className="write-step">
-                    01
+
+                    {t(
+                      "write.documentUploadStep",
+                      "01"
+                    )}
+
                   </span>
 
+
                   <h2>
-                    Upload your PDF
+
+                    {t(
+                      "write.documentUploadTitle",
+                      "Upload your PDF"
+                    )}
+
                   </h2>
 
                 </div>
@@ -2921,9 +3269,10 @@ function Write({
 
               <p className="scan-description">
 
-                The original PDF will be stored
-                securely and published as a
-                document on SHOBDO.
+                {t(
+                  "write.documentUploadDescription",
+                  "The original PDF will be stored securely and published as a document on SHOBDO."
+                )}
 
               </p>
 
@@ -2971,15 +3320,22 @@ function Write({
 
 
                   <h3>
-                    Drop your PDF here
+
+                    {t(
+                      "write.dropPdfTitle",
+                      "Drop your PDF here"
+                    )}
+
                   </h3>
 
 
                   <p>
-                    Upload manuscripts,
-                    essays, research,
-                    magazines or other
-                    literary documents.
+
+                    {t(
+                      "write.dropPdfDescription",
+                      "Upload manuscripts, essays, research, magazines or other literary documents."
+                    )}
+
                   </p>
 
 
@@ -2997,14 +3353,22 @@ function Write({
                       size={18}
                     />
 
-                    Choose PDF
+
+                    {t(
+                      "write.choosePdf",
+                      "Choose PDF"
+                    )}
 
                   </button>
 
 
                   <small>
-                    PDF only · Maximum 10 MB ·
-                    Maximum 30 pages
+
+                    {t(
+                      "write.pdfRequirements",
+                      "PDF only • Maximum 10 MB • Maximum 30 pages"
+                    )}
+
                   </small>
 
                 </div>
@@ -3032,6 +3396,7 @@ function Write({
                         }
                       </strong>
 
+
                       <span>
 
                         {
@@ -3040,7 +3405,12 @@ function Write({
                           )
                         }
 
-                        {" • Ready to publish"}
+                        {" • "}
+
+                        {t(
+                          "write.readyToPublish",
+                          "Ready to publish"
+                        )}
 
                       </span>
 
@@ -3050,6 +3420,12 @@ function Write({
                     <button
                       type="button"
                       className="remove-file-button"
+                      aria-label={
+                        t(
+                          "write.removeFile",
+                          "Remove selected file"
+                        )
+                      }
                       disabled={
                         documentPublishing
                       }
@@ -3079,8 +3455,14 @@ function Write({
                             size={18}
                           />
 
+
                           <span>
-                            PDF Preview
+
+                            {t(
+                              "write.pdfPreview",
+                              "PDF Preview"
+                            )}
+
                           </span>
 
                         </div>
@@ -3094,7 +3476,10 @@ function Write({
                           rel="noreferrer"
                         >
 
-                          Open preview
+                          {t(
+                            "write.openPreview",
+                            "Open preview"
+                          )}
 
                         </a>
 
@@ -3105,7 +3490,12 @@ function Write({
                         src={
                           documentPreviewUrl
                         }
-                        title="PDF preview"
+                        title={
+                          t(
+                            "write.pdfPreview",
+                            "PDF Preview"
+                          )
+                        }
                       />
 
                     </div>
@@ -3130,11 +3520,22 @@ function Write({
                 <div>
 
                   <span className="write-step">
-                    02
+
+                    {t(
+                      "write.documentInfoStep",
+                      "02"
+                    )}
+
                   </span>
 
+
                   <h2>
-                    Document information
+
+                    {t(
+                      "write.documentInfoTitle",
+                      "Document information"
+                    )}
+
                   </h2>
 
                 </div>
@@ -3146,7 +3547,10 @@ function Write({
 
                 <label htmlFor="document-title">
 
-                  Document title
+                  {t(
+                    "write.documentTitleLabel",
+                    "Document title"
+                  )}
 
                   <span aria-hidden="true">
                     *
@@ -3162,7 +3566,12 @@ function Write({
                   value={
                     documentTitle
                   }
-                  placeholder="Enter the document title"
+                  placeholder={
+                    t(
+                      "write.documentTitlePlaceholder",
+                      "Enter the document title"
+                    )
+                  }
                   disabled={
                     documentPublishing
                   }
@@ -3181,15 +3590,22 @@ function Write({
                 <div className="field-meta">
 
                   <span>
-                    This title will appear
-                    publicly on SHOBDO.
+
+                    {t(
+                      "write.documentTitleHelp",
+                      "This title will appear publicly on SHOBDO."
+                    )}
+
                   </span>
 
+
                   <span>
+
                     {
                       documentTitle
                         .length
                     }/200
+
                   </span>
 
                 </div>
@@ -3202,7 +3618,12 @@ function Write({
                 <div className="write-field">
 
                   <label htmlFor="document-category">
-                    Category
+
+                    {t(
+                      "write.documentCategoryLabel",
+                      "Category"
+                    )}
+
                   </label>
 
 
@@ -3254,7 +3675,12 @@ function Write({
                 <div className="write-field">
 
                   <label htmlFor="document-language">
-                    Language
+
+                    {t(
+                      "write.documentLanguageLabel",
+                      "Document language"
+                    )}
+
                   </label>
 
 
@@ -3310,7 +3736,12 @@ function Write({
               <div className="write-field">
 
                 <label htmlFor="document-description">
-                  Description
+
+                  {t(
+                    "write.documentDescriptionLabel",
+                    "Description"
+                  )}
+
                 </label>
 
 
@@ -3321,7 +3752,12 @@ function Write({
                   }
                   rows={6}
                   maxLength={5000}
-                  placeholder="Tell readers what this document is about..."
+                  placeholder={
+                    t(
+                      "write.documentDescriptionPlaceholder",
+                      "Tell readers what this document is about..."
+                    )
+                  }
                   disabled={
                     documentPublishing
                   }
@@ -3340,14 +3776,22 @@ function Write({
                 <div className="field-meta">
 
                   <span>
-                    Optional, but recommended.
+
+                    {t(
+                      "write.documentDescriptionHelp",
+                      "Optional, but recommended."
+                    )}
+
                   </span>
 
+
                   <span>
+
                     {
                       documentDescription
                         .length
                     }/5000
+
                   </span>
 
                 </div>
@@ -3368,11 +3812,22 @@ function Write({
                 <div>
 
                   <span className="write-step">
-                    03
+
+                    {t(
+                      "write.documentSettingsStep",
+                      "03"
+                    )}
+
                   </span>
 
+
                   <h2>
-                    Publishing settings
+
+                    {t(
+                      "write.documentSettingsTitle",
+                      "Publishing settings"
+                    )}
+
                   </h2>
 
                 </div>
@@ -3418,12 +3873,22 @@ function Write({
                   <span>
 
                     <strong>
-                      Public
+
+                      {t(
+                        "write.visibilityPublic",
+                        "Public"
+                      )}
+
                     </strong>
 
+
                     <small>
-                      Anyone can discover
-                      and read this document.
+
+                      {t(
+                        "write.visibilityPublicDescription",
+                        "Anyone can discover and read this document."
+                      )}
+
                     </small>
 
                   </span>
@@ -3467,13 +3932,22 @@ function Write({
                   <span>
 
                     <strong>
-                      Unlisted
+
+                      {t(
+                        "write.visibilityUnlisted",
+                        "Unlisted"
+                      )}
+
                     </strong>
 
+
                     <small>
-                      Accessible by direct
-                      link but not publicly
-                      listed.
+
+                      {t(
+                        "write.visibilityUnlistedDescription",
+                        "Accessible by direct link but not publicly listed."
+                      )}
+
                     </small>
 
                   </span>
@@ -3517,12 +3991,22 @@ function Write({
                 <span>
 
                   <strong>
-                    Allow readers to download
+
+                    {t(
+                      "write.allowDownload",
+                      "Allow readers to download"
+                    )}
+
                   </strong>
 
+
                   <small>
-                    Readers can save the
-                    original PDF file.
+
+                    {t(
+                      "write.allowDownloadDescription",
+                      "Readers can save the original PDF file."
+                    )}
+
                   </small>
 
                 </span>
@@ -3567,7 +4051,11 @@ function Write({
 
                 )}
 
-                Save Document Draft
+
+                {t(
+                  "write.saveDocumentDraft",
+                  "Save Document Draft"
+                )}
 
               </button>
 
@@ -3598,8 +4086,14 @@ function Write({
 
 
                 {documentPublishing
-                  ? "Publishing PDF..."
-                  : "Publish PDF"}
+                  ? t(
+                      "write.publishingPdf",
+                      "Publishing PDF..."
+                    )
+                  : t(
+                      "write.publishPdf",
+                      "Publish PDF"
+                    )}
 
               </button>
 
@@ -3622,15 +4116,22 @@ function Write({
                 <div>
 
                   <strong>
+
                     {
                       lastPublishedDocument
                         .title
                     }
+
                   </strong>
 
+
                   <span>
-                    Your document was stored
-                    successfully.
+
+                    {t(
+                      "write.documentStored",
+                      "Your document was stored successfully."
+                    )}
+
                   </span>
 
                 </div>
@@ -3648,7 +4149,10 @@ function Write({
                     rel="noreferrer"
                   >
 
-                    View PDF
+                    {t(
+                      "write.viewPdf",
+                      "View PDF"
+                    )}
 
                   </a>
 
