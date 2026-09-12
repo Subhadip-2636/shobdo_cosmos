@@ -3,6 +3,8 @@ from extensions import (
     socketio,
 )
 
+from models.user import User
+from models.writing import Writing
 from models.notification import Notification
 
 
@@ -39,6 +41,65 @@ def serialize_notification(
     notification
 ):
 
+    actor = None
+    writing = None
+
+
+    # -----------------------------------------------------
+    # ACTOR
+    # -----------------------------------------------------
+
+    if notification.actor_id:
+
+        actor_user = db.session.get(
+            User,
+            notification.actor_id,
+        )
+
+        if actor_user:
+
+            actor = {
+                "id":
+                    actor_user.id,
+
+                "name":
+                    actor_user.name,
+
+                "avatar_url":
+                    getattr(
+                        actor_user,
+                        "avatar_url",
+                        None,
+                    ),
+            }
+
+
+    # -----------------------------------------------------
+    # WRITING
+    # -----------------------------------------------------
+
+    if notification.writing_id:
+
+        writing_object = db.session.get(
+            Writing,
+            notification.writing_id,
+        )
+
+        if writing_object:
+
+            writing = {
+                "id":
+                    writing_object.id,
+
+                "title":
+                    writing_object.title,
+            }
+
+
+    # -----------------------------------------------------
+    # RESPONSE
+    # -----------------------------------------------------
+
     return {
         "id":
             notification.id,
@@ -67,8 +128,13 @@ def serialize_notification(
                 if notification.created_at
                 else None
             ),
-    }
 
+        "actor":
+            actor,
+
+        "writing":
+            writing,
+    }
 
 # =========================================================
 # CREATE NOTIFICATION

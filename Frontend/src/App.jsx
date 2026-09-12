@@ -19,6 +19,7 @@ import {
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
+import NotificationToast from "./components/NotificationToast";
 
 
 // =========================================================
@@ -101,13 +102,9 @@ function PrivateRoute({
   if (authLoading) {
 
     return (
-
       <div className="app-route-loading">
-
         Loading...
-
       </div>
-
     );
 
   }
@@ -120,12 +117,10 @@ function PrivateRoute({
   if (!user) {
 
     return (
-
       <Navigate
         to="/login"
         replace
       />
-
     );
 
   }
@@ -174,6 +169,16 @@ function App() {
     writingsLoading,
     setWritingsLoading,
   ] = useState(true);
+
+
+  // =====================================================
+  // REAL-TIME NOTIFICATION STATE
+  // =====================================================
+
+  const [
+    realtimeNotification,
+    setRealtimeNotification,
+  ] = useState(null);
 
 
   // =====================================================
@@ -321,6 +326,10 @@ function App() {
 
       disconnectSocket();
 
+      setRealtimeNotification(
+        null
+      );
+
       return undefined;
 
     }
@@ -410,19 +419,6 @@ function App() {
     // ---------------------------------------------------
     // NEW REAL-TIME NOTIFICATION
     // ---------------------------------------------------
-    //
-    // Backend will emit:
-    //
-    // notification:new
-    //
-    // Navbar already listens for:
-    //
-    // shobdo:notifications-changed
-    //
-    // Therefore this event immediately refreshes
-    // the unread notification badge.
-    //
-    // ---------------------------------------------------
 
     function handleNewNotification(
       notification
@@ -433,6 +429,19 @@ function App() {
         notification
       );
 
+
+      // -------------------------------------------------
+      // SHOW TOAST
+      // -------------------------------------------------
+
+      setRealtimeNotification(
+        notification
+      );
+
+
+      // -------------------------------------------------
+      // INFORM NAVBAR + NOTIFICATION PAGE
+      // -------------------------------------------------
 
       window.dispatchEvent(
         new CustomEvent(
@@ -569,6 +578,45 @@ function App() {
 
 
   // =====================================================
+  // AUTO-HIDE REAL-TIME NOTIFICATION TOAST
+  // =====================================================
+
+  useEffect(() => {
+
+    if (!realtimeNotification) {
+
+      return undefined;
+
+    }
+
+
+    const timer =
+      window.setTimeout(
+        () => {
+
+          setRealtimeNotification(
+            null
+          );
+
+        },
+        5000
+      );
+
+
+    return () => {
+
+      window.clearTimeout(
+        timer
+      );
+
+    };
+
+  }, [
+    realtimeNotification,
+  ]);
+
+
+  // =====================================================
   // AUTH CALLBACK
   // =====================================================
 
@@ -599,6 +647,24 @@ function App() {
     <BrowserRouter>
 
       <ScrollToTop />
+
+
+      {/* =============================================
+          REAL-TIME NOTIFICATION TOAST
+      ============================================== */}
+
+      <NotificationToast
+        notification={
+          realtimeNotification
+        }
+        onClose={() => {
+
+          setRealtimeNotification(
+            null
+          );
+
+        }}
+      />
 
 
       <div className="app-shell">

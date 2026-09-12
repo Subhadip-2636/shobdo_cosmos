@@ -18,6 +18,7 @@ from models.follow import Follow
 from services.notification_service import (
     create_notification,
     delete_notification,
+    emit_notification,
 )
 
 
@@ -688,10 +689,12 @@ def follow_user(user_id):
     )
 
     if current_user_id is None:
+
         return jsonify({
             "message":
                 "Invalid authentication identity."
         }), 401
+
 
     current_user = (
         get_active_user(
@@ -700,10 +703,12 @@ def follow_user(user_id):
     )
 
     if not current_user:
+
         return jsonify({
             "message":
                 "Authenticated user not found."
         }), 404
+
 
     target_user = (
         get_active_user(
@@ -712,10 +717,12 @@ def follow_user(user_id):
     )
 
     if not target_user:
+
         return jsonify({
             "message":
                 "Writer not found."
         }), 404
+
 
     # --------------------------------------------------------
     # PREVENT SELF FOLLOW
@@ -725,6 +732,7 @@ def follow_user(user_id):
         current_user.id
         == target_user.id
     ):
+
         return jsonify({
             "message":
                 "You cannot follow yourself.",
@@ -743,6 +751,7 @@ def follow_user(user_id):
                 ),
         }), 400
 
+
     # --------------------------------------------------------
     # CHECK EXISTING FOLLOW
     # --------------------------------------------------------
@@ -759,11 +768,13 @@ def follow_user(user_id):
         .first()
     )
 
+
     # --------------------------------------------------------
     # IDEMPOTENT
     # --------------------------------------------------------
 
     if existing_follow:
+
         return jsonify({
             "message":
                 "You are already following this writer.",
@@ -782,6 +793,7 @@ def follow_user(user_id):
                 ),
         }), 200
 
+
     # --------------------------------------------------------
     # CREATE FOLLOW
     # --------------------------------------------------------
@@ -794,11 +806,16 @@ def follow_user(user_id):
             target_user.id,
     )
 
+
+    notification = None
+
+
     try:
 
         db.session.add(
             follow
         )
+
 
         # ----------------------------------------------------
         # CREATE FOLLOW NOTIFICATION
@@ -807,9 +824,11 @@ def follow_user(user_id):
         # recipient = user being followed
         # actor     = user who followed
         #
+        # create_notification() does NOT commit.
+        #
         # ----------------------------------------------------
 
-        create_notification(
+        notification = create_notification(
             recipient_id=
                 target_user.id,
 
@@ -820,25 +839,62 @@ def follow_user(user_id):
                 "follow",
         )
 
+
         # ----------------------------------------------------
         # COMMIT FOLLOW + NOTIFICATION TOGETHER
         # ----------------------------------------------------
 
         db.session.commit()
 
+
     except Exception as error:
 
         db.session.rollback()
+
 
         print(
             "FOLLOW CREATE ERROR:",
             error,
         )
 
+
         return jsonify({
             "message":
                 "Unable to follow this writer."
         }), 500
+
+
+    # --------------------------------------------------------
+    # REAL-TIME NOTIFICATION
+    # --------------------------------------------------------
+    #
+    # Emit only after the database commit succeeds.
+    #
+    # If Socket.IO temporarily fails, the follow action
+    # must still remain successful.
+    #
+    # --------------------------------------------------------
+
+    if notification:
+
+        try:
+
+            emit_notification(
+                notification
+            )
+
+        except Exception as error:
+
+            print(
+                "FOLLOW REAL-TIME "
+                "NOTIFICATION ERROR:",
+                error,
+            )
+
+
+    # --------------------------------------------------------
+    # SUCCESS RESPONSE
+    # --------------------------------------------------------
 
     return jsonify({
         "message":

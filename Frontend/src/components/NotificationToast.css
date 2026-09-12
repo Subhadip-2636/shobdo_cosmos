@@ -1,0 +1,153 @@
+.shobdo-notification-toast {
+  position: fixed;
+
+  top: 82px;
+  right: 22px;
+
+  width: min(390px, calc(100vw - 32px));
+
+  display: flex;
+  align-items: flex-start;
+
+  border: 1px solid rgba(127, 127, 127, 0.2);
+
+  border-radius: 16px;
+
+  background: var(--background, #ffffff);
+
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.16);
+
+  overflow: hidden;
+
+  z-index: 9999;
+
+  animation:
+    shobdo-toast-enter 0.25s ease-out;
+}
+
+
+.shobdo-notification-toast-main {
+  flex: 1;
+
+  display: flex;
+  align-items: flex-start;
+
+  gap: 12px;
+
+  padding: 16px;
+
+  border: 0;
+
+  background: transparent;
+
+  color: inherit;
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+
+.shobdo-notification-toast-icon {
+  width: 40px;
+  height: 40px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: rgba(127, 127, 127, 0.1);
+}
+
+
+.shobdo-notification-toast-content {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+
+.shobdo-notification-toast-content strong {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+
+.shobdo-notification-toast-content span {
+  max-width: 260px;
+
+  overflow: hidden;
+
+  color: #6b7280;
+
+  font-size: 13px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.shobdo-notification-toast-close {
+  width: 36px;
+  height: 36px;
+
+  margin: 8px 8px 0 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border: 0;
+
+  border-radius: 10px;
+
+  background: transparent;
+
+  color: inherit;
+
+  cursor: pointer;
+}
+
+
+.shobdo-notification-toast-close:hover {
+  background: rgba(127, 127, 127, 0.1);
+}
+
+
+@keyframes shobdo-toast-enter {
+
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .shobdo-notification-toast {
+    top: 72px;
+
+    right: 16px;
+    left: 16px;
+
+    width: auto;
+  }
+
+}
