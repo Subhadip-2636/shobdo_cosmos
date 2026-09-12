@@ -473,6 +473,21 @@ async function createDocumentRequest({
 // WRITE PAGE
 // =========================================================
 
+function getDefaultWritingLanguage(
+  uiLanguage
+) {
+
+  if (
+    ["bn", "en", "hi"].includes(
+      uiLanguage
+    )
+  ) {
+    return uiLanguage;
+  }
+
+  return "bn";
+}
+
 function Write({
   user,
   onPublished,
@@ -490,6 +505,7 @@ function Write({
 
   const {
     t,
+    language: uiLanguage,
   } = useLanguage();
 
 
@@ -641,7 +657,10 @@ function Write({
     writingLanguage,
     setWritingLanguage,
   ] = useState(
-    "bn"
+    () =>
+      getDefaultWritingLanguage(
+        uiLanguage
+      )
   );
 
 
@@ -649,6 +668,50 @@ function Write({
     publishing,
     setPublishing,
   ] = useState(false);
+
+
+  // =======================================================
+  // SYNC NEW WRITING LANGUAGE WITH WEBSITE LANGUAGE
+  // =======================================================
+  //
+  // A new, empty writing follows the current website
+  // language (বাংলা / English / हिन्दी).
+  //
+  // Once the user starts writing, the selected content
+  // language is preserved independently from the UI.
+  // =======================================================
+
+  useEffect(() => {
+
+    if (isEditMode) {
+      return;
+    }
+
+
+    const hasStartedWriting =
+      Boolean(
+        title.trim() ||
+        content.trim()
+      );
+
+
+    if (hasStartedWriting) {
+      return;
+    }
+
+
+    setWritingLanguage(
+      getDefaultWritingLanguage(
+        uiLanguage
+      )
+    );
+
+  }, [
+    uiLanguage,
+    isEditMode,
+    title,
+    content,
+  ]);
 
 
   // =======================================================
@@ -1550,7 +1613,10 @@ function Write({
     documentLanguage,
     setDocumentLanguage,
   ] = useState(
-    "bn"
+    () =>
+      getDefaultWritingLanguage(
+        uiLanguage
+      )
   );
 
 
@@ -1582,6 +1648,44 @@ function Write({
     lastPublishedDocument,
     setLastPublishedDocument,
   ] = useState(null);
+
+
+  // =======================================================
+  // SYNC NEW DOCUMENT LANGUAGE WITH WEBSITE LANGUAGE
+  // =======================================================
+  //
+  // A new, untouched PDF form follows the website language.
+  // Once the user selects a file or starts entering document
+  // information, the document language is preserved.
+  // =======================================================
+
+  useEffect(() => {
+
+    const hasStartedDocument =
+      Boolean(
+        documentFile ||
+        documentTitle.trim() ||
+        documentDescription.trim()
+      );
+
+
+    if (hasStartedDocument) {
+      return;
+    }
+
+
+    setDocumentLanguage(
+      getDefaultWritingLanguage(
+        uiLanguage
+      )
+    );
+
+  }, [
+    uiLanguage,
+    documentFile,
+    documentTitle,
+    documentDescription,
+  ]);
 
 
   const documentPreviewUrl =
@@ -1943,7 +2047,9 @@ function Write({
       );
 
       setDocumentLanguage(
-        "bn"
+        getDefaultWritingLanguage(
+          uiLanguage
+        )
       );
 
       setDocumentVisibility(
