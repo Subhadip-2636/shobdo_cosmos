@@ -1,4 +1,8 @@
-from database import db
+from extensions import (
+    db,
+    socketio,
+)
+
 from models.notification import Notification
 
 
@@ -6,7 +10,7 @@ from models.notification import Notification
 # SUPPORTED NOTIFICATION TYPES
 # =========================================================
 
-VALID_NOTIFICATION_TYPES = {
+SUPPORTED_NOTIFICATION_TYPES = {
     "like",
     "comment",
     "follow",
@@ -14,6 +18,56 @@ VALID_NOTIFICATION_TYPES = {
     "mention",
     "system",
 }
+
+
+# =========================================================
+# PRIVATE USER ROOM
+# =========================================================
+
+def get_notification_room(
+    user_id
+):
+
+    return f"user_{user_id}"
+
+
+# =========================================================
+# SERIALIZE NOTIFICATION
+# =========================================================
+
+def serialize_notification(
+    notification
+):
+
+    return {
+        "id":
+            notification.id,
+
+        "recipient_id":
+            notification.recipient_id,
+
+        "actor_id":
+            notification.actor_id,
+
+        "type":
+            notification.type,
+
+        "writing_id":
+            notification.writing_id,
+
+        "comment_id":
+            notification.comment_id,
+
+        "is_read":
+            notification.is_read,
+
+        "created_at":
+            (
+                notification.created_at.isoformat()
+                if notification.created_at
+                else None
+            ),
+    }
 
 
 # =========================================================
@@ -27,107 +81,121 @@ def create_notification(
     writing_id=None,
     comment_id=None,
 ):
-    """
-    Create a SHOBDO notification.
-
-    The notification is added to the current SQLAlchemy
-    transaction but is NOT committed here.
-
-    The calling route should normally call:
-
-        db.session.commit()
-
-    This allows the original action and its notification
-    to succeed or fail together.
-    """
 
     # -----------------------------------------------------
-    # RECIPIENT VALIDATION
+    # RECIPIENT REQUIRED
     # -----------------------------------------------------
 
     if recipient_id is None:
+
         return None
 
-    try:
-        recipient_id = int(recipient_id)
-    except (TypeError, ValueError):
-        return None
 
     # -----------------------------------------------------
-    # ACTOR VALIDATION
+    # VALID TYPE
     # -----------------------------------------------------
 
-    if actor_id is not None:
-
-        try:
-            actor_id = int(actor_id)
-        except (TypeError, ValueError):
-            return None
-
-        # Prevent self-notifications.
-        #
-        # Example:
-        # A user should not receive a notification
-        # after liking their own writing.
-
-        if actor_id == recipient_id:
-            return None
-
-    # -----------------------------------------------------
-    # TYPE VALIDATION
-    # -----------------------------------------------------
-
-    notification_type = (
-        str(notification_type)
-        .strip()
-        .lower()
-    )
-
-    if notification_type not in VALID_NOTIFICATION_TYPES:
+    if (
+        notification_type
+        not in SUPPORTED_NOTIFICATION_TYPES
+    ):
 
         raise ValueError(
             f"Unsupported notification type: "
             f"{notification_type}"
         )
 
-    # -----------------------------------------------------
-    # OPTIONAL WRITING ID
-    # -----------------------------------------------------
-
-    if writing_id is not None:
-
-        try:
-            writing_id = int(writing_id)
-        except (TypeError, ValueError):
-            writing_id = None
 
     # -----------------------------------------------------
-    # OPTIONAL COMMENT ID
+    # DON'T NOTIFY YOURSELF
     # -----------------------------------------------------
 
-    if comment_id is not None:
+    if (
+        actor_id is not None
+        and
+        int(actor_id) ==
+        int(recipient_id)
+    ):
 
-        try:
-            comment_id = int(comment_id)
-        except (TypeError, ValueError):
-            comment_id = None
+        return None
+
 
     # -----------------------------------------------------
-    # CREATE MODEL
+    # CREATE DATABASE OBJECT
     # -----------------------------------------------------
 
     notification = Notification(
-        recipient_id=recipient_id,
-        actor_id=actor_id,
-        type=notification_type,
-        writing_id=writing_id,
-        comment_id=comment_id,
+        recipient_id=
+            recipient_id,
+
+        actor_id=
+            actor_id,
+
+        type=
+            notification_type,
+
+        writing_id=
+            writing_id,
+
+        comment_id=
+            comment_id,
+
         is_read=False,
     )
 
-    db.session.add(notification)
+
+    db.session.add(
+        notification
+    )
+
+
+    # Generate notification.id
+    # without committing the transaction.
+    db.session.flush()
+
 
     return notification
+
+
+# =========================================================
+# EMIT REAL-TIME NOTIFICATION
+# =========================================================
+
+def emit_notification(
+    notification
+):
+
+    if notification is None:
+
+        return False
+
+
+    room = get_notification_room(
+        notification.recipient_id
+    )
+
+
+    payload = serialize_notification(
+        notification
+    )
+
+
+    socketio.emit(
+        "notification:new",
+        payload,
+        to=room,
+    )
+
+
+    print(
+        "REAL-TIME NOTIFICATION SENT:",
+        f"type={notification.type},",
+        f"recipient={notification.recipient_id},",
+        f"room={room}",
+    )
+
+
+    return True
 
 
 # =========================================================
@@ -141,139 +209,119 @@ def delete_notification(
     writing_id=None,
     comment_id=None,
 ):
-    """
-    Delete matching notifications.
 
-    Useful when an action is reversed.
+    query = Notification.query.filter_by(
+        recipient_id=
+            recipient_id,
 
-    Examples:
-        unlike
-        unfollow
-
-    This function does NOT commit automatically.
-    """
-
-    if recipient_id is None:
-        return 0
-
-    try:
-        recipient_id = int(recipient_id)
-    except (TypeError, ValueError):
-        return 0
-
-    query = Notification.query.filter(
-        Notification.recipient_id == recipient_id,
-        Notification.type == notification_type,
+        type=
+            notification_type,
     )
+
 
     if actor_id is not None:
 
-        try:
-            actor_id = int(actor_id)
-        except (TypeError, ValueError):
-            return 0
-
-        query = query.filter(
-            Notification.actor_id == actor_id
+        query = query.filter_by(
+            actor_id=
+                actor_id
         )
+
 
     if writing_id is not None:
 
-        try:
-            writing_id = int(writing_id)
-        except (TypeError, ValueError):
-            return 0
-
-        query = query.filter(
-            Notification.writing_id == writing_id
+        query = query.filter_by(
+            writing_id=
+                writing_id
         )
+
 
     if comment_id is not None:
 
-        try:
-            comment_id = int(comment_id)
-        except (TypeError, ValueError):
-            return 0
-
-        query = query.filter(
-            Notification.comment_id == comment_id
+        query = query.filter_by(
+            comment_id=
+                comment_id
         )
+
 
     notifications = query.all()
 
-    deleted_count = len(notifications)
 
     for notification in notifications:
-        db.session.delete(notification)
 
-    return deleted_count
+        db.session.delete(
+            notification
+        )
+
+
+    return len(
+        notifications
+    )
 
 
 # =========================================================
-# MARK ONE NOTIFICATION AS READ
+# MARK ONE AS READ
 # =========================================================
 
 def mark_notification_as_read(
-    notification,
+    notification
 ):
+
     if notification is None:
+
         return None
 
+
     notification.is_read = True
+
 
     return notification
 
 
 # =========================================================
-# MARK ALL USER NOTIFICATIONS AS READ
+# MARK ALL AS READ
 # =========================================================
 
 def mark_all_notifications_as_read(
-    recipient_id,
+    recipient_id
 ):
-    try:
-        recipient_id = int(recipient_id)
-    except (TypeError, ValueError):
-        return 0
 
-    unread_notifications = (
+    notifications = (
         Notification.query
-        .filter(
-            Notification.recipient_id
-            == recipient_id,
-            Notification.is_read.is_(False),
+        .filter_by(
+            recipient_id=
+                recipient_id,
+
+            is_read=False,
         )
         .all()
     )
 
-    updated_count = len(
-        unread_notifications
-    )
 
-    for notification in unread_notifications:
+    for notification in notifications:
+
         notification.is_read = True
 
-    return updated_count
+
+    return len(
+        notifications
+    )
 
 
 # =========================================================
-# GET UNREAD COUNT
+# UNREAD COUNT
 # =========================================================
 
 def get_unread_notification_count(
-    recipient_id,
+    recipient_id
 ):
-    try:
-        recipient_id = int(recipient_id)
-    except (TypeError, ValueError):
-        return 0
 
     return (
         Notification.query
-        .filter(
-            Notification.recipient_id
-            == recipient_id,
-            Notification.is_read.is_(False),
+        .filter_by(
+            recipient_id=
+                recipient_id,
+
+            is_read=False,
         )
         .count()
     )

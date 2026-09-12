@@ -17,6 +17,7 @@ from models.writing import Writing
 from services.notification_service import (
     create_notification,
     delete_notification,
+    emit_notification,
 )
 
 
@@ -40,10 +41,18 @@ def get_current_user():
     identity = get_jwt_identity()
 
     try:
-        user_id = int(identity)
 
-    except (TypeError, ValueError):
+        user_id = int(
+            identity
+        )
+
+    except (
+        TypeError,
+        ValueError,
+    ):
+
         return None
+
 
     return db.session.get(
         User,
@@ -67,11 +76,14 @@ def get_writing_likes(
         writing_id,
     )
 
+
     if not writing:
 
         return jsonify({
-            "message": "Writing not found."
+            "message":
+                "Writing not found."
         }), 404
+
 
     if getattr(
         writing,
@@ -80,16 +92,22 @@ def get_writing_likes(
     ) != "published":
 
         return jsonify({
-            "message": "Writing not found."
+            "message":
+                "Writing not found."
         }), 404
+
 
     count = Like.query.filter_by(
         writing_id=writing_id,
     ).count()
 
+
     return jsonify({
-        "writing_id": writing_id,
-        "likes_count": count,
+        "writing_id":
+            writing_id,
+
+        "likes_count":
+            count,
     }), 200
 
 
@@ -107,35 +125,46 @@ def get_my_like_status(
 
     user = get_current_user()
 
+
     if not user:
 
         return jsonify({
-            "message": "User not found."
+            "message":
+                "User not found."
         }), 404
+
 
     writing = db.session.get(
         Writing,
         writing_id,
     )
 
+
     if not writing:
 
         return jsonify({
-            "message": "Writing not found."
+            "message":
+                "Writing not found."
         }), 404
+
 
     like = Like.query.filter_by(
         user_id=user.id,
         writing_id=writing_id,
     ).first()
 
+
     count = Like.query.filter_by(
         writing_id=writing_id,
     ).count()
 
+
     return jsonify({
-        "liked": like is not None,
-        "likes_count": count,
+        "liked":
+            like is not None,
+
+        "likes_count":
+            count,
     }), 200
 
 
@@ -157,11 +186,14 @@ def like_writing(
 
     user = get_current_user()
 
+
     if not user:
 
         return jsonify({
-            "message": "User not found."
+            "message":
+                "User not found."
         }), 404
+
 
     # -----------------------------------------------------
     # GET WRITING
@@ -172,11 +204,14 @@ def like_writing(
         writing_id,
     )
 
+
     if not writing:
 
         return jsonify({
-            "message": "Writing not found."
+            "message":
+                "Writing not found."
         }), 404
+
 
     # -----------------------------------------------------
     # ONLY PUBLISHED WRITINGS
@@ -190,17 +225,26 @@ def like_writing(
 
         return jsonify({
             "message":
-                "Only published writings can be liked."
+                (
+                    "Only published writings "
+                    "can be liked."
+                )
         }), 400
+
 
     # -----------------------------------------------------
     # CHECK EXISTING LIKE
     # -----------------------------------------------------
 
-    existing_like = Like.query.filter_by(
-        user_id=user.id,
-        writing_id=writing_id,
-    ).first()
+    existing_like = (
+        Like.query
+        .filter_by(
+            user_id=user.id,
+            writing_id=writing_id,
+        )
+        .first()
+    )
+
 
     if existing_like:
 
@@ -208,76 +252,153 @@ def like_writing(
             writing_id=writing_id,
         ).count()
 
+
         return jsonify({
             "message":
-                "You already liked this writing.",
-            "liked": True,
-            "likes_count": count,
+                (
+                    "You already liked "
+                    "this writing."
+                ),
+
+            "liked":
+                True,
+
+            "likes_count":
+                count,
         }), 200
 
-    # -----------------------------------------------------
-    # CREATE LIKE
-    # -----------------------------------------------------
-
-    like = Like(
-        user_id=user.id,
-        writing_id=writing_id,
-    )
-
-    db.session.add(
-        like
-    )
 
     # -----------------------------------------------------
-    # CREATE NOTIFICATION
-    # -----------------------------------------------------
-    #
-    # Recipient = author of the writing
-    # Actor     = user who liked it
-    #
-    # create_notification() automatically ignores
-    # self-likes.
-    #
+    # CREATE LIKE + NOTIFICATION
     # -----------------------------------------------------
 
-    create_notification(
-        recipient_id=writing.user_id,
-        actor_id=user.id,
-        notification_type="like",
-        writing_id=writing.id,
-    )
+    notification = None
 
-    # -----------------------------------------------------
-    # COMMIT BOTH TOGETHER
-    # -----------------------------------------------------
 
     try:
 
+        # -------------------------------------------------
+        # CREATE LIKE
+        # -------------------------------------------------
+
+        like = Like(
+            user_id=user.id,
+            writing_id=writing_id,
+        )
+
+
+        db.session.add(
+            like
+        )
+
+
+        # -------------------------------------------------
+        # CREATE DATABASE NOTIFICATION
+        # -------------------------------------------------
+        #
+        # Recipient = writing author
+        # Actor     = user who liked
+        #
+        # Self-likes automatically return None.
+        #
+        # -------------------------------------------------
+
+        notification = create_notification(
+            recipient_id=
+                writing.user_id,
+
+            actor_id=
+                user.id,
+
+            notification_type=
+                "like",
+
+            writing_id=
+                writing.id,
+        )
+
+
+        # -------------------------------------------------
+        # COMMIT LIKE + NOTIFICATION TOGETHER
+        # -------------------------------------------------
+
         db.session.commit()
 
-    except Exception:
+
+    except Exception as error:
 
         db.session.rollback()
+
+
+        print(
+            "LIKE ERROR:",
+            error
+        )
+
 
         return jsonify({
             "message":
                 "Unable to like writing."
         }), 500
 
+
     # -----------------------------------------------------
-    # UPDATED COUNT
+    # REAL-TIME NOTIFICATION
+    # -----------------------------------------------------
+    #
+    # IMPORTANT:
+    # Emit only AFTER successful database commit.
+    #
+    # If WebSocket delivery fails, the like should still
+    # remain successful because it is already committed.
+    #
+    # -----------------------------------------------------
+
+    if notification:
+
+        try:
+
+            emit_notification(
+                notification
+            )
+
+        except Exception as error:
+
+            print(
+                "LIKE REAL-TIME "
+                "NOTIFICATION ERROR:",
+                error
+            )
+
+
+    # -----------------------------------------------------
+    # UPDATED LIKE COUNT
     # -----------------------------------------------------
 
     count = Like.query.filter_by(
         writing_id=writing_id,
     ).count()
 
+
+    # -----------------------------------------------------
+    # RESPONSE
+    # -----------------------------------------------------
+
     return jsonify({
         "message":
-            "Writing liked successfully.",
-        "liked": True,
-        "likes_count": count,
-        "like": like.to_dict(),
+            (
+                "Writing liked "
+                "successfully."
+            ),
+
+        "liked":
+            True,
+
+        "likes_count":
+            count,
+
+        "like":
+            like.to_dict(),
     }), 201
 
 
@@ -299,19 +420,17 @@ def unlike_writing(
 
     user = get_current_user()
 
+
     if not user:
 
         return jsonify({
-            "message": "User not found."
+            "message":
+                "User not found."
         }), 404
+
 
     # -----------------------------------------------------
     # GET WRITING
-    # -----------------------------------------------------
-    #
-    # We need the writing owner's ID so the matching
-    # notification can also be removed.
-    #
     # -----------------------------------------------------
 
     writing = db.session.get(
@@ -319,20 +438,28 @@ def unlike_writing(
         writing_id,
     )
 
+
     if not writing:
 
         return jsonify({
-            "message": "Writing not found."
+            "message":
+                "Writing not found."
         }), 404
+
 
     # -----------------------------------------------------
     # FIND LIKE
     # -----------------------------------------------------
 
-    like = Like.query.filter_by(
-        user_id=user.id,
-        writing_id=writing_id,
-    ).first()
+    like = (
+        Like.query
+        .filter_by(
+            user_id=user.id,
+            writing_id=writing_id,
+        )
+        .first()
+    )
+
 
     if not like:
 
@@ -340,48 +467,68 @@ def unlike_writing(
             writing_id=writing_id,
         ).count()
 
+
         return jsonify({
             "message":
                 "Writing was not liked.",
-            "liked": False,
-            "likes_count": count,
+
+            "liked":
+                False,
+
+            "likes_count":
+                count,
         }), 200
 
-    # -----------------------------------------------------
-    # DELETE LIKE
-    # -----------------------------------------------------
-
-    db.session.delete(
-        like
-    )
 
     # -----------------------------------------------------
-    # DELETE LIKE NOTIFICATION
-    # -----------------------------------------------------
-
-    delete_notification(
-        recipient_id=writing.user_id,
-        actor_id=user.id,
-        notification_type="like",
-        writing_id=writing.id,
-    )
-
-    # -----------------------------------------------------
-    # COMMIT BOTH TOGETHER
+    # DELETE LIKE + MATCHING NOTIFICATION
     # -----------------------------------------------------
 
     try:
 
+        db.session.delete(
+            like
+        )
+
+
+        delete_notification(
+            recipient_id=
+                writing.user_id,
+
+            actor_id=
+                user.id,
+
+            notification_type=
+                "like",
+
+            writing_id=
+                writing.id,
+        )
+
+
+        # -------------------------------------------------
+        # COMMIT BOTH TOGETHER
+        # -------------------------------------------------
+
         db.session.commit()
 
-    except Exception:
+
+    except Exception as error:
 
         db.session.rollback()
+
+
+        print(
+            "UNLIKE ERROR:",
+            error
+        )
+
 
         return jsonify({
             "message":
                 "Unable to remove like."
         }), 500
+
 
     # -----------------------------------------------------
     # UPDATED COUNT
@@ -391,9 +538,21 @@ def unlike_writing(
         writing_id=writing_id,
     ).count()
 
+
+    # -----------------------------------------------------
+    # RESPONSE
+    # -----------------------------------------------------
+
     return jsonify({
         "message":
-            "Like removed successfully.",
-        "liked": False,
-        "likes_count": count,
+            (
+                "Like removed "
+                "successfully."
+            ),
+
+        "liked":
+            False,
+
+        "likes_count":
+            count,
     }), 200

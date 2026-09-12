@@ -1,28 +1,44 @@
 from flask_jwt_extended import JWTManager
 from flask_mail import Mail
 from flask_migrate import Migrate
-
-from database import db
+from flask_socketio import SocketIO
+from flask_sqlalchemy import SQLAlchemy
 
 
 # =========================================================
-# SHARED FLASK EXTENSIONS
+# DATABASE
+# =========================================================
+
+db = SQLAlchemy()
+
+
+# =========================================================
+# JWT
 # =========================================================
 
 jwt = JWTManager()
 
+
+# =========================================================
+# MAIL
+# =========================================================
+
 mail = Mail()
+
+
+# =========================================================
+# MIGRATIONS
+# =========================================================
 
 migrate = Migrate()
 
 
 # =========================================================
-# EXPORTS
+# SOCKET.IO
 # =========================================================
 
-__all__ = [
-    "db",
-    "jwt",
-    "mail",
-    "migrate",
-]
+socketio = SocketIO(
+    async_mode="threading",
+    ping_interval=25,
+    ping_timeout=60,
+)

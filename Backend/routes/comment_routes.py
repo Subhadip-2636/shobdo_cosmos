@@ -18,6 +18,7 @@ from models.writing import Writing
 from services.notification_service import (
     create_notification,
     delete_notification,
+    emit_notification,
 )
 
 
@@ -48,9 +49,16 @@ def get_current_user():
     identity = get_jwt_identity()
 
     try:
-        user_id = int(identity)
 
-    except (TypeError, ValueError):
+        user_id = int(
+            identity
+        )
+
+    except (
+        TypeError,
+        ValueError,
+    ):
+
         return None
 
     return db.session.get(
@@ -86,6 +94,7 @@ def get_comments(
                 "Writing not found."
         }), 404
 
+
     # -----------------------------------------------------
     # ONLY PUBLISHED WRITINGS
     # -----------------------------------------------------
@@ -100,6 +109,7 @@ def get_comments(
             "message":
                 "Writing not found."
         }), 404
+
 
     # -----------------------------------------------------
     # GET COMMENTS
@@ -116,13 +126,15 @@ def get_comments(
         .all()
     )
 
+
     return jsonify({
         "comments": [
             comment.to_dict()
             for comment
             in comments
         ],
-        "count": len(comments),
+        "count":
+            len(comments),
     }), 200
 
 
@@ -144,12 +156,14 @@ def create_comment(
 
     user = get_current_user()
 
+
     if not user:
 
         return jsonify({
             "message":
                 "User not found."
         }), 404
+
 
     # -----------------------------------------------------
     # GET WRITING
@@ -160,12 +174,14 @@ def create_comment(
         writing_id,
     )
 
+
     if not writing:
 
         return jsonify({
             "message":
                 "Writing not found."
         }), 404
+
 
     # -----------------------------------------------------
     # ONLY PUBLISHED WRITINGS
@@ -179,9 +195,12 @@ def create_comment(
 
         return jsonify({
             "message":
-                "Only published writings can "
-                "receive comments."
+                (
+                    "Only published writings "
+                    "can receive comments."
+                )
         }), 400
+
 
     # -----------------------------------------------------
     # GET REQUEST DATA
@@ -191,6 +210,7 @@ def create_comment(
         silent=True
     ) or {}
 
+
     content = (
         data.get(
             "content",
@@ -198,6 +218,7 @@ def create_comment(
         )
         .strip()
     )
+
 
     # -----------------------------------------------------
     # VALIDATE COMMENT
@@ -210,13 +231,17 @@ def create_comment(
                 "Comment cannot be empty."
         }), 400
 
+
     if len(content) > MAX_COMMENT_LENGTH:
 
         return jsonify({
             "message":
-                f"Comment cannot exceed "
-                f"{MAX_COMMENT_LENGTH} characters."
+                (
+                    f"Comment cannot exceed "
+                    f"{MAX_COMMENT_LENGTH} characters."
+                )
         }), 400
+
 
     # -----------------------------------------------------
     # CREATE COMMENT
@@ -228,70 +253,111 @@ def create_comment(
         writing_id=writing_id,
     )
 
+
+    notification = None
+
+
     try:
+
+        # -------------------------------------------------
+        # ADD COMMENT
+        # -------------------------------------------------
 
         db.session.add(
             comment
         )
 
+
         # -------------------------------------------------
-        # FLUSH
+        # FLUSH COMMENT
         # -------------------------------------------------
         #
-        # We need comment.id before creating the
-        # notification.
-        #
-        # flush() sends the INSERT to PostgreSQL and assigns
-        # the ID, but DOES NOT commit the transaction.
+        # This gives us comment.id without committing.
         #
         # -------------------------------------------------
 
         db.session.flush()
 
+
         # -------------------------------------------------
         # CREATE COMMENT NOTIFICATION
         # -------------------------------------------------
         #
-        # Recipient = author of the writing
-        # Actor     = user who posted the comment
+        # Recipient = writing author
+        # Actor     = commenting user
         #
-        # create_notification() automatically skips
-        # notifications when:
-        #
-        # actor_id == recipient_id
-        #
-        # Therefore, commenting on your own writing does
-        # not generate a notification.
+        # Self-comments automatically return None.
         #
         # -------------------------------------------------
 
-        create_notification(
-            recipient_id=writing.user_id,
-            actor_id=user.id,
-            notification_type="comment",
-            writing_id=writing.id,
-            comment_id=comment.id,
+        notification = create_notification(
+            recipient_id=
+                writing.user_id,
+
+            actor_id=
+                user.id,
+
+            notification_type=
+                "comment",
+
+            writing_id=
+                writing.id,
+
+            comment_id=
+                comment.id,
         )
 
+
         # -------------------------------------------------
-        # COMMIT COMMENT + NOTIFICATION TOGETHER
+        # COMMIT COMMENT + NOTIFICATION
         # -------------------------------------------------
 
         db.session.commit()
 
+
     except Exception as error:
 
         db.session.rollback()
+
 
         print(
             "CREATE COMMENT ERROR:",
             error,
         )
 
+
         return jsonify({
             "message":
                 "Unable to add comment."
         }), 500
+
+
+    # -----------------------------------------------------
+    # REAL-TIME NOTIFICATION
+    # -----------------------------------------------------
+    #
+    # Emit only AFTER the database transaction succeeds.
+    #
+    # If Socket.IO fails, the comment remains saved.
+    #
+    # -----------------------------------------------------
+
+    if notification:
+
+        try:
+
+            emit_notification(
+                notification
+            )
+
+        except Exception as error:
+
+            print(
+                "COMMENT REAL-TIME "
+                "NOTIFICATION ERROR:",
+                error,
+            )
+
 
     # -----------------------------------------------------
     # SUCCESS RESPONSE
@@ -300,6 +366,7 @@ def create_comment(
     return jsonify({
         "message":
             "Comment added successfully.",
+
         "comment":
             comment.to_dict(),
     }), 201
@@ -323,12 +390,14 @@ def delete_comment(
 
     user = get_current_user()
 
+
     if not user:
 
         return jsonify({
             "message":
                 "User not found."
         }), 404
+
 
     # -----------------------------------------------------
     # GET COMMENT
@@ -339,12 +408,14 @@ def delete_comment(
         comment_id,
     )
 
+
     if not comment:
 
         return jsonify({
             "message":
                 "Comment not found."
         }), 404
+
 
     # -----------------------------------------------------
     # OWNERSHIP CHECK
@@ -354,23 +425,33 @@ def delete_comment(
 
         return jsonify({
             "message":
-                "You can only delete "
-                "your own comments."
+                (
+                    "You can only delete "
+                    "your own comments."
+                )
         }), 403
+
 
     # -----------------------------------------------------
     # GET RELATED WRITING
-    # -----------------------------------------------------
-    #
-    # We need the author's user_id so we can remove the
-    # corresponding notification.
-    #
     # -----------------------------------------------------
 
     writing = db.session.get(
         Writing,
         comment.writing_id,
     )
+
+
+    # -----------------------------------------------------
+    # SAVE VALUES BEFORE DELETE
+    # -----------------------------------------------------
+
+    writing_id = comment.writing_id
+
+    comment_user_id = comment.user_id
+
+    deleted_comment_id = comment.id
+
 
     try:
 
@@ -381,12 +462,22 @@ def delete_comment(
         if writing:
 
             delete_notification(
-                recipient_id=writing.user_id,
-                actor_id=comment.user_id,
-                notification_type="comment",
-                writing_id=comment.writing_id,
-                comment_id=comment.id,
+                recipient_id=
+                    writing.user_id,
+
+                actor_id=
+                    comment_user_id,
+
+                notification_type=
+                    "comment",
+
+                writing_id=
+                    writing_id,
+
+                comment_id=
+                    deleted_comment_id,
             )
+
 
         # -------------------------------------------------
         # DELETE COMMENT
@@ -396,25 +487,30 @@ def delete_comment(
             comment
         )
 
+
         # -------------------------------------------------
         # COMMIT BOTH TOGETHER
         # -------------------------------------------------
 
         db.session.commit()
 
+
     except Exception as error:
 
         db.session.rollback()
+
 
         print(
             "DELETE COMMENT ERROR:",
             error,
         )
 
+
         return jsonify({
             "message":
                 "Unable to delete comment."
         }), 500
+
 
     # -----------------------------------------------------
     # SUCCESS RESPONSE

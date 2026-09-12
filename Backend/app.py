@@ -1,20 +1,23 @@
 import os
 
+from datetime import timedelta
+
+from dotenv import load_dotenv
+
 from flask import (
     Flask,
     jsonify,
 )
 
 from flask_cors import CORS
-from dotenv import load_dotenv
 
 from extensions import (
     db,
     jwt,
     mail,
     migrate,
+    socketio,
 )
-
 
 
 # =========================================================
@@ -58,7 +61,9 @@ def create_app():
     ] = False
 
 
-    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    app.config[
+        "SQLALCHEMY_ENGINE_OPTIONS"
+    ] = {
         "pool_pre_ping": True,
         "pool_recycle": 300,
     }
@@ -84,10 +89,11 @@ def create_app():
     ] = jwt_secret
 
 
-    # 24 hours
     app.config[
         "JWT_ACCESS_TOKEN_EXPIRES"
-    ] = 60 * 60 * 24
+    ] = timedelta(
+        hours=24
+    )
 
 
     # =====================================================
@@ -118,7 +124,9 @@ def create_app():
         os.getenv(
             "MAIL_USE_TLS",
             "True",
-        ).lower()
+        )
+        .strip()
+        .lower()
         == "true"
     )
 
@@ -129,7 +137,9 @@ def create_app():
         os.getenv(
             "MAIL_USE_SSL",
             "False",
-        ).lower()
+        )
+        .strip()
+        .lower()
         == "true"
     )
 
@@ -162,12 +172,21 @@ def create_app():
     # FRONTEND CONFIG
     # =====================================================
 
-    app.config[
-        "FRONTEND_URL"
-    ] = os.getenv(
+    frontend_url = os.getenv(
         "FRONTEND_URL",
         "http://localhost:5173",
     )
+
+    frontend_url = (
+        frontend_url
+        .strip()
+        .rstrip("/")
+    )
+
+
+    app.config[
+        "FRONTEND_URL"
+    ] = frontend_url
 
 
     # =====================================================
@@ -183,30 +202,8 @@ def create_app():
     )
 
 
-   # =====================================================
-   # INITIALIZE EXTENSIONS
-   # =====================================================
-
-    db.init_app(
-        app
-    )
-
-    migrate.init_app(
-        app,
-        db
-    )
-
-    jwt.init_app(
-        app
-    )
-
-    mail.init_app(
-        app
-    )
-
-
     # =====================================================
-    # CORS
+    # ALLOWED ORIGINS
     # =====================================================
 
     allowed_origins = [
@@ -215,40 +212,140 @@ def create_app():
     ]
 
 
-    production_frontend_url = (
-        os.getenv(
-            "PRODUCTION_FRONTEND_URL"
+    # -----------------------------------------------------
+    # FRONTEND_URL
+    # -----------------------------------------------------
+
+    if (
+        frontend_url
+        and
+        frontend_url not in allowed_origins
+    ):
+
+        allowed_origins.append(
+            frontend_url
         )
+
+
+    # -----------------------------------------------------
+    # PRODUCTION FRONTEND URL
+    # -----------------------------------------------------
+
+    production_frontend_url = os.getenv(
+        "PRODUCTION_FRONTEND_URL"
     )
 
 
     if production_frontend_url:
 
-        allowed_origins.append(
+        production_frontend_url = (
             production_frontend_url
+            .strip()
+            .rstrip("/")
         )
 
+
+        if (
+            production_frontend_url
+            not in allowed_origins
+        ):
+
+            allowed_origins.append(
+                production_frontend_url
+            )
+
+
+    # =====================================================
+    # INITIALIZE FLASK EXTENSIONS
+    # =====================================================
+
+    db.init_app(
+        app
+    )
+
+
+    migrate.init_app(
+        app,
+        db,
+    )
+
+
+    jwt.init_app(
+        app
+    )
+
+
+    mail.init_app(
+        app
+    )
+
+
+    # =====================================================
+    # HTTP CORS
+    # =====================================================
 
     CORS(
         app,
         resources={
             r"/api/*": {
-                "origins": (
-                    allowed_origins
-                )
-            }
+                "origins": allowed_origins,
+            },
         },
         supports_credentials=True,
     )
 
 
     # =====================================================
+    # SOCKET.IO
+    # =====================================================
+
+    socketio.init_app(
+        app,
+        cors_allowed_origins=allowed_origins,
+    )
+
+
+    # =====================================================
+    # SOCKET.IO EVENT HANDLERS
+    # =====================================================
+    #
+    # Importing this module registers all @socketio.on(...)
+    # handlers.
+    #
+    # =====================================================
+
+    import socket_handlers
+
+
+    # =====================================================
     # IMPORT MODELS
+    # =====================================================
+    #
+    # Models must be imported before db.create_all()
+    # so SQLAlchemy knows about their tables.
+    #
     # =====================================================
 
     from models.user import User
     from models.writing import Writing
     from models.notification import Notification
+
+
+    # Keep explicit references to imported models.
+    _models = (
+        User,
+        Writing,
+        Notification,
+    )
+
+
+    # Prevent optimization/tools from considering it unused.
+    if not _models:
+
+        raise RuntimeError(
+            "Unable to load database models."
+        )
+
 
     # =====================================================
     # REGISTER BLUEPRINTS
@@ -261,12 +358,27 @@ def create_app():
     from routes.writing_routes import (
         writings_bp,
     )
-    from routes.like_routes import like_bp
-    from routes.comment_routes import comment_bp
-    from routes.user_routes import user_bp
+
+    from routes.like_routes import (
+        like_bp,
+    )
+
+    from routes.comment_routes import (
+        comment_bp,
+    )
+
+    from routes.user_routes import (
+        user_bp,
+    )
+
     from routes.notification_routes import (
         notification_bp,
     )
+
+
+    # -----------------------------------------------------
+    # AUTH
+    # -----------------------------------------------------
 
     app.register_blueprint(
         auth_bp,
@@ -274,24 +386,53 @@ def create_app():
     )
 
 
+    # -----------------------------------------------------
+    # WRITINGS
+    # -----------------------------------------------------
+
     app.register_blueprint(
         writings_bp,
         url_prefix="/api/writings",
     )
+
+
+    # -----------------------------------------------------
+    # LIKES
+    # -----------------------------------------------------
 
     app.register_blueprint(
         like_bp,
         url_prefix="/api/likes",
     )
 
+
+    # -----------------------------------------------------
+    # COMMENTS
+    # -----------------------------------------------------
+
     app.register_blueprint(
         comment_bp,
         url_prefix="/api/comments",
     )
 
-    app.register_blueprint(user_bp)
 
-    app.register_blueprint(notification_bp)
+    # -----------------------------------------------------
+    # USERS
+    # -----------------------------------------------------
+
+    app.register_blueprint(
+        user_bp
+    )
+
+
+    # -----------------------------------------------------
+    # NOTIFICATIONS
+    # -----------------------------------------------------
+
+    app.register_blueprint(
+        notification_bp
+    )
+
 
     # =====================================================
     # ROOT API
@@ -299,14 +440,24 @@ def create_app():
 
     @app.route(
         "/api",
-        methods=["GET"],
+        methods=[
+            "GET",
+        ],
     )
     def api_root():
 
         return jsonify({
-            "name": "SHOBDO API",
-            "status": "running",
-            "version": "1.0.0",
+            "name":
+                "SHOBDO API",
+
+            "status":
+                "running",
+
+            "version":
+                "1.0.0",
+
+            "realtime":
+                True,
         }), 200
 
 
@@ -316,13 +467,21 @@ def create_app():
 
     @app.route(
         "/api/health",
-        methods=["GET"],
+        methods=[
+            "GET",
+        ],
     )
     def health():
 
         return jsonify({
-            "status": "ok",
-            "service": "SHOBDO Backend",
+            "status":
+                "ok",
+
+            "service":
+                "SHOBDO Backend",
+
+            "socketio":
+                "enabled",
         }), 200
 
 
@@ -336,9 +495,11 @@ def create_app():
     ):
 
         return jsonify({
-            "message": (
-                "Authentication token is required."
-            )
+            "message":
+                (
+                    "Authentication token "
+                    "is required."
+                )
         }), 401
 
 
@@ -348,9 +509,11 @@ def create_app():
     ):
 
         return jsonify({
-            "message": (
-                "Invalid authentication token."
-            )
+            "message":
+                (
+                    "Invalid authentication "
+                    "token."
+                )
         }), 422
 
 
@@ -361,10 +524,11 @@ def create_app():
     ):
 
         return jsonify({
-            "message": (
-                "Your session has expired. "
-                "Please log in again."
-            )
+            "message":
+                (
+                    "Your session has expired. "
+                    "Please log in again."
+                )
         }), 401
 
 
@@ -380,9 +544,11 @@ def create_app():
     ):
 
         return jsonify({
-            "message": (
-                "Requested resource was not found."
-            )
+            "message":
+                (
+                    "Requested resource "
+                    "was not found."
+                )
         }), 404
 
 
@@ -398,9 +564,11 @@ def create_app():
     ):
 
         return jsonify({
-            "message": (
-                "HTTP method not allowed."
-            )
+            "message":
+                (
+                    "HTTP method "
+                    "not allowed."
+                )
         }), 405
 
 
@@ -416,10 +584,11 @@ def create_app():
     ):
 
         return jsonify({
-            "message": (
-                "Uploaded file is too large. "
-                "Maximum allowed size is 10 MB."
-            )
+            "message":
+                (
+                    "Uploaded file is too large. "
+                    "Maximum allowed size is 10 MB."
+                )
         }), 413
 
 
@@ -436,10 +605,22 @@ def create_app():
 
         db.session.rollback()
 
+
+        print(
+            "Internal server error:"
+        )
+
+        print(
+            error
+        )
+
+
         return jsonify({
-            "message": (
-                "An internal server error occurred."
-            )
+            "message":
+                (
+                    "An internal server "
+                    "error occurred."
+                )
         }), 500
 
 
@@ -453,8 +634,10 @@ def create_app():
 
             db.create_all()
 
+
             print(
-                "SHOBDO database tables checked successfully."
+                "SHOBDO database tables "
+                "checked successfully."
             )
 
         except Exception as error:
@@ -467,6 +650,27 @@ def create_app():
                 error
             )
 
+
+    # =====================================================
+    # DEVELOPMENT INFORMATION
+    # =====================================================
+
+    if app.debug:
+
+        print(
+            "Allowed frontend origins:"
+        )
+
+        for origin in allowed_origins:
+
+            print(
+                f" - {origin}"
+            )
+
+
+    # =====================================================
+    # RETURN APP
+    # =====================================================
 
     return app
 
@@ -484,8 +688,10 @@ app = create_app()
 
 if __name__ == "__main__":
 
-    app.run(
+    socketio.run(
+        app,
         host="0.0.0.0",
         port=5000,
         debug=True,
+        allow_unsafe_werkzeug=True,
     )

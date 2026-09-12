@@ -4,3 +4,21 @@
 
 # Vite production build
 Frontend/dist/
+# Frontend
+Frontend/node_modules/
+Frontend/dist/
+
+# Backend
+Backend/venv/
+Backend/__pycache__/
+Backend/**/__pycache__/
+*.pyc
+
+# Environment files
+.env
+Backend/.env
+Frontend/.env
+
+# Misc
+.DS_Store
+Thumbs.db

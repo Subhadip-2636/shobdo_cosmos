@@ -78,6 +78,11 @@ import {
   getCurrentUser,
 } from "./api/auth";
 
+import {
+  connectSocket,
+  disconnectSocket,
+} from "./api/socket";
+
 
 // =========================================================
 // PRIVATE ROUTE
@@ -200,7 +205,9 @@ function App() {
           );
 
 
-          setUser(null);
+          setUser(
+            null
+          );
 
 
           return null;
@@ -256,7 +263,9 @@ function App() {
           );
 
 
-          setWritings([]);
+          setWritings(
+            []
+          );
 
         } finally {
 
@@ -284,6 +293,278 @@ function App() {
   }, [
     loadCurrentUser,
     loadWritings,
+  ]);
+
+
+  // =====================================================
+  // SOCKET.IO CONNECTION
+  // =====================================================
+
+  useEffect(() => {
+
+    // ---------------------------------------------------
+    // WAIT UNTIL AUTH CHECK IS FINISHED
+    // ---------------------------------------------------
+
+    if (authLoading) {
+
+      return undefined;
+
+    }
+
+
+    // ---------------------------------------------------
+    // LOGGED OUT
+    // ---------------------------------------------------
+
+    if (!user) {
+
+      disconnectSocket();
+
+      return undefined;
+
+    }
+
+
+    // ---------------------------------------------------
+    // CONNECT
+    // ---------------------------------------------------
+
+    const socket =
+      connectSocket();
+
+
+    if (!socket) {
+
+      console.warn(
+        "SHOBDO SOCKET: No socket created."
+      );
+
+      return undefined;
+
+    }
+
+
+    // ---------------------------------------------------
+    // CONNECTED
+    // ---------------------------------------------------
+
+    function handleConnect() {
+
+      console.log(
+        "SHOBDO SOCKET CONNECTED:",
+        socket.id
+      );
+
+    }
+
+
+    // ---------------------------------------------------
+    // PRIVATE ROOM READY
+    // ---------------------------------------------------
+
+    function handleSocketReady(
+      data
+    ) {
+
+      console.log(
+        "SHOBDO SOCKET READY:",
+        data
+      );
+
+    }
+
+
+    // ---------------------------------------------------
+    // CONNECTION ERROR
+    // ---------------------------------------------------
+
+    function handleConnectError(
+      error
+    ) {
+
+      console.error(
+        "SHOBDO SOCKET CONNECTION ERROR:",
+        error?.message || error
+      );
+
+    }
+
+
+    // ---------------------------------------------------
+    // DISCONNECTED
+    // ---------------------------------------------------
+
+    function handleDisconnect(
+      reason
+    ) {
+
+      console.log(
+        "SHOBDO SOCKET DISCONNECTED:",
+        reason
+      );
+
+    }
+
+
+    // ---------------------------------------------------
+    // NEW REAL-TIME NOTIFICATION
+    // ---------------------------------------------------
+    //
+    // Backend will emit:
+    //
+    // notification:new
+    //
+    // Navbar already listens for:
+    //
+    // shobdo:notifications-changed
+    //
+    // Therefore this event immediately refreshes
+    // the unread notification badge.
+    //
+    // ---------------------------------------------------
+
+    function handleNewNotification(
+      notification
+    ) {
+
+      console.log(
+        "SHOBDO NEW NOTIFICATION:",
+        notification
+      );
+
+
+      window.dispatchEvent(
+        new CustomEvent(
+          "shobdo:notifications-changed",
+          {
+            detail:
+              notification,
+          }
+        )
+      );
+
+    }
+
+
+    // ---------------------------------------------------
+    // TEST PONG
+    // ---------------------------------------------------
+
+    function handleSocketPong(
+      data
+    ) {
+
+      console.log(
+        "SHOBDO SOCKET PONG:",
+        data
+      );
+
+    }
+
+
+    // ---------------------------------------------------
+    // REGISTER LISTENERS
+    // ---------------------------------------------------
+
+    socket.on(
+      "connect",
+      handleConnect
+    );
+
+
+    socket.on(
+      "socket:ready",
+      handleSocketReady
+    );
+
+
+    socket.on(
+      "connect_error",
+      handleConnectError
+    );
+
+
+    socket.on(
+      "disconnect",
+      handleDisconnect
+    );
+
+
+    socket.on(
+      "notification:new",
+      handleNewNotification
+    );
+
+
+    socket.on(
+      "socket:pong",
+      handleSocketPong
+    );
+
+
+    // ---------------------------------------------------
+    // HANDLE ALREADY CONNECTED SOCKET
+    // ---------------------------------------------------
+
+    if (
+      socket.connected
+    ) {
+
+      console.log(
+        "SHOBDO SOCKET ALREADY CONNECTED:",
+        socket.id
+      );
+
+    }
+
+
+    // ---------------------------------------------------
+    // CLEANUP LISTENERS
+    // ---------------------------------------------------
+
+    return () => {
+
+      socket.off(
+        "connect",
+        handleConnect
+      );
+
+
+      socket.off(
+        "socket:ready",
+        handleSocketReady
+      );
+
+
+      socket.off(
+        "connect_error",
+        handleConnectError
+      );
+
+
+      socket.off(
+        "disconnect",
+        handleDisconnect
+      );
+
+
+      socket.off(
+        "notification:new",
+        handleNewNotification
+      );
+
+
+      socket.off(
+        "socket:pong",
+        handleSocketPong
+      );
+
+    };
+
+  }, [
+    user?.id,
+    authLoading,
   ]);
 
 
@@ -328,8 +609,12 @@ function App() {
         ============================================== */}
 
         <Navbar
-          user={user}
-          setUser={setUser}
+          user={
+            user
+          }
+          setUser={
+            setUser
+          }
         />
 
 
@@ -470,14 +755,18 @@ function App() {
               element={
 
                 <PrivateRoute
-                  user={user}
+                  user={
+                    user
+                  }
                   authLoading={
                     authLoading
                   }
                 >
 
                   <Write
-                    user={user}
+                    user={
+                      user
+                    }
                     onWritingCreated={
                       handleWritingChanged
                     }
@@ -498,14 +787,18 @@ function App() {
               element={
 
                 <PrivateRoute
-                  user={user}
+                  user={
+                    user
+                  }
                   authLoading={
                     authLoading
                   }
                 >
 
                   <Write
-                    user={user}
+                    user={
+                      user
+                    }
                     onWritingCreated={
                       handleWritingChanged
                     }
@@ -526,7 +819,9 @@ function App() {
               element={
 
                 <PrivateRoute
-                  user={user}
+                  user={
+                    user
+                  }
                   authLoading={
                     authLoading
                   }
@@ -549,7 +844,9 @@ function App() {
               element={
 
                 <PrivateRoute
-                  user={user}
+                  user={
+                    user
+                  }
                   authLoading={
                     authLoading
                   }
@@ -572,14 +869,18 @@ function App() {
               element={
 
                 <PrivateRoute
-                  user={user}
+                  user={
+                    user
+                  }
                   authLoading={
                     authLoading
                   }
                 >
 
                   <EditProfile
-                    user={user}
+                    user={
+                      user
+                    }
                     onProfileUpdated={
                       loadCurrentUser
                     }
@@ -635,13 +936,14 @@ function App() {
               }
             />
 
+
           </Routes>
 
         </div>
 
 
         {/* =============================================
-            FOOTER — ONLY ONCE
+            FOOTER
         ============================================== */}
 
         <Footer />
