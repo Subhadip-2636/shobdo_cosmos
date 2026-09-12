@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 from flask import (
     Flask,
+    app,
     jsonify,
 )
 
@@ -196,7 +197,7 @@ def create_app():
     app.config[
         "MAX_CONTENT_LENGTH"
     ] = (
-        10
+        12
         * 1024
         * 1024
     )
@@ -213,13 +214,14 @@ def create_app():
 
 
     # -----------------------------------------------------
-    # FRONTEND_URL
+    # FRONTEND URL
     # -----------------------------------------------------
 
     if (
         frontend_url
         and
-        frontend_url not in allowed_origins
+        frontend_url
+        not in allowed_origins
     ):
 
         allowed_origins.append(
@@ -288,7 +290,8 @@ def create_app():
         app,
         resources={
             r"/api/*": {
-                "origins": allowed_origins,
+                "origins":
+                    allowed_origins,
             },
         },
         supports_credentials=True,
@@ -301,7 +304,8 @@ def create_app():
 
     socketio.init_app(
         app,
-        cors_allowed_origins=allowed_origins,
+        cors_allowed_origins=
+            allowed_origins,
     )
 
 
@@ -309,37 +313,45 @@ def create_app():
     # SOCKET.IO EVENT HANDLERS
     # =====================================================
     #
-    # Importing this module registers all @socketio.on(...)
-    # handlers.
+    # Importing this module registers
+    # all @socketio.on(...) handlers.
     #
     # =====================================================
 
     import socket_handlers
+
+    _ = socket_handlers
 
 
     # =====================================================
     # IMPORT MODELS
     # =====================================================
     #
-    # Models must be imported before db.create_all()
-    # so SQLAlchemy knows about their tables.
+    # Import every SQLAlchemy model so both SQLAlchemy
+    # and Alembic/Flask-Migrate know about all tables.
+    #
+    # IMPORTANT:
+    #
+    # db.create_all() is intentionally NOT used here.
+    # Database schema changes are managed exclusively
+    # through Flask-Migrate / Alembic.
     #
     # =====================================================
 
     from models.user import User
     from models.writing import Writing
     from models.notification import Notification
+    from models.document import Document
 
 
-    # Keep explicit references to imported models.
     _models = (
         User,
         Writing,
         Notification,
+        Document,
     )
 
 
-    # Prevent optimization/tools from considering it unused.
     if not _models:
 
         raise RuntimeError(
@@ -373,6 +385,10 @@ def create_app():
 
     from routes.notification_routes import (
         notification_bp,
+    )
+
+    from routes.document_routes import (
+        document_bp,
     )
 
 
@@ -419,6 +435,12 @@ def create_app():
     # -----------------------------------------------------
     # USERS
     # -----------------------------------------------------
+    #
+    # user_bp already contains:
+    #
+    # /api/users
+    #
+    # -----------------------------------------------------
 
     app.register_blueprint(
         user_bp
@@ -428,9 +450,23 @@ def create_app():
     # -----------------------------------------------------
     # NOTIFICATIONS
     # -----------------------------------------------------
+    #
+    # notification_bp already contains:
+    #
+    # /api/notifications
+    #
+    # -----------------------------------------------------
 
     app.register_blueprint(
         notification_bp
+    )
+
+    # -----------------------------------------------------
+    # DOCUMENTS
+    # -----------------------------------------------------
+
+    app.register_blueprint(
+        document_bp
     )
 
 
@@ -622,33 +658,6 @@ def create_app():
                     "error occurred."
                 )
         }), 500
-
-
-    # =====================================================
-    # DATABASE CHECK
-    # =====================================================
-
-    with app.app_context():
-
-        try:
-
-            db.create_all()
-
-
-            print(
-                "SHOBDO database tables "
-                "checked successfully."
-            )
-
-        except Exception as error:
-
-            print(
-                "Database initialization error:"
-            )
-
-            print(
-                error
-            )
 
 
     # =====================================================
