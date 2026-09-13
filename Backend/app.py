@@ -342,6 +342,7 @@ def create_app():
     from models.writing import Writing
     from models.notification import Notification
     from models.document import Document
+    from models.artwork import Artwork
 
 
     _models = (
@@ -349,6 +350,7 @@ def create_app():
         Writing,
         Notification,
         Document,
+        Artwork,
     )
 
 
@@ -389,6 +391,10 @@ def create_app():
 
     from routes.document_routes import (
         document_bp,
+    )
+
+    from routes.artwork_routes import (
+        artwork_bp,
     )
 
 
@@ -467,6 +473,10 @@ def create_app():
 
     app.register_blueprint(
         document_bp
+    )
+
+    app.register_blueprint(
+        artwork_bp
     )
 
 
