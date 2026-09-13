@@ -91,6 +91,33 @@ const WRITING_SCAN_EXTENSIONS = [
 ];
 
 
+const ARTWORK_FILE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+];
+
+
+const ARTWORK_EXTENSIONS = [
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+];
+
+
+const ARTWORK_CATEGORIES = [
+  "Painting",
+  "Sketch",
+  "Digital Art",
+  "Photography",
+  "Calligraphy",
+  "Illustration",
+  "Other",
+];
+
+
 const WRITING_LANGUAGES = [
   {
     code: "bn",
@@ -298,6 +325,30 @@ function isAllowedScanFile(
 }
 
 
+function isAllowedArtworkFile(
+  file
+) {
+
+  if (!file) {
+    return false;
+  }
+
+  const extension =
+    getFileExtension(
+      file.name
+    );
+
+  return (
+    ARTWORK_FILE_TYPES.includes(
+      file.type
+    ) ||
+    ARTWORK_EXTENSIONS.includes(
+      extension
+    )
+  );
+}
+
+
 function isPdfFile(
   file
 ) {
@@ -464,6 +515,128 @@ async function createDocumentRequest({
     throw requestError;
   }
 
+
+  return data;
+}
+
+
+// =========================================================
+// ARTWORK API
+// =========================================================
+
+async function createArtworkRequest({
+  file,
+  title,
+  description,
+  category,
+  language,
+  visibility,
+  allowDownload,
+  status,
+  authErrorMessage,
+  requestErrorMessage,
+}) {
+
+  const token =
+    getToken();
+
+  if (!token) {
+    throw new Error(
+      authErrorMessage
+    );
+  }
+
+  const formData =
+    new FormData();
+
+  formData.append(
+    "artwork",
+    file
+  );
+
+  formData.append(
+    "title",
+    title
+  );
+
+  formData.append(
+    "description",
+    description
+  );
+
+  formData.append(
+    "category",
+    category
+  );
+
+  formData.append(
+    "language",
+    language
+  );
+
+  formData.append(
+    "visibility",
+    visibility
+  );
+
+  formData.append(
+    "allow_download",
+    allowDownload
+      ? "true"
+      : "false"
+  );
+
+  formData.append(
+    "status",
+    status
+  );
+
+  const response =
+    await fetch(
+      `${API_URL}/artworks`,
+      {
+        method: "POST",
+
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
+        },
+
+        body:
+          formData,
+      }
+    );
+
+  let data = null;
+
+  try {
+    data =
+      await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+
+    const serverMessage =
+      data?.message ||
+      data?.error ||
+      "";
+
+    const requestError =
+      new Error(
+        serverMessage ||
+        requestErrorMessage
+      );
+
+    requestError.status =
+      response.status;
+
+    requestError.serverMessage =
+      serverMessage;
+
+    throw requestError;
+  }
 
   return data;
 }
@@ -2102,6 +2275,508 @@ function Write({
 
 
   // =======================================================
+  // ARTWORK STATE
+  // =======================================================
+
+  const artworkInputRef =
+    useRef(null);
+
+  const [
+    artworkFile,
+    setArtworkFile,
+  ] = useState(null);
+
+  const [
+    artworkDragging,
+    setArtworkDragging,
+  ] = useState(false);
+
+  const [
+    artworkTitle,
+    setArtworkTitle,
+  ] = useState("");
+
+  const [
+    artworkDescription,
+    setArtworkDescription,
+  ] = useState("");
+
+  const [
+    artworkCategory,
+    setArtworkCategory,
+  ] = useState(
+    "Digital Art"
+  );
+
+  const [
+    artworkLanguage,
+    setArtworkLanguage,
+  ] = useState(
+    () =>
+      getDefaultWritingLanguage(
+        uiLanguage
+      )
+  );
+
+  const [
+    artworkVisibility,
+    setArtworkVisibility,
+  ] = useState(
+    "public"
+  );
+
+  const [
+    artworkAllowDownload,
+    setArtworkAllowDownload,
+  ] = useState(
+    true
+  );
+
+  const [
+    artworkPublishing,
+    setArtworkPublishing,
+  ] = useState(
+    false
+  );
+
+  const [
+    lastPublishedArtwork,
+    setLastPublishedArtwork,
+  ] = useState(null);
+
+
+  useEffect(() => {
+
+    const hasStartedArtwork =
+      Boolean(
+        artworkFile ||
+        artworkTitle.trim() ||
+        artworkDescription.trim()
+      );
+
+    if (hasStartedArtwork) {
+      return;
+    }
+
+    setArtworkLanguage(
+      getDefaultWritingLanguage(
+        uiLanguage
+      )
+    );
+
+  }, [
+    uiLanguage,
+    artworkFile,
+    artworkTitle,
+    artworkDescription,
+  ]);
+
+
+  const artworkPreviewUrl =
+    useMemo(
+      () => {
+
+        if (!artworkFile) {
+          return "";
+        }
+
+        return URL.createObjectURL(
+          artworkFile
+        );
+      },
+      [
+        artworkFile,
+      ]
+    );
+
+
+  useEffect(() => {
+
+    return () => {
+
+      if (
+        artworkPreviewUrl
+      ) {
+        URL.revokeObjectURL(
+          artworkPreviewUrl
+        );
+      }
+    };
+
+  }, [
+    artworkPreviewUrl,
+  ]);
+
+
+  function validateArtworkFile(
+    file
+  ) {
+
+    setError("");
+    setSuccess("");
+
+    if (!file) {
+      return;
+    }
+
+    if (
+      !isAllowedArtworkFile(
+        file
+      )
+    ) {
+
+      setArtworkFile(
+        null
+      );
+
+      setError(
+        t(
+          "write.artworkInvalidFile",
+          "Only JPG, JPEG, PNG and WEBP images can be published as artwork."
+        )
+      );
+
+      return;
+    }
+
+    if (
+      file.size >
+      MAX_FILE_SIZE
+    ) {
+
+      setArtworkFile(
+        null
+      );
+
+      setError(
+        t(
+          "write.artworkFileTooLarge",
+          "Artwork image size cannot exceed 10 MB."
+        )
+      );
+
+      return;
+    }
+
+    setArtworkFile(
+      file
+    );
+
+    if (
+      !artworkTitle.trim()
+    ) {
+
+      const titleFromFile =
+        file.name
+          .replace(
+            /\.(jpg|jpeg|png|webp)$/i,
+            ""
+          )
+          .replace(
+            /[_-]+/g,
+            " "
+          )
+          .trim();
+
+      setArtworkTitle(
+        titleFromFile.slice(
+          0,
+          200
+        )
+      );
+    }
+  }
+
+
+  function handleArtworkFileChange(
+    event
+  ) {
+
+    validateArtworkFile(
+      event.target.files?.[0]
+    );
+
+    event.target.value =
+      "";
+  }
+
+
+  function handleArtworkDragOver(
+    event
+  ) {
+
+    event.preventDefault();
+
+    setArtworkDragging(
+      true
+    );
+  }
+
+
+  function handleArtworkDragLeave(
+    event
+  ) {
+
+    event.preventDefault();
+
+    setArtworkDragging(
+      false
+    );
+  }
+
+
+  function handleArtworkDrop(
+    event
+  ) {
+
+    event.preventDefault();
+
+    setArtworkDragging(
+      false
+    );
+
+    validateArtworkFile(
+      event.dataTransfer
+        .files?.[0]
+    );
+  }
+
+
+  function removeArtworkFile() {
+
+    setArtworkFile(
+      null
+    );
+
+    setError("");
+    setSuccess("");
+
+    if (
+      artworkInputRef.current
+    ) {
+      artworkInputRef.current.value =
+        "";
+    }
+  }
+
+
+  async function submitArtwork(
+    status
+  ) {
+
+    setError("");
+    setSuccess("");
+
+    if (!user) {
+
+      setError(
+        t(
+          "write.artworkLoginRequired",
+          "Please log in before publishing artwork."
+        )
+      );
+
+      return;
+    }
+
+    if (!artworkFile) {
+
+      setError(
+        t(
+          "write.artworkFileRequired",
+          "Select an artwork image first."
+        )
+      );
+
+      return;
+    }
+
+    if (
+      !artworkTitle.trim()
+    ) {
+
+      setError(
+        t(
+          "write.artworkTitleRequired",
+          "Artwork title is required."
+        )
+      );
+
+      return;
+    }
+
+    if (
+      artworkTitle
+        .trim()
+        .length >
+      200
+    ) {
+
+      setError(
+        t(
+          "write.artworkTitleTooLong",
+          "Artwork title cannot exceed 200 characters."
+        )
+      );
+
+      return;
+    }
+
+    if (
+      artworkDescription.length >
+      5000
+    ) {
+
+      setError(
+        t(
+          "write.artworkDescriptionTooLong",
+          "Artwork description cannot exceed 5000 characters."
+        )
+      );
+
+      return;
+    }
+
+    try {
+
+      setArtworkPublishing(
+        true
+      );
+
+      const response =
+        await createArtworkRequest({
+
+          file:
+            artworkFile,
+
+          title:
+            artworkTitle.trim(),
+
+          description:
+            artworkDescription.trim(),
+
+          category:
+            artworkCategory,
+
+          language:
+            artworkLanguage,
+
+          visibility:
+            artworkVisibility,
+
+          allowDownload:
+            artworkAllowDownload,
+
+          status,
+
+          authErrorMessage:
+            t(
+              "write.artworkLoginRequired",
+              "Please log in before publishing artwork."
+            ),
+
+          requestErrorMessage:
+            t(
+              "write.artworkPublishFailed",
+              "Unable to publish artwork."
+            ),
+        });
+
+      const savedArtwork =
+        response?.artwork ||
+        response?.data?.artwork ||
+        response;
+
+      setLastPublishedArtwork(
+        savedArtwork
+      );
+
+      setSuccess(
+        status === "published"
+          ? t(
+              "write.artworkPublished",
+              "Artwork published successfully."
+            )
+          : t(
+              "write.artworkDraftSaved",
+              "Artwork saved as draft."
+            )
+      );
+
+      if (
+        typeof onPublished ===
+          "function" &&
+        savedArtwork
+      ) {
+        onPublished(
+          savedArtwork
+        );
+      }
+
+      setArtworkFile(
+        null
+      );
+
+      setArtworkTitle("");
+      setArtworkDescription("");
+
+      setArtworkCategory(
+        "Digital Art"
+      );
+
+      setArtworkLanguage(
+        getDefaultWritingLanguage(
+          uiLanguage
+        )
+      );
+
+      setArtworkVisibility(
+        "public"
+      );
+
+      setArtworkAllowDownload(
+        true
+      );
+
+    } catch (
+      requestError
+    ) {
+
+      console.error(
+        "ARTWORK PUBLISH ERROR:",
+        requestError
+      );
+
+      setError(
+        requestError?.message ||
+        t(
+          "write.artworkPublishFailed",
+          "Unable to publish artwork."
+        )
+      );
+
+    } finally {
+
+      setArtworkPublishing(
+        false
+      );
+    }
+  }
+
+
+  function handleArtworkSubmit(
+    event
+  ) {
+
+    event.preventDefault();
+
+    submitArtwork(
+      "published"
+    );
+  }
+
+
+  // =======================================================
   // COUNTS
   // =======================================================
 
@@ -2234,6 +2909,13 @@ function Write({
                 size={25}
               />
 
+            ) : publishMode ===
+              "artwork" ? (
+
+              <Image
+                size={25}
+              />
+
             ) : (
 
               <PenLine
@@ -2275,8 +2957,8 @@ function Write({
             <p>
 
               {t(
-                "write.creatorSubtitle",
-                "Share original writing or publish a PDF document with the SHOBDO community."
+                "write.creatorSubtitleWithArtwork",
+                "Share original writing, PDF documents or visual artwork with the SHOBDO community."
               )}
 
             </p>
@@ -2455,12 +3137,20 @@ function Write({
 
               <button
                 type="button"
-                className="publish-type-tab disabled"
-                disabled
-                title={
-                  t(
-                    "write.artworkComingSoonTitle",
-                    "Artwork publishing will be added next."
+                role="tab"
+                aria-selected={
+                  publishMode ===
+                  "artwork"
+                }
+                className={
+                  publishMode ===
+                  "artwork"
+                    ? "publish-type-tab active"
+                    : "publish-type-tab"
+                }
+                onClick={() =>
+                  changeMode(
+                    "artwork"
                   )
                 }
               >
@@ -2489,8 +3179,8 @@ function Write({
                   <small>
 
                     {t(
-                      "write.comingSoon",
-                      "Coming soon"
+                      "write.artworkModeReadyDescription",
+                      "Paintings, sketches, photography and digital art"
                     )}
 
                   </small>
@@ -4258,6 +4948,940 @@ function Write({
                     {t(
                       "write.viewPdf",
                       "View PDF"
+                    )}
+
+                  </a>
+
+                )}
+
+              </div>
+
+            )}
+
+          </form>
+
+        )}
+
+
+        {/* ================================================= */}
+        {/* ARTWORK MODE                                     */}
+        {/* ================================================= */}
+
+        {publishMode ===
+        "artwork" && (
+
+          <form
+            className="write-form-card document-publish-form"
+            onSubmit={
+              handleArtworkSubmit
+            }
+          >
+
+            <StatusMessages />
+
+
+            {/* ============================================= */}
+            {/* ARTWORK UPLOAD                                */}
+            {/* ============================================= */}
+
+            <div className="write-section">
+
+              <div className="write-section-heading">
+
+                <div>
+
+                  <span className="write-step">
+
+                    {t(
+                      "write.artworkUploadStep",
+                      "01"
+                    )}
+
+                  </span>
+
+
+                  <h2>
+
+                    {t(
+                      "write.artworkUploadTitle",
+                      "Upload your artwork"
+                    )}
+
+                  </h2>
+
+                </div>
+
+
+                <span className="document-format-badge">
+
+                  <Image
+                    size={15}
+                  />
+
+                  JPG · PNG · WEBP
+
+                </span>
+
+              </div>
+
+
+              <p className="scan-description">
+
+                {t(
+                  "write.artworkUploadDescription",
+                  "Upload an original painting, sketch, illustration, photograph, calligraphy piece or digital artwork."
+                )}
+
+              </p>
+
+
+              {!artworkFile ? (
+
+                <div
+                  className={
+                    artworkDragging
+                      ? "document-drop-zone dragging"
+                      : "document-drop-zone"
+                  }
+                  onDragOver={
+                    handleArtworkDragOver
+                  }
+                  onDragLeave={
+                    handleArtworkDragLeave
+                  }
+                  onDrop={
+                    handleArtworkDrop
+                  }
+                >
+
+                  <input
+                    ref={
+                      artworkInputRef
+                    }
+                    type="file"
+                    id="publish-artwork-image"
+                    className="scan-file-input"
+                    accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                    onChange={
+                      handleArtworkFileChange
+                    }
+                  />
+
+
+                  <div className="document-upload-icon">
+
+                    <Image
+                      size={30}
+                    />
+
+                  </div>
+
+
+                  <h3>
+
+                    {t(
+                      "write.dropArtworkTitle",
+                      "Drop your artwork here"
+                    )}
+
+                  </h3>
+
+
+                  <p>
+
+                    {t(
+                      "write.dropArtworkDescription",
+                      "Share paintings, sketches, illustrations, photography, calligraphy or digital art."
+                    )}
+
+                  </p>
+
+
+                  <button
+                    type="button"
+                    className="scan-select-button"
+                    onClick={() =>
+                      artworkInputRef
+                        .current
+                        ?.click()
+                    }
+                  >
+
+                    <FileImage
+                      size={18}
+                    />
+
+
+                    {t(
+                      "write.chooseArtwork",
+                      "Choose image"
+                    )}
+
+                  </button>
+
+
+                  <small>
+
+                    {t(
+                      "write.artworkRequirements",
+                      "JPG, JPEG, PNG or WEBP • Maximum 10 MB"
+                    )}
+
+                  </small>
+
+                </div>
+
+              ) : (
+
+                <>
+
+                  <div className="document-selected-card">
+
+                    <div className="document-selected-icon">
+
+                      <FileImage
+                        size={30}
+                      />
+
+                    </div>
+
+
+                    <div className="document-selected-info">
+
+                      <strong>
+                        {artworkFile.name}
+                      </strong>
+
+
+                      <span>
+
+                        {
+                          formatFileSize(
+                            artworkFile.size
+                          )
+                        }
+
+                        {" • "}
+
+                        {t(
+                          "write.readyToPublish",
+                          "Ready to publish"
+                        )}
+
+                      </span>
+
+                    </div>
+
+
+                    <button
+                      type="button"
+                      className="remove-file-button"
+                      aria-label={
+                        t(
+                          "write.removeArtwork",
+                          "Remove selected artwork"
+                        )
+                      }
+                      disabled={
+                        artworkPublishing
+                      }
+                      onClick={
+                        removeArtworkFile
+                      }
+                    >
+
+                      <Trash2
+                        size={19}
+                      />
+
+                    </button>
+
+                  </div>
+
+
+                  {artworkPreviewUrl && (
+
+                    <div className="document-preview">
+
+                      <div className="document-preview-header">
+
+                        <div>
+
+                          <Image
+                            size={18}
+                          />
+
+
+                          <span>
+
+                            {t(
+                              "write.artworkPreview",
+                              "Artwork Preview"
+                            )}
+
+                          </span>
+
+                        </div>
+
+                      </div>
+
+
+                      <img
+                        src={
+                          artworkPreviewUrl
+                        }
+                        alt={
+                          artworkTitle ||
+                          t(
+                            "write.artworkPreview",
+                            "Artwork Preview"
+                          )
+                        }
+                        style={{
+                          display:
+                            "block",
+                          width:
+                            "100%",
+                          maxHeight:
+                            "560px",
+                          objectFit:
+                            "contain",
+                          borderRadius:
+                            "16px",
+                          background:
+                            "#f7f5fa",
+                        }}
+                      />
+
+                    </div>
+
+                  )}
+
+                </>
+
+              )}
+
+            </div>
+
+
+            {/* ============================================= */}
+            {/* ARTWORK INFORMATION                           */}
+            {/* ============================================= */}
+
+            <div className="write-section">
+
+              <div className="write-section-heading">
+
+                <div>
+
+                  <span className="write-step">
+
+                    {t(
+                      "write.artworkInfoStep",
+                      "02"
+                    )}
+
+                  </span>
+
+
+                  <h2>
+
+                    {t(
+                      "write.artworkInfoTitle",
+                      "Artwork information"
+                    )}
+
+                  </h2>
+
+                </div>
+
+              </div>
+
+
+              <div className="write-field">
+
+                <label htmlFor="artwork-title">
+
+                  {t(
+                    "write.artworkTitleLabel",
+                    "Artwork title"
+                  )}
+
+                  <span aria-hidden="true">
+                    *
+                  </span>
+
+                </label>
+
+
+                <input
+                  id="artwork-title"
+                  type="text"
+                  maxLength={200}
+                  value={
+                    artworkTitle
+                  }
+                  placeholder={
+                    t(
+                      "write.artworkTitlePlaceholder",
+                      "Give your artwork a title"
+                    )
+                  }
+                  disabled={
+                    artworkPublishing
+                  }
+                  onChange={
+                    (
+                      event
+                    ) =>
+                      setArtworkTitle(
+                        event.target
+                          .value
+                      )
+                  }
+                />
+
+
+                <div className="field-meta">
+
+                  <span>
+
+                    {t(
+                      "write.artworkTitleHelp",
+                      "This title will appear publicly on SHOBDO."
+                    )}
+
+                  </span>
+
+
+                  <span>
+                    {artworkTitle.length}/200
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              <div className="document-field-grid">
+
+                <div className="write-field">
+
+                  <label htmlFor="artwork-category">
+
+                    {t(
+                      "write.artworkCategoryLabel",
+                      "Category"
+                    )}
+
+                  </label>
+
+
+                  <select
+                    id="artwork-category"
+                    value={
+                      artworkCategory
+                    }
+                    disabled={
+                      artworkPublishing
+                    }
+                    onChange={
+                      (
+                        event
+                      ) =>
+                        setArtworkCategory(
+                          event.target
+                            .value
+                        )
+                    }
+                  >
+
+                    {ARTWORK_CATEGORIES.map(
+                      (
+                        item
+                      ) => (
+
+                        <option
+                          key={item}
+                          value={item}
+                        >
+                          {item}
+                        </option>
+
+                      )
+                    )}
+
+                  </select>
+
+                </div>
+
+
+                <div className="write-field">
+
+                  <label htmlFor="artwork-language">
+
+                    {t(
+                      "write.artworkLanguageLabel",
+                      "Artwork language"
+                    )}
+
+                  </label>
+
+
+                  <select
+                    id="artwork-language"
+                    value={
+                      artworkLanguage
+                    }
+                    disabled={
+                      artworkPublishing
+                    }
+                    onChange={
+                      (
+                        event
+                      ) =>
+                        setArtworkLanguage(
+                          event.target
+                            .value
+                        )
+                    }
+                  >
+
+                    {DOCUMENT_LANGUAGES.map(
+                      (
+                        language
+                      ) => (
+
+                        <option
+                          key={
+                            language.code
+                          }
+                          value={
+                            language.code
+                          }
+                        >
+                          {language.label}
+                        </option>
+
+                      )
+                    )}
+
+                  </select>
+
+                </div>
+
+              </div>
+
+
+              <div className="write-field">
+
+                <label htmlFor="artwork-description">
+
+                  {t(
+                    "write.artworkDescriptionLabel",
+                    "Description"
+                  )}
+
+                </label>
+
+
+                <textarea
+                  id="artwork-description"
+                  value={
+                    artworkDescription
+                  }
+                  rows={6}
+                  maxLength={5000}
+                  placeholder={
+                    t(
+                      "write.artworkDescriptionPlaceholder",
+                      "Tell viewers about the artwork, its inspiration, medium or story..."
+                    )
+                  }
+                  disabled={
+                    artworkPublishing
+                  }
+                  onChange={
+                    (
+                      event
+                    ) =>
+                      setArtworkDescription(
+                        event.target
+                          .value
+                      )
+                  }
+                />
+
+
+                <div className="field-meta">
+
+                  <span>
+
+                    {t(
+                      "write.artworkDescriptionHelp",
+                      "Optional, but recommended."
+                    )}
+
+                  </span>
+
+
+                  <span>
+                    {artworkDescription.length}/5000
+                  </span>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* ============================================= */}
+            {/* ARTWORK SETTINGS                              */}
+            {/* ============================================= */}
+
+            <div className="write-section">
+
+              <div className="write-section-heading">
+
+                <div>
+
+                  <span className="write-step">
+
+                    {t(
+                      "write.artworkSettingsStep",
+                      "03"
+                    )}
+
+                  </span>
+
+
+                  <h2>
+
+                    {t(
+                      "write.artworkSettingsTitle",
+                      "Publishing settings"
+                    )}
+
+                  </h2>
+
+                </div>
+
+              </div>
+
+
+              <div className="document-settings-grid">
+
+                <label
+                  className={
+                    artworkVisibility ===
+                    "public"
+                      ? "document-setting-card active"
+                      : "document-setting-card"
+                  }
+                >
+
+                  <input
+                    type="radio"
+                    name="artwork-visibility"
+                    value="public"
+                    checked={
+                      artworkVisibility ===
+                      "public"
+                    }
+                    disabled={
+                      artworkPublishing
+                    }
+                    onChange={() =>
+                      setArtworkVisibility(
+                        "public"
+                      )
+                    }
+                  />
+
+
+                  <BookOpen
+                    size={21}
+                  />
+
+
+                  <span>
+
+                    <strong>
+
+                      {t(
+                        "write.visibilityPublic",
+                        "Public"
+                      )}
+
+                    </strong>
+
+
+                    <small>
+
+                      {t(
+                        "write.artworkVisibilityPublicDescription",
+                        "Anyone can discover and view this artwork."
+                      )}
+
+                    </small>
+
+                  </span>
+
+                </label>
+
+
+                <label
+                  className={
+                    artworkVisibility ===
+                    "unlisted"
+                      ? "document-setting-card active"
+                      : "document-setting-card"
+                  }
+                >
+
+                  <input
+                    type="radio"
+                    name="artwork-visibility"
+                    value="unlisted"
+                    checked={
+                      artworkVisibility ===
+                      "unlisted"
+                    }
+                    disabled={
+                      artworkPublishing
+                    }
+                    onChange={() =>
+                      setArtworkVisibility(
+                        "unlisted"
+                      )
+                    }
+                  />
+
+
+                  <Lock
+                    size={21}
+                  />
+
+
+                  <span>
+
+                    <strong>
+
+                      {t(
+                        "write.visibilityUnlisted",
+                        "Unlisted"
+                      )}
+
+                    </strong>
+
+
+                    <small>
+
+                      {t(
+                        "write.artworkVisibilityUnlistedDescription",
+                        "Accessible by direct link but not publicly listed."
+                      )}
+
+                    </small>
+
+                  </span>
+
+                </label>
+
+              </div>
+
+
+              <label className="document-download-toggle">
+
+                <input
+                  type="checkbox"
+                  checked={
+                    artworkAllowDownload
+                  }
+                  disabled={
+                    artworkPublishing
+                  }
+                  onChange={
+                    (
+                      event
+                    ) =>
+                      setArtworkAllowDownload(
+                        event.target
+                          .checked
+                      )
+                  }
+                />
+
+
+                <span className="document-toggle-icon">
+
+                  <Download
+                    size={19}
+                  />
+
+                </span>
+
+
+                <span>
+
+                  <strong>
+
+                    {t(
+                      "write.artworkAllowDownload",
+                      "Allow viewers to download"
+                    )}
+
+                  </strong>
+
+
+                  <small>
+
+                    {t(
+                      "write.artworkAllowDownloadDescription",
+                      "Viewers can save the published artwork image."
+                    )}
+
+                  </small>
+
+                </span>
+
+              </label>
+
+            </div>
+
+
+            {/* ============================================= */}
+            {/* ARTWORK ACTIONS                               */}
+            {/* ============================================= */}
+
+            <div className="write-form-actions">
+
+              <button
+                type="button"
+                className="draft-button"
+                disabled={
+                  artworkPublishing ||
+                  !artworkFile
+                }
+                onClick={() =>
+                  submitArtwork(
+                    "draft"
+                  )
+                }
+              >
+
+                {artworkPublishing ? (
+
+                  <LoaderCircle
+                    className="spin"
+                    size={19}
+                  />
+
+                ) : (
+
+                  <Save
+                    size={19}
+                  />
+
+                )}
+
+
+                {t(
+                  "write.saveArtworkDraft",
+                  "Save Artwork Draft"
+                )}
+
+              </button>
+
+
+              <button
+                type="submit"
+                className="publish-button"
+                disabled={
+                  artworkPublishing ||
+                  !artworkFile
+                }
+              >
+
+                {artworkPublishing ? (
+
+                  <LoaderCircle
+                    className="spin"
+                    size={20}
+                  />
+
+                ) : (
+
+                  <Send
+                    size={19}
+                  />
+
+                )}
+
+
+                {artworkPublishing
+                  ? t(
+                      "write.publishingArtwork",
+                      "Publishing artwork..."
+                    )
+                  : t(
+                      "write.publishArtwork",
+                      "Publish Artwork"
+                    )}
+
+              </button>
+
+            </div>
+
+
+            {/* ============================================= */}
+            {/* LAST PUBLISHED ARTWORK                        */}
+            {/* ============================================= */}
+
+            {lastPublishedArtwork && (
+
+              <div className="document-published-result">
+
+                <CheckCircle2
+                  size={22}
+                />
+
+
+                <div>
+
+                  <strong>
+                    {lastPublishedArtwork.title}
+                  </strong>
+
+
+                  <span>
+
+                    {t(
+                      "write.artworkStored",
+                      "Your artwork was stored successfully."
+                    )}
+
+                  </span>
+
+                </div>
+
+
+                {lastPublishedArtwork
+                  .image_url && (
+
+                  <a
+                    href={
+                      lastPublishedArtwork
+                        .image_url
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+
+                    {t(
+                      "write.viewArtwork",
+                      "View artwork"
                     )}
 
                   </a>

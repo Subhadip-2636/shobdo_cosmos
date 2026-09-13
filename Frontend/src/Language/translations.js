@@ -268,7 +268,7 @@ export const translations = {
       words: "শব্দ",
     },
 
-    write: {
+        write: {
       eyebrow: "তোমার সৃষ্টির জায়গা",
       title: "নতুন কিছু লিখুন",
       subtitle:
@@ -313,7 +313,8 @@ export const translations = {
         "শুধুমাত্র PDF, JPG, JPEG অথবা PNG ফাইল নির্বাচন করুন।",
       fileTooLarge:
         "ফাইলের আকার ১০ MB-এর বেশি হতে পারবে না।",
-      emptyFile: "নির্বাচিত ফাইলটি খালি।",
+      emptyFile:
+        "নির্বাচিত ফাইলটি খালি।",
       damagedImage:
         "ছবিটি ক্ষতিগ্রস্ত অথবা পড়া যাচ্ছে না।",
       damagedPdf:
@@ -351,6 +352,9 @@ export const translations = {
         "খসড়া এই ডিভাইসে সংরক্ষণ করা হয়েছে।",
       draftEmpty:
         "খসড়া সংরক্ষণ করতে শিরোনাম বা লেখার কিছু অংশ লিখুন।",
+      draftIdMissing:
+        "খসড়া সংরক্ষিত হয়েছে, কিন্তু লেখার আইডি পাওয়া যায়নি।",
+
       publish: "লেখা প্রকাশ করুন",
       publishing: "প্রকাশ করা হচ্ছে...",
       published:
@@ -360,7 +364,8 @@ export const translations = {
 
       loginRequired:
         "লেখা প্রকাশ করতে প্রথমে লগইন করুন।",
-      titleRequired: "লেখার শিরোনাম লিখুন।",
+      titleRequired:
+        "লেখার শিরোনাম লিখুন।",
       contentRequired:
         "লেখার মূল অংশ লিখুন অথবা একটি ফাইল স্ক্যান করুন।",
       titleTooLong:
@@ -372,89 +377,300 @@ export const translations = {
       // CREATOR STUDIO
       // =====================================================
 
-      creatorEyebrow: "SHOBDO ক্রিয়েটর স্টুডিও",
-      creatorTitle: "তৈরি করুন ও প্রকাশ করুন",
-      creatorEditTitle: "আপনার লেখা সম্পাদনা করুন",
-      creatorSubtitle:"নিজের লেখা লিখুন অথবা একটি PDF ডকুমেন্ট SHOBDO সম্প্রদায়ের সঙ্গে প্রকাশ করুন।",
+      creatorEyebrow:
+        "SHOBDO ক্রিয়েটর স্টুডিও",
+      creatorTitle:
+        "তৈরি করুন ও প্রকাশ করুন",
+      creatorEditTitle:
+        "আপনার লেখা সম্পাদনা করুন",
+      creatorSubtitle:
+        "নিজের লেখা, PDF ডকুমেন্ট অথবা দৃশ্যশিল্প SHOBDO সম্প্রদায়ের সঙ্গে প্রকাশ করুন।",
+      creatorSubtitleWithArtwork:
+        "নিজের লেখা, PDF ডকুমেন্ট অথবা দৃশ্যশিল্প SHOBDO সম্প্রদায়ের সঙ্গে প্রকাশ করুন।",
+
       createStep: "তৈরি করুন",
-      createQuestion: "আপনি কী প্রকাশ করতে চান?",
-      createDescription:"আপনার কাজের জন্য উপযুক্ত প্রকাশনার ধরন নির্বাচন করুন।",
+      createQuestion:
+        "আপনি কী প্রকাশ করতে চান?",
+      createDescription:
+        "আপনার কাজের জন্য উপযুক্ত প্রকাশনার ধরন নির্বাচন করুন।",
+      publishingTypeAria:
+        "প্রকাশনার ধরন",
+
       writingMode: "লেখা",
-      writingModeDescription:"কবিতা, গল্প, প্রবন্ধ ও অনুভূতি",
-      documentMode: "PDF ডকুমেন্ট",
-      documentModeDescription:"সম্পূর্ণ PDF ফাইল প্রকাশ করুন",
-      artworkMode: "চিত্রকর্ম",
-      artworkModeDescription:"শীঘ্রই আসছে",
-      comingSoon: "শীঘ্রই আসছে",
+      writingModeDescription:
+        "কবিতা, গল্প, প্রবন্ধ ও অনুভূতি",
+
+      documentMode:
+        "PDF ডকুমেন্ট",
+      documentModeDescription:
+        "সম্পূর্ণ PDF ফাইল প্রকাশ করুন",
+
+      artworkMode:
+        "চিত্রকর্ম",
+      artworkModeDescription:
+        "চিত্রকর্ম, স্কেচ, ফটোগ্রাফি ও ডিজিটাল আর্ট প্রকাশ করুন",
+      artworkModeReadyDescription:
+        "চিত্রকর্ম, স্কেচ, ফটোগ্রাফি ও ডিজিটাল আর্ট",
+
+      comingSoon:
+        "শীঘ্রই আসছে",
 
       // =====================================================
       // WRITING MODE
       // =====================================================
 
-      writingLanguageTitle: "লেখার ভাষা",
-      writingLanguageDescription:"আপনার লেখার ভাষা নির্বাচন করুন।",
-      ocrImportTitle:"ডকুমেন্ট থেকে লেখা আমদানি করুন",
-      ocrImportDescription:"স্ক্যান করা PDF অথবা ছবি আপলোড করে লেখাটি সম্পাদক অংশে আনুন। এতে মূল PDF প্রকাশিত হবে না।",
-      scanDocumentToText:"ডকুমেন্ট স্ক্যান করে লেখা তুলুন",
-      scanDocumentSubtitle:"এখানে PDF বা ছবি ছেড়ে দিন অথবা একটি ফাইল নির্বাচন করুন।",
-      selectScan: "স্ক্যান ফাইল নির্বাচন করুন",
-      scanSupported:"PDF, JPG, JPEG বা PNG • সর্বোচ্চ ১০ MB",
-      ocrImportReady: "OCR আমদানির জন্য প্রস্তুত",
-      extractText: "লেখা তুলুন",
-      extractingText: "লেখা তোলা হচ্ছে...",
-      writingDetailsTitle: "লেখার তথ্য",
-      writingTitlePlaceholder:"আপনার লেখার একটি শিরোনাম দিন",
-      writingTitleHelp:"পাঠকের মনে থাকার মতো একটি শিরোনাম দিন।",
-      makeMemorable:"পাঠকের মনে থাকার মতো করে লিখুন।",
-      publishWritingButton:"লেখা প্রকাশ করুন",
+      writingLanguageTitle:
+        "লেখার ভাষা",
+      writingLanguageDescription:
+        "আপনার লেখার ভাষা নির্বাচন করুন।",
+
+      ocrImportTitle:
+        "ডকুমেন্ট থেকে লেখা আমদানি করুন",
+      ocrImportDescription:
+        "স্ক্যান করা PDF অথবা ছবি আপলোড করে লেখাটি সম্পাদক অংশে আনুন। এতে মূল PDF প্রকাশিত হবে না।",
+
+      scanDocumentToText:
+        "ডকুমেন্ট স্ক্যান করে লেখা তুলুন",
+      scanDocumentSubtitle:
+        "এখানে PDF বা ছবি ছেড়ে দিন অথবা একটি ফাইল নির্বাচন করুন।",
+      selectScan:
+        "স্ক্যান ফাইল নির্বাচন করুন",
+      scanSupported:
+        "PDF, JPG, JPEG বা PNG • সর্বোচ্চ ১০ MB",
+      ocrImportReady:
+        "OCR আমদানির জন্য প্রস্তুত",
+      extractText:
+        "লেখা তুলুন",
+      extractingText:
+        "লেখা তোলা হচ্ছে...",
+
+      writingDetailsTitle:
+        "লেখার তথ্য",
+      writingTitlePlaceholder:
+        "আপনার লেখার একটি শিরোনাম দিন",
+      writingTitleHelp:
+        "পাঠকের মনে থাকার মতো একটি শিরোনাম দিন।",
+      makeMemorable:
+        "পাঠকের মনে থাকার মতো করে লিখুন।",
+      publishWritingButton:
+        "লেখা প্রকাশ করুন",
 
       // =====================================================
       // PDF DOCUMENT
       // =====================================================
 
-      documentUploadStep: "০১",
-      documentUploadTitle: "আপনার PDF আপলোড করুন",
-      documentUploadDescription:"মূল PDF নিরাপদভাবে সংরক্ষিত হবে এবং SHOBDO-তে একটি ডকুমেন্ট হিসেবে প্রকাশিত হবে।",
-      dropPdfTitle: "আপনার PDF এখানে ছেড়ে দিন",
-      dropPdfDescription:"পাণ্ডুলিপি, প্রবন্ধ, গবেষণাপত্র, ম্যগাজিন বা অন্যান্য সাহিত্যিক ডকুমেন্ট প্রকাশ করুন।",
-      choosePdf: "PDF নির্বাচন করুন",
-      pdfRequirements:"শুধুমাত্র PDF • সর্বোচ্চ ১০ MB • সর্বোচ্চ ৩০ পৃষ্ঠা",
-      readyToPublish: "প্রকাশের জন্য প্রস্তুত",
-      pdfPreview: "PDF প্রিভিউ",
-      openPreview: "প্রিভিউ খুলুন",
-      documentInfoStep: "০২",
-      documentInfoTitle: "ডকুমেন্টের তথ্য",
-      documentTitleLabel: "ডকুমেন্টের শিরোনাম",
-      documentTitlePlaceholder:"ডকুমেন্টের শিরোনাম লিখুন",
-      documentTitleHelp:"এই শিরোনামটি SHOBDO-তে প্রকাশ্যে দেখা যাবে।",
-      documentCategoryLabel: "বিভাগ",
-      documentLanguageLabel: "ডকুমেন্টের ভাষা",
-      documentDescriptionLabel: "বিবরণ",
-      documentDescriptionPlaceholder:"পাঠকদের বলুন এই ডকুমেন্টটি কী সম্পর্কে...",
-      documentDescriptionHelp:"ঐচ্ছিক, তবে দেওয়া ভালো।",
-      documentSettingsStep: "০৩",
-      documentSettingsTitle: "প্রকাশনার সেটিংস",
-      visibilityPublic: "সবার জন্য",
-      visibilityPublicDescription:"যে কেউ এই ডকুমেন্ট খুঁজে পেয়ে পড়তে পারবেন।",
-      visibilityUnlisted: "আনলিস্টেড",
-      visibilityUnlistedDescription:"শুধু সরাসরি লিংক থাকলে দেখা যাবে; সাধারণ তালিকায় দেখানো হবে না।",
-      allowDownload: "পাঠকদের ডাউনলোডের অনুমতি দিন",
-      allowDownloadDescription:"পাঠকেরা মূল PDF ফাইলটি সংরক্ষণ করতে পারবেন।",
-      saveDocumentDraft: "ডকুমেন্টের খসড়া সংরক্ষণ",
-      publishPdf: "PDF প্রকাশ করুন",
-      publishingPdf: "PDF প্রকাশ করা হচ্ছে...",
-      documentPublished:"PDF ডকুমেন্ট সফলভাবে প্রকাশিত হয়েছে।",
-      documentDraftSaved:"PDF ডকুমেন্ট খসড়া হিসেবে সংরক্ষিত হয়েছে।",
-      documentStored:"আপনার ডকুমেন্ট সফলভাবে সংরক্ষিত হয়েছে।",
-      viewPdf: "PDF দেখুন",
-      documentLoginRequired:"ডকুমেন্ট প্রকাশ করতে প্রথমে লগইন করুন।",
-      documentFileRequired:"প্রথমে একটি PDF নির্বাচন করুন।",
-      documentTitleRequired:"ডকুমেন্টের শিরোনাম আবশ্যক।",
-      documentTitleTooLong:"ডকুমেন্টের শিরোনাম সর্বোচ্চ ২০০ অক্ষরের হতে পারবে।",
-      documentDescriptionTooLong:"বিবরণ সর্বোচ্চ ৫০০০ অক্ষরের হতে পারবে।",
-      documentOnlyPdf:"ডকুমেন্ট মোডে শুধুমাত্র PDF প্রকাশ করা যায়।",
-      documentFileTooLarge:"PDF ফাইলের আকার ১০ MB-এর বেশি হতে পারবে না।",
-      documentPublishFailed:"PDF ডকুমেন্ট প্রকাশ করা যায়নি। আবার চেষ্টা করুন।",
+      documentUploadStep:
+        "০১",
+      documentUploadTitle:
+        "আপনার PDF আপলোড করুন",
+      documentUploadDescription:
+        "মূল PDF নিরাপদভাবে সংরক্ষিত হবে এবং SHOBDO-তে একটি ডকুমেন্ট হিসেবে প্রকাশিত হবে।",
+
+      dropPdfTitle:
+        "আপনার PDF এখানে ছেড়ে দিন",
+      dropPdfDescription:
+        "পাণ্ডুলিপি, প্রবন্ধ, গবেষণাপত্র, ম্যাগাজিন বা অন্যান্য সাহিত্যিক ডকুমেন্ট প্রকাশ করুন।",
+
+      choosePdf:
+        "PDF নির্বাচন করুন",
+      pdfRequirements:
+        "শুধুমাত্র PDF • সর্বোচ্চ ১০ MB • সর্বোচ্চ ৩০ পৃষ্ঠা",
+
+      readyToPublish:
+        "প্রকাশের জন্য প্রস্তুত",
+      pdfPreview:
+        "PDF প্রিভিউ",
+      openPreview:
+        "প্রিভিউ খুলুন",
+
+      documentInfoStep:
+        "০২",
+      documentInfoTitle:
+        "ডকুমেন্টের তথ্য",
+      documentTitleLabel:
+        "ডকুমেন্টের শিরোনাম",
+      documentTitlePlaceholder:
+        "ডকুমেন্টের শিরোনাম লিখুন",
+      documentTitleHelp:
+        "এই শিরোনামটি SHOBDO-তে প্রকাশ্যে দেখা যাবে।",
+
+      documentCategoryLabel:
+        "বিভাগ",
+      documentLanguageLabel:
+        "ডকুমেন্টের ভাষা",
+      documentDescriptionLabel:
+        "বিবরণ",
+      documentDescriptionPlaceholder:
+        "পাঠকদের বলুন এই ডকুমেন্টটি কী সম্পর্কে...",
+      documentDescriptionHelp:
+        "ঐচ্ছিক, তবে দেওয়া ভালো।",
+
+      documentSettingsStep:
+        "০৩",
+      documentSettingsTitle:
+        "প্রকাশনার সেটিংস",
+
+      visibilityPublic:
+        "সবার জন্য",
+      visibilityPublicDescription:
+        "যে কেউ এই ডকুমেন্ট খুঁজে পেয়ে পড়তে পারবেন।",
+
+      visibilityUnlisted:
+        "আনলিস্টেড",
+      visibilityUnlistedDescription:
+        "শুধু সরাসরি লিংক থাকলে দেখা যাবে; সাধারণ তালিকায় দেখানো হবে না।",
+
+      allowDownload:
+        "পাঠকদের ডাউনলোডের অনুমতি দিন",
+      allowDownloadDescription:
+        "পাঠকেরা মূল PDF ফাইলটি সংরক্ষণ করতে পারবেন।",
+
+      saveDocumentDraft:
+        "ডকুমেন্টের খসড়া সংরক্ষণ",
+      publishPdf:
+        "PDF প্রকাশ করুন",
+      publishingPdf:
+        "PDF প্রকাশ করা হচ্ছে...",
+
+      documentPublished:
+        "PDF ডকুমেন্ট সফলভাবে প্রকাশিত হয়েছে।",
+      documentDraftSaved:
+        "PDF ডকুমেন্ট খসড়া হিসেবে সংরক্ষিত হয়েছে।",
+      documentStored:
+        "আপনার ডকুমেন্ট সফলভাবে সংরক্ষিত হয়েছে।",
+      viewPdf:
+        "PDF দেখুন",
+
+      documentLoginRequired:
+        "ডকুমেন্ট প্রকাশ করতে প্রথমে লগইন করুন।",
+      documentFileRequired:
+        "প্রথমে একটি PDF নির্বাচন করুন।",
+      documentTitleRequired:
+        "ডকুমেন্টের শিরোনাম আবশ্যক।",
+      documentTitleTooLong:
+        "ডকুমেন্টের শিরোনাম সর্বোচ্চ ২০০ অক্ষরের হতে পারবে।",
+      documentDescriptionTooLong:
+        "বিবরণ সর্বোচ্চ ৫০০০ অক্ষরের হতে পারবে।",
+      documentOnlyPdf:
+        "ডকুমেন্ট মোডে শুধুমাত্র PDF প্রকাশ করা যায়।",
+      documentFileTooLarge:
+        "PDF ফাইলের আকার ১০ MB-এর বেশি হতে পারবে না।",
+      documentPublishFailed:
+        "PDF ডকুমেন্ট প্রকাশ করা যায়নি। আবার চেষ্টা করুন।",
+
+      // =====================================================
+      // ARTWORK
+      // =====================================================
+
+      artworkInvalidFile:
+        "শুধুমাত্র JPG, JPEG, PNG অথবা WEBP ছবি চিত্রকর্ম হিসেবে প্রকাশ করা যাবে।",
+
+      artworkFileTooLarge:
+        "চিত্রকর্মের ছবির আকার ১০ MB-এর বেশি হতে পারবে না।",
+
+      artworkLoginRequired:
+        "চিত্রকর্ম প্রকাশ করতে প্রথমে লগইন করুন।",
+
+      artworkFileRequired:
+        "প্রথমে একটি চিত্রকর্মের ছবি নির্বাচন করুন।",
+
+      artworkTitleRequired:
+        "চিত্রকর্মের শিরোনাম আবশ্যক।",
+
+      artworkTitleTooLong:
+        "চিত্রকর্মের শিরোনাম সর্বোচ্চ ২০০ অক্ষরের হতে পারবে।",
+
+      artworkDescriptionTooLong:
+        "চিত্রকর্মের বিবরণ সর্বোচ্চ ৫০০০ অক্ষরের হতে পারবে।",
+
+      artworkPublished:
+        "চিত্রকর্ম সফলভাবে প্রকাশিত হয়েছে।",
+
+      artworkDraftSaved:
+        "চিত্রকর্ম খসড়া হিসেবে সংরক্ষিত হয়েছে।",
+
+      artworkPublishFailed:
+        "চিত্রকর্ম প্রকাশ করা যায়নি। আবার চেষ্টা করুন।",
+
+      artworkUploadStep:
+        "০১",
+      artworkUploadTitle:
+        "আপনার চিত্রকর্ম আপলোড করুন",
+      artworkUploadDescription:
+        "আপনার মূল ছবি নিরাপদে সংরক্ষিত হবে এবং SHOBDO-তে চিত্রকর্ম হিসেবে প্রকাশিত হবে।",
+
+      dropArtworkTitle:
+        "আপনার চিত্রকর্ম এখানে ছেড়ে দিন",
+      dropArtworkDescription:
+        "পেইন্টিং, স্কেচ, ডিজিটাল আর্ট, ফটোগ্রাফি, ক্যালিগ্রাফি বা ইলাস্ট্রেশন প্রকাশ করুন।",
+
+      chooseArtwork:
+        "ছবি নির্বাচন করুন",
+
+      artworkRequirements:
+        "JPG, JPEG, PNG বা WEBP • সর্বোচ্চ ১০ MB",
+
+      removeArtwork:
+        "নির্বাচিত চিত্রকর্ম সরান",
+
+      artworkPreview:
+        "চিত্রকর্মের প্রিভিউ",
+
+      artworkInfoStep:
+        "০২",
+      artworkInfoTitle:
+        "চিত্রকর্মের তথ্য",
+
+      artworkTitleLabel:
+        "চিত্রকর্মের শিরোনাম",
+      artworkTitlePlaceholder:
+        "চিত্রকর্মের একটি শিরোনাম লিখুন",
+      artworkTitleHelp:
+        "এই শিরোনামটি SHOBDO-তে প্রকাশ্যে দেখা যাবে।",
+
+      artworkCategoryLabel:
+        "চিত্রকর্মের বিভাগ",
+      artworkLanguageLabel:
+        "চিত্রকর্মের ভাষা",
+
+      artworkDescriptionLabel:
+        "বিবরণ",
+      artworkDescriptionPlaceholder:
+        "চিত্রকর্মটির ভাবনা, প্রেরণা বা গল্প সম্পর্কে লিখুন...",
+      artworkDescriptionHelp:
+        "ঐচ্ছিক, তবে দর্শকদের জন্য একটি সংক্ষিপ্ত বিবরণ সহায়ক।",
+
+      artworkSettingsStep:
+        "০৩",
+      artworkSettingsTitle:
+        "প্রকাশনার সেটিংস",
+
+      artworkVisibilityPublicDescription:
+        "যে কেউ এই চিত্রকর্ম খুঁজে পেয়ে দেখতে পারবেন।",
+
+      artworkVisibilityUnlistedDescription:
+        "শুধু সরাসরি লিংক থাকলে দেখা যাবে; সাধারণ তালিকায় দেখানো হবে না।",
+
+      artworkAllowDownload:
+        "দর্শকদের ডাউনলোডের অনুমতি দিন",
+
+      artworkAllowDownloadDescription:
+        "দর্শকেরা চিত্রকর্মের মূল ছবি সংরক্ষণ করতে পারবেন।",
+
+      saveArtworkDraft:
+        "চিত্রকর্মের খসড়া সংরক্ষণ",
+
+      publishArtwork:
+        "চিত্রকর্ম প্রকাশ করুন",
+
+      publishingArtwork:
+        "চিত্রকর্ম প্রকাশ করা হচ্ছে...",
+
+      artworkStored:
+        "আপনার চিত্রকর্ম সফলভাবে সংরক্ষিত হয়েছে।",
+
+      viewArtwork:
+        "চিত্রকর্ম দেখুন",
     },
 
     writingDetails: {
@@ -1132,7 +1348,7 @@ export const translations = {
       words: "words",
     },
 
-    write: {
+        write: {
       eyebrow: "Your creative space",
       title: "Create something new",
       subtitle:
@@ -1154,156 +1370,492 @@ export const translations = {
       scanOptional: "Optional",
       scanDescription:
         "Select a clear handwritten image or PDF. The extracted text will be inserted into the editor.",
+
       dropTitle: "Drop your file here",
       dropSubtitle:
         "or select it from your device",
+
       selectFile: "Select file",
+
       supportedFiles:
         "PDF, JPG or PNG • Maximum 10 MB",
+
       selectedFile: "Selected file",
       removeFile: "Remove selected file",
       ocrLabel: "OCR",
-      extractButton: "Scan and extract text",
-      extracting: "Recognizing text...",
+
+      extractButton:
+        "Scan and extract text",
+
+      extracting:
+        "Recognizing text...",
+
       extractionSuccess:
         "Text extracted successfully. Review and edit it before publishing.",
+
       extractionFailed:
         "Unable to scan the writing. Please try again.",
+
       noTextFound:
         "No readable text was found. Try a clearer image or PDF.",
+
       chooseFileFirst:
         "Select a PDF, JPG or PNG file first.",
+
       invalidFile:
         "Only PDF, JPG, JPEG and PNG files are supported.",
+
       fileTooLarge:
         "File size cannot exceed 10 MB.",
-      emptyFile: "The selected file is empty.",
+
+      emptyFile:
+        "The selected file is empty.",
+
       damagedImage:
         "The selected image is damaged or unreadable.",
+
       damagedPdf:
         "The selected PDF is damaged or unreadable.",
+
       tesseractMissing:
         "Tesseract OCR is not installed or unavailable in Windows PATH.",
+
       languageDataMissing:
         "OCR language data is missing. Check eng, ben and hin traineddata.",
+
       serverUnavailable:
         "Unable to connect to the backend server.",
+
       ocrLanguageUnsupported:
         "OCR scanning isn't available yet for this language. Try Bengali, English or Hindi, or type your writing directly.",
+
       ocrLanguageNote:
         "Scanning (OCR) currently supports Bengali, English and Hindi only — you can still type your writing directly in this language.",
 
       editorStep: "03",
       editorTitle: "Edit your writing",
+
       titleLabel: "Title",
       titlePlaceholder:
         "Give your writing a meaningful title",
       titleHelp:
         "Choose a title that invites readers in.",
+
       categoryLabel: "Category",
       languageLabel: "Writing language",
-      contentLabel: "Your writing",
+
+      contentLabel:
+        "Your writing",
+
       contentPlaceholder:
         "Start writing here...",
+
       editorHelp:
         "Correct any OCR mistakes before publishing.",
+
       wordCount: "words",
       characterCount: "characters",
 
-      saveDraft: "Save draft",
+      saveDraft:
+        "Save draft",
+
       draftSaved:
         "Draft saved on this device.",
+
       draftEmpty:
         "Write a title or some content before saving a draft.",
-      publish: "Publish writing",
-      publishing: "Publishing...",
+
+      draftIdMissing:
+        "Draft saved, but no writing ID was returned.",
+
+      publish:
+        "Publish writing",
+
+      publishing:
+        "Publishing...",
+
       published:
         "Your writing was published successfully.",
+
       publishedSuccess:
         "Your writing was published successfully.",
 
       loginRequired:
         "Please log in before publishing.",
-      titleRequired: "Please enter a title.",
+
+      titleRequired:
+        "Please enter a title.",
+
       contentRequired:
         "Write something or scan a document first.",
+
       titleTooLong:
         "The title cannot exceed 200 characters.",
+
       publishFailed:
         "Unable to publish the writing. Please try again.",
-      creatorEyebrow: "SHOBDO Creator Studio",
-      creatorTitle: "Create and publish",
-      creatorEditTitle: "Edit your writing",
-      creatorSubtitle:"Share original writing or publish a PDF document with the SHOBDO community.",
+
+      // =====================================================
+      // CREATOR STUDIO
+      // =====================================================
+
+      creatorEyebrow:
+        "SHOBDO Creator Studio",
+
+      creatorTitle:
+        "Create and publish",
+
+      creatorEditTitle:
+        "Edit your writing",
+
+      creatorSubtitle:
+        "Share original writing, PDF documents or visual artwork with the SHOBDO community.",
+
+      creatorSubtitleWithArtwork:
+        "Share original writing, PDF documents or visual artwork with the SHOBDO community.",
+
       createStep: "CREATE",
-      createQuestion: "What would you like to publish?",
-      createDescription:"Choose the format that best fits your work.",
-      writingMode: "Writing",
-      writingModeDescription:"Poetry, stories, essays and thoughts",
-      documentMode: "PDF Document",
-      documentModeDescription:"Publish complete PDF files",
-      artworkMode: "Artwork",
-      artworkModeDescription: "Coming soon",
-      comingSoon: "Coming soon",
-      writingLanguageTitle: "Writing language",
-      writingLanguageDescription:"Choose the language of your writing.",
-      ocrImportTitle: "Import text from document",
-      ocrImportDescription:"Upload a scanned PDF or image and extract its text into the writing editor. This does not publish the original PDF.",
-      scanDocumentToText: "Scan document to text",
-      scanDocumentSubtitle:"Drag a PDF or image here, or choose a file.",
-      selectScan: "Select scan",
-      scanSupported:"PDF, JPG, JPEG or PNG • Maximum 10 MB",
-      ocrImportReady: "Ready for OCR import",
-      extractText: "Extract text",
-      extractingText: "Extracting text...",
-      writingDetailsTitle: "Writing details",
-      writingTitlePlaceholder:"Give your writing a title",
-      writingTitleHelp:"Choose a title readers will remember.",
-      makeMemorable: "Make it memorable.",
-      publishWritingButton: "Publish Writing",
+
+      createQuestion:
+        "What would you like to publish?",
+
+      createDescription:
+        "Choose the format that best fits your work.",
+
+      publishingTypeAria:
+        "Publishing type",
+
+      writingMode:
+        "Writing",
+
+      writingModeDescription:
+        "Poetry, stories, essays and thoughts",
+
+      documentMode:
+        "PDF Document",
+
+      documentModeDescription:
+        "Publish complete PDF files",
+
+      artworkMode:
+        "Artwork",
+
+      artworkModeDescription:
+        "Publish paintings, sketches, photography and digital art",
+
+      artworkModeReadyDescription:
+        "Paintings, sketches, photography and digital art",
+
+      comingSoon:
+        "Coming soon",
+
+      // =====================================================
+      // WRITING MODE
+      // =====================================================
+
+      writingLanguageTitle:
+        "Writing language",
+
+      writingLanguageDescription:
+        "Choose the language of your writing.",
+
+      ocrImportTitle:
+        "Import text from document",
+
+      ocrImportDescription:
+        "Upload a scanned PDF or image and extract its text into the writing editor. This does not publish the original PDF.",
+
+      scanDocumentToText:
+        "Scan document to text",
+
+      scanDocumentSubtitle:
+        "Drag a PDF or image here, or choose a file.",
+
+      selectScan:
+        "Select scan",
+
+      scanSupported:
+        "PDF, JPG, JPEG or PNG • Maximum 10 MB",
+
+      ocrImportReady:
+        "Ready for OCR import",
+
+      extractText:
+        "Extract text",
+
+      extractingText:
+        "Extracting text...",
+
+      writingDetailsTitle:
+        "Writing details",
+
+      writingTitlePlaceholder:
+        "Give your writing a title",
+
+      writingTitleHelp:
+        "Choose a title readers will remember.",
+
+      makeMemorable:
+        "Make it memorable.",
+
+      publishWritingButton:
+        "Publish Writing",
+
+      // =====================================================
+      // PDF DOCUMENT
+      // =====================================================
+
       documentUploadStep: "01",
-      documentUploadTitle: "Upload your PDF",
-      documentUploadDescription:"The original PDF will be stored securely and published as a document on SHOBDO.",
-      dropPdfTitle: "Drop your PDF here",
-      dropPdfDescription:"Upload manuscripts, essays, research, magazines or other literary documents.",
-      choosePdf: "Choose PDF",
-      pdfRequirements:"PDF only • Maximum 10 MB • Maximum 30 pages",
-      readyToPublish: "Ready to publish",
-      pdfPreview: "PDF Preview",
-      openPreview: "Open preview",
-      documentInfoStep: "02",
-      documentInfoTitle: "Document information",
-      documentTitleLabel: "Document title",
-      documentTitlePlaceholder:"Enter the document title",
-      documentTitleHelp:"This title will appear publicly on SHOBDO.",
-      documentCategoryLabel: "Category",
-      documentLanguageLabel: "Document language",
-      documentDescriptionLabel: "Description",
-      documentDescriptionPlaceholder:"Tell readers what this document is about...",
-      documentDescriptionHelp:"Optional, but recommended.",
-      documentSettingsStep: "03",
-      documentSettingsTitle: "Publishing settings",
-      visibilityPublic: "Public",
-      visibilityPublicDescription:"Anyone can discover and read this document.",
-      visibilityUnlisted: "Unlisted",
-      visibilityUnlistedDescription:"Accessible by direct link but not publicly listed.",
-      allowDownload: "Allow readers to download",
-      allowDownloadDescription:"Readers can save the original PDF file.",
-      saveDocumentDraft: "Save Document Draft",
-      publishPdf: "Publish PDF",
-      publishingPdf: "Publishing PDF...",
-      documentPublished:"PDF document published successfully.",
-      documentDraftSaved:"PDF document saved as draft.",
-      documentStored:"Your document was stored successfully.",
-      viewPdf: "View PDF",
-      documentLoginRequired:"Please log in before publishing a document.",
-      documentFileRequired:"Select a PDF document first.",
-      documentTitleRequired:"Document title is required.",
-      documentTitleTooLong:"Document title cannot exceed 200 characters.",
-      documentDescriptionTooLong:"Description cannot exceed 5000 characters.",
-      documentOnlyPdf:"Only PDF documents can be published in Document mode.",
-      documentFileTooLarge:"PDF size cannot exceed 10 MB.",
-      documentPublishFailed:"Unable to publish PDF document.",
+
+      documentUploadTitle:
+        "Upload your PDF",
+
+      documentUploadDescription:
+        "The original PDF will be stored securely and published as a document on SHOBDO.",
+
+      dropPdfTitle:
+        "Drop your PDF here",
+
+      dropPdfDescription:
+        "Upload manuscripts, essays, research, magazines or other literary documents.",
+
+      choosePdf:
+        "Choose PDF",
+
+      pdfRequirements:
+        "PDF only • Maximum 10 MB • Maximum 30 pages",
+
+      readyToPublish:
+        "Ready to publish",
+
+      pdfPreview:
+        "PDF Preview",
+
+      openPreview:
+        "Open preview",
+
+      documentInfoStep:
+        "02",
+
+      documentInfoTitle:
+        "Document information",
+
+      documentTitleLabel:
+        "Document title",
+
+      documentTitlePlaceholder:
+        "Enter the document title",
+
+      documentTitleHelp:
+        "This title will appear publicly on SHOBDO.",
+
+      documentCategoryLabel:
+        "Category",
+
+      documentLanguageLabel:
+        "Document language",
+
+      documentDescriptionLabel:
+        "Description",
+
+      documentDescriptionPlaceholder:
+        "Tell readers what this document is about...",
+
+      documentDescriptionHelp:
+        "Optional, but recommended.",
+
+      documentSettingsStep:
+        "03",
+
+      documentSettingsTitle:
+        "Publishing settings",
+
+      visibilityPublic:
+        "Public",
+
+      visibilityPublicDescription:
+        "Anyone can discover and read this document.",
+
+      visibilityUnlisted:
+        "Unlisted",
+
+      visibilityUnlistedDescription:
+        "Accessible by direct link but not publicly listed.",
+
+      allowDownload:
+        "Allow readers to download",
+
+      allowDownloadDescription:
+        "Readers can save the original PDF file.",
+
+      saveDocumentDraft:
+        "Save Document Draft",
+
+      publishPdf:
+        "Publish PDF",
+
+      publishingPdf:
+        "Publishing PDF...",
+
+      documentPublished:
+        "PDF document published successfully.",
+
+      documentDraftSaved:
+        "PDF document saved as draft.",
+
+      documentStored:
+        "Your document was stored successfully.",
+
+      viewPdf:
+        "View PDF",
+
+      documentLoginRequired:
+        "Please log in before publishing a document.",
+
+      documentFileRequired:
+        "Select a PDF document first.",
+
+      documentTitleRequired:
+        "Document title is required.",
+
+      documentTitleTooLong:
+        "Document title cannot exceed 200 characters.",
+
+      documentDescriptionTooLong:
+        "Description cannot exceed 5000 characters.",
+
+      documentOnlyPdf:
+        "Only PDF documents can be published in Document mode.",
+
+      documentFileTooLarge:
+        "PDF size cannot exceed 10 MB.",
+
+      documentPublishFailed:
+        "Unable to publish PDF document.",
+
+      // =====================================================
+      // ARTWORK
+      // =====================================================
+
+      artworkInvalidFile:
+        "Only JPG, JPEG, PNG and WEBP images can be published as artwork.",
+
+      artworkFileTooLarge:
+        "Artwork image size cannot exceed 10 MB.",
+
+      artworkLoginRequired:
+        "Please log in before publishing artwork.",
+
+      artworkFileRequired:
+        "Select an artwork image first.",
+
+      artworkTitleRequired:
+        "Artwork title is required.",
+
+      artworkTitleTooLong:
+        "Artwork title cannot exceed 200 characters.",
+
+      artworkDescriptionTooLong:
+        "Artwork description cannot exceed 5000 characters.",
+
+      artworkPublished:
+        "Artwork published successfully.",
+
+      artworkDraftSaved:
+        "Artwork saved as draft.",
+
+      artworkPublishFailed:
+        "Unable to publish artwork.",
+
+      artworkUploadStep:
+        "01",
+
+      artworkUploadTitle:
+        "Upload your artwork",
+
+      artworkUploadDescription:
+        "Your original image will be stored securely and published as artwork on SHOBDO.",
+
+      dropArtworkTitle:
+        "Drop your artwork here",
+
+      dropArtworkDescription:
+        "Publish paintings, sketches, digital art, photography, calligraphy or illustrations.",
+
+      chooseArtwork:
+        "Choose image",
+
+      artworkRequirements:
+        "JPG, JPEG, PNG or WEBP • Maximum 10 MB",
+
+      removeArtwork:
+        "Remove selected artwork",
+
+      artworkPreview:
+        "Artwork preview",
+
+      artworkInfoStep:
+        "02",
+
+      artworkInfoTitle:
+        "Artwork information",
+
+      artworkTitleLabel:
+        "Artwork title",
+
+      artworkTitlePlaceholder:
+        "Give your artwork a title",
+
+      artworkTitleHelp:
+        "This title will appear publicly on SHOBDO.",
+
+      artworkCategoryLabel:
+        "Artwork category",
+
+      artworkLanguageLabel:
+        "Artwork language",
+
+      artworkDescriptionLabel:
+        "Description",
+
+      artworkDescriptionPlaceholder:
+        "Tell viewers about the idea, inspiration or story behind this artwork...",
+
+      artworkDescriptionHelp:
+        "Optional, but a short description helps viewers understand your work.",
+
+      artworkSettingsStep:
+        "03",
+
+      artworkSettingsTitle:
+        "Publishing settings",
+
+      artworkVisibilityPublicDescription:
+        "Anyone can discover and view this artwork.",
+
+      artworkVisibilityUnlistedDescription:
+        "Accessible by direct link but not publicly listed.",
+
+      artworkAllowDownload:
+        "Allow viewers to download",
+
+      artworkAllowDownloadDescription:
+        "Viewers can save the original artwork image.",
+
+      saveArtworkDraft:
+        "Save Artwork Draft",
+
+      publishArtwork:
+        "Publish Artwork",
+
+      publishingArtwork:
+        "Publishing artwork...",
+
+      artworkStored:
+        "Your artwork was stored successfully.",
+
+      viewArtwork:
+        "View Artwork",
     },
 
     writingDetails: {
@@ -1978,16 +2530,24 @@ export const translations = {
       words: "शब्द",
     },
 
-    write: {
-      eyebrow: "आपका रचनात्मक स्थान",
-      title: "कुछ नया लिखें",
+        write: {
+      eyebrow:
+        "आपका रचनात्मक स्थान",
+
+      title:
+        "कुछ नया लिखें",
+
       subtitle:
         "अपने विचारों को शब्द दें। स्वयं लिखें या हस्तलिखित पृष्ठ अथवा PDF स्कैन करें।",
 
       languageStep: "01",
-      languageTitle: "लेखन की भाषा",
+
+      languageTitle:
+        "लेखन की भाषा",
+
       languageDescription:
         "OCR इसी भाषा के अनुसार टेक्स्ट पहचानेगा।",
+
       languageNote:
         "वेबसाइट की भाषा बदल सकती है। आपकी रचना की भाषा नहीं बदलेगी।",
 
@@ -1996,163 +2556,523 @@ export const translations = {
       hindi: "हिन्दी",
 
       scanStep: "02",
-      scanTitle: "रचना स्कैन करें",
-      scanOptional: "वैकल्पिक",
+
+      scanTitle:
+        "रचना स्कैन करें",
+
+      scanOptional:
+        "वैकल्पिक",
+
       scanDescription:
         "साफ़ हस्तलिखित चित्र या PDF चुनें। निकाला गया टेक्स्ट संपादक में जोड़ दिया जाएगा।",
-      dropTitle: "फ़ाइल यहाँ छोड़ें",
+
+      dropTitle:
+        "फ़ाइल यहाँ छोड़ें",
+
       dropSubtitle:
         "या अपने डिवाइस से चुनें",
-      selectFile: "फ़ाइल चुनें",
+
+      selectFile:
+        "फ़ाइल चुनें",
+
       supportedFiles:
         "PDF, JPG या PNG • अधिकतम 10 MB",
-      selectedFile: "चुनी हुई फ़ाइल",
-      removeFile: "चुनी हुई फ़ाइल हटाएँ",
-      ocrLabel: "OCR",
+
+      selectedFile:
+        "चुनी हुई फ़ाइल",
+
+      removeFile:
+        "चुनी हुई फ़ाइल हटाएँ",
+
+      ocrLabel:
+        "OCR",
+
       extractButton:
         "स्कैन करके टेक्स्ट निकालें",
+
       extracting:
         "टेक्स्ट पहचाना जा रहा है...",
+
       extractionSuccess:
         "टेक्स्ट सफलतापूर्वक निकाला गया। प्रकाशित करने से पहले संपादित करें।",
+
       extractionFailed:
         "रचना स्कैन नहीं हो सकी। फिर प्रयास करें।",
+
       noTextFound:
         "फ़ाइल में पढ़ने योग्य टेक्स्ट नहीं मिला। अधिक साफ़ चित्र या PDF चुनें।",
+
       chooseFileFirst:
         "पहले PDF, JPG या PNG फ़ाइल चुनें।",
+
       invalidFile:
         "केवल PDF, JPG, JPEG और PNG फ़ाइल समर्थित हैं।",
+
       fileTooLarge:
         "फ़ाइल का आकार 10 MB से अधिक नहीं हो सकता।",
-      emptyFile: "चुनी हुई फ़ाइल खाली है।",
+
+      emptyFile:
+        "चुनी हुई फ़ाइल खाली है।",
+
       damagedImage:
         "चुना हुआ चित्र खराब है या पढ़ा नहीं जा सकता।",
+
       damagedPdf:
         "चुनी हुई PDF खराब है या पढ़ी नहीं जा सकती।",
+
       tesseractMissing:
         "Tesseract OCR इंस्टॉल नहीं है या Windows PATH में उपलब्ध नहीं है।",
+
       languageDataMissing:
         "OCR भाषा डेटा नहीं मिला। eng, ben और hin traineddata जाँचें।",
+
       serverUnavailable:
         "Backend server से संपर्क नहीं हो सका।",
+
       ocrLanguageUnsupported:
         "इस भाषा के लिए अभी स्कैन (OCR) सुविधा उपलब्ध नहीं है। बांग्ला, अंग्रेज़ी या हिन्दी आज़माएँ, या सीधे टाइप करें।",
+
       ocrLanguageNote:
         "स्कैन (OCR) सुविधा फिलहाल केवल बांग्ला, अंग्रेज़ी और हिन्दी में उपलब्ध है — आप चाहें तो इस भाषा में सीधे टाइप कर सकते हैं।",
 
-      editorStep: "03",
-      editorTitle: "रचना संपादित करें",
-      titleLabel: "शीर्षक",
+      editorStep:
+        "03",
+
+      editorTitle:
+        "रचना संपादित करें",
+
+      titleLabel:
+        "शीर्षक",
+
       titlePlaceholder:
         "अपनी रचना को एक सुंदर शीर्षक दें",
+
       titleHelp:
         "ऐसा शीर्षक लिखें जो पाठकों को आकर्षित करे।",
-      categoryLabel: "श्रेणी",
-      languageLabel: "लेखन की भाषा",
-      contentLabel: "आपकी रचना",
+
+      categoryLabel:
+        "श्रेणी",
+
+      languageLabel:
+        "लेखन की भाषा",
+
+      contentLabel:
+        "आपकी रचना",
+
       contentPlaceholder:
         "यहाँ लिखना शुरू करें...",
+
       editorHelp:
         "प्रकाशित करने से पहले OCR की गलतियाँ सुधारें।",
-      wordCount: "शब्द",
-      characterCount: "अक्षर",
 
-      saveDraft: "ड्राफ्ट सहेजें",
+      wordCount:
+        "शब्द",
+
+      characterCount:
+        "अक्षर",
+
+      saveDraft:
+        "ड्राफ्ट सहेजें",
+
       draftSaved:
         "ड्राफ्ट इस डिवाइस पर सहेजा गया।",
+
       draftEmpty:
         "ड्राफ्ट सहेजने से पहले शीर्षक या कुछ सामग्री लिखें।",
-      publish: "रचना प्रकाशित करें",
-      publishing: "प्रकाशित हो रहा है...",
+
+      draftIdMissing:
+        "ड्राफ्ट सहेजा गया, लेकिन रचना की आईडी नहीं मिली।",
+
+      publish:
+        "रचना प्रकाशित करें",
+
+      publishing:
+        "प्रकाशित हो रहा है...",
+
       published:
         "आपकी रचना सफलतापूर्वक प्रकाशित हुई।",
+
       publishedSuccess:
         "आपकी रचना सफलतापूर्वक प्रकाशित हुई।",
 
       loginRequired:
         "प्रकाशित करने से पहले लॉगिन करें।",
+
       titleRequired:
         "रचना का शीर्षक लिखें।",
+
       contentRequired:
         "कुछ लिखें या कोई दस्तावेज़ स्कैन करें।",
+
       titleTooLong:
         "शीर्षक 200 अक्षरों से अधिक नहीं हो सकता।",
+
       publishFailed:
         "रचना प्रकाशित नहीं हो सकी। फिर प्रयास करें।",
-      creatorEyebrow: "SHOBDO क्रिएटर स्टूडियो",
-      creatorTitle: "बनाएँ और प्रकाशित करें",
-      creatorEditTitle: "अपनी रचना संपादित करें",
-      creatorSubtitle:"अपनी मौलिक रचना लिखें या SHOBDO समुदाय के साथ PDF दस्तावेज़ प्रकाशित करें।",
-      createStep: "बनाएँ",
-      createQuestion: "आप क्या प्रकाशित करना चाहते हैं?",
-      createDescription:"अपने कार्य के लिए उपयुक्त प्रारूप चुनें।",
-      writingMode: "लेखन",
-      writingModeDescription:"कविता, कहानी, निबंध और विचार",
-      documentMode: "PDF दस्तावेज़",
-      documentModeDescription:"संपूर्ण PDF फ़ाइल प्रकाशित करें",
-      artworkMode: "कलाकृति",
-      artworkModeDescription:"जल्द आ रहा है",
-      comingSoon: "जल्द आ रहा है",
-      writingLanguageTitle: "लेखन की भाषा",
-      writingLanguageDescription:"अपनी रचना की भाषा चुनें।",
-      ocrImportTitle:"दस्तावेज़ से टेक्स्ट आयात करें",
-      ocrImportDescription:"स्कैन किया हुआ PDF या चित्र अपलोड करके उसका टेक्स्ट लेखन संपादक में लाएँ। इससे मूल PDF प्रकाशित नहीं होगा।",
-      scanDocumentToText:"दस्तावेज़ स्कैन करके टेक्स्ट निकालें",
-      scanDocumentSubtitle:"PDF या चित्र यहाँ छोड़ें या फ़ाइल चुनें।",
-      selectScan: "स्कैन फ़ाइल चुनें",
-      scanSupported:"PDF, JPG, JPEG या PNG • अधिकतम 10 MB",
-      ocrImportReady:"OCR आयात के लिए तैयार",
-      extractText: "टेक्स्ट निकालें",
-      extractingText:"टेक्स्ट निकाला जा रहा है...",
-      writingDetailsTitle: "रचना की जानकारी",
-      writingTitlePlaceholder:"अपनी रचना का शीर्षक लिखें",
-      writingTitleHelp:"ऐसा शीर्षक चुनें जो पाठकों को याद रहे।",
-      makeMemorable:"इसे यादगार बनाएँ।",
-      publishWritingButton:"रचना प्रकाशित करें",
-      documentUploadStep: "01",
-      documentUploadTitle: "अपना PDF अपलोड करें",
-      documentUploadDescription:"मूल PDF सुरक्षित रूप से संग्रहीत होगा और SHOBDO पर दस्तावेज़ के रूप में प्रकाशित किया जाएगा।",
-      dropPdfTitle: "अपना PDF यहाँ छोड़ें",
-      dropPdfDescription:"पांडुलिपि, निबंध, शोध, पत्रिका या अन्य साहित्यिक दस्तावेज़ अपलोड करें।",
-      choosePdf: "PDF चुनें",
-      pdfRequirements:"केवल PDF • अधिकतम 10 MB • अधिकतम 30 पृषठ",
-      readyToPublish:"प्रकाशित करने के लिए तैयार",
-      pdfPreview: "PDF पूर्वावलोकन",
-      openPreview: "पूर्वावलोकन खोलें",
-      documentInfoStep: "02",
-      documentInfoTitle: "दस्तावेज़ की जानकारी",
-      documentTitleLabel: "दस्तावेज़ का शीर्षक",
-      documentTitlePlaceholder:"दस्तावेज़ का शीर्षक लिखें",
-      documentTitleHelp:"यह शीर्षक SHOBDO पर सार्वजनिक रूप से दिखाई देगा।",
-      documentCategoryLabel: "श्रेणी",
-      documentLanguageLabel:"दस्तावेज़ की भाषा",
-      documentDescriptionLabel: "विवरण",
-      documentDescriptionPlaceholder:"पाठकों को बताएँ कि यह दस्तावेज़ किस बारे में है...",
-      documentDescriptionHelp:"वैकल्पिक, लेकिन अनुशंसित।",
-      documentSettingsStep: "03",
-      documentSettingsTitle:"प्रकाशन सेटिंग्स",
-      visibilityPublic: "सार्वजनिक",
-      visibilityPublicDescription:"कोई भी इस दस्तावेज़ को खोज और पढ़ सकता है।",
-      visibilityUnlisted: "अनलिस्टेड",
-      visibilityUnlistedDescription:"सीधे लिंक से उपलब्ध होगा, लेकिन सार्वजनिक सूची में नहीं दिखेगा।",
-      allowDownload:"पाठकों को डाउनलोड करने दें",
-      allowDownloadDescription:"पाठक मूल PDF फ़ाइल सहेज सकेंगे।",
-      saveDocumentDraft:"दस्तावेज़ ड्राफ्ट सहेजें",
-      publishPdf: "PDF प्रकाशित करें",
-      publishingPdf:"PDF प्रकाशित हो रहा है...",
-      documentPublished:"PDF दस्तावेज़ सफलतापूर्वक प्रकाशित हुआ।",
-      documentDraftSaved:"PDF दस्तावेज़ ड्राफ्ट के रूप में सहेजा गया।",
-      documentStored:"आपका दस्तावेज़ सफलतापूर्वक संग्रहीत हुआ।",
-      viewPdf: "PDF देखें",
-      documentLoginRequired:"दस्तावेज़ प्रकाशित करने से पहले लॉगिन करें।",
-      documentFileRequired:"पहले एक PDF दस्तावेज़ चुनें।",
-      documentTitleRequired:"दस्तावेज़ का शीर्षक आवश्यक है।",
-      documentTitleTooLong:"दस्तावेज़ का शीर्षक 200 अक्षरों से अधिक नहीं हो सकता।",
-      documentDescriptionTooLong:"विवरण 5000 अक्षरों से अधिक नहीं हो सकता।",
-      documentOnlyPdf:"दस्तावेज़ मोड में केवल PDF फ़ाइल प्रकाशित की जा सकती है।",
-      documentFileTooLarge:"PDF का आकार 10 MB से अधिक नहीं हो सकता।",
-      documentPublishFailed:"PDF दस्तावेज़ प्रकाशित नहीं हो सका। फिर प्रयास करें।",
+
+      // =====================================================
+      // CREATOR STUDIO
+      // =====================================================
+
+      creatorEyebrow:
+        "SHOBDO क्रिएटर स्टूडियो",
+
+      creatorTitle:
+        "बनाएँ और प्रकाशित करें",
+
+      creatorEditTitle:
+        "अपनी रचना संपादित करें",
+
+      creatorSubtitle:
+        "अपनी मौलिक रचना, PDF दस्तावेज़ या दृश्य कलाकृति SHOBDO समुदाय के साथ प्रकाशित करें।",
+
+      creatorSubtitleWithArtwork:
+        "अपनी मौलिक रचना, PDF दस्तावेज़ या दृश्य कलाकृति SHOBDO समुदाय के साथ प्रकाशित करें।",
+
+      createStep:
+        "बनाएँ",
+
+      createQuestion:
+        "आप क्या प्रकाशित करना चाहते हैं?",
+
+      createDescription:
+        "अपने कार्य के लिए उपयुक्त प्रारूप चुनें।",
+
+      publishingTypeAria:
+        "प्रकाशन का प्रकार",
+
+      writingMode:
+        "लेखन",
+
+      writingModeDescription:
+        "कविता, कहानी, निबंध और विचार",
+
+      documentMode:
+        "PDF दस्तावेज़",
+
+      documentModeDescription:
+        "संपूर्ण PDF फ़ाइल प्रकाशित करें",
+
+      artworkMode:
+        "कलाकृति",
+
+      artworkModeDescription:
+        "चित्रकला, स्केच, फोटोग्राफी और डिजिटल कला प्रकाशित करें",
+
+      artworkModeReadyDescription:
+        "चित्रकला, स्केच, फोटोग्राफी और डिजिटल कला",
+
+      comingSoon:
+        "जल्द आ रहा है",
+
+      // =====================================================
+      // WRITING MODE
+      // =====================================================
+
+      writingLanguageTitle:
+        "लेखन की भाषा",
+
+      writingLanguageDescription:
+        "अपनी रचना की भाषा चुनें।",
+
+      ocrImportTitle:
+        "दस्तावेज़ से टेक्स्ट आयात करें",
+
+      ocrImportDescription:
+        "स्कैन किया हुआ PDF या चित्र अपलोड करके उसका टेक्स्ट लेखन संपादक में लाएँ। इससे मूल PDF प्रकाशित नहीं होगा।",
+
+      scanDocumentToText:
+        "दस्तावेज़ स्कैन करके टेक्स्ट निकालें",
+
+      scanDocumentSubtitle:
+        "PDF या चित्र यहाँ छोड़ें या फ़ाइल चुनें।",
+
+      selectScan:
+        "स्कैन फ़ाइल चुनें",
+
+      scanSupported:
+        "PDF, JPG, JPEG या PNG • अधिकतम 10 MB",
+
+      ocrImportReady:
+        "OCR आयात के लिए तैयार",
+
+      extractText:
+        "टेक्स्ट निकालें",
+
+      extractingText:
+        "टेक्स्ट निकाला जा रहा है...",
+
+      writingDetailsTitle:
+        "रचना की जानकारी",
+
+      writingTitlePlaceholder:
+        "अपनी रचना का शीर्षक लिखें",
+
+      writingTitleHelp:
+        "ऐसा शीर्षक चुनें जो पाठकों को याद रहे।",
+
+      makeMemorable:
+        "इसे यादगार बनाएँ।",
+
+      publishWritingButton:
+        "रचना प्रकाशित करें",
+
+      // =====================================================
+      // PDF DOCUMENT
+      // =====================================================
+
+      documentUploadStep:
+        "01",
+
+      documentUploadTitle:
+        "अपना PDF अपलोड करें",
+
+      documentUploadDescription:
+        "मूल PDF सुरक्षित रूप से संग्रहीत होगा और SHOBDO पर दस्तावेज़ के रूप में प्रकाशित किया जाएगा।",
+
+      dropPdfTitle:
+        "अपना PDF यहाँ छोड़ें",
+
+      dropPdfDescription:
+        "पांडुलिपि, निबंध, शोध, पत्रिका या अन्य साहित्यिक दस्तावेज़ अपलोड करें।",
+
+      choosePdf:
+        "PDF चुनें",
+
+      pdfRequirements:
+        "केवल PDF • अधिकतम 10 MB • अधिकतम 30 पृष्ठ",
+
+      readyToPublish:
+        "प्रकाशित करने के लिए तैयार",
+
+      pdfPreview:
+        "PDF पूर्वावलोकन",
+
+      openPreview:
+        "पूर्वावलोकन खोलें",
+
+      documentInfoStep:
+        "02",
+
+      documentInfoTitle:
+        "दस्तावेज़ की जानकारी",
+
+      documentTitleLabel:
+        "दस्तावेज़ का शीर्षक",
+
+      documentTitlePlaceholder:
+        "दस्तावेज़ का शीर्षक लिखें",
+
+      documentTitleHelp:
+        "यह शीर्षक SHOBDO पर सार्वजनिक रूप से दिखाई देगा।",
+
+      documentCategoryLabel:
+        "श्रेणी",
+
+      documentLanguageLabel:
+        "दस्तावेज़ की भाषा",
+
+      documentDescriptionLabel:
+        "विवरण",
+
+      documentDescriptionPlaceholder:
+        "पाठकों को बताएँ कि यह दस्तावेज़ किस बारे में है...",
+
+      documentDescriptionHelp:
+        "वैकल्पिक, लेकिन अनुशंसित।",
+
+      documentSettingsStep:
+        "03",
+
+      documentSettingsTitle:
+        "प्रकाशन सेटिंग्स",
+
+      visibilityPublic:
+        "सार्वजनिक",
+
+      visibilityPublicDescription:
+        "कोई भी इस दस्तावेज़ को खोज और पढ़ सकता है।",
+
+      visibilityUnlisted:
+        "अनलिस्टेड",
+
+      visibilityUnlistedDescription:
+        "सीधे लिंक से उपलब्ध होगा, लेकिन सार्वजनिक सूची में नहीं दिखेगा।",
+
+      allowDownload:
+        "पाठकों को डाउनलोड करने दें",
+
+      allowDownloadDescription:
+        "पाठक मूल PDF फ़ाइल सहेज सकेंगे।",
+
+      saveDocumentDraft:
+        "दस्तावेज़ ड्राफ्ट सहेजें",
+
+      publishPdf:
+        "PDF प्रकाशित करें",
+
+      publishingPdf:
+        "PDF प्रकाशित हो रहा है...",
+
+      documentPublished:
+        "PDF दस्तावेज़ सफलतापूर्वक प्रकाशित हुआ।",
+
+      documentDraftSaved:
+        "PDF दस्तावेज़ ड्राफ्ट के रूप में सहेजा गया।",
+
+      documentStored:
+        "आपका दस्तावेज़ सफलतापूर्वक संग्रहीत हुआ।",
+
+      viewPdf:
+        "PDF देखें",
+
+      documentLoginRequired:
+        "दस्तावेज़ प्रकाशित करने से पहले लॉगिन करें।",
+
+      documentFileRequired:
+        "पहले एक PDF दस्तावेज़ चुनें।",
+
+      documentTitleRequired:
+        "दस्तावेज़ का शीर्षक आवश्यक है।",
+
+      documentTitleTooLong:
+        "दस्तावेज़ का शीर्षक 200 अक्षरों से अधिक नहीं हो सकता।",
+
+      documentDescriptionTooLong:
+        "विवरण 5000 अक्षरों से अधिक नहीं हो सकता।",
+
+      documentOnlyPdf:
+        "दस्तावेज़ मोड में केवल PDF फ़ाइल प्रकाशित की जा सकती है।",
+
+      documentFileTooLarge:
+        "PDF का आकार 10 MB से अधिक नहीं हो सकता।",
+
+      documentPublishFailed:
+        "PDF दस्तावेज़ प्रकाशित नहीं हो सका। फिर प्रयास करें।",
+
+      // =====================================================
+      // ARTWORK
+      // =====================================================
+
+      artworkInvalidFile:
+        "कलाकृति के रूप में केवल JPG, JPEG, PNG और WEBP चित्र प्रकाशित किए जा सकते हैं।",
+
+      artworkFileTooLarge:
+        "कलाकृति की छवि 10 MB से अधिक नहीं हो सकती।",
+
+      artworkLoginRequired:
+        "कलाकृति प्रकाशित करने से पहले लॉगिन करें।",
+
+      artworkFileRequired:
+        "पहले कलाकृति की एक छवि चुनें।",
+
+      artworkTitleRequired:
+        "कलाकृति का शीर्षक आवश्यक है।",
+
+      artworkTitleTooLong:
+        "कलाकृति का शीर्षक 200 अक्षरों से अधिक नहीं हो सकता।",
+
+      artworkDescriptionTooLong:
+        "कलाकृति का विवरण 5000 अक्षरों से अधिक नहीं हो सकता।",
+
+      artworkPublished:
+        "कलाकृति सफलतापूर्वक प्रकाशित हुई।",
+
+      artworkDraftSaved:
+        "कलाकृति ड्राफ्ट के रूप में सहेजी गई।",
+
+      artworkPublishFailed:
+        "कलाकृति प्रकाशित नहीं हो सकी। फिर प्रयास करें।",
+
+      artworkUploadStep:
+        "01",
+
+      artworkUploadTitle:
+        "अपनी कलाकृति अपलोड करें",
+
+      artworkUploadDescription:
+        "आपकी मूल छवि सुरक्षित रूप से संग्रहीत होगी और SHOBDO पर कलाकृति के रूप में प्रकाशित की जाएगी।",
+
+      dropArtworkTitle:
+        "अपनी कलाकृति यहाँ छोड़ें",
+
+      dropArtworkDescription:
+        "चित्रकला, स्केच, डिजिटल आर्ट, फोटोग्राफी, सुलेख या चित्रण प्रकाशित करें।",
+
+      chooseArtwork:
+        "चित्र चुनें",
+
+      artworkRequirements:
+        "JPG, JPEG, PNG या WEBP • अधिकतम 10 MB",
+
+      removeArtwork:
+        "चुनी हुई कलाकृति हटाएँ",
+
+      artworkPreview:
+        "कलाकृति पूर्वावलोकन",
+
+      artworkInfoStep:
+        "02",
+
+      artworkInfoTitle:
+        "कलाकृति की जानकारी",
+
+      artworkTitleLabel:
+        "कलाकृति का शीर्षक",
+
+      artworkTitlePlaceholder:
+        "अपनी कलाकृति का शीर्षक लिखें",
+
+      artworkTitleHelp:
+        "यह शीर्षक SHOBDO पर सार्वजनिक रूप से दिखाई देगा।",
+
+      artworkCategoryLabel:
+        "कलाकृति की श्रेणी",
+
+      artworkLanguageLabel:
+        "कलाकृति की भाषा",
+
+      artworkDescriptionLabel:
+        "विवरण",
+
+      artworkDescriptionPlaceholder:
+        "इस कलाकृति के विचार, प्रेरणा या कहानी के बारे में बताएँ...",
+
+      artworkDescriptionHelp:
+        "वैकल्पिक, लेकिन छोटा विवरण दर्शकों को आपके काम को समझने में मदद करता है।",
+
+      artworkSettingsStep:
+        "03",
+
+      artworkSettingsTitle:
+        "प्रकाशन सेटिंग्स",
+
+      artworkVisibilityPublicDescription:
+        "कोई भी इस कलाकृति को खोज और देख सकता है।",
+
+      artworkVisibilityUnlistedDescription:
+        "सीधे लिंक से उपलब्ध होगी, लेकिन सार्वजनिक सूची में नहीं दिखाई जाएगी।",
+
+      artworkAllowDownload:
+        "दर्शकों को डाउनलोड करने दें",
+
+      artworkAllowDownloadDescription:
+        "दर्शक कलाकृति की मूल छवि सहेज सकेंगे।",
+
+      saveArtworkDraft:
+        "कलाकृति ड्राफ्ट सहेजें",
+
+      publishArtwork:
+        "कलाकृति प्रकाशित करें",
+
+      publishingArtwork:
+        "कलाकृति प्रकाशित हो रही है...",
+
+      artworkStored:
+        "आपकी कलाकृति सफलतापूर्वक संग्रहीत हुई।",
+
+      viewArtwork:
+        "कलाकृति देखें",
     },
 
     writingDetails: {
