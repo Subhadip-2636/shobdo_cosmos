@@ -411,20 +411,22 @@ async function createDocumentRequest({
   authErrorMessage,
   requestErrorMessage,
 }) {
-
-  const token =
-    getToken();
+  const token = getToken();
 
   if (!token) {
-
     throw new Error(
-      authErrorMessage
+      authErrorMessage ||
+        "Please log in before publishing a document."
     );
   }
 
+  if (!file) {
+    throw new Error(
+      "Please select a PDF document first."
+    );
+  }
 
-  const formData =
-    new FormData();
+  const formData = new FormData();
 
   formData.append(
     "document",
@@ -433,27 +435,27 @@ async function createDocumentRequest({
 
   formData.append(
     "title",
-    title
+    title || ""
   );
 
   formData.append(
     "description",
-    description
+    description || ""
   );
 
   formData.append(
     "category",
-    category
+    category || "প্রবন্ধ"
   );
 
   formData.append(
     "language",
-    language
+    language || "bn"
   );
 
   formData.append(
     "visibility",
-    visibility
+    visibility || "public"
   );
 
   formData.append(
@@ -465,12 +467,25 @@ async function createDocumentRequest({
 
   formData.append(
     "status",
-    status
+    status || "published"
   );
 
+  console.log(
+    "Publishing PDF to:",
+    `${API_URL}/documents`
+  );
 
-  const response =
-    await fetch(
+  console.log(
+    "PDF file:",
+    file.name,
+    file.size,
+    file.type
+  );
+
+  let response;
+
+  try {
+    response = await fetch(
       `${API_URL}/documents`,
       {
         method: "POST",
@@ -480,41 +495,128 @@ async function createDocumentRequest({
             `Bearer ${token}`,
         },
 
-        body:
-          formData,
+        body: formData,
       }
     );
+  } catch (networkError) {
+    console.error(
+      "DOCUMENT NETWORK ERROR:",
+      networkError
+    );
 
+    throw new Error(
+      "Unable to connect to the SHOBDO server. Please check your internet connection or backend server."
+    );
+  }
 
   let data = null;
 
+  const contentType =
+    response.headers.get(
+      "content-type"
+    ) || "";
+
   try {
+    if (
+      contentType.includes(
+        "application/json"
+      )
+    ) {
+      data =
+        await response.json();
+    } else {
+      const text =
+        await response.text();
 
-    data =
-      await response.json();
-
-  } catch {
+      data = {
+        message: text,
+      };
+    }
+  } catch (parseError) {
+    console.error(
+      "Unable to parse document response:",
+      parseError
+    );
 
     data = null;
   }
 
+  console.log(
+    "Document API response:",
+    response.status,
+    data
+  );
 
   if (!response.ok) {
+    let message =
+      data?.message ||
+      data?.error ||
+      data?.detail ||
+      "";
+
+    if (
+      response.status === 400 &&
+      !message
+    ) {
+      message =
+        "The PDF information is invalid.";
+    }
+
+    if (
+      response.status === 401
+    ) {
+      message =
+        message ||
+        "Your login session has expired. Please log in again.";
+    }
+
+    if (
+      response.status === 403
+    ) {
+      message =
+        message ||
+        "You do not have permission to publish this document.";
+    }
+
+    if (
+      response.status === 404
+    ) {
+      message =
+        "PDF publishing API was not found. Make sure the /api/documents backend route is registered.";
+    }
+
+    if (
+      response.status === 413
+    ) {
+      message =
+        "The PDF file is too large.";
+    }
+
+    if (
+      response.status >= 500
+    ) {
+      message =
+        message ||
+        "The server could not publish the PDF. Please check the backend logs.";
+    }
+
+    if (!message) {
+      message =
+        requestErrorMessage ||
+        `Unable to publish PDF. Server returned ${response.status}.`;
+    }
 
     const requestError =
-      new Error(
-        requestErrorMessage
-      );
+      new Error(message);
 
     requestError.status =
       response.status;
 
-    requestError.serverMessage =
-      data?.message || "";
+    requestError.data =
+      data;
 
     throw requestError;
   }
-
 
   return data;
 }
@@ -2057,218 +2159,391 @@ function Write({
 
 
   async function submitDocument(
-    status
+    status = "published"
   ) {
 
     setError("");
     setSuccess("");
 
+  // =====================================================
+  // AUTHENTICATION
+  // =====================================================
 
-    if (!user) {
+  const token = getToken();
 
-      setError(
-        t(
-          "write.documentLoginRequired",
-          "Please log in before publishing a document."
-        )
+  if (!token) {
+    setError(
+      t(
+        "write.documentLoginRequired",
+        "Please log in before publishing a document."
+      )
+    );
+
+    setTimeout(() => {
+      navigate(
+        "/login",
+        {
+          state: {
+            from:
+              location.pathname,
+          },
+        }
       );
+    }, 1000);
 
-      return;
-    }
-
-
-    if (!documentFile) {
-
-      setError(
-        t(
-          "write.documentFileRequired",
-          "Select a PDF document first."
-        )
-      );
-
-      return;
-    }
-
-
-    if (
-      !documentTitle.trim()
-    ) {
-
-      setError(
-        t(
-          "write.documentTitleRequired",
-          "Document title is required."
-        )
-      );
-
-      return;
-    }
-
-
-    if (
-      documentTitle
-        .trim()
-        .length >
-      200
-    ) {
-
-      setError(
-        t(
-          "write.documentTitleTooLong",
-          "Document title cannot exceed 200 characters."
-        )
-      );
-
-      return;
-    }
-
-
-    if (
-      documentDescription.length >
-      5000
-    ) {
-
-      setError(
-        t(
-          "write.documentDescriptionTooLong",
-          "Description cannot exceed 5000 characters."
-        )
-      );
-
-      return;
-    }
-
-
-    try {
-
-      setDocumentPublishing(
-        true
-      );
-
-
-      const response =
-        await createDocumentRequest({
-
-          file:
-            documentFile,
-
-          title:
-            documentTitle.trim(),
-
-          description:
-            documentDescription.trim(),
-
-          category:
-            documentCategory,
-
-          language:
-            documentLanguage,
-
-          visibility:
-            documentVisibility,
-
-          allowDownload,
-
-          status,
-
-          authErrorMessage:
-            t(
-              "write.documentLoginRequired",
-              "Please log in before publishing a document."
-            ),
-
-          requestErrorMessage:
-            t(
-              "write.documentPublishFailed",
-              "Unable to publish PDF document."
-            ),
-        });
-
-
-      const savedDocument =
-        response?.document ||
-        null;
-
-
-      setLastPublishedDocument(
-        savedDocument
-      );
-
-
-      setSuccess(
-        status === "published"
-          ? t(
-              "write.documentPublished",
-              "PDF document published successfully."
-            )
-          : t(
-              "write.documentDraftSaved",
-              "PDF document saved as draft."
-            )
-      );
-
-
-      setDocumentFile(
-        null
-      );
-
-      setDocumentTitle("");
-      setDocumentDescription("");
-
-      setDocumentCategory(
-        "প্রবন্ধ"
-      );
-
-      setDocumentLanguage(
-        getDefaultWritingLanguage(
-          uiLanguage
-        )
-      );
-
-      setDocumentVisibility(
-        "public"
-      );
-
-      setAllowDownload(
-        true
-      );
-
-
-    } catch (
-      requestError
-    ) {
-
-      console.error(
-        "DOCUMENT PUBLISH ERROR:",
-        requestError
-      );
-
-
-      setError(
-        requestError?.message ||
-        t(
-          "write.documentPublishFailed",
-          "Unable to publish PDF document."
-        )
-      );
-
-
-    } finally {
-
-      setDocumentPublishing(
-        false
-      );
-    }
+    return;
   }
 
+  // =====================================================
+  // FILE VALIDATION
+  // =====================================================
 
-  function handleDocumentSubmit(
+  if (!documentFile) {
+    setError(
+      t(
+        "write.documentFileRequired",
+        "Select a PDF document first."
+      )
+    );
+
+    return;
+  }
+
+  if (
+    !isPdfFile(
+      documentFile
+    )
+  ) {
+    setError(
+      t(
+        "write.documentOnlyPdf",
+        "Only PDF documents can be published."
+      )
+    );
+
+    return;
+  }
+
+  if (
+    documentFile.size >
+    MAX_FILE_SIZE
+  ) {
+    setError(
+      t(
+        "write.documentFileTooLarge",
+        "PDF size cannot exceed 10 MB."
+      )
+    );
+
+    return;
+  }
+
+  // =====================================================
+  // TITLE VALIDATION
+  // =====================================================
+
+  const cleanTitle =
+    documentTitle.trim();
+
+  if (!cleanTitle) {
+    setError(
+      t(
+        "write.documentTitleRequired",
+        "Document title is required."
+      )
+    );
+
+    return;
+  }
+
+  if (
+    cleanTitle.length >
+    200
+  ) {
+    setError(
+      t(
+        "write.documentTitleTooLong",
+        "Document title cannot exceed 200 characters."
+      )
+    );
+
+    return;
+  }
+
+  // =====================================================
+  // DESCRIPTION VALIDATION
+  // =====================================================
+
+  const cleanDescription =
+    documentDescription.trim();
+
+  if (
+    cleanDescription.length >
+    5000
+  ) {
+    setError(
+      t(
+        "write.documentDescriptionTooLong",
+        "Description cannot exceed 5000 characters."
+      )
+    );
+
+    return;
+  }
+
+  // =====================================================
+  // START PUBLISHING
+  // =====================================================
+
+  try {
+    setDocumentPublishing(
+      true
+    );
+
+    console.log(
+      "Starting document publication..."
+    );
+
+    console.log({
+      file:
+        documentFile.name,
+
+      fileSize:
+        documentFile.size,
+
+      title:
+        cleanTitle,
+
+      category:
+        documentCategory,
+
+      language:
+        documentLanguage,
+
+      visibility:
+        documentVisibility,
+
+      allowDownload,
+
+      status,
+    });
+
+    const response =
+      await createDocumentRequest({
+        file:
+          documentFile,
+
+        title:
+          cleanTitle,
+
+        description:
+          cleanDescription,
+
+        category:
+          documentCategory,
+
+        language:
+          documentLanguage,
+
+        visibility:
+          documentVisibility,
+
+        allowDownload,
+
+        status,
+
+        authErrorMessage:
+          t(
+            "write.documentLoginRequired",
+            "Please log in before publishing a document."
+          ),
+
+        requestErrorMessage:
+          t(
+            "write.documentPublishFailed",
+            "Unable to publish PDF document."
+          ),
+      });
+
+    console.log(
+      "DOCUMENT PUBLISH SUCCESS:",
+      response
+    );
+
+    const savedDocument =
+      response?.document ||
+      response?.data?.document ||
+      response?.data ||
+      response;
+
+    if (
+      !savedDocument
+    ) {
+      throw new Error(
+        "The server accepted the PDF but did not return document information."
+      );
+    }
+
+    setLastPublishedDocument(
+      savedDocument
+    );
+
+    setSuccess(
+      status ===
+        "published"
+        ? t(
+            "write.documentPublished",
+            "PDF document published successfully."
+          )
+        : t(
+            "write.documentDraftSaved",
+            "PDF document saved as draft."
+          )
+    );
+
+    // ===================================================
+    // OPTIONAL GLOBAL UPDATE
+    // ===================================================
+
+    if (
+      typeof onPublished ===
+        "function" &&
+      status ===
+        "published"
+    ) {
+      onPublished(
+        savedDocument
+      );
+    }
+
+    // ===================================================
+    // RESET FORM
+    // ===================================================
+
+    setDocumentFile(
+      null
+    );
+
+    if (
+      documentInputRef.current
+    ) {
+      documentInputRef.current.value =
+        "";
+    }
+
+    setDocumentTitle(
+      ""
+    );
+
+    setDocumentDescription(
+      ""
+    );
+
+    setDocumentCategory(
+      "প্রবন্ধ"
+    );
+
+    setDocumentLanguage(
+      getDefaultWritingLanguage(
+        uiLanguage
+      )
+    );
+
+    setDocumentVisibility(
+      "public"
+    );
+
+    setAllowDownload(
+      true
+    );
+
+    // Scroll upward so the success message is visible.
+    setTimeout(() => {
+      const form =
+        document.querySelector(
+          ".document-publish-form"
+        );
+
+      form?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
+
+    return savedDocument;
+
+  } catch (
+    requestError
+  ) {
+    console.error(
+      "DOCUMENT PUBLISH ERROR:",
+      requestError
+    );
+
+    let message =
+      requestError?.message ||
+      t(
+        "write.documentPublishFailed",
+        "Unable to publish PDF document."
+      );
+
+    if (
+      requestError?.status ===
+      401
+    ) {
+      localStorage.removeItem(
+        "shobdo_token"
+      );
+
+      message =
+        t(
+          "write.sessionExpired",
+          "Your login session has expired. Please log in again."
+        );
+    }
+
+    setError(
+      message
+    );
+
+    // Your error box is at the TOP of the form.
+    // Without this, clicking the bottom button can look like
+    // nothing happened.
+    setTimeout(() => {
+      const form =
+        document.querySelector(
+          ".document-publish-form"
+        );
+
+      form?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
+
+    return null;
+
+  } finally {
+    setDocumentPublishing(
+      false
+    );
+  }
+}
+
+
+  async function handleDocumentSubmit(
     event
   ) {
 
     event.preventDefault();
 
-    submitDocument(
+    if (
+      documentPublishing
+    ) {
+      return;
+    }
+
+    await submitDocument(
       "published"
     );
   }
@@ -4825,11 +5100,17 @@ function Write({
                   documentPublishing ||
                   !documentFile
                 }
-                onClick={() =>
-                  submitDocument(
+                onClick={async () => {
+                  if (
+                    documentPublishing
+                  ) {
+                    return;
+                  }
+
+                  await submitDocument(
                     "draft"
-                  )
-                }
+                  );
+                }}
               >
 
                 {documentPublishing ? (
@@ -4848,21 +5129,37 @@ function Write({
                 )}
 
 
-                {t(
-                  "write.saveDocumentDraft",
-                  "Save Document Draft"
-                )}
+                {documentPublishing
+                  ? t(
+                      "write.savingDocument",
+                      "Saving..."
+                    )
+                  : t(
+                      "write.saveDocumentDraft",
+                      "Save Document Draft"
+                    )}
 
               </button>
 
 
               <button
-                type="submit"
+                type="button"
                 className="publish-button"
                 disabled={
                   documentPublishing ||
                   !documentFile
                 }
+                onClick={async () => {
+                  if (
+                    documentPublishing
+                  ) {
+                    return;
+                  }
+
+                  await submitDocument(
+                    "published"
+                  );
+                }}
               >
 
                 {documentPublishing ? (
