@@ -13,7 +13,8 @@ from flask_jwt_extended import (
     jwt_required,
 )
 
-from database import db
+from extensions import db
+
 from models.document import Document
 
 from services.document_storage import (
@@ -25,11 +26,33 @@ from services.document_storage import (
 # =========================================================
 # BLUEPRINT
 # =========================================================
+#
+# IMPORTANT:
+#
+# app.py already registers this blueprint using:
+#
+# app.register_blueprint(
+#     document_bp,
+#     url_prefix="/api",
+# )
+#
+# Therefore DO NOT add url_prefix="/api/documents" here.
+#
+# Routes in this file explicitly begin with "/documents".
+#
+# Final URLs:
+#
+# POST   /api/documents
+# GET    /api/documents
+# GET    /api/documents/mine
+# GET    /api/documents/<id>
+# DELETE /api/documents/<id>
+#
+# =========================================================
 
 document_bp = Blueprint(
     "documents",
     __name__,
-    url_prefix="/api/documents",
 )
 
 
@@ -37,9 +60,24 @@ document_bp = Blueprint(
 # CONSTANTS
 # =========================================================
 
-MAX_PDF_SIZE = 10 * 1024 * 1024
+MAX_PDF_SIZE = (
+    10 * 1024 * 1024
+)
+
 MAX_PDF_PAGES = 30
-MAX_EXTRACTED_TEXT_LENGTH = 100000
+
+MAX_EXTRACTED_TEXT_LENGTH = (
+    100000
+)
+
+MAX_TITLE_LENGTH = 200
+
+MAX_DESCRIPTION_LENGTH = 5000
+
+MAX_CATEGORY_LENGTH = 80
+
+MAX_FILENAME_LENGTH = 255
+
 
 ALLOWED_LANGUAGES = {
     "bn",
@@ -51,10 +89,12 @@ ALLOWED_LANGUAGES = {
     "te",
 }
 
+
 ALLOWED_VISIBILITIES = {
     "public",
     "unlisted",
 }
+
 
 ALLOWED_STATUSES = {
     "draft",
@@ -63,18 +103,48 @@ ALLOWED_STATUSES = {
 
 
 # =========================================================
-# HELPERS
+# CURRENT UTC TIME
 # =========================================================
+
+
+def utc_now():
+
+    return datetime.now(
+        timezone.utc
+    )
+
+
+# =========================================================
+# CURRENT USER
+# =========================================================
+
 
 def get_current_user_id():
 
-    identity = get_jwt_identity()
+    identity = (
+        get_jwt_identity()
+    )
+
+    if identity is None:
+        return None
 
     try:
-        return int(identity)
 
-    except (TypeError, ValueError):
+        return int(
+            identity
+        )
+
+    except (
+        TypeError,
+        ValueError,
+    ):
+
         return None
+
+
+# =========================================================
+# BOOLEAN PARSER
+# =========================================================
 
 
 def parse_boolean(
@@ -83,38 +153,63 @@ def parse_boolean(
 ):
 
     if value is None:
+
         return default
 
-    value = str(value).strip().lower()
 
-    if value in {
+    normalized = (
+        str(value)
+        .strip()
+        .lower()
+    )
+
+
+    if normalized in {
         "true",
         "1",
         "yes",
         "on",
     }:
+
         return True
 
-    if value in {
+
+    if normalized in {
         "false",
         "0",
         "no",
         "off",
     }:
+
         return False
 
+
     return default
+
+
+# =========================================================
+# PDF INSPECTION
+# =========================================================
 
 
 def inspect_pdf(
     file_bytes,
 ):
 
+    if not file_bytes:
+
+        raise ValueError(
+            "The uploaded PDF is empty."
+        )
+
+
     try:
 
-        document = pymupdf.open(
-            stream=file_bytes,
-            filetype="pdf",
+        pdf_document = (
+            pymupdf.open(
+                stream=file_bytes,
+                filetype="pdf",
+            )
         )
 
     except Exception as error:
@@ -126,14 +221,25 @@ def inspect_pdf(
 
     try:
 
-        if document.needs_pass:
+        # =================================================
+        # PASSWORD PROTECTION
+        # =================================================
+
+        if pdf_document.needs_pass:
 
             raise ValueError(
                 "Password-protected PDFs are not supported."
             )
 
 
-        page_count = document.page_count
+        # =================================================
+        # PAGE COUNT
+        # =================================================
+
+        page_count = (
+            pdf_document.page_count
+        )
+
 
         if page_count < 1:
 
@@ -142,51 +248,70 @@ def inspect_pdf(
             )
 
 
-        if page_count > MAX_PDF_PAGES:
+        if (
+            page_count >
+            MAX_PDF_PAGES
+        ):
 
             raise ValueError(
-                f"PDF cannot contain more than "
-                f"{MAX_PDF_PAGES} pages."
+                (
+                    "PDF cannot contain more than "
+                    f"{MAX_PDF_PAGES} pages."
+                )
             )
 
+
+        # =================================================
+        # TEXT EXTRACTION
+        # =================================================
 
         extracted_parts = []
 
 
-        for page in document:
+        for page in pdf_document:
 
             try:
 
-                text = (
-                    page.get_text("text")
+                page_text = (
+                    page.get_text(
+                        "text"
+                    )
                     or ""
                 ).strip()
 
             except Exception:
 
-                text = ""
+                page_text = ""
 
 
-            if text:
+            if page_text:
 
                 extracted_parts.append(
-                    text
+                    page_text
                 )
 
 
-        extracted_text = "\n".join(
-            extracted_parts
-        ).strip()
+        extracted_text = (
+            "\n".join(
+                extracted_parts
+            )
+            .strip()
+        )
 
+
+        # Prevent enormous amounts of text
+        # from being stored in PostgreSQL.
 
         if (
-            len(extracted_text)
-            > MAX_EXTRACTED_TEXT_LENGTH
+            len(extracted_text) >
+            MAX_EXTRACTED_TEXT_LENGTH
         ):
 
-            extracted_text = extracted_text[
-                :MAX_EXTRACTED_TEXT_LENGTH
-            ]
+            extracted_text = (
+                extracted_text[
+                    :MAX_EXTRACTED_TEXT_LENGTH
+                ]
+            )
 
 
         return {
@@ -200,7 +325,50 @@ def inspect_pdf(
 
     finally:
 
-        document.close()
+        pdf_document.close()
+
+
+# =========================================================
+# DOCUMENT ACCESS CHECK
+# =========================================================
+
+
+def can_view_document(
+    document,
+    user_id=None,
+):
+
+    # Owner may view their own drafts.
+
+    if (
+        user_id is not None
+        and
+        str(document.user_id)
+        ==
+        str(user_id)
+    ):
+
+        return True
+
+
+    # Everyone else can only view
+    # published documents.
+
+    if (
+        document.status !=
+        "published"
+    ):
+
+        return False
+
+
+    return (
+        document.visibility
+        in {
+            "public",
+            "unlisted",
+        }
+    )
 
 
 # =========================================================
@@ -222,14 +390,23 @@ def inspect_pdf(
 #
 # =========================================================
 
+
 @document_bp.route(
-    "",
-    methods=["POST"],
+    "/documents",
+    methods=[
+        "POST",
+    ],
 )
 @jwt_required()
 def create_document():
 
-    user_id = get_current_user_id()
+    # =====================================================
+    # AUTHENTICATION
+    # =====================================================
+
+    user_id = (
+        get_current_user_id()
+    )
 
 
     if user_id is None:
@@ -244,8 +421,10 @@ def create_document():
     # PDF FILE
     # =====================================================
 
-    uploaded_file = request.files.get(
-        "document"
+    uploaded_file = (
+        request.files.get(
+            "document"
+        )
     )
 
 
@@ -271,8 +450,26 @@ def create_document():
         }), 400
 
 
-    if not original_filename.lower().endswith(
-        ".pdf"
+    if (
+        len(original_filename) >
+        MAX_FILENAME_LENGTH
+    ):
+
+        return jsonify({
+            "message":
+                (
+                    "The PDF filename is too long. "
+                    "Maximum length is 255 characters."
+                )
+        }), 400
+
+
+    if not (
+        original_filename
+        .lower()
+        .endswith(
+            ".pdf"
+        )
     ):
 
         return jsonify({
@@ -281,7 +478,59 @@ def create_document():
         }), 400
 
 
-    file_bytes = uploaded_file.read()
+    # =====================================================
+    # MIME TYPE
+    # =====================================================
+
+    mime_type = (
+        uploaded_file.mimetype
+        or ""
+    ).lower()
+
+
+    if (
+        mime_type
+        and
+        mime_type
+        not in {
+            "application/pdf",
+            "application/octet-stream",
+        }
+    ):
+
+        return jsonify({
+            "message":
+                "The selected file is not a PDF."
+        }), 400
+
+
+    # =====================================================
+    # READ FILE
+    # =====================================================
+
+    try:
+
+        # Read one extra byte so oversized files
+        # can be rejected without unnecessarily
+        # loading a very large request into memory.
+
+        file_bytes = (
+            uploaded_file.read(
+                MAX_PDF_SIZE + 1
+            )
+        )
+
+    except Exception as error:
+
+        print(
+            "DOCUMENT FILE READ ERROR:",
+            error,
+        )
+
+        return jsonify({
+            "message":
+                "Unable to read the uploaded PDF."
+        }), 400
 
 
     if not file_bytes:
@@ -292,7 +541,10 @@ def create_document():
         }), 400
 
 
-    if len(file_bytes) > MAX_PDF_SIZE:
+    if (
+        len(file_bytes) >
+        MAX_PDF_SIZE
+    ):
 
         return jsonify({
             "message":
@@ -300,10 +552,14 @@ def create_document():
         }), 413
 
 
-    # Basic PDF signature check.
+    # =====================================================
+    # PDF SIGNATURE
+    # =====================================================
 
-    if not file_bytes.startswith(
-        b"%PDF-"
+    if not (
+        file_bytes.startswith(
+            b"%PDF-"
+        )
     ):
 
         return jsonify({
@@ -317,51 +573,65 @@ def create_document():
     # =====================================================
 
     title = (
-        request.form.get("title")
+        request.form.get(
+            "title"
+        )
         or ""
     ).strip()
 
 
     description = (
-        request.form.get("description")
+        request.form.get(
+            "description"
+        )
         or ""
     ).strip()
 
 
     category = (
-        request.form.get("category")
+        request.form.get(
+            "category"
+        )
         or "অন্যান্য"
     ).strip()
 
 
     language = (
-        request.form.get("language")
+        request.form.get(
+            "language"
+        )
         or "bn"
     ).strip().lower()
 
 
     visibility = (
-        request.form.get("visibility")
+        request.form.get(
+            "visibility"
+        )
         or "public"
     ).strip().lower()
 
 
     status = (
-        request.form.get("status")
+        request.form.get(
+            "status"
+        )
         or "published"
     ).strip().lower()
 
 
-    allow_download = parse_boolean(
-        request.form.get(
-            "allow_download"
-        ),
-        default=True,
+    allow_download = (
+        parse_boolean(
+            request.form.get(
+                "allow_download"
+            ),
+            default=True,
+        )
     )
 
 
     # =====================================================
-    # FIELD VALIDATION
+    # TITLE VALIDATION
     # =====================================================
 
     if not title:
@@ -372,34 +642,71 @@ def create_document():
         }), 400
 
 
-    if len(title) > 200:
+    if (
+        len(title) >
+        MAX_TITLE_LENGTH
+    ):
 
         return jsonify({
             "message":
-                "Document title cannot exceed "
-                "200 characters."
+                (
+                    "Document title cannot exceed "
+                    "200 characters."
+                )
         }), 400
 
 
-    if len(description) > 5000:
+    # =====================================================
+    # DESCRIPTION VALIDATION
+    # =====================================================
+
+    if (
+        len(description) >
+        MAX_DESCRIPTION_LENGTH
+    ):
 
         return jsonify({
             "message":
-                "Description cannot exceed "
-                "5000 characters."
+                (
+                    "Description cannot exceed "
+                    "5000 characters."
+                )
         }), 400
 
 
-    if len(category) > 80:
+    # =====================================================
+    # CATEGORY VALIDATION
+    # =====================================================
+
+    if (
+        len(category) >
+        MAX_CATEGORY_LENGTH
+    ):
 
         return jsonify({
             "message":
-                "Category cannot exceed "
-                "80 characters."
+                (
+                    "Category cannot exceed "
+                    "80 characters."
+                )
         }), 400
 
 
-    if language not in ALLOWED_LANGUAGES:
+    if not category:
+
+        category = (
+            "অন্যান্য"
+        )
+
+
+    # =====================================================
+    # LANGUAGE VALIDATION
+    # =====================================================
+
+    if (
+        language not in
+        ALLOWED_LANGUAGES
+    ):
 
         return jsonify({
             "message":
@@ -407,7 +714,14 @@ def create_document():
         }), 400
 
 
-    if visibility not in ALLOWED_VISIBILITIES:
+    # =====================================================
+    # VISIBILITY VALIDATION
+    # =====================================================
+
+    if (
+        visibility not in
+        ALLOWED_VISIBILITIES
+    ):
 
         return jsonify({
             "message":
@@ -415,7 +729,14 @@ def create_document():
         }), 400
 
 
-    if status not in ALLOWED_STATUSES:
+    # =====================================================
+    # STATUS VALIDATION
+    # =====================================================
+
+    if (
+        status not in
+        ALLOWED_STATUSES
+    ):
 
         return jsonify({
             "message":
@@ -429,8 +750,10 @@ def create_document():
 
     try:
 
-        pdf_info = inspect_pdf(
-            file_bytes
+        pdf_info = (
+            inspect_pdf(
+                file_bytes
+            )
         )
 
     except ValueError as error:
@@ -442,7 +765,7 @@ def create_document():
 
 
     # =====================================================
-    # CLOUDINARY UPLOAD
+    # UPLOAD TO EXTERNAL STORAGE
     # =====================================================
 
     storage_result = None
@@ -450,29 +773,64 @@ def create_document():
 
     try:
 
-        storage_result = upload_pdf(
-            file_bytes
+        storage_result = (
+            upload_pdf(
+                file_bytes
+            )
         )
 
 
-        public_id = storage_result.get(
-            "public_id"
-        )
-
-        file_url = storage_result.get(
-            "file_url"
-        )
-
-        thumbnail_url = storage_result.get(
-            "thumbnail_url"
-        )
-
-
-        if not public_id or not file_url:
+        if not isinstance(
+            storage_result,
+            dict,
+        ):
 
             raise RuntimeError(
-                "Cloud storage did not return "
-                "the required document information."
+                (
+                    "Document storage returned "
+                    "an invalid response."
+                )
+            )
+
+
+        public_id = (
+            storage_result.get(
+                "public_id"
+            )
+        )
+
+
+        file_url = (
+            storage_result.get(
+                "file_url"
+            )
+        )
+
+
+        thumbnail_url = (
+            storage_result.get(
+                "thumbnail_url"
+            )
+        )
+
+
+        if not public_id:
+
+            raise RuntimeError(
+                (
+                    "Cloud storage did not return "
+                    "a public ID."
+                )
+            )
+
+
+        if not file_url:
+
+            raise RuntimeError(
+                (
+                    "Cloud storage did not return "
+                    "the document URL."
+                )
             )
 
 
@@ -481,6 +839,7 @@ def create_document():
         # =================================================
 
         new_document = Document(
+
             user_id=
                 user_id,
 
@@ -539,10 +898,9 @@ def create_document():
                 status,
 
             published_at=(
-                datetime.now(
-                    timezone.utc
-                )
-                if status == "published"
+                utc_now()
+                if status ==
+                "published"
                 else None
             ),
         )
@@ -552,20 +910,24 @@ def create_document():
             new_document
         )
 
+
         db.session.commit()
 
 
         return jsonify({
+
             "message":
                 (
                     "Document published successfully."
-                    if status == "published"
+                    if status ==
+                    "published"
                     else
                     "Document draft saved successfully."
                 ),
 
             "document":
                 new_document.to_dict(),
+
         }), 201
 
 
@@ -574,14 +936,28 @@ def create_document():
         db.session.rollback()
 
 
-        # If Cloudinary upload succeeded but the database
-        # operation failed, clean up the uploaded asset.
+        # =================================================
+        # REMOVE STORAGE FILE IF DATABASE FAILED
+        # =================================================
+        #
+        # If upload succeeded but PostgreSQL failed,
+        # delete the orphaned Cloudinary asset.
+        #
+        # =================================================
 
         if storage_result:
 
-            public_id = storage_result.get(
-                "public_id"
+            public_id = (
+                storage_result.get(
+                    "public_id"
+                )
+                if isinstance(
+                    storage_result,
+                    dict,
+                )
+                else None
             )
+
 
             if public_id:
 
@@ -594,8 +970,10 @@ def create_document():
                 except Exception as cleanup_error:
 
                     print(
-                        "DOCUMENT STORAGE "
-                        "CLEANUP ERROR:",
+                        (
+                            "DOCUMENT STORAGE "
+                            "CLEANUP ERROR:"
+                        ),
                         cleanup_error,
                     )
 
@@ -608,7 +986,10 @@ def create_document():
 
         return jsonify({
             "message":
-                "Unable to publish document."
+                (
+                    "Unable to publish document. "
+                    "Please try again."
+                )
         }), 500
 
 
@@ -620,17 +1001,25 @@ def create_document():
 #
 # =========================================================
 
+
 @document_bp.route(
-    "",
-    methods=["GET"],
+    "/documents",
+    methods=[
+        "GET",
+    ],
 )
 def get_documents():
+
+    # =====================================================
+    # PAGINATION
+    # =====================================================
 
     page = request.args.get(
         "page",
         default=1,
         type=int,
     )
+
 
     limit = request.args.get(
         "limit",
@@ -644,6 +1033,7 @@ def get_documents():
         1,
     )
 
+
     limit = max(
         1,
         min(
@@ -653,37 +1043,229 @@ def get_documents():
     )
 
 
+    # =====================================================
+    # FILTER OPTIONS
+    # =====================================================
+
+    language = (
+        request.args.get(
+            "language",
+            ""
+        )
+        .strip()
+        .lower()
+    )
+
+
+    category = (
+        request.args.get(
+            "category",
+            ""
+        )
+        .strip()
+    )
+
+
+    # =====================================================
+    # QUERY
+    # =====================================================
+
     query = (
         Document.query
         .filter(
-            Document.status
-            == "published",
+            Document.status ==
+                "published",
 
-            Document.visibility
-            == "public",
+            Document.visibility ==
+                "public",
         )
-        .order_by(
+    )
+
+
+    if language:
+
+        if (
+            language not in
+            ALLOWED_LANGUAGES
+        ):
+
+            return jsonify({
+                "message":
+                    "Unsupported document language."
+            }), 400
+
+
+        query = (
+            query.filter(
+                Document.language ==
+                    language
+            )
+        )
+
+
+    if category:
+
+        query = (
+            query.filter(
+                Document.category ==
+                    category
+            )
+        )
+
+
+    query = (
+        query.order_by(
             Document.published_at.desc(),
             Document.created_at.desc(),
         )
     )
 
 
-    pagination = query.paginate(
-        page=page,
-        per_page=limit,
-        error_out=False,
+    # =====================================================
+    # PAGINATE
+    # =====================================================
+
+    pagination = (
+        query.paginate(
+            page=page,
+            per_page=limit,
+            error_out=False,
+        )
     )
 
 
     return jsonify({
+
         "documents": [
+
             document.to_dict()
+
             for document
             in pagination.items
         ],
 
         "pagination": {
+
+            "page":
+                pagination.page,
+
+            "pages":
+                pagination.pages,
+
+            "total":
+                pagination.total,
+
+            "per_page":
+                pagination.per_page,
+
+            "has_next":
+                pagination.has_next,
+
+            "has_prev":
+                pagination.has_prev,
+        },
+
+    }), 200
+
+
+# =========================================================
+# CURRENT USER DOCUMENTS
+# =========================================================
+#
+# GET /api/documents/mine
+#
+# Includes:
+#
+# draft
+# published
+#
+# =========================================================
+
+
+@document_bp.route(
+    "/documents/mine",
+    methods=[
+        "GET",
+    ],
+)
+@jwt_required()
+def get_my_documents():
+
+    user_id = (
+        get_current_user_id()
+    )
+
+
+    if user_id is None:
+
+        return jsonify({
+            "message":
+                "Invalid authentication identity."
+        }), 401
+
+
+    page = request.args.get(
+        "page",
+        default=1,
+        type=int,
+    )
+
+
+    limit = request.args.get(
+        "limit",
+        default=20,
+        type=int,
+    )
+
+
+    page = max(
+        page or 1,
+        1,
+    )
+
+
+    limit = max(
+        1,
+        min(
+            limit or 20,
+            100,
+        ),
+    )
+
+
+    query = (
+        Document.query
+        .filter(
+            Document.user_id ==
+                user_id
+        )
+        .order_by(
+            Document.created_at.desc()
+        )
+    )
+
+
+    pagination = (
+        query.paginate(
+            page=page,
+            per_page=limit,
+            error_out=False,
+        )
+    )
+
+
+    return jsonify({
+
+        "documents": [
+
+            document.to_dict()
+
+            for document
+            in pagination.items
+        ],
+
+        "pagination": {
+
             "page":
                 pagination.page,
 
@@ -699,56 +1281,7 @@ def get_documents():
             "has_prev":
                 pagination.has_prev,
         },
-    }), 200
 
-
-# =========================================================
-# CURRENT USER DOCUMENTS
-# =========================================================
-#
-# GET /api/documents/mine
-#
-# Includes drafts and published documents.
-#
-# =========================================================
-
-@document_bp.route(
-    "/mine",
-    methods=["GET"],
-)
-@jwt_required()
-def get_my_documents():
-
-    user_id = get_current_user_id()
-
-
-    if user_id is None:
-
-        return jsonify({
-            "message":
-                "Invalid authentication identity."
-        }), 401
-
-
-    documents = (
-        Document.query
-        .filter(
-            Document.user_id
-            == user_id
-        )
-        .order_by(
-            Document.created_at.desc()
-        )
-        .all()
-    )
-
-
-    return jsonify({
-        "documents": [
-            document.to_dict()
-            for document
-            in documents
-        ]
     }), 200
 
 
@@ -758,19 +1291,33 @@ def get_my_documents():
 #
 # GET /api/documents/<id>
 #
+# Published:
+#   Public/unlisted viewers may access.
+#
+# Draft:
+#   Owner only.
+#
 # =========================================================
 
+
 @document_bp.route(
-    "/<int:document_id>",
-    methods=["GET"],
+    "/documents/<int:document_id>",
+    methods=[
+        "GET",
+    ],
+)
+@jwt_required(
+    optional=True
 )
 def get_document(
     document_id,
 ):
 
-    document = db.session.get(
-        Document,
-        document_id,
+    document = (
+        db.session.get(
+            Document,
+            document_id,
+        )
     )
 
 
@@ -782,18 +1329,15 @@ def get_document(
         }), 404
 
 
-    if document.status != "published":
-
-        return jsonify({
-            "message":
-                "Document not found."
-        }), 404
+    user_id = (
+        get_current_user_id()
+    )
 
 
-    if document.visibility not in {
-        "public",
-        "unlisted",
-    }:
+    if not can_view_document(
+        document,
+        user_id,
+    ):
 
         return jsonify({
             "message":
@@ -813,18 +1357,25 @@ def get_document(
 #
 # DELETE /api/documents/<id>
 #
+# Only the owner may delete it.
+#
 # =========================================================
 
+
 @document_bp.route(
-    "/<int:document_id>",
-    methods=["DELETE"],
+    "/documents/<int:document_id>",
+    methods=[
+        "DELETE",
+    ],
 )
 @jwt_required()
 def delete_document(
     document_id,
 ):
 
-    user_id = get_current_user_id()
+    user_id = (
+        get_current_user_id()
+    )
 
 
     if user_id is None:
@@ -835,9 +1386,11 @@ def delete_document(
         }), 401
 
 
-    document = db.session.get(
-        Document,
-        document_id,
+    document = (
+        db.session.get(
+            Document,
+            document_id,
+        )
     )
 
 
@@ -849,12 +1402,18 @@ def delete_document(
         }), 404
 
 
-    if document.user_id != user_id:
+    if (
+        str(document.user_id)
+        !=
+        str(user_id)
+    ):
 
         return jsonify({
             "message":
-                "You do not have permission "
-                "to delete this document."
+                (
+                    "You do not have permission "
+                    "to delete this document."
+                )
         }), 403
 
 
@@ -863,9 +1422,9 @@ def delete_document(
     )
 
 
-    # Delete the database record first.
-    # If Cloudinary cleanup fails afterward,
-    # the user's application data is still deleted.
+    # =====================================================
+    # DELETE DATABASE RECORD
+    # =====================================================
 
     try:
 
@@ -875,14 +1434,17 @@ def delete_document(
 
         db.session.commit()
 
+
     except Exception as error:
 
         db.session.rollback()
 
+
         print(
-            "DELETE DOCUMENT ERROR:",
+            "DELETE DOCUMENT DATABASE ERROR:",
             error,
         )
+
 
         return jsonify({
             "message":
@@ -890,7 +1452,17 @@ def delete_document(
         }), 500
 
 
-    # Remove Cloudinary asset.
+    # =====================================================
+    # DELETE CLOUD STORAGE ASSET
+    # =====================================================
+    #
+    # The database deletion is already committed.
+    #
+    # If Cloudinary cleanup fails, the user-facing
+    # document remains deleted. The orphan can later be
+    # cleaned from Cloudinary manually.
+    #
+    # =====================================================
 
     if public_id:
 
@@ -903,8 +1475,10 @@ def delete_document(
         except Exception as error:
 
             print(
-                "DOCUMENT CLOUDINARY "
-                "DELETE ERROR:",
+                (
+                    "DOCUMENT CLOUDINARY "
+                    "DELETE ERROR:"
+                ),
                 error,
             )
 
