@@ -10,17 +10,37 @@ const RAW_API_URL =
 const CLEAN_API_URL =
   RAW_API_URL
     .trim()
-    .replace(/\/+$/, "");
+    .replace(
+      /\/+$/,
+      ""
+    );
 
 
 const API_URL =
-  CLEAN_API_URL.endsWith("/api")
+  CLEAN_API_URL.endsWith(
+    "/api"
+  )
     ? CLEAN_API_URL
     : `${CLEAN_API_URL}/api`;
 
 
 // =========================================================
-// PARSE RESPONSE
+// TOKEN
+// =========================================================
+
+function getDocumentToken() {
+
+  return (
+    localStorage.getItem(
+      "shobdo_token"
+    ) ||
+    ""
+  );
+}
+
+
+// =========================================================
+// RESPONSE HANDLER
 // =========================================================
 
 async function parseResponse(
@@ -41,7 +61,9 @@ async function parseResponse(
   }
 
 
-  if (!response.ok) {
+  if (
+    !response.ok
+  ) {
 
     throw new Error(
       data?.message ||
@@ -97,7 +119,10 @@ export async function getDocuments({
   );
 
 
-  if (language.trim()) {
+  if (
+    language &&
+    language.trim()
+  ) {
 
     params.set(
       "language",
@@ -106,7 +131,10 @@ export async function getDocuments({
   }
 
 
-  if (category.trim()) {
+  if (
+    category &&
+    category.trim()
+  ) {
 
     params.set(
       "category",
@@ -137,7 +165,7 @@ export async function getDocuments({
 
 
 // =========================================================
-// GET ONE DOCUMENT
+// GET ONE PUBLIC DOCUMENT
 //
 // GET /api/documents/<id>
 // =========================================================
@@ -153,7 +181,9 @@ export async function getDocument(
 
 
   if (
-    !Number.isFinite(id) ||
+    !Number.isFinite(
+      id
+    ) ||
     id <= 0
   ) {
 
@@ -173,6 +203,52 @@ export async function getDocument(
         headers: {
           Accept:
             "application/json",
+        },
+      }
+    );
+
+
+  return parseResponse(
+    response
+  );
+}
+
+
+// =========================================================
+// GET CURRENT USER DOCUMENTS
+//
+// GET /api/documents/mine
+// =========================================================
+
+export async function getMyDocuments() {
+
+  const token =
+    getDocumentToken();
+
+
+  if (
+    !token
+  ) {
+
+    throw new Error(
+      "Please log in to view your documents."
+    );
+  }
+
+
+  const response =
+    await fetch(
+      `${API_URL}/documents/mine`,
+      {
+        method:
+          "GET",
+
+        headers: {
+          Accept:
+            "application/json",
+
+          Authorization:
+            `Bearer ${token}`,
         },
       }
     );
