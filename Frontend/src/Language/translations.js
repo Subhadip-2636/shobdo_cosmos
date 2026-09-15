@@ -197,60 +197,124 @@ export const translations = {
     },
 
     explore: {
-      eyebrow: "সাহিত্য আবিষ্কার করুন",
-      title: "অন্বেষণ করুন",
-      description:
-        "কবিতা, গল্প, অনুভূতি, প্রবন্ধ এবং নতুন লেখক খুঁজে নিন।",
+  eyebrow: "আবিষ্কার",
+  title: "SHOBDO অন্বেষণ করুন",
 
-      searchPlaceholder:
-        "কবিতা, গল্প বা লেখক খুঁজুন…",
-      searchButton: "খুঁজুন",
+  description:
+    "লেখা, PDF ডকুমেন্ট এবং শিল্পকর্মের মাধ্যমে SHOBDO কমিউনিটিকে আবিষ্কার করুন।",
 
-      category: "বিভাগ",
-      language: "লেখার ভাষা",
+  searchPlaceholder:
+    "কবিতা, গল্প, বিষয় বা লেখক খুঁজুন...",
 
-      allCategories: "সব বিভাগ",
-      allLanguages: "সব ভাষা",
+  searchButton: "খুঁজুন",
 
-      latest: "সাম্প্রতিক",
-      popular: "জনপ্রিয়",
-      oldest: "পুরোনো",
-      titleAZ: "শিরোনাম: অ–হ",
+  category: "বিভাগ",
+  language: "লেখার ভাষা",
 
-      results: "টি লেখা পাওয়া গেছে",
-      writingsFound: "টি লেখা পাওয়া গেছে",
+  allCategories: "সব বিভাগ",
+  allLanguages: "সব ভাষা",
 
-      loading: "লেখাগুলো লোড হচ্ছে...",
+  latest: "সাম্প্রতিক",
+  popular: "জনপ্রিয়",
+  oldest: "পুরোনো আগে",
+  titleAZ: "শিরোনাম A–Z",
 
-      loadError: "লেখা লোড করা যায়নি",
-      loadErrorDescription:
-        "Backend server-এর সঙ্গে সংযোগ করা যাচ্ছে না। Backend চালু আছে কি না পরীক্ষা করুন।",
+  results: "টি লেখা পাওয়া গেছে",
+  writingsFound: "টি লেখা পাওয়া গেছে",
+  documentsFound: "টি PDF ডকুমেন্ট পাওয়া গেছে",
+  artworksFound: "টি শিল্পকর্ম পাওয়া গেছে",
+  followingWritings: "টি অনুসরণ করা লেখা",
 
-      retry: "আবার চেষ্টা করুন",
+  loading: "লেখা লোড হচ্ছে...",
+  loadingDocuments: "PDF ডকুমেন্ট লোড হচ্ছে...",
+  loadingArtwork: "শিল্পকর্ম লোড হচ্ছে...",
 
-      noResultsTitle: "কোনো লেখা পাওয়া যায়নি",
-      noResultsDescription:
-        "অন্য শব্দ বা বিভাগ ব্যবহার করে আবার চেষ্টা করুন।",
+  loadError: "কনটেন্ট লোড করা যায়নি।",
+  loadContentError: "কনটেন্ট লোড করা যায়নি",
 
-      clearFilters: "ফিল্টার মুছুন",
-      loadMore: "আরও লেখা দেখুন",
+  loadErrorDescription:
+    "Backend server-এর সঙ্গে সংযোগ করা যাচ্ছে না। Backend চালু আছে কি না পরীক্ষা করুন।",
 
-      allWritings:"সবার লেখা",
-      following:"অনুসরণ",
-      followingDescription:
-        "আপনি যেসব লেখককে অনুসরণ করেন তাদের সাম্প্রতিক প্রকাশিত লেখা।",
-      followingWritings:"অনুসরণ করা লেখকদের লেখা",
-      noFollowing:"অনুসরণ ফিড এখন খালি",
-      noFollowingDescription:
-        "লেখকদের অনুসরণ করলে তাদের প্রকাশিত লেখা এখানে দেখা যাবে।",
-      signInFollowingTitle:
-        "সাইন ইন প্রয়োজন",
-      signInFollowing:
-        "অনুসরণ করা লেখকদের লেখা দেখতে আপনার অ্যাকাউন্টে সাইন ইন করুন।",
-      noResults: "কোনও লেখা পাওয়া যায়নি",
-      noResultsDescription:"অন্য কোনও শব্দ, বিভাগ বা ফিল্টার দিয়ে আবার চেষ্টা করুন।",
-      clearFilters:"ফিল্টার মুছুন",
-    },
+  retry: "আবার চেষ্টা করুন",
+
+  noResultsTitle: "কোনো লেখা পাওয়া যায়নি",
+  noResults: "কোনো লেখা পাওয়া যায়নি",
+
+  noResultsDescription:
+    "অন্য শব্দ, বিভাগ বা ভাষা ব্যবহার করে আবার চেষ্টা করুন।",
+
+  noDocuments:
+    "কোনো PDF ডকুমেন্ট পাওয়া যায়নি",
+
+  noDocumentsDescription:
+    "প্রকাশিত পাবলিক PDF ডকুমেন্ট এখানে দেখা যাবে।",
+
+  noArtwork:
+    "কোনো শিল্পকর্ম পাওয়া যায়নি",
+
+  noArtworkDescription:
+    "প্রকাশিত পাবলিক শিল্পকর্ম এখানে দেখা যাবে।",
+
+  clearFilters: "ফিল্টার মুছুন",
+  loadMore: "আরও দেখুন",
+
+  writingsTab: "লেখা",
+  documentsTab: "PDF ডকুমেন্ট",
+  artworkTab: "শিল্পকর্ম",
+
+  allWritings: "সব লেখা",
+  following: "অনুসরণ করা",
+
+  followingDescription:
+    "আপনি যেসব লেখককে অনুসরণ করেন তাঁদের সাম্প্রতিক লেখা।",
+
+  signInFollowingTitle:
+    "সাইন ইন প্রয়োজন",
+
+  signInFollowing:
+    "অনুসরণ করা লেখকদের লেখা দেখতে লগ ইন করুন।",
+
+  noFollowing:
+    "অনুসরণ ফিড এখন খালি",
+
+  noFollowingDescription:
+    "লেখকদের অনুসরণ করলে তাঁদের প্রকাশিত লেখা এখানে দেখা যাবে।",
+
+  followingEmpty:
+    "অনুসরণ করা লেখার তালিকা খালি",
+
+  followingEmptyDescription:
+    "আপনি যেসব লেখককে অনুসরণ করেন তাঁদের নতুন লেখা এখানে দেখা যাবে।",
+
+  documentsDescription:
+    "SHOBDO কমিউনিটির প্রকাশিত PDF বই, প্রবন্ধ, কবিতার সংকলন ও পাণ্ডুলিপি দেখুন।",
+
+  artworksDescription:
+    "SHOBDO স্রষ্টাদের আঁকা ছবি, ইলাস্ট্রেশন, ফটোগ্রাফি, স্কেচ ও ডিজিটাল শিল্পকর্ম আবিষ্কার করুন।",
+
+  previous: "পূর্ববর্তী",
+  next: "পরবর্তী",
+  page: "পৃষ্ঠা",
+  of: "এর মধ্যে",
+
+  // Artwork categories
+
+  digitalArt: "ডিজিটাল আর্ট",
+  painting: "চিত্রকর্ম",
+  sketch: "স্কেচ",
+  illustration: "ইলাস্ট্রেশন",
+  photography: "ফটোগ্রাফি",
+  calligraphy: "ক্যালিগ্রাফি",
+  otherArtwork: "অন্যান্য",
+
+  // Artwork card
+
+  artworkLabel: "শিল্পকর্ম",
+  unknownArtist: "SHOBDO শিল্পী",
+  untitledArtwork: "শিরোনামহীন শিল্পকর্ম",
+  viewArtwork: "শিল্পকর্ম দেখুন",
+  download: "ডাউনলোড",
+},
 
     writingCard: {
       read: "লেখাটি পড়ুন",
@@ -1272,65 +1336,124 @@ export const translations = {
     },
 
     explore: {
-      eyebrow: "Discover literature",
-      title: "Explore",
-      description:
-        "Discover poetry, stories, feelings, essays and new writers.",
+  eyebrow: "DISCOVER",
+  title: "Explore SHOBDO",
 
-      searchPlaceholder:
-        "Search poems, stories or writers…",
-      searchButton: "Search",
+  description:
+    "Discover writings, PDF documents and artwork from the SHOBDO community.",
 
-      category: "Category",
-      language: "Writing language",
+  searchPlaceholder:
+    "Search poems, stories, topics or authors...",
 
-      allCategories: "All categories",
-      allLanguages: "All languages",
+  searchButton: "Search",
 
-      latest: "Latest",
-      popular: "Popular",
-      oldest: "Oldest",
-      titleAZ: "Title: A–Z",
+  category: "Category",
+  language: "Writing language",
 
-      results: "writings found",
-      writingsFound: "writings found",
+  allCategories: "All Categories",
+  allLanguages: "All Languages",
 
-      loading: "Loading writings...",
+  latest: "Latest",
+  popular: "Popular",
+  oldest: "Oldest First",
+  titleAZ: "Title A–Z",
 
-      loadError: "Unable to load writings",
-      loadErrorDescription:
-        "Unable to connect to the backend server. Check that the backend is running and try again.",
+  results: "writings found",
+  writingsFound: "writings found",
+  documentsFound: "PDF documents found",
+  artworksFound: "artworks found",
+  followingWritings: "following writings",
 
-      retry: "Try again",
+  loading: "Loading writings...",
+  loadingDocuments: "Loading PDF documents...",
+  loadingArtwork: "Loading artwork...",
 
-      noResultsTitle: "No writings found",
-      noResultsDescription:
-        "Try another search term or category.",
+  loadError: "Unable to load content.",
+  loadContentError: "Unable to load content",
 
-      clearFilters: "Clear filters",
-      loadMore: "Load more",
+  loadErrorDescription:
+    "Unable to connect to the backend server. Check that the backend is running and try again.",
 
-      allWritings:"All Writings",
-      following:"Following",
-      followingDescription:
-        "Recent published writings from authors you follow.",
-      followingWritings:
-        "writings from followed authors",
+  retry: "Try Again",
 
-      noFollowing:
-        "Your following feed is empty",
+  noResultsTitle: "No writings found",
+  noResults: "No writings found",
 
-      noFollowingDescription:
-        "Follow writers and their published writings will appear here.",
-      signInFollowingTitle:"Sign in required",
+  noResultsDescription:
+    "Try another search term, category or language.",
 
-      signInFollowing:
-        "Sign in to your account to see writings from authors you follow.",
-      noResults: "No writings found",
+  noDocuments:
+    "No PDF documents found",
 
-      noResultsDescription:"Try another search term, category or filter.",
-      clearFilters:"Clear filters",
-    },
+  noDocumentsDescription:
+    "Published public PDF documents will appear here.",
+
+  noArtwork:
+    "No artwork found",
+
+  noArtworkDescription:
+    "Published public artwork will appear here.",
+
+  clearFilters: "Clear Filters",
+  loadMore: "Load More",
+
+  writingsTab: "Writings",
+  documentsTab: "PDF Documents",
+  artworkTab: "Artwork",
+
+  allWritings: "All Writings",
+  following: "Following",
+
+  followingDescription:
+    "Recent writings from authors you follow.",
+
+  signInFollowingTitle:
+    "Sign in required",
+
+  signInFollowing:
+    "Sign in to see writings from authors you follow.",
+
+  noFollowing:
+    "Your following feed is empty",
+
+  noFollowingDescription:
+    "Follow writers and their published writings will appear here.",
+
+  followingEmpty:
+    "Following feed is empty",
+
+  followingEmptyDescription:
+    "New writings from authors you follow will appear here.",
+
+  documentsDescription:
+    "Browse PDF books, essays, poetry collections and manuscripts published by the SHOBDO community.",
+
+  artworksDescription:
+    "Discover paintings, illustrations, photography, sketches and digital artwork from SHOBDO creators.",
+
+  previous: "Previous",
+  next: "Next",
+  page: "Page",
+  of: "of",
+
+  // Artwork categories
+
+  digitalArt: "Digital Art",
+  painting: "Painting",
+  sketch: "Sketch",
+  illustration: "Illustration",
+  photography: "Photography",
+  calligraphy: "Calligraphy",
+  otherArtwork: "Other",
+
+  // Artwork card
+
+  artworkLabel: "Artwork",
+  unknownArtist: "SHOBDO Artist",
+  untitledArtwork: "Untitled Artwork",
+  viewArtwork: "View Artwork",
+  download: "Download",
+},
 
     writingCard: {
       read: "Read writing",
@@ -2459,60 +2582,141 @@ export const translations = {
     },
 
     explore: {
-      eyebrow: "साहित्य खोजें",
-      title: "खोजें",
-      description:
-        "कविता, कहानी, भावनाएँ, निबंध और नए लेखक खोजें।",
+  eyebrow: "खोजें",
+  title: "SHOBDO खोजें",
 
-      searchPlaceholder:
-        "कविता, कहानी या लेखक खोजें…",
-      searchButton: "खोजें",
+  description:
+    "SHOBDO समुदाय की रचनाएँ, PDF दस्तावेज़ और कलाकृतियाँ खोजें।",
 
-      category: "श्रेणी",
-      language: "लेखन की भाषा",
+  searchPlaceholder:
+    "कविता, कहानी, विषय या लेखक खोजें...",
 
-      allCategories: "सभी श्रेणियाँ",
-      allLanguages: "सभी भाषाएँ",
+  searchButton: "खोजें",
 
-      latest: "नवीनतम",
-      popular: "लोकप्रिय",
-      oldest: "पुरानी",
-      titleAZ: "शीर्षक: अ–ह",
+  category: "श्रेणी",
+  language: "लेखन की भाषा",
 
-      results: "रचनाएँ मिलीं",
-      writingsFound: "रचनाएँ मिलीं",
+  allCategories: "सभी श्रेणियाँ",
+  allLanguages: "सभी भाषाएँ",
 
-      loading: "रचनाएँ लोड हो रही हैं...",
+  latest: "नवीनतम",
+  popular: "लोकप्रिय",
+  oldest: "पुरानी पहले",
+  titleAZ: "शीर्षक A–Z",
 
-      loadError: "रचनाएँ लोड नहीं हो सकीं",
-      loadErrorDescription:
-        "Backend server से संपर्क नहीं हो सका। जाँचें कि Backend चल रहा है और फिर प्रयास करें।",
+  results: "रचनाएँ मिलीं",
+  writingsFound: "रचनाएँ मिलीं",
+  documentsFound: "PDF दस्तावेज़ मिले",
+  artworksFound: "कलाकृतियाँ मिलीं",
+  followingWritings: "फ़ॉलो की गई रचनाएँ",
 
-      retry: "फिर प्रयास करें",
+  loading: "रचनाएँ लोड हो रही हैं...",
+  loadingDocuments: "PDF दस्तावेज़ लोड हो रहे हैं...",
+  loadingArtwork: "कलाकृतियाँ लोड हो रही हैं...",
 
-      noResultsTitle: "कोई रचना नहीं मिली",
-      noResultsDescription:
-        "दूसरे शब्द या श्रेणी के साथ प्रयास करें।",
+  loadError:
+    "सामग्री लोड नहीं की जा सकी।",
 
-      clearFilters: "फ़िल्टर हटाएँ",
-      loadMore: "और देखें",
-      allWritings:"सभी रचनाएँ",
-      following:"फ़ॉलोइंग",
-      followingDescription:
-        "आप जिन लेखकों को फ़ॉलो करते हैं उनकी नवीनतम प्रकाशित रचनाएँ।",
-      followingWritings:
-        "फ़ॉलो किए गए लेखकों की रचनाएँ",
-      noFollowing:
-        "फ़ॉलोइंग फ़ीड खाली है",
-      noFollowingDescription:
-        "लेखकों को फ़ॉलो करें और उनकी प्रकाशित रचनाएँ यहाँ दिखाई देंगी।",
-      signInFollowingTitle:"साइन इन आवश्यक है",
-      signInFollowing:
-        "फ़ॉलो किए गए लेखकों की रचनाएँ देखने के लिए अपने अकाउंट में साइन इन करें।",
-      noResults: "कोई रचना नहीं मिली",
-      noResultsDescription:"किसी अन्य खोज शब्द, श्रेणी या फ़िल्टर के साथ फिर से प्रयास करें।",
-      clearFilters:"फ़िल्टर साफ़ करें",
-    },
+  loadContentError:
+    "सामग्री लोड नहीं की जा सकी",
+
+  loadErrorDescription:
+    "Backend server से संपर्क नहीं हो सका। जाँचें कि Backend चल रहा है और फिर प्रयास करें।",
+
+  retry: "फिर प्रयास करें",
+
+  noResultsTitle:
+    "कोई रचना नहीं मिली",
+
+  noResults:
+    "कोई रचना नहीं मिली",
+
+  noResultsDescription:
+    "दूसरे शब्द, श्रेणी या भाषा के साथ फिर प्रयास करें।",
+
+  noDocuments:
+    "कोई PDF दस्तावेज़ नहीं मिला",
+
+  noDocumentsDescription:
+    "प्रकाशित सार्वजनिक PDF दस्तावेज़ यहाँ दिखाई देंगे।",
+
+  noArtwork:
+    "कोई कलाकृति नहीं मिली",
+
+  noArtworkDescription:
+    "प्रकाशित सार्वजनिक कलाकृतियाँ यहाँ दिखाई देंगी।",
+
+  clearFilters:
+    "फ़िल्टर साफ़ करें",
+
+  loadMore:
+    "और देखें",
+
+  writingsTab:
+    "रचनाएँ",
+
+  documentsTab:
+    "PDF दस्तावेज़",
+
+  artworkTab:
+    "कलाकृति",
+
+  allWritings:
+    "सभी रचनाएँ",
+
+  following:
+    "फ़ॉलो किए गए",
+
+  followingDescription:
+    "आप जिन लेखकों को फ़ॉलो करते हैं उनकी हाल की रचनाएँ।",
+
+  signInFollowingTitle:
+    "साइन इन आवश्यक है",
+
+  signInFollowing:
+    "फ़ॉलो किए गए लेखकों की रचनाएँ देखने के लिए लॉग इन करें।",
+
+  noFollowing:
+    "फ़ॉलोइंग फ़ीड खाली है",
+
+  noFollowingDescription:
+    "लेखकों को फ़ॉलो करें और उनकी प्रकाशित रचनाएँ यहाँ दिखाई देंगी।",
+
+  followingEmpty:
+    "फ़ॉलो की गई रचनाओं की सूची खाली है",
+
+  followingEmptyDescription:
+    "आपके फ़ॉलो किए गए लेखकों की नई रचनाएँ यहाँ दिखाई देंगी।",
+
+  documentsDescription:
+    "SHOBDO समुदाय द्वारा प्रकाशित PDF पुस्तकें, निबंध, कविता संग्रह और पांडुलिपियाँ देखें।",
+
+  artworksDescription:
+    "SHOBDO रचनाकारों की पेंटिंग, चित्रण, फ़ोटोग्राफ़ी, स्केच और डिजिटल कला खोजें।",
+
+  previous: "पिछला",
+  next: "अगला",
+  page: "पृष्ठ",
+  of: "में से",
+
+  // Artwork categories
+
+  digitalArt: "डिजिटल कला",
+  painting: "पेंटिंग",
+  sketch: "स्केच",
+  illustration: "चित्रण",
+  photography: "फ़ोटोग्राफ़ी",
+  calligraphy: "सुलेख",
+  otherArtwork: "अन्य",
+
+  // Artwork card
+
+  artworkLabel: "कलाकृति",
+  unknownArtist: "SHOBDO कलाकार",
+  untitledArtwork: "बिना शीर्षक की कलाकृति",
+  viewArtwork: "कलाकृति देखें",
+  download: "डाउनलोड",
+},
 
     writingCard: {
       read: "रचना पढ़ें",
