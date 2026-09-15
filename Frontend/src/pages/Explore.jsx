@@ -6,6 +6,7 @@ import {
 
 import {
   BookOpen,
+  FileText,
   Filter,
   Globe2,
   Loader2,
@@ -26,6 +27,10 @@ import {
 } from "../api/api";
 
 import {
+  getDocuments,
+} from "../api/documents";
+
+import {
   LANGUAGES,
 } from "../config/languages";
 
@@ -35,6 +40,9 @@ import {
 
 import WritingCard
   from "../components/WritingCard";
+
+import DocumentCard
+  from "../components/DocumentCard";
 
 
 // =========================================================
@@ -69,7 +77,7 @@ function Explore() {
 
 
   // =======================================================
-  // INITIAL VALUES FROM URL
+  // INITIAL VALUES
   // =======================================================
 
   const initialSearch =
@@ -90,8 +98,34 @@ function Explore() {
     ) || "";
 
 
+  const initialContentMode =
+    searchParams.get(
+      "type"
+    ) === "documents"
+      ? "documents"
+      : "writings";
+
+
   // =======================================================
-  // FEED MODE
+  // CONTENT MODE
+  //
+  // writings
+  // documents
+  // =======================================================
+
+  const [
+    contentMode,
+    setContentMode,
+  ] = useState(
+    initialContentMode
+  );
+
+
+  // =======================================================
+  // WRITING FEED MODE
+  //
+  // all
+  // following
   // =======================================================
 
   const [
@@ -157,6 +191,12 @@ function Explore() {
 
 
   const [
+    documents,
+    setDocuments,
+  ] = useState([]);
+
+
+  const [
     loading,
     setLoading,
   ] = useState(true);
@@ -181,7 +221,7 @@ function Explore() {
 
 
   // =======================================================
-  // CURRENT AUTH STATE
+  // AUTH
   // =======================================================
 
   const isLoggedIn =
@@ -202,32 +242,38 @@ function Explore() {
 
       "":
         t(
-          "explore.allCategories"
+          "explore.allCategories",
+          "All Categories"
         ),
 
       "কবিতা":
         t(
-          "categories.poetry"
+          "categories.poetry",
+          "Poetry"
         ),
 
       "গল্প":
         t(
-          "categories.story"
+          "categories.story",
+          "Story"
         ),
 
       "অনুভূতি":
         t(
-          "categories.reflection"
+          "categories.reflection",
+          "Feelings"
         ),
 
       "প্রবন্ধ":
         t(
-          "categories.essay"
+          "categories.essay",
+          "Essay"
         ),
 
       "অন্যান্য":
         t(
-          "categories.other"
+          "categories.other",
+          "Other"
         ),
 
     };
@@ -237,20 +283,102 @@ function Explore() {
       map[value] ||
       value
     );
-
   }
 
 
   // =======================================================
-  // UPDATE URL QUERY
+  // CHANGE CONTENT MODE
+  // =======================================================
+
+  function changeContentMode(
+    mode
+  ) {
+
+    if (
+      mode ===
+      contentMode
+    ) {
+      return;
+    }
+
+
+    setContentMode(
+      mode
+    );
+
+
+    setError(
+      ""
+    );
+
+
+    setPage(
+      1
+    );
+
+
+    setPagination(
+      null
+    );
+
+
+    setSortBy(
+      "latest"
+    );
+
+
+    if (
+      mode ===
+      "documents"
+    ) {
+
+      setFeedMode(
+        "all"
+      );
+    }
+  }
+
+
+  // =======================================================
+  // UPDATE URL
   // =======================================================
 
   useEffect(() => {
 
-    /*
-     * The Following feed does not use Explore search
-     * parameters, so keep the URL clean in Following mode.
-     */
+    const params =
+      new URLSearchParams();
+
+
+    // -----------------------------------------------------
+    // DOCUMENT MODE
+    // -----------------------------------------------------
+
+    if (
+      contentMode ===
+      "documents"
+    ) {
+
+      params.set(
+        "type",
+        "documents"
+      );
+
+
+      setSearchParams(
+        params,
+        {
+          replace: true,
+        }
+      );
+
+
+      return;
+    }
+
+
+    // -----------------------------------------------------
+    // FOLLOWING MODE
+    // -----------------------------------------------------
 
     if (
       feedMode ===
@@ -258,20 +386,20 @@ function Explore() {
     ) {
 
       setSearchParams(
-        {},
+        params,
         {
           replace: true,
         }
       );
 
-      return;
 
+      return;
     }
 
 
-    const params =
-      new URLSearchParams();
-
+    // -----------------------------------------------------
+    // WRITING FILTERS
+    // -----------------------------------------------------
 
     if (
       submittedSearch
@@ -281,7 +409,6 @@ function Explore() {
         "search",
         submittedSearch
       );
-
     }
 
 
@@ -293,7 +420,6 @@ function Explore() {
         "language",
         language
       );
-
     }
 
 
@@ -305,7 +431,6 @@ function Explore() {
         "category",
         category
       );
-
     }
 
 
@@ -317,6 +442,7 @@ function Explore() {
     );
 
   }, [
+    contentMode,
     feedMode,
     submittedSearch,
     language,
@@ -326,38 +452,87 @@ function Explore() {
 
 
   // =======================================================
-  // LOAD WRITINGS
+  // LOAD EXPLORE CONTENT
   // =======================================================
 
   useEffect(() => {
 
-    let mounted = true;
+    let mounted =
+      true;
 
 
-    async function loadWritings() {
+    async function loadContent() {
 
-      setLoading(true);
-      setError("");
+      setLoading(
+        true
+      );
+
+
+      setError(
+        ""
+      );
 
 
       try {
 
-        let data;
+        // =================================================
+        // DOCUMENTS
+        // =================================================
+
+        if (
+          contentMode ===
+          "documents"
+        ) {
+
+          const data =
+            await getDocuments({
+
+              page,
+
+              limit:
+                12,
+            });
 
 
-        // ---------------------------------------------------
-        // FOLLOWING
-        // ---------------------------------------------------
+          if (
+            !mounted
+          ) {
+            return;
+          }
+
+
+          setDocuments(
+            Array.isArray(
+              data?.documents
+            )
+              ? data.documents
+              : []
+          );
+
+
+          setWritings(
+            []
+          );
+
+
+          setPagination(
+            data?.pagination ||
+            null
+          );
+
+
+          return;
+        }
+
+
+        // =================================================
+        // FOLLOWING WRITINGS
+        // =================================================
 
         if (
           feedMode ===
           "following"
         ) {
-
-          /*
-           * Do not make an authenticated request if
-           * there is no local JWT.
-           */
 
           if (
             !isLoggedIn
@@ -371,22 +546,29 @@ function Explore() {
                 []
               );
 
+
+              setDocuments(
+                []
+              );
+
+
               setPagination(
                 null
               );
-
             }
 
 
             return;
-
           }
 
 
-          data =
+          const data =
             await getFollowingFeed({
+
               page,
-              limit: 12,
+
+              limit:
+                12,
             });
 
 
@@ -403,6 +585,11 @@ function Explore() {
             )
               ? data.writings
               : []
+          );
+
+
+          setDocuments(
+            []
           );
 
 
@@ -437,20 +624,20 @@ function Explore() {
 
 
           return;
-
         }
 
 
-        // ---------------------------------------------------
+        // =================================================
         // ALL WRITINGS
-        // ---------------------------------------------------
+        // =================================================
 
-        data =
+        const data =
           await getWritings({
 
             page,
 
-            limit: 12,
+            limit:
+              12,
 
             search:
               submittedSearch,
@@ -458,7 +645,6 @@ function Explore() {
             language,
 
             category,
-
           });
 
 
@@ -478,6 +664,11 @@ function Explore() {
         );
 
 
+        setDocuments(
+          []
+        );
+
+
         setPagination(
           data?.pagination ||
           null
@@ -485,12 +676,12 @@ function Explore() {
 
 
       } catch (
-        err
+        requestError
       ) {
 
         console.error(
           "EXPLORE ERROR:",
-          err
+          requestError
         );
 
 
@@ -506,15 +697,21 @@ function Explore() {
         );
 
 
+        setDocuments(
+          []
+        );
+
+
         setPagination(
           null
         );
 
 
         setError(
-          err?.message ||
+          requestError?.message ||
           t(
-            "explore.loadError"
+            "explore.loadError",
+            "Unable to load content."
           )
         );
 
@@ -528,37 +725,34 @@ function Explore() {
           setLoading(
             false
           );
-
         }
-
       }
-
     }
 
 
-    loadWritings();
+    loadContent();
 
 
     return () => {
 
       mounted =
         false;
-
     };
 
   }, [
+    contentMode,
+    feedMode,
     page,
     submittedSearch,
     language,
     category,
-    feedMode,
     isLoggedIn,
     t,
   ]);
 
 
   // =======================================================
-  // CHANGE FEED
+  // CHANGE WRITING FEED
   // =======================================================
 
   function changeFeed(
@@ -588,38 +782,35 @@ function Explore() {
       "following"
     ) {
 
-      /*
-       * Following-feed endpoint currently supports
-       * pagination only, so clear Explore-only filters.
-       */
-
       setSearch(
         ""
       );
+
 
       setSubmittedSearch(
         ""
       );
 
+
       setLanguage(
         ""
       );
+
 
       setCategory(
         ""
       );
 
+
       setSortBy(
         "latest"
       );
-
     }
 
 
     setFeedMode(
       mode
     );
-
   }
 
 
@@ -635,9 +826,12 @@ function Explore() {
 
 
     if (
+      contentMode !==
+        "writings" ||
       feedMode !==
-      "all"
+        "all"
     ) {
+
       return;
     }
 
@@ -650,7 +844,6 @@ function Explore() {
     setSubmittedSearch(
       search.trim()
     );
-
   }
 
 
@@ -673,7 +866,6 @@ function Explore() {
     setPage(
       1
     );
-
   }
 
 
@@ -711,20 +903,30 @@ function Explore() {
     setPage(
       1
     );
-
   }
 
 
   // =======================================================
-  // CLIENT-SIDE SORT
+  // CURRENT ITEMS
   // =======================================================
 
-  const sortedWritings =
+  const currentItems =
+    contentMode ===
+      "documents"
+      ? documents
+      : writings;
+
+
+  // =======================================================
+  // SORT
+  // =======================================================
+
+  const sortedItems =
     useMemo(
       () => {
 
         const result = [
-          ...writings,
+          ...currentItems,
         ];
 
 
@@ -756,7 +958,6 @@ function Explore() {
                   0
                 )
               );
-
             }
 
 
@@ -779,7 +980,6 @@ function Explore() {
                     ""
                   )
               );
-
             }
 
 
@@ -800,7 +1000,6 @@ function Explore() {
                 0
               )
             );
-
           }
         );
 
@@ -809,21 +1008,30 @@ function Explore() {
 
       },
       [
-        writings,
+        currentItems,
         sortBy,
       ]
     );
 
 
   // =======================================================
-  // ACTIVE FILTERS
+  // ACTIVE WRITING FILTERS
   // =======================================================
 
   const hasActiveFilters =
     Boolean(
-      submittedSearch ||
-      language ||
-      category
+
+      contentMode ===
+        "writings" &&
+
+      feedMode ===
+        "all" &&
+
+      (
+        submittedSearch ||
+        language ||
+        category
+      )
     );
 
 
@@ -840,12 +1048,12 @@ function Explore() {
 
 
   // =======================================================
-  // RESULT TOTAL
+  // TOTAL RESULTS
   // =======================================================
 
   const totalResults =
     pagination?.total ??
-    sortedWritings.length;
+    sortedItems.length;
 
 
   // =======================================================
@@ -862,10 +1070,9 @@ function Explore() {
         className="explore-shell"
       >
 
-
-        {/* ===============================================
+        {/* =================================================
             HERO
-        ================================================ */}
+        ================================================== */}
 
         <header
           className="explore-hero"
@@ -879,12 +1086,16 @@ function Explore() {
               size={16}
             />
 
+
             <span>
+
               {
                 t(
-                  "explore.eyebrow"
+                  "explore.eyebrow",
+                  "DISCOVER"
                 )
               }
+
             </span>
 
           </div>
@@ -894,7 +1105,8 @@ function Explore() {
 
             {
               t(
-                "explore.title"
+                "explore.title",
+                "Explore SHOBDO"
               )
             }
 
@@ -905,7 +1117,8 @@ function Explore() {
 
             {
               t(
-                "explore.description"
+                "explore.description",
+                "Discover writings and PDF documents from the SHOBDO community."
               )
             }
 
@@ -914,93 +1127,93 @@ function Explore() {
         </header>
 
 
-        {/* ===============================================
-            ALL WRITINGS / FOLLOWING
-        ================================================ */}
+        {/* =================================================
+            WRITINGS / PDF DOCUMENTS
+        ================================================== */}
 
         <div
-          className="explore-feed-tabs"
+          className="explore-content-tabs"
           role="tablist"
-          aria-label="Explore feed"
+          aria-label="Explore content type"
         >
 
+          {/* WRITINGS */}
+
           <button
-
             type="button"
-
             role="tab"
-
             aria-selected={
-              feedMode ===
-              "all"
+              contentMode ===
+              "writings"
             }
-
             className={
-              feedMode ===
-              "all"
-                ? "explore-feed-tab active"
-                : "explore-feed-tab"
+              contentMode ===
+              "writings"
+                ? "explore-content-tab active"
+                : "explore-content-tab"
             }
-
             onClick={() =>
-              changeFeed(
-                "all"
+              changeContentMode(
+                "writings"
               )
             }
-
           >
 
             <BookOpen
-              size={16}
+              size={18}
             />
 
+
             <span>
+
               {
                 t(
-                  "explore.allWritings"
+                  "explore.writingsTab",
+                  "Writings"
                 )
               }
+
             </span>
 
           </button>
 
 
+          {/* DOCUMENTS */}
+
           <button
-
             type="button"
-
             role="tab"
-
             aria-selected={
-              feedMode ===
-              "following"
+              contentMode ===
+              "documents"
             }
-
             className={
-              feedMode ===
-              "following"
-                ? "explore-feed-tab active"
-                : "explore-feed-tab"
+              contentMode ===
+              "documents"
+                ? "explore-content-tab active"
+                : "explore-content-tab"
             }
-
             onClick={() =>
-              changeFeed(
-                "following"
+              changeContentMode(
+                "documents"
               )
             }
-
           >
 
-            <Users
-              size={16}
+            <FileText
+              size={18}
             />
 
+
             <span>
+
               {
                 t(
-                  "explore.following"
+                  "explore.documentsTab",
+                  "PDF Documents"
                 )
               }
+
             </span>
 
           </button>
@@ -1008,11 +1221,114 @@ function Explore() {
         </div>
 
 
-        {/* ===============================================
-            FOLLOWING DESCRIPTION
-        ================================================ */}
+        {/* =================================================
+            ALL WRITINGS / FOLLOWING
 
-        {feedMode ===
+            Only shown for writing mode.
+        ================================================== */}
+
+        {contentMode ===
+          "writings" && (
+
+          <div
+            className="explore-feed-tabs"
+            role="tablist"
+            aria-label="Explore writings"
+          >
+
+            {/* ALL WRITINGS */}
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={
+                feedMode ===
+                "all"
+              }
+              className={
+                feedMode ===
+                "all"
+                  ? "explore-feed-tab active"
+                  : "explore-feed-tab"
+              }
+              onClick={() =>
+                changeFeed(
+                  "all"
+                )
+              }
+            >
+
+              <BookOpen
+                size={16}
+              />
+
+
+              <span>
+
+                {
+                  t(
+                    "explore.allWritings",
+                    "All Writings"
+                  )
+                }
+
+              </span>
+
+            </button>
+
+
+            {/* FOLLOWING */}
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={
+                feedMode ===
+                "following"
+              }
+              className={
+                feedMode ===
+                "following"
+                  ? "explore-feed-tab active"
+                  : "explore-feed-tab"
+              }
+              onClick={() =>
+                changeFeed(
+                  "following"
+                )
+              }
+            >
+
+              <Users
+                size={16}
+              />
+
+
+              <span>
+
+                {
+                  t(
+                    "explore.following",
+                    "Following"
+                  )
+                }
+
+              </span>
+
+            </button>
+
+          </div>
+
+        )}
+
+
+        {/* =================================================
+            FOLLOWING NOTICE
+        ================================================== */}
+
+        {contentMode ===
+          "writings" &&
+        feedMode ===
           "following" && (
 
           <div
@@ -1029,10 +1345,12 @@ function Explore() {
               {
                 isLoggedIn
                   ? t(
-                      "explore.followingDescription"
+                      "explore.followingDescription",
+                      "Recent writings from authors you follow."
                     )
                   : t(
-                      "explore.signInFollowing"
+                      "explore.signInFollowing",
+                      "Sign in to see writings from authors you follow."
                     )
               }
 
@@ -1043,407 +1361,490 @@ function Explore() {
         )}
 
 
-        {/* ===============================================
-            SEARCH + FILTERS
+        {/* =================================================
+            DOCUMENT NOTICE
+        ================================================== */}
 
-            Only relevant to All Writings.
-        ================================================ */}
+        {contentMode ===
+          "documents" && (
 
-        {feedMode ===
-          "all" && (
+          <div
+            className="explore-document-notice"
+          >
 
-          <>
+            <FileText
+              size={18}
+            />
 
-            {/* ===========================================
-                SEARCH
-            ============================================ */}
 
-            <form
+            <span>
 
-              className="explore-search"
-
-              onSubmit={
-                handleSearch
+              {
+                t(
+                  "explore.documentsDescription",
+                  "Browse PDF books, poems, essays, manuscripts and documents published by the SHOBDO community."
+                )
               }
 
-            >
+            </span>
 
-              <Search
-                size={18}
-              />
+          </div>
+
+        )}
 
 
-              <input
+        {/* =================================================
+            WRITING SEARCH
 
-                type="search"
+            Documents currently don't need text search.
+        ================================================== */}
 
-                value={
-                  search
+        {contentMode ===
+          "writings" &&
+        feedMode ===
+          "all" && (
+
+          <form
+            className="explore-search"
+            onSubmit={
+              handleSearch
+            }
+          >
+
+            <Search
+              size={18}
+            />
+
+
+            <input
+              type="search"
+              value={
+                search
+              }
+              onChange={(
+                event
+              ) =>
+                setSearch(
+                  event.target.value
+                )
+              }
+              placeholder={
+                t(
+                  "explore.searchPlaceholder",
+                  "Search poems, stories, topics or writers..."
+                )
+              }
+              aria-label={
+                t(
+                  "common.search",
+                  "Search"
+                )
+              }
+            />
+
+
+            {search && (
+
+              <button
+                type="button"
+                className="explore-search-clear"
+                onClick={
+                  clearSearch
                 }
-
-                onChange={(
-                  event
-                ) =>
-                  setSearch(
-                    event
-                      .target
-                      .value
-                  )
-                }
-
-                placeholder={
-                  t(
-                    "explore.searchPlaceholder"
-                  )
-                }
-
                 aria-label={
                   t(
-                    "common.search"
+                    "common.clear",
+                    "Clear"
                   )
                 }
+              >
 
+                <X
+                  size={16}
+                />
+
+              </button>
+
+            )}
+
+
+            <button
+              type="submit"
+              className="explore-search-submit"
+            >
+
+              {
+                t(
+                  "explore.searchButton",
+                  "Search"
+                )
+              }
+
+            </button>
+
+          </form>
+
+        )}
+
+
+        {/* =================================================
+            WRITING FILTER BAR
+        ================================================== */}
+
+        {contentMode ===
+          "writings" &&
+        feedMode ===
+          "all" && (
+
+          <section
+            className="explore-filters"
+          >
+
+            {/* LANGUAGE */}
+
+            <div
+              className="explore-filter-control"
+            >
+
+              <Globe2
+                size={16}
               />
 
 
-              {search && (
+              <select
+                value={
+                  language
+                }
+                onChange={(
+                  event
+                ) => {
 
-                <button
+                  setLanguage(
+                    event.target.value
+                  );
 
-                  type="button"
 
-                  className="explore-search-clear"
+                  setPage(
+                    1
+                  );
 
-                  onClick={
-                    clearSearch
-                  }
+                }}
+                aria-label={
+                  t(
+                    "common.language",
+                    "Language"
+                  )
+                }
+              >
 
-                  aria-label={
+                <option
+                  value=""
+                >
+
+                  {
                     t(
-                      "common.clear"
+                      "explore.allLanguages",
+                      "All Languages"
                     )
                   }
 
-                >
-
-                  <X
-                    size={16}
-                  />
-
-                </button>
-
-              )}
+                </option>
 
 
-              <button
+                {
+                  LANGUAGES.map(
+                    (
+                      item
+                    ) => (
 
-                type="submit"
+                      <option
+                        key={
+                          item.code
+                        }
+                        value={
+                          item.code
+                        }
+                      >
 
-                className="explore-search-submit"
+                        {
+                          item.nativeName ===
+                          item.name
+                            ? item.name
+                            : `${item.nativeName} — ${item.name}`
+                        }
 
+                      </option>
+
+                    )
+                  )
+                }
+
+              </select>
+
+            </div>
+
+
+            {/* CATEGORY */}
+
+            <div
+              className="explore-filter-control"
+            >
+
+              <Filter
+                size={16}
+              />
+
+
+              <select
+                value={
+                  category
+                }
+                onChange={(
+                  event
+                ) => {
+
+                  setCategory(
+                    event.target.value
+                  );
+
+
+                  setPage(
+                    1
+                  );
+
+                }}
+                aria-label={
+                  t(
+                    "common.category",
+                    "Category"
+                  )
+                }
               >
 
                 {
+                  CATEGORY_VALUES.map(
+                    (
+                      item
+                    ) => (
+
+                      <option
+                        key={
+                          item ||
+                          "all"
+                        }
+                        value={
+                          item
+                        }
+                      >
+
+                        {
+                          getCategoryLabel(
+                            item
+                          )
+                        }
+
+                      </option>
+
+                    )
+                  )
+                }
+
+              </select>
+
+            </div>
+
+
+            {/* SORT */}
+
+            <div
+              className="explore-filter-control"
+            >
+
+              <SlidersHorizontal
+                size={16}
+              />
+
+
+              <select
+                value={
+                  sortBy
+                }
+                onChange={(
+                  event
+                ) =>
+                  setSortBy(
+                    event.target.value
+                  )
+                }
+                aria-label="Sort writings"
+              >
+
+                <option
+                  value="latest"
+                >
+
+                  {
+                    t(
+                      "explore.latest",
+                      "Latest"
+                    )
+                  }
+
+                </option>
+
+
+                <option
+                  value="oldest"
+                >
+
+                  {
+                    t(
+                      "explore.oldest",
+                      "Oldest First"
+                    )
+                  }
+
+                </option>
+
+
+                <option
+                  value="title"
+                >
+
+                  {
+                    t(
+                      "explore.titleAZ",
+                      "Title A-Z"
+                    )
+                  }
+
+                </option>
+
+              </select>
+
+            </div>
+
+
+            {/* CLEAR */}
+
+            {hasActiveFilters && (
+
+              <button
+                type="button"
+                className="explore-reset-button"
+                onClick={
+                  resetFilters
+                }
+              >
+
+                <X
+                  size={15}
+                />
+
+
+                {
                   t(
-                    "explore.searchButton"
+                    "explore.clearFilters",
+                    "Clear Filters"
                   )
                 }
 
               </button>
 
-            </form>
+            )}
 
-
-            {/* ===========================================
-                FILTER BAR
-            ============================================ */}
-
-            <section
-              className="explore-filters"
-            >
-
-
-              {/* LANGUAGE */}
-
-              <div
-                className="explore-filter-control"
-              >
-
-                <Globe2
-                  size={16}
-                />
-
-
-                <select
-
-                  value={
-                    language
-                  }
-
-                  onChange={(
-                    event
-                  ) => {
-
-                    setLanguage(
-                      event
-                        .target
-                        .value
-                    );
-
-                    setPage(
-                      1
-                    );
-
-                  }}
-
-                  aria-label={
-                    t(
-                      "common.language"
-                    )
-                  }
-
-                >
-
-                  <option
-                    value=""
-                  >
-
-                    {
-                      t(
-                        "explore.allLanguages"
-                      )
-                    }
-
-                  </option>
-
-
-                  {
-                    LANGUAGES.map(
-                      (
-                        item
-                      ) => (
-
-                        <option
-
-                          key={
-                            item.code
-                          }
-
-                          value={
-                            item.code
-                          }
-
-                        >
-
-                          {
-                            item.nativeName ===
-                            item.name
-                              ? item.name
-                              : `${item.nativeName} — ${item.name}`
-                          }
-
-                        </option>
-
-                      )
-                    )
-                  }
-
-                </select>
-
-              </div>
-
-
-              {/* CATEGORY */}
-
-              <div
-                className="explore-filter-control"
-              >
-
-                <Filter
-                  size={16}
-                />
-
-
-                <select
-
-                  value={
-                    category
-                  }
-
-                  onChange={(
-                    event
-                  ) => {
-
-                    setCategory(
-                      event
-                        .target
-                        .value
-                    );
-
-                    setPage(
-                      1
-                    );
-
-                  }}
-
-                  aria-label={
-                    t(
-                      "common.category"
-                    )
-                  }
-
-                >
-
-                  {
-                    CATEGORY_VALUES.map(
-                      (
-                        item
-                      ) => (
-
-                        <option
-
-                          key={
-                            item ||
-                            "all"
-                          }
-
-                          value={
-                            item
-                          }
-
-                        >
-
-                          {
-                            getCategoryLabel(
-                              item
-                            )
-                          }
-
-                        </option>
-
-                      )
-                    )
-                  }
-
-                </select>
-
-              </div>
-
-
-              {/* SORT */}
-
-              <div
-                className="explore-filter-control"
-              >
-
-                <SlidersHorizontal
-                  size={16}
-                />
-
-
-                <select
-
-                  value={
-                    sortBy
-                  }
-
-                  onChange={(
-                    event
-                  ) =>
-                    setSortBy(
-                      event
-                        .target
-                        .value
-                    )
-                  }
-
-                  aria-label="Sort writings"
-
-                >
-
-                  <option
-                    value="latest"
-                  >
-
-                    {
-                      t(
-                        "explore.latest"
-                      )
-                    }
-
-                  </option>
-
-
-                  <option
-                    value="oldest"
-                  >
-
-                    {
-                      t(
-                        "explore.oldest"
-                      )
-                    }
-
-                  </option>
-
-
-                  <option
-                    value="title"
-                  >
-
-                    {
-                      t(
-                        "explore.titleAZ"
-                      )
-                    }
-
-                  </option>
-
-                </select>
-
-              </div>
-
-
-              {/* RESET */}
-
-              {hasActiveFilters && (
-
-                <button
-
-                  type="button"
-
-                  className="explore-reset-button"
-
-                  onClick={
-                    resetFilters
-                  }
-
-                >
-
-                  <X
-                    size={15}
-                  />
-
-                  {
-                    t(
-                      "explore.clearFilters"
-                    )
-                  }
-
-                </button>
-
-              )}
-
-            </section>
-
-          </>
+          </section>
 
         )}
 
 
-        {/* ===============================================
+        {/* =================================================
+            DOCUMENT SORT
+        ================================================== */}
+
+        {contentMode ===
+          "documents" && (
+
+          <section
+            className="explore-filters"
+          >
+
+            <div
+              className="explore-filter-control"
+            >
+
+              <SlidersHorizontal
+                size={16}
+              />
+
+
+              <select
+                value={
+                  sortBy
+                }
+                onChange={(
+                  event
+                ) =>
+                  setSortBy(
+                    event.target.value
+                  )
+                }
+                aria-label="Sort documents"
+              >
+
+                <option
+                  value="latest"
+                >
+
+                  {
+                    t(
+                      "explore.latest",
+                      "Latest"
+                    )
+                  }
+
+                </option>
+
+
+                <option
+                  value="oldest"
+                >
+
+                  {
+                    t(
+                      "explore.oldest",
+                      "Oldest First"
+                    )
+                  }
+
+                </option>
+
+
+                <option
+                  value="title"
+                >
+
+                  {
+                    t(
+                      "explore.titleAZ",
+                      "Title A-Z"
+                    )
+                  }
+
+                </option>
+
+              </select>
+
+            </div>
+
+          </section>
+
+        )}
+
+
+        {/* =================================================
             RESULTS SUMMARY
-        ================================================ */}
+        ================================================== */}
 
         <div
           className="explore-result-summary"
@@ -1456,39 +1857,49 @@ function Explore() {
             {" "}
 
             {
-              feedMode ===
-              "following"
+              contentMode ===
+              "documents"
                 ? t(
-                    "explore.followingWritings"
+                    "explore.documentsFound",
+                    "documents found"
                   )
-                : t(
-                    "explore.writingsFound"
-                  )
+                : feedMode ===
+                  "following"
+                  ? t(
+                      "explore.followingWritings",
+                      "following writings"
+                    )
+                  : t(
+                      "explore.writingsFound",
+                      "writings found"
+                    )
             }
 
           </span>
 
 
-          {/* SEARCH CHIP */}
+          {/* WRITING SEARCH CHIP */}
 
-          {feedMode ===
+          {contentMode ===
+            "writings" &&
+          feedMode ===
             "all" &&
           submittedSearch && (
 
             <span
               className="explore-active-filter"
             >
-
               “{submittedSearch}”
-
             </span>
 
           )}
 
 
-          {/* LANGUAGE CHIP */}
+          {/* WRITING LANGUAGE CHIP */}
 
-          {feedMode ===
+          {contentMode ===
+            "writings" &&
+          feedMode ===
             "all" &&
           selectedLanguage && (
 
@@ -1500,6 +1911,7 @@ function Explore() {
                 size={11}
               />
 
+
               {
                 selectedLanguage
                   .nativeName
@@ -1510,9 +1922,11 @@ function Explore() {
           )}
 
 
-          {/* CATEGORY CHIP */}
+          {/* WRITING CATEGORY CHIP */}
 
-          {feedMode ===
+          {contentMode ===
+            "writings" &&
+          feedMode ===
             "all" &&
           category && (
 
@@ -1533,9 +1947,9 @@ function Explore() {
         </div>
 
 
-        {/* ===============================================
+        {/* =================================================
             LOADING
-        ================================================ */}
+        ================================================== */}
 
         {loading && (
 
@@ -1548,12 +1962,20 @@ function Explore() {
               className="spin"
             />
 
+
             <p>
 
               {
-                t(
-                  "explore.loading"
-                )
+                contentMode ===
+                "documents"
+                  ? t(
+                      "explore.loadingDocuments",
+                      "Loading PDF documents..."
+                    )
+                  : t(
+                      "explore.loading",
+                      "Loading writings..."
+                    )
               }
 
             </p>
@@ -1563,9 +1985,9 @@ function Explore() {
         )}
 
 
-        {/* ===============================================
+        {/* =================================================
             ERROR
-        ================================================ */}
+        ================================================== */}
 
         {!loading &&
         error && (
@@ -1574,17 +1996,35 @@ function Explore() {
             className="explore-state"
           >
 
-            <BookOpen
-              size={30}
-            />
+            {
+              contentMode ===
+              "documents"
+                ? (
+                    <FileText
+                      size={30}
+                    />
+                  )
+                : (
+                    <BookOpen
+                      size={30}
+                    />
+                  )
+            }
 
 
             <h2>
 
               {
-                t(
-                  "explore.loadError"
-                )
+                contentMode ===
+                "documents"
+                  ? t(
+                      "explore.documentLoadError",
+                      "Unable to load PDF documents."
+                    )
+                  : t(
+                      "explore.loadError",
+                      "Unable to load writings."
+                    )
               }
 
             </h2>
@@ -1596,19 +2036,17 @@ function Explore() {
 
 
             <button
-
               type="button"
-
               onClick={() =>
                 window.location
                   .reload()
               }
-
             >
 
               {
                 t(
-                  "explore.retry"
+                  "explore.retry",
+                  "Try Again"
                 )
               }
 
@@ -1619,13 +2057,13 @@ function Explore() {
         )}
 
 
-        {/* ===============================================
+        {/* =================================================
             EMPTY
-        ================================================ */}
+        ================================================== */}
 
         {!loading &&
         !error &&
-        sortedWritings.length ===
+        sortedItems.length ===
           0 && (
 
           <section
@@ -1633,36 +2071,52 @@ function Explore() {
           >
 
             {
-              feedMode ===
-              "following"
+              contentMode ===
+              "documents"
                 ? (
-                    <Users
+                    <FileText
                       size={32}
                     />
                   )
-                : (
-                    <Search
-                      size={30}
-                    />
-                  )
+                : feedMode ===
+                  "following"
+                  ? (
+                      <Users
+                        size={32}
+                      />
+                    )
+                  : (
+                      <Search
+                        size={30}
+                      />
+                    )
             }
 
 
             <h2>
 
               {
-                feedMode ===
-                "following"
-                  ? isLoggedIn
-                    ? t(
-                        "explore.noFollowing"
-                      )
-                    : t(
-                        "explore.signInFollowingTitle"
-                      )
-                  : t(
-                      "explore.noResults"
+                contentMode ===
+                "documents"
+                  ? t(
+                      "explore.noDocuments",
+                      "No PDF documents found"
                     )
+                  : feedMode ===
+                    "following"
+                    ? isLoggedIn
+                      ? t(
+                          "explore.noFollowing",
+                          "Your following feed is empty"
+                        )
+                      : t(
+                          "explore.signInFollowingTitle",
+                          "Sign in to view your following feed"
+                        )
+                    : t(
+                        "explore.noResults",
+                        "No writings found"
+                      )
               }
 
             </h2>
@@ -1671,40 +2125,45 @@ function Explore() {
             <p>
 
               {
-                feedMode ===
-                "following"
-                  ? isLoggedIn
-                    ? t(
-                        "explore.noFollowingDescription"
-                      )
-                    : t(
-                        "explore.signInFollowing"
-                      )
-                  : t(
-                      "explore.noResultsDescription"
+                contentMode ===
+                "documents"
+                  ? t(
+                      "explore.noDocumentsDescription",
+                      "Published public PDF documents will appear here."
                     )
+                  : feedMode ===
+                    "following"
+                    ? isLoggedIn
+                      ? t(
+                          "explore.noFollowingDescription",
+                          "Follow writers and their published writings will appear here."
+                        )
+                      : t(
+                          "explore.signInFollowing",
+                          "Sign in to see writings from authors you follow."
+                        )
+                    : t(
+                        "explore.noResultsDescription",
+                        "Try another search term or change your filters."
+                      )
               }
 
             </p>
 
 
-            {feedMode ===
-              "all" &&
-            hasActiveFilters && (
+            {hasActiveFilters && (
 
               <button
-
                 type="button"
-
                 onClick={
                   resetFilters
                 }
-
               >
 
                 {
                   t(
-                    "explore.clearFilters"
+                    "explore.clearFilters",
+                    "Clear Filters"
                   )
                 }
 
@@ -1717,13 +2176,15 @@ function Explore() {
         )}
 
 
-        {/* ===============================================
-            WRITING GRID
-        ================================================ */}
+        {/* =================================================
+            WRITINGS GRID
+        ================================================== */}
 
-        {!loading &&
+        {contentMode ===
+          "writings" &&
+        !loading &&
         !error &&
-        sortedWritings.length >
+        sortedItems.length >
           0 && (
 
           <section
@@ -1731,21 +2192,18 @@ function Explore() {
           >
 
             {
-              sortedWritings.map(
+              sortedItems.map(
                 (
                   writing
                 ) => (
 
                   <WritingCard
-
                     key={
                       writing.id
                     }
-
                     writing={
                       writing
                     }
-
                   />
 
                 )
@@ -1757,9 +2215,48 @@ function Explore() {
         )}
 
 
-        {/* ===============================================
+        {/* =================================================
+            DOCUMENT GRID
+        ================================================== */}
+
+        {contentMode ===
+          "documents" &&
+        !loading &&
+        !error &&
+        sortedItems.length >
+          0 && (
+
+          <section
+            className="explore-document-grid"
+          >
+
+            {
+              sortedItems.map(
+                (
+                  document
+                ) => (
+
+                  <DocumentCard
+                    key={
+                      document.id
+                    }
+                    document={
+                      document
+                    }
+                  />
+
+                )
+              )
+            }
+
+          </section>
+
+        )}
+
+
+        {/* =================================================
             PAGINATION
-        ================================================ */}
+        ================================================== */}
 
         {!loading &&
         !error &&
@@ -1768,22 +2265,18 @@ function Explore() {
           1 && (
 
           <nav
-
             className="explore-pagination"
-
             aria-label="Explore pages"
-
           >
 
+            {/* PREVIOUS */}
+
             <button
-
               type="button"
-
               disabled={
                 !pagination
                   .has_prev
               }
-
               onClick={() => {
 
                 setPage(
@@ -1804,44 +2297,55 @@ function Explore() {
                 });
 
               }}
-
             >
 
               {
                 t(
-                  "explore.previous"
+                  "explore.previous",
+                  "Previous"
                 )
               }
 
             </button>
 
 
+            {/* PAGE NUMBER */}
+
             <span>
 
               {
                 t(
-                  "common.page"
+                  "common.page",
+                  "Page"
                 )
               }
 
               {" "}
 
+
               <strong>
+
                 {
                   pagination
                     .page
                 }
+
               </strong>
 
+
               {" "}
+
 
               {
                 t(
-                  "common.of"
+                  "common.of",
+                  "of"
                 )
               }
 
+
               {" "}
+
 
               {
                 pagination
@@ -1851,15 +2355,14 @@ function Explore() {
             </span>
 
 
+            {/* NEXT */}
+
             <button
-
               type="button"
-
               disabled={
                 !pagination
                   .has_next
               }
-
               onClick={() => {
 
                 setPage(
@@ -1877,12 +2380,12 @@ function Explore() {
                 });
 
               }}
-
             >
 
               {
                 t(
-                  "explore.next"
+                  "explore.next",
+                  "Next"
                 )
               }
 
@@ -1895,9 +2398,7 @@ function Explore() {
       </div>
 
     </main>
-
   );
-
 }
 
 
