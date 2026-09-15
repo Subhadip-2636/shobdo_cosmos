@@ -37,6 +37,10 @@ import {
 } from "../api/api";
 
 import {
+  getMyDocuments,
+} from "../api/documents";
+
+import {
   LANGUAGES,
   getLanguageLabel,
 } from "../config/languages";
@@ -45,40 +49,71 @@ import {
   useLanguage,
 } from "../Language/LanguageContext";
 
+import DocumentCard
+  from "../components/DocumentCard";
+
+
+// =========================================================
+// MY WRITINGS
+// =========================================================
 
 function MyWritings() {
 
   const navigate =
     useNavigate();
 
+
   const {
     t,
   } = useLanguage();
 
 
-  // =====================================================
+  // =======================================================
   // MAIN STATE
-  // =====================================================
+  //
+  // draft
+  // published
+  // documents
+  // deleted
+  // =======================================================
 
   const [
     activeTab,
     setActiveTab,
-  ] = useState("draft");
+  ] = useState(
+    "draft"
+  );
+
 
   const [
     writings,
     setWritings,
   ] = useState([]);
 
+
+  const [
+    documents,
+    setDocuments,
+  ] = useState([]);
+
+
   const [
     draftCount,
     setDraftCount,
   ] = useState(0);
 
+
   const [
     publishedCount,
     setPublishedCount,
   ] = useState(0);
+
+
+  const [
+    documentCount,
+    setDocumentCount,
+  ] = useState(0);
+
 
   const [
     trashCount,
@@ -86,49 +121,57 @@ function MyWritings() {
   ] = useState(0);
 
 
-  // =====================================================
+  // =======================================================
   // FILTER STATE
-  // =====================================================
+  // =======================================================
 
   const [
     search,
     setSearch,
   ] = useState("");
 
+
   const [
     language,
     setLanguage,
   ] = useState("");
 
+
   const [
     sortBy,
     setSortBy,
-  ] = useState("recent");
+  ] = useState(
+    "recent"
+  );
 
 
-  // =====================================================
+  // =======================================================
   // UI STATE
-  // =====================================================
+  // =======================================================
 
   const [
     loading,
     setLoading,
   ] = useState(true);
 
+
   const [
     refreshing,
     setRefreshing,
   ] = useState(false);
+
 
   const [
     actionId,
     setActionId,
   ] = useState(null);
 
+
   const [
     error,
     setError,
   ] = useState("");
+
 
   const [
     success,
@@ -136,14 +179,15 @@ function MyWritings() {
   ] = useState("");
 
 
-  // =====================================================
+  // =======================================================
   // DELETE MODAL
-  // =====================================================
+  // =======================================================
 
   const [
     deleteTarget,
     setDeleteTarget,
   ] = useState(null);
+
 
   const [
     deleting,
@@ -151,87 +195,114 @@ function MyWritings() {
   ] = useState(false);
 
 
-  // =====================================================
+  // =======================================================
   // LOAD COUNTS
-  // =====================================================
+  // =======================================================
 
   const loadCounts =
-    useCallback(async () => {
+    useCallback(
+      async () => {
 
-      try {
+        try {
 
-        const [
-          draftsData,
-          publishedData,
-          trashData,
-        ] = await Promise.all([
+          const [
+            draftsData,
+            publishedData,
+            trashData,
+            documentsData,
+          ] =
+            await Promise.all([
 
-          getMyWritings({
-            status: "draft",
-          }),
+              getMyWritings({
+                status:
+                  "draft",
+              }),
 
-          getMyWritings({
-            status: "published",
-          }),
+              getMyWritings({
+                status:
+                  "published",
+              }),
 
-          getMyWritings({
-            status: "deleted",
-          }),
+              getMyWritings({
+                status:
+                  "deleted",
+              }),
 
-        ]);
+              getMyDocuments(),
 
-
-        const drafts =
-          Array.isArray(
-            draftsData?.writings
-          )
-            ? draftsData.writings
-            : [];
-
-
-        const published =
-          Array.isArray(
-            publishedData?.writings
-          )
-            ? publishedData.writings
-            : [];
+            ]);
 
 
-        const trash =
-          Array.isArray(
-            trashData?.writings
-          )
-            ? trashData.writings
-            : [];
+          const drafts =
+            Array.isArray(
+              draftsData?.writings
+            )
+              ? draftsData.writings
+              : [];
 
 
-        setDraftCount(
-          drafts.length
-        );
+          const published =
+            Array.isArray(
+              publishedData?.writings
+            )
+              ? publishedData.writings
+              : [];
 
-        setPublishedCount(
-          published.length
-        );
 
-        setTrashCount(
-          trash.length
-        );
+          const trash =
+            Array.isArray(
+              trashData?.writings
+            )
+              ? trashData.writings
+              : [];
 
-      } catch (err) {
 
-        console.error(
-          "COUNT LOAD ERROR:",
+          const myDocuments =
+            Array.isArray(
+              documentsData?.documents
+            )
+              ? documentsData.documents
+              : [];
+
+
+          setDraftCount(
+            drafts.length
+          );
+
+
+          setPublishedCount(
+            published.length
+          );
+
+
+          setTrashCount(
+            trash.length
+          );
+
+
+          setDocumentCount(
+            myDocuments.length
+          );
+
+
+        } catch (
           err
-        );
+        ) {
 
-      }
+          console.error(
+            "COUNT LOAD ERROR:",
+            err
+          );
+        }
 
-    }, []);
+      },
+      []
+    );
 
 
-  // =====================================================
-  // LOAD CURRENT TAB
-  // =====================================================
+  // =======================================================
+  // LOAD WRITINGS
+  // =======================================================
 
   const loadWritings =
     useCallback(
@@ -240,18 +311,25 @@ function MyWritings() {
         showMainLoader = true
       ) => {
 
-        if (showMainLoader) {
+        if (
+          showMainLoader
+        ) {
 
-          setLoading(true);
+          setLoading(
+            true
+          );
 
         } else {
 
-          setRefreshing(true);
-
+          setRefreshing(
+            true
+          );
         }
 
 
-        setError("");
+        setError(
+          ""
+        );
 
 
         try {
@@ -275,39 +353,47 @@ function MyWritings() {
           );
 
 
+          setDocuments(
+            []
+          );
+
+
           if (
-            status === "draft"
+            status ===
+            "draft"
           ) {
 
             setDraftCount(
               items.length
             );
-
           }
 
 
           if (
-            status === "published"
+            status ===
+            "published"
           ) {
 
             setPublishedCount(
               items.length
             );
-
           }
 
 
           if (
-            status === "deleted"
+            status ===
+            "deleted"
           ) {
 
             setTrashCount(
               items.length
             );
-
           }
 
-        } catch (err) {
+
+        } catch (
+          err
+        ) {
 
           console.error(
             "MY WRITINGS ERROR:",
@@ -316,75 +402,217 @@ function MyWritings() {
 
 
           setError(
-            err.message ||
+            err?.message ||
             t(
               "errors.generic"
             )
           );
 
 
-          setWritings([]);
+          setWritings(
+            []
+          );
+
 
         } finally {
 
-          setLoading(false);
+          setLoading(
+            false
+          );
 
-          setRefreshing(false);
 
+          setRefreshing(
+            false
+          );
         }
 
       },
-      [t]
+      [
+        t,
+      ]
     );
 
 
-  // =====================================================
+  // =======================================================
+  // LOAD DOCUMENTS
+  // =======================================================
+
+  const loadDocuments =
+    useCallback(
+      async (
+        showMainLoader = true
+      ) => {
+
+        if (
+          showMainLoader
+        ) {
+
+          setLoading(
+            true
+          );
+
+        } else {
+
+          setRefreshing(
+            true
+          );
+        }
+
+
+        setError(
+          ""
+        );
+
+
+        try {
+
+          const data =
+            await getMyDocuments();
+
+
+          const items =
+            Array.isArray(
+              data?.documents
+            )
+              ? data.documents
+              : [];
+
+
+          setDocuments(
+            items
+          );
+
+
+          setWritings(
+            []
+          );
+
+
+          setDocumentCount(
+            items.length
+          );
+
+
+        } catch (
+          err
+        ) {
+
+          console.error(
+            "MY DOCUMENTS ERROR:",
+            err
+          );
+
+
+          setDocuments(
+            []
+          );
+
+
+          setError(
+            err?.message ||
+            "Unable to load your PDF documents."
+          );
+
+
+        } finally {
+
+          setLoading(
+            false
+          );
+
+
+          setRefreshing(
+            false
+          );
+        }
+
+      },
+      []
+    );
+
+
+  // =======================================================
   // INITIAL COUNTS
-  // =====================================================
+  // =======================================================
 
-  useEffect(() => {
+  useEffect(
+    () => {
 
-    loadCounts();
+      loadCounts();
 
-  }, [loadCounts]);
+    },
+    [
+      loadCounts,
+    ]
+  );
 
 
-  // =====================================================
+  // =======================================================
   // ACTIVE TAB LOAD
-  // =====================================================
+  // =======================================================
 
-  useEffect(() => {
+  useEffect(
+    () => {
 
-    setSearch("");
-
-    setLanguage("");
-
-    setSuccess("");
-
-    loadWritings(
-      activeTab
-    );
-
-  }, [
-    activeTab,
-    loadWritings,
-  ]);
+      setSearch(
+        ""
+      );
 
 
-  // =====================================================
+      setLanguage(
+        ""
+      );
+
+
+      setSuccess(
+        ""
+      );
+
+
+      setError(
+        ""
+      );
+
+
+      if (
+        activeTab ===
+        "documents"
+      ) {
+
+        loadDocuments();
+
+        return;
+      }
+
+
+      loadWritings(
+        activeTab
+      );
+
+    },
+    [
+      activeTab,
+      loadDocuments,
+      loadWritings,
+    ]
+  );
+
+
+  // =======================================================
   // DATE FORMAT
-  // =====================================================
+  // =======================================================
 
   function formatDate(
     dateString
   ) {
 
-    if (!dateString) {
+    if (
+      !dateString
+    ) {
 
       return t(
         "common.noData"
       );
-
     }
 
 
@@ -403,36 +631,46 @@ function MyWritings() {
       return t(
         "common.noData"
       );
-
     }
 
 
     try {
 
-      return new Intl.DateTimeFormat(
-        undefined,
-        {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-        }
-      ).format(date);
+      return new Intl
+        .DateTimeFormat(
+          undefined,
+          {
+            day:
+              "numeric",
+
+            month:
+              "short",
+
+            year:
+              "numeric",
+
+            hour:
+              "numeric",
+
+            minute:
+              "2-digit",
+          }
+        )
+        .format(
+          date
+        );
 
     } catch {
 
       return date
         .toLocaleString();
-
     }
-
   }
 
 
-  // =====================================================
+  // =======================================================
   // WORD COUNT
-  // =====================================================
+  // =======================================================
 
   function getWordCount(
     content
@@ -444,22 +682,24 @@ function MyWritings() {
     ) {
 
       return 0;
-
     }
 
 
     return content
       .trim()
-      .split(/\s+/)
-      .filter(Boolean)
+      .split(
+        /\s+/
+      )
+      .filter(
+        Boolean
+      )
       .length;
-
   }
 
 
-  // =====================================================
+  // =======================================================
   // READING TIME
-  // =====================================================
+  // =======================================================
 
   function getReadingTime(
     content
@@ -474,194 +714,481 @@ function MyWritings() {
     return Math.max(
       1,
       Math.ceil(
-        count / 180
+        count /
+        180
       )
     );
-
   }
 
 
-  // =====================================================
-  // FILTER + SORT
-  // =====================================================
+  // =======================================================
+  // FILTER WRITINGS
+  // =======================================================
 
   const filteredWritings =
-    useMemo(() => {
+    useMemo(
+      () => {
 
-      const normalizedSearch =
-        search
-          .trim()
-          .toLowerCase();
-
-
-      let result = [
-        ...writings,
-      ];
+        const normalizedSearch =
+          search
+            .trim()
+            .toLowerCase();
 
 
-      if (normalizedSearch) {
+        let result = [
+          ...writings,
+        ];
 
-        result =
-          result.filter(
-            (writing) => {
 
-              const title =
+        // -------------------------------------------------
+        // SEARCH
+        // -------------------------------------------------
+
+        if (
+          normalizedSearch
+        ) {
+
+          result =
+            result.filter(
+              (
+                writing
+              ) => {
+
+                const title =
+                  (
+                    writing.title ||
+                    ""
+                  )
+                    .toLowerCase();
+
+
+                const content =
+                  (
+                    writing.content ||
+                    ""
+                  )
+                    .toLowerCase();
+
+
+                const category =
+                  (
+                    writing.category ||
+                    ""
+                  )
+                    .toLowerCase();
+
+
+                const languageCode =
+                  writing.language ||
+                  "bn";
+
+
+                const languageLabel =
+                  getLanguageLabel(
+                    languageCode
+                  )
+                    .toLowerCase();
+
+
+                return (
+                  title.includes(
+                    normalizedSearch
+                  )
+                  ||
+                  content.includes(
+                    normalizedSearch
+                  )
+                  ||
+                  category.includes(
+                    normalizedSearch
+                  )
+                  ||
+                  languageLabel.includes(
+                    normalizedSearch
+                  )
+                );
+              }
+            );
+        }
+
+
+        // -------------------------------------------------
+        // LANGUAGE
+        // -------------------------------------------------
+
+        if (
+          language
+        ) {
+
+          result =
+            result.filter(
+              (
+                writing
+              ) =>
                 (
-                  writing.title ||
-                  ""
-                ).toLowerCase();
+                  writing.language ||
+                  "bn"
+                ) ===
+                language
+            );
+        }
 
-              const content =
-                (
-                  writing.content ||
-                  ""
-                ).toLowerCase();
 
-              const category =
-                (
-                  writing.category ||
-                  ""
-                ).toLowerCase();
+        // -------------------------------------------------
+        // SORT
+        // -------------------------------------------------
 
-              const languageCode =
-                writing.language ||
-                "bn";
+        result.sort(
+          (
+            a,
+            b
+          ) => {
 
-              const languageLabel =
-                getLanguageLabel(
-                  languageCode
-                ).toLowerCase();
-
+            if (
+              sortBy ===
+              "oldest"
+            ) {
 
               return (
-                title.includes(
-                  normalizedSearch
+                new Date(
+                  a.updated_at ||
+                  a.created_at ||
+                  0
                 )
-                ||
-                content.includes(
-                  normalizedSearch
-                )
-                ||
-                category.includes(
-                  normalizedSearch
-                )
-                ||
-                languageLabel.includes(
-                  normalizedSearch
+                -
+                new Date(
+                  b.updated_at ||
+                  b.created_at ||
+                  0
                 )
               );
-
             }
-          );
-
-      }
 
 
-      if (language) {
+            if (
+              sortBy ===
+              "title"
+            ) {
 
-        result =
-          result.filter(
-            (writing) =>
-              (
-                writing.language ||
-                "bn"
-              ) === language
-          );
+              return (
+                (
+                  a.title ||
+                  ""
+                )
+                  .localeCompare(
+                    b.title ||
+                    ""
+                  )
+              );
+            }
 
-      }
 
+            if (
+              sortBy ===
+              "created"
+            ) {
 
-      result.sort(
-        (a, b) => {
+              return (
+                new Date(
+                  b.created_at ||
+                  0
+                )
+                -
+                new Date(
+                  a.created_at ||
+                  0
+                )
+              );
+            }
 
-          if (
-            sortBy === "oldest"
-          ) {
 
             return (
-              new Date(
-                a.updated_at ||
-                a.created_at ||
-                0
-              )
-              -
               new Date(
                 b.updated_at ||
                 b.created_at ||
                 0
               )
-            );
-
-          }
-
-
-          if (
-            sortBy === "title"
-          ) {
-
-            return (
-              (
-                a.title ||
-                ""
-              ).localeCompare(
-                b.title ||
-                ""
+              -
+              new Date(
+                a.updated_at ||
+                a.created_at ||
+                0
               )
             );
-
           }
+        );
 
 
-          if (
-            sortBy === "created"
-          ) {
+        return result;
+
+      },
+      [
+        writings,
+        search,
+        language,
+        sortBy,
+      ]
+    );
+
+
+  // =======================================================
+  // FILTER DOCUMENTS
+  // =======================================================
+
+  const filteredDocuments =
+    useMemo(
+      () => {
+
+        const normalizedSearch =
+          search
+            .trim()
+            .toLowerCase();
+
+
+        let result = [
+          ...documents,
+        ];
+
+
+        // -------------------------------------------------
+        // SEARCH
+        // -------------------------------------------------
+
+        if (
+          normalizedSearch
+        ) {
+
+          result =
+            result.filter(
+              (
+                document
+              ) => {
+
+                const title =
+                  (
+                    document.title ||
+                    ""
+                  )
+                    .toLowerCase();
+
+
+                const description =
+                  (
+                    document.description ||
+                    ""
+                  )
+                    .toLowerCase();
+
+
+                const category =
+                  (
+                    document.category ||
+                    ""
+                  )
+                    .toLowerCase();
+
+
+                const filename =
+                  (
+                    document.original_filename ||
+                    ""
+                  )
+                    .toLowerCase();
+
+
+                const languageCode =
+                  document.language ||
+                  "bn";
+
+
+                let languageLabel =
+                  languageCode;
+
+
+                try {
+
+                  languageLabel =
+                    getLanguageLabel(
+                      languageCode
+                    )
+                      .toLowerCase();
+
+                } catch {
+
+                  languageLabel =
+                    languageCode
+                      .toLowerCase();
+                }
+
+
+                return (
+                  title.includes(
+                    normalizedSearch
+                  )
+                  ||
+                  description.includes(
+                    normalizedSearch
+                  )
+                  ||
+                  category.includes(
+                    normalizedSearch
+                  )
+                  ||
+                  filename.includes(
+                    normalizedSearch
+                  )
+                  ||
+                  languageLabel.includes(
+                    normalizedSearch
+                  )
+                );
+              }
+            );
+        }
+
+
+        // -------------------------------------------------
+        // LANGUAGE
+        // -------------------------------------------------
+
+        if (
+          language
+        ) {
+
+          result =
+            result.filter(
+              (
+                document
+              ) =>
+                (
+                  document.language ||
+                  "bn"
+                ) ===
+                language
+            );
+        }
+
+
+        // -------------------------------------------------
+        // SORT
+        // -------------------------------------------------
+
+        result.sort(
+          (
+            a,
+            b
+          ) => {
+
+            if (
+              sortBy ===
+              "oldest"
+            ) {
+
+              return (
+                new Date(
+                  a.updated_at ||
+                  a.created_at ||
+                  0
+                )
+                -
+                new Date(
+                  b.updated_at ||
+                  b.created_at ||
+                  0
+                )
+              );
+            }
+
+
+            if (
+              sortBy ===
+              "title"
+            ) {
+
+              return (
+                (
+                  a.title ||
+                  ""
+                )
+                  .localeCompare(
+                    b.title ||
+                    ""
+                  )
+              );
+            }
+
+
+            if (
+              sortBy ===
+              "created"
+            ) {
+
+              return (
+                new Date(
+                  b.created_at ||
+                  0
+                )
+                -
+                new Date(
+                  a.created_at ||
+                  0
+                )
+              );
+            }
+
 
             return (
               new Date(
+                b.updated_at ||
+                b.published_at ||
                 b.created_at ||
                 0
               )
               -
               new Date(
+                a.updated_at ||
+                a.published_at ||
                 a.created_at ||
                 0
               )
             );
-
           }
+        );
 
 
-          return (
-            new Date(
-              b.updated_at ||
-              b.created_at ||
-              0
-            )
-            -
-            new Date(
-              a.updated_at ||
-              a.created_at ||
-              0
-            )
-          );
+        return result;
 
-        }
-      );
+      },
+      [
+        documents,
+        search,
+        language,
+        sortBy,
+      ]
+    );
 
 
-      return result;
+  // =======================================================
+  // CURRENT RESULTS
+  // =======================================================
 
-    }, [
-      writings,
-      search,
-      language,
-      sortBy,
-    ]);
+  const currentItems =
+    activeTab ===
+    "documents"
+      ? filteredDocuments
+      : filteredWritings;
 
 
-  // =====================================================
-  // PUBLISH
-  // =====================================================
+  const currentTotal =
+    activeTab ===
+    "documents"
+      ? documents.length
+      : writings.length;
+
+
+  // =======================================================
+  // PUBLISH WRITING
+  // =======================================================
 
   async function handlePublish(
     writingId
@@ -671,8 +1198,15 @@ function MyWritings() {
       writingId
     );
 
-    setError("");
-    setSuccess("");
+
+    setError(
+      ""
+    );
+
+
+    setSuccess(
+      ""
+    );
 
 
     try {
@@ -700,27 +1234,31 @@ function MyWritings() {
 
       ]);
 
-    } catch (err) {
+
+    } catch (
+      err
+    ) {
 
       setError(
-        err.message ||
+        err?.message ||
         t(
           "errors.generic"
         )
       );
 
+
     } finally {
 
-      setActionId(null);
-
+      setActionId(
+        null
+      );
     }
-
   }
 
 
-  // =====================================================
-  // UNPUBLISH
-  // =====================================================
+  // =======================================================
+  // UNPUBLISH WRITING
+  // =======================================================
 
   async function handleUnpublish(
     writingId
@@ -730,8 +1268,15 @@ function MyWritings() {
       writingId
     );
 
-    setError("");
-    setSuccess("");
+
+    setError(
+      ""
+    );
+
+
+    setSuccess(
+      ""
+    );
 
 
     try {
@@ -759,27 +1304,31 @@ function MyWritings() {
 
       ]);
 
-    } catch (err) {
+
+    } catch (
+      err
+    ) {
 
       setError(
-        err.message ||
+        err?.message ||
         t(
           "errors.generic"
         )
       );
 
+
     } finally {
 
-      setActionId(null);
-
+      setActionId(
+        null
+      );
     }
-
   }
 
 
-  // =====================================================
-  // RESTORE FROM TRASH
-  // =====================================================
+  // =======================================================
+  // RESTORE WRITING
+  // =======================================================
 
   async function handleRestore(
     writingId
@@ -789,8 +1338,15 @@ function MyWritings() {
       writingId
     );
 
-    setError("");
-    setSuccess("");
+
+    setError(
+      ""
+    );
+
+
+    setSuccess(
+      ""
+    );
 
 
     try {
@@ -807,16 +1363,23 @@ function MyWritings() {
 
 
       setWritings(
-        (current) =>
+        (
+          current
+        ) =>
           current.filter(
-            (item) =>
-              item.id !== writingId
+            (
+              item
+            ) =>
+              item.id !==
+              writingId
           )
       );
 
 
       setTrashCount(
-        (current) =>
+        (
+          current
+        ) =>
           Math.max(
             0,
             current - 1
@@ -830,17 +1393,20 @@ function MyWritings() {
       ) {
 
         setPublishedCount(
-          (current) =>
+          (
+            current
+          ) =>
             current + 1
         );
 
       } else {
 
         setDraftCount(
-          (current) =>
+          (
+            current
+          ) =>
             current + 1
         );
-
       }
 
 
@@ -850,7 +1416,10 @@ function MyWritings() {
         )
       );
 
-    } catch (err) {
+
+    } catch (
+      err
+    ) {
 
       console.error(
         "RESTORE WRITING ERROR:",
@@ -859,24 +1428,25 @@ function MyWritings() {
 
 
       setError(
-        err.message ||
+        err?.message ||
         t(
           "errors.generic"
         )
       );
 
+
     } finally {
 
-      setActionId(null);
-
+      setActionId(
+        null
+      );
     }
-
   }
 
 
-  // =====================================================
-  // PERMANENT DELETE
-  // =====================================================
+  // =======================================================
+  // PERMANENT DELETE WRITING
+  // =======================================================
 
   async function handlePermanentDelete(
     writing
@@ -888,10 +1458,10 @@ function MyWritings() {
       );
 
 
-    if (!confirmed) {
-
+    if (
+      !confirmed
+    ) {
       return;
-
     }
 
 
@@ -899,8 +1469,15 @@ function MyWritings() {
       writing.id
     );
 
-    setError("");
-    setSuccess("");
+
+    setError(
+      ""
+    );
+
+
+    setSuccess(
+      ""
+    );
 
 
     try {
@@ -911,16 +1488,23 @@ function MyWritings() {
 
 
       setWritings(
-        (current) =>
+        (
+          current
+        ) =>
           current.filter(
-            (item) =>
-              item.id !== writing.id
+            (
+              item
+            ) =>
+              item.id !==
+              writing.id
           )
       );
 
 
       setTrashCount(
-        (current) =>
+        (
+          current
+        ) =>
           Math.max(
             0,
             current - 1
@@ -934,7 +1518,10 @@ function MyWritings() {
         )
       );
 
-    } catch (err) {
+
+    } catch (
+      err
+    ) {
 
       console.error(
         "PERMANENT DELETE ERROR:",
@@ -943,24 +1530,25 @@ function MyWritings() {
 
 
       setError(
-        err.message ||
+        err?.message ||
         t(
           "errors.generic"
         )
       );
 
+
     } finally {
 
-      setActionId(null);
-
+      setActionId(
+        null
+      );
     }
-
   }
 
 
-  // =====================================================
+  // =======================================================
   // DELETE MODAL
-  // =====================================================
+  // =======================================================
 
   function openDeleteModal(
     writing
@@ -970,49 +1558,64 @@ function MyWritings() {
       writing
     );
 
-    setError("");
-    setSuccess("");
 
+    setError(
+      ""
+    );
+
+
+    setSuccess(
+      ""
+    );
   }
 
 
   function closeDeleteModal() {
 
-    if (deleting) {
-
+    if (
+      deleting
+    ) {
       return;
-
     }
 
 
     setDeleteTarget(
       null
     );
-
   }
 
 
-  // =====================================================
-  // MOVE TO TRASH
-  // =====================================================
+  // =======================================================
+  // MOVE WRITING TO TRASH
+  // =======================================================
 
   async function confirmDelete() {
 
-    if (!deleteTarget) {
-
+    if (
+      !deleteTarget
+    ) {
       return;
-
     }
 
 
-    setDeleting(true);
+    setDeleting(
+      true
+    );
+
 
     setActionId(
       deleteTarget.id
     );
 
-    setError("");
-    setSuccess("");
+
+    setError(
+      ""
+    );
+
+
+    setSuccess(
+      ""
+    );
 
 
     try {
@@ -1023,9 +1626,13 @@ function MyWritings() {
 
 
       setWritings(
-        (current) =>
+        (
+          current
+        ) =>
           current.filter(
-            (item) =>
+            (
+              item
+            ) =>
               item.id !==
               deleteTarget.id
           )
@@ -1033,37 +1640,43 @@ function MyWritings() {
 
 
       if (
-        activeTab === "draft"
+        activeTab ===
+        "draft"
       ) {
 
         setDraftCount(
-          (current) =>
+          (
+            current
+          ) =>
             Math.max(
               0,
               current - 1
             )
         );
-
       }
 
 
       if (
-        activeTab === "published"
+        activeTab ===
+        "published"
       ) {
 
         setPublishedCount(
-          (current) =>
+          (
+            current
+          ) =>
             Math.max(
               0,
               current - 1
             )
         );
-
       }
 
 
       setTrashCount(
-        (current) =>
+        (
+          current
+        ) =>
           current + 1
       );
 
@@ -1079,29 +1692,36 @@ function MyWritings() {
         null
       );
 
-    } catch (err) {
+
+    } catch (
+      err
+    ) {
 
       setError(
-        err.message ||
+        err?.message ||
         t(
           "errors.generic"
         )
       );
 
+
     } finally {
 
-      setDeleting(false);
+      setDeleting(
+        false
+      );
 
-      setActionId(null);
 
+      setActionId(
+        null
+      );
     }
-
   }
 
 
-  // =====================================================
-  // EDIT
-  // =====================================================
+  // =======================================================
+  // EDIT WRITING
+  // =======================================================
 
   function handleEdit(
     writing
@@ -1115,17 +1735,39 @@ function MyWritings() {
         },
       }
     );
-
   }
 
 
-  // =====================================================
+  // =======================================================
   // REFRESH
-  // =====================================================
+  // =======================================================
 
   async function handleRefresh() {
 
-    setSuccess("");
+    setSuccess(
+      ""
+    );
+
+
+    if (
+      activeTab ===
+      "documents"
+    ) {
+
+      await Promise.all([
+
+        loadDocuments(
+          false
+        ),
+
+        loadCounts(),
+
+      ]);
+
+
+      return;
+    }
+
 
     await Promise.all([
 
@@ -1137,60 +1779,173 @@ function MyWritings() {
       loadCounts(),
 
     ]);
-
   }
 
 
-  // =====================================================
+  // =======================================================
   // CLEAR FILTERS
-  // =====================================================
+  // =======================================================
 
   function clearFilters() {
 
-    setSearch("");
+    setSearch(
+      ""
+    );
 
-    setLanguage("");
+
+    setLanguage(
+      ""
+    );
+
 
     setSortBy(
       "recent"
     );
-
   }
 
 
-  // =====================================================
+  // =======================================================
+  // SEARCH PLACEHOLDER
+  // =======================================================
+
+  function getSearchPlaceholder() {
+
+    if (
+      activeTab ===
+      "documents"
+    ) {
+
+      return "PDF ডকুমেন্ট খুঁজুন";
+    }
+
+
+    if (
+      activeTab ===
+      "draft"
+    ) {
+
+      return t(
+        "myWritings.drafts"
+      );
+    }
+
+
+    if (
+      activeTab ===
+      "published"
+    ) {
+
+      return t(
+        "myWritings.published"
+      );
+    }
+
+
+    return t(
+      "myWritings.trash"
+    );
+  }
+
+
+  // =======================================================
+  // CURRENT TAB TITLE
+  // =======================================================
+
+  function getCurrentTabTitle() {
+
+    if (
+      activeTab ===
+      "draft"
+    ) {
+
+      return t(
+        "myWritings.drafts"
+      );
+    }
+
+
+    if (
+      activeTab ===
+      "published"
+    ) {
+
+      return t(
+        "myWritings.published"
+      );
+    }
+
+
+    if (
+      activeTab ===
+      "documents"
+    ) {
+
+      return "PDF ডকুমেন্ট";
+    }
+
+
+    return t(
+      "myWritings.trash"
+    );
+  }
+
+
+  // =======================================================
   // UI
-  // =====================================================
+  // =======================================================
 
   return (
 
-    <main className="my-writings-page">
+    <main
+      className="my-writings-page"
+    >
 
-      <div className="my-writings-shell">
+      <div
+        className="my-writings-shell"
+      >
 
+        {/* =================================================
+            HEADER
+        ================================================== */}
 
-        {/* HEADER */}
-
-        <header className="my-writings-header">
+        <header
+          className="my-writings-header"
+        >
 
           <div>
 
-            <p className="my-writings-eyebrow">
-              {t(
-                "myWritings.eyebrow"
-              )}
+            <p
+              className="my-writings-eyebrow"
+            >
+
+              {
+                t(
+                  "myWritings.eyebrow"
+                )
+              }
+
             </p>
 
+
             <h1>
-              {t(
-                "myWritings.title"
-              )}
+
+              {
+                t(
+                  "myWritings.title"
+                )
+              }
+
             </h1>
 
+
             <p>
-              {t(
-                "myWritings.description"
-              )}
+
+              {
+                t(
+                  "myWritings.description"
+                )
+              }
+
             </p>
 
           </div>
@@ -1201,25 +1956,37 @@ function MyWritings() {
             className="my-writings-new-button"
           >
 
-            <Edit3 size={18} />
+            <Edit3
+              size={18}
+            />
 
-            {t(
-              "myWritings.newWriting"
-            )}
+
+            {
+              t(
+                "myWritings.newWriting"
+              )
+            }
 
           </Link>
 
         </header>
 
 
-        {/* SUMMARY */}
+        {/* =================================================
+            SUMMARY
+        ================================================== */}
 
-        <section className="my-writing-summary">
+        <section
+          className="my-writing-summary"
+        >
+
+          {/* DRAFT */}
 
           <button
             type="button"
             className={
-              activeTab === "draft"
+              activeTab ===
+              "draft"
                 ? "my-writing-summary-card active"
                 : "my-writing-summary-card"
             }
@@ -1230,17 +1997,29 @@ function MyWritings() {
             }
           >
 
-            <span className="my-writing-summary-icon draft">
-              <FileText size={20} />
+            <span
+              className="my-writing-summary-icon draft"
+            >
+
+              <FileText
+                size={20}
+              />
+
             </span>
+
 
             <div>
 
               <span>
-                {t(
-                  "myWritings.drafts"
-                )}
+
+                {
+                  t(
+                    "myWritings.drafts"
+                  )
+                }
+
               </span>
+
 
               <strong>
                 {draftCount}
@@ -1251,10 +2030,13 @@ function MyWritings() {
           </button>
 
 
+          {/* PUBLISHED */}
+
           <button
             type="button"
             className={
-              activeTab === "published"
+              activeTab ===
+              "published"
                 ? "my-writing-summary-card active"
                 : "my-writing-summary-card"
             }
@@ -1265,17 +2047,29 @@ function MyWritings() {
             }
           >
 
-            <span className="my-writing-summary-icon published">
-              <BookOpen size={20} />
+            <span
+              className="my-writing-summary-icon published"
+            >
+
+              <BookOpen
+                size={20}
+              />
+
             </span>
+
 
             <div>
 
               <span>
-                {t(
-                  "myWritings.published"
-                )}
+
+                {
+                  t(
+                    "myWritings.published"
+                  )
+                }
+
               </span>
+
 
               <strong>
                 {publishedCount}
@@ -1286,10 +2080,57 @@ function MyWritings() {
           </button>
 
 
+          {/* PDF DOCUMENTS */}
+
           <button
             type="button"
             className={
-              activeTab === "deleted"
+              activeTab ===
+              "documents"
+                ? "my-writing-summary-card active"
+                : "my-writing-summary-card"
+            }
+            onClick={() =>
+              setActiveTab(
+                "documents"
+              )
+            }
+          >
+
+            <span
+              className="my-writing-summary-icon document"
+            >
+
+              <FileText
+                size={20}
+              />
+
+            </span>
+
+
+            <div>
+
+              <span>
+                PDF ডকুমেন্ট
+              </span>
+
+
+              <strong>
+                {documentCount}
+              </strong>
+
+            </div>
+
+          </button>
+
+
+          {/* TRASH */}
+
+          <button
+            type="button"
+            className={
+              activeTab ===
+              "deleted"
                 ? "my-writing-summary-card active"
                 : "my-writing-summary-card"
             }
@@ -1300,17 +2141,29 @@ function MyWritings() {
             }
           >
 
-            <span className="my-writing-summary-icon trash">
-              <Trash2 size={20} />
+            <span
+              className="my-writing-summary-icon trash"
+            >
+
+              <Trash2
+                size={20}
+              />
+
             </span>
+
 
             <div>
 
               <span>
-                {t(
-                  "myWritings.trash"
-                )}
+
+                {
+                  t(
+                    "myWritings.trash"
+                  )
+                }
+
               </span>
+
 
               <strong>
                 {trashCount}
@@ -1323,7 +2176,9 @@ function MyWritings() {
         </section>
 
 
-        {/* MESSAGES */}
+        {/* =================================================
+            MESSAGES
+        ================================================== */}
 
         {error && (
 
@@ -1348,6 +2203,7 @@ function MyWritings() {
               size={18}
             />
 
+
             <span>
               {success}
             </span>
@@ -1357,31 +2213,36 @@ function MyWritings() {
         )}
 
 
-        {/* FILTERS */}
+        {/* =================================================
+            FILTERS
+        ================================================== */}
 
-        <section className="my-writing-controls">
+        <section
+          className="my-writing-controls"
+        >
 
-          <div className="my-writing-search">
+          {/* SEARCH */}
 
-            <Search size={17} />
+          <div
+            className="my-writing-search"
+          >
+
+            <Search
+              size={17}
+            />
+
 
             <input
               type="search"
               placeholder={
-                activeTab === "draft"
-                  ? t(
-                      "myWritings.drafts"
-                    )
-                  : activeTab === "published"
-                    ? t(
-                        "myWritings.published"
-                      )
-                    : t(
-                        "myWritings.trash"
-                      )
+                getSearchPlaceholder()
               }
-              value={search}
-              onChange={(event) =>
+              value={
+                search
+              }
+              onChange={(
+                event
+              ) =>
                 setSearch(
                   event.target.value
                 )
@@ -1399,7 +2260,9 @@ function MyWritings() {
               <button
                 type="button"
                 onClick={() =>
-                  setSearch("")
+                  setSearch(
+                    ""
+                  )
                 }
                 aria-label={
                   t(
@@ -1408,7 +2271,9 @@ function MyWritings() {
                 }
               >
 
-                <X size={15} />
+                <X
+                  size={15}
+                />
 
               </button>
 
@@ -1417,13 +2282,24 @@ function MyWritings() {
           </div>
 
 
-          <div className="my-writing-language-filter">
+          {/* LANGUAGE */}
 
-            <Globe2 size={16} />
+          <div
+            className="my-writing-language-filter"
+          >
+
+            <Globe2
+              size={16}
+            />
+
 
             <select
-              value={language}
-              onChange={(event) =>
+              value={
+                language
+              }
+              onChange={(
+                event
+              ) =>
                 setLanguage(
                   event.target.value
                 )
@@ -1435,83 +2311,133 @@ function MyWritings() {
               }
             >
 
-              <option value="">
-                {t(
-                  "myWritings.allLanguages"
-                )}
+              <option
+                value=""
+              >
+
+                {
+                  t(
+                    "myWritings.allLanguages"
+                  )
+                }
+
               </option>
 
-              {LANGUAGES.map(
-                (item) => (
 
-                  <option
-                    key={
-                      item.code
-                    }
-                    value={
-                      item.code
-                    }
-                  >
+              {
+                LANGUAGES.map(
+                  (
+                    item
+                  ) => (
 
-                    {item.nativeName ===
-                    item.name
-                      ? item.name
-                      : `${item.nativeName} — ${item.name}`
-                    }
+                    <option
+                      key={
+                        item.code
+                      }
+                      value={
+                        item.code
+                      }
+                    >
 
-                  </option>
+                      {
+                        item.nativeName ===
+                        item.name
+                          ? item.name
+                          : `${item.nativeName} — ${item.name}`
+                      }
 
+                    </option>
+
+                  )
                 )
-              )}
+              }
 
             </select>
 
           </div>
 
 
-          <div className="my-writing-sort">
+          {/* SORT */}
+
+          <div
+            className="my-writing-sort"
+          >
 
             <SlidersHorizontal
               size={16}
             />
 
+
             <select
-              value={sortBy}
-              onChange={(event) =>
+              value={
+                sortBy
+              }
+              onChange={(
+                event
+              ) =>
                 setSortBy(
                   event.target.value
                 )
               }
             >
 
-              <option value="recent">
-                {t(
-                  "myWritings.recentlyUpdated"
-                )}
+              <option
+                value="recent"
+              >
+
+                {
+                  t(
+                    "myWritings.recentlyUpdated"
+                  )
+                }
+
               </option>
 
-              <option value="created">
-                {t(
-                  "myWritings.recentlyCreated"
-                )}
+
+              <option
+                value="created"
+              >
+
+                {
+                  t(
+                    "myWritings.recentlyCreated"
+                  )
+                }
+
               </option>
 
-              <option value="oldest">
-                {t(
-                  "myWritings.oldestFirst"
-                )}
+
+              <option
+                value="oldest"
+              >
+
+                {
+                  t(
+                    "myWritings.oldestFirst"
+                  )
+                }
+
               </option>
 
-              <option value="title">
-                {t(
-                  "myWritings.titleAZ"
-                )}
+
+              <option
+                value="title"
+              >
+
+                {
+                  t(
+                    "myWritings.titleAZ"
+                  )
+                }
+
               </option>
 
             </select>
 
           </div>
 
+
+          {/* REFRESH */}
 
           <button
             type="button"
@@ -1534,10 +2460,15 @@ function MyWritings() {
               }
             />
 
+
             <span>
-              {t(
-                "myWritings.refresh"
-              )}
+
+              {
+                t(
+                  "myWritings.refresh"
+                )
+              }
+
             </span>
 
           </button>
@@ -1545,34 +2476,38 @@ function MyWritings() {
         </section>
 
 
-        {/* RESULT INFO */}
+        {/* =================================================
+            RESULT INFO
+        ================================================== */}
 
-        <div className="my-writings-toolbar">
+        <div
+          className="my-writings-toolbar"
+        >
 
-          <div className="my-writings-result-info">
+          <div
+            className="my-writings-result-info"
+          >
 
             <span>
 
-              {activeTab === "draft"
-                ? t(
-                    "myWritings.drafts"
-                  )
-                : activeTab === "published"
-                  ? t(
-                      "myWritings.published"
-                    )
-                  : t(
-                      "myWritings.trash"
-                    )
+              {
+                getCurrentTabTitle()
               }
+
 
               {" · "}
 
-              {filteredWritings.length}
 
-              {search || language
-                ? ` / ${writings.length}`
-                : ""
+              {
+                currentItems.length
+              }
+
+
+              {
+                search ||
+                language
+                  ? ` / ${currentTotal}`
+                  : ""
               }
 
             </span>
@@ -1580,13 +2515,20 @@ function MyWritings() {
 
             {language && (
 
-              <span className="my-writing-active-language">
+              <span
+                className="my-writing-active-language"
+              >
 
-                <Globe2 size={12} />
+                <Globe2
+                  size={12}
+                />
 
-                {getLanguageLabel(
-                  language
-                )}
+
+                {
+                  getLanguageLabel(
+                    language
+                  )
+                }
 
               </span>
 
@@ -1595,7 +2537,8 @@ function MyWritings() {
           </div>
 
 
-          {(search || language) && (
+          {(search ||
+            language) && (
 
             <button
               type="button"
@@ -1605,11 +2548,16 @@ function MyWritings() {
               }
             >
 
-              <X size={13} />
+              <X
+                size={13}
+              />
 
-              {t(
-                "myWritings.clearFilters"
-              )}
+
+              {
+                t(
+                  "myWritings.clearFilters"
+                )
+              }
 
             </button>
 
@@ -1618,21 +2566,33 @@ function MyWritings() {
         </div>
 
 
-        {/* LOADING */}
+        {/* =================================================
+            LOADING
+        ================================================== */}
 
         {loading && (
 
-          <div className="my-writings-loading">
+          <div
+            className="my-writings-loading"
+          >
 
             <Loader2
               size={30}
               className="spin"
             />
 
+
             <p>
-              {t(
-                "myWritings.loading"
-              )}
+
+              {
+                activeTab ===
+                "documents"
+                  ? "PDF ডকুমেন্ট লোড হচ্ছে..."
+                  : t(
+                      "myWritings.loading"
+                    )
+              }
+
             </p>
 
           </div>
@@ -1640,53 +2600,93 @@ function MyWritings() {
         )}
 
 
-        {/* EMPTY */}
+        {/* =================================================
+            EMPTY STATE
+        ================================================== */}
 
         {!loading &&
-        filteredWritings.length === 0 && (
+        currentItems.length ===
+          0 && (
 
-          <section className="my-writings-empty">
+          <section
+            className="my-writings-empty"
+          >
 
-            <div className="my-writings-empty-icon">
+            <div
+              className="my-writings-empty-icon"
+            >
 
-              {search || language ? (
+              {search ||
+              language
+                ? (
 
-                <Search size={30} />
+                    <Search
+                      size={30}
+                    />
 
-              ) : activeTab === "draft" ? (
+                  )
+                : activeTab ===
+                  "draft"
+                  ? (
 
-                <FileText size={30} />
+                      <FileText
+                        size={30}
+                      />
 
-              ) : activeTab === "deleted" ? (
+                    )
+                  : activeTab ===
+                    "documents"
+                    ? (
 
-                <Trash2 size={30} />
+                        <FileText
+                          size={30}
+                        />
 
-              ) : (
+                      )
+                    : activeTab ===
+                      "deleted"
+                      ? (
 
-                <BookOpen size={30} />
+                          <Trash2
+                            size={30}
+                          />
 
-              )}
+                        )
+                      : (
+
+                          <BookOpen
+                            size={30}
+                          />
+
+                        )}
 
             </div>
 
 
             <h2>
 
-              {search || language
-                ? t(
-                    "myWritings.noResults"
-                  )
-                : activeTab === "draft"
+              {
+                search ||
+                language
                   ? t(
-                      "myWritings.noDrafts"
+                      "myWritings.noResults"
                     )
-                  : activeTab === "deleted"
+                  : activeTab ===
+                    "draft"
                     ? t(
-                        "myWritings.noTrash"
+                        "myWritings.noDrafts"
                       )
-                    : t(
-                        "myWritings.noPublished"
-                      )
+                    : activeTab ===
+                      "documents"
+                      ? "কোনও PDF ডকুমেন্ট নেই"
+                    : activeTab ===
+                      "deleted"
+                      ? t(
+                          "myWritings.noTrash"
+                        )
+                      : t(
+                          "myWritings.noPublished"
+                        )
               }
 
             </h2>
@@ -1694,477 +2694,671 @@ function MyWritings() {
 
             <p>
 
-              {search || language
-                ? t(
-                    "myWritings.noResultsDescription"
-                  )
-                : activeTab === "draft"
+              {
+                search ||
+                language
                   ? t(
-                      "myWritings.noDraftsDescription"
+                      "myWritings.noResultsDescription"
                     )
-                  : activeTab === "deleted"
+                  : activeTab ===
+                    "draft"
                     ? t(
-                        "myWritings.noTrashDescription"
+                        "myWritings.noDraftsDescription"
                       )
-                    : t(
-                        "myWritings.noPublishedDescription"
-                      )
+                    : activeTab ===
+                      "documents"
+                      ? "আপনার প্রকাশিত অথবা সংরক্ষিত PDF ডকুমেন্ট এখানে দেখা যাবে।"
+                    : activeTab ===
+                      "deleted"
+                      ? t(
+                          "myWritings.noTrashDescription"
+                        )
+                      : t(
+                          "myWritings.noPublishedDescription"
+                        )
               }
 
             </p>
 
 
-            {search || language ? (
+            {search ||
+            language
+              ? (
 
-              <button
-                type="button"
-                className="my-writings-new-button"
-                onClick={
-                  clearFilters
-                }
-              >
+                  <button
+                    type="button"
+                    className="my-writings-new-button"
+                    onClick={
+                      clearFilters
+                    }
+                  >
 
-                {t(
-                  "myWritings.clearFilters"
-                )}
+                    {
+                      t(
+                        "myWritings.clearFilters"
+                      )
+                    }
 
-              </button>
+                  </button>
 
-            ) : activeTab !== "deleted" ? (
+                )
+              : activeTab !==
+                  "deleted"
+                ? (
 
-              <Link
-                to="/write"
-                className="my-writings-new-button"
-              >
+                    <Link
+                      to="/write"
+                      className="my-writings-new-button"
+                    >
 
-                <Edit3 size={17} />
+                      <Edit3
+                        size={17}
+                      />
 
-                {t(
-                  "myWritings.startWriting"
-                )}
 
-              </Link>
+                      {
+                        activeTab ===
+                        "documents"
+                          ? "PDF প্রকাশ করুন"
+                          : t(
+                              "myWritings.startWriting"
+                            )
+                      }
 
-            ) : null}
+                    </Link>
+
+                  )
+                : null}
 
           </section>
 
         )}
 
 
-        {/* WRITINGS GRID */}
+        {/* =================================================
+            DOCUMENT GRID
+        ================================================== */}
 
-        {!loading &&
-        filteredWritings.length > 0 && (
+        {activeTab ===
+          "documents" &&
+        !loading &&
+        filteredDocuments.length >
+          0 && (
 
-          <section className="my-writings-grid">
+          <section
+            className="explore-document-grid"
+          >
 
-            {filteredWritings.map(
-              (writing) => {
+            {
+              filteredDocuments.map(
+                (
+                  document
+                ) => (
 
-                const busy =
-                  actionId ===
-                  writing.id;
-
-                const wordCount =
-                  getWordCount(
-                    writing.content
-                  );
-
-                const readingTime =
-                  getReadingTime(
-                    writing.content
-                  );
-
-                const languageCode =
-                  writing.language ||
-                  "bn";
-
-
-                return (
-
-                  <article
+                  <DocumentCard
                     key={
-                      writing.id
+                      document.id
                     }
-                    className="my-writing-card"
-                  >
+                    document={
+                      document
+                    }
+                  />
 
-                    <div className="my-writing-card-top">
+                )
+              )
+            }
 
-                      <div className="my-writing-card-badges">
+          </section>
 
-                        <span
-                          className={
-                            writing.status === "published"
-                              ? "my-writing-status published"
-                              : writing.status === "deleted"
-                                ? "my-writing-status deleted"
-                                : "my-writing-status draft"
-                          }
+        )}
+
+
+        {/* =================================================
+            WRITINGS GRID
+        ================================================== */}
+
+        {activeTab !==
+          "documents" &&
+        !loading &&
+        filteredWritings.length >
+          0 && (
+
+          <section
+            className="my-writings-grid"
+          >
+
+            {
+              filteredWritings.map(
+                (
+                  writing
+                ) => {
+
+                  const busy =
+                    actionId ===
+                    writing.id;
+
+
+                  const wordCount =
+                    getWordCount(
+                      writing.content
+                    );
+
+
+                  const readingTime =
+                    getReadingTime(
+                      writing.content
+                    );
+
+
+                  const languageCode =
+                    writing.language ||
+                    "bn";
+
+
+                  return (
+
+                    <article
+                      key={
+                        writing.id
+                      }
+                      className="my-writing-card"
+                    >
+
+                      {/* =====================================
+                          TOP
+                      ====================================== */}
+
+                      <div
+                        className="my-writing-card-top"
+                      >
+
+                        <div
+                          className="my-writing-card-badges"
                         >
 
-                          {writing.status === "published"
-                            ? t(
-                                "myWritings.published"
+                          <span
+                            className={
+                              writing.status ===
+                              "published"
+                                ? "my-writing-status published"
+                                : writing.status ===
+                                  "deleted"
+                                  ? "my-writing-status deleted"
+                                  : "my-writing-status draft"
+                            }
+                          >
+
+                            {
+                              writing.status ===
+                              "published"
+                                ? t(
+                                    "myWritings.published"
+                                  )
+                                : writing.status ===
+                                  "deleted"
+                                  ? t(
+                                      "myWritings.trash"
+                                    )
+                                  : t(
+                                      "myWritings.drafts"
+                                    )
+                            }
+
+                          </span>
+
+
+                          <span
+                            className="my-writing-language-badge"
+                          >
+
+                            <Globe2
+                              size={11}
+                            />
+
+
+                            {
+                              getLanguageLabel(
+                                languageCode
                               )
-                            : writing.status === "deleted"
-                              ? t(
-                                  "myWritings.trash"
-                                )
-                              : t(
-                                  "myWritings.drafts"
-                                )
+                            }
+
+                          </span>
+
+                        </div>
+
+
+                        <span
+                          className="my-writing-category"
+                        >
+
+                          {
+                            writing.category ||
+                            t(
+                              "categories.other"
+                            )
                           }
-
-                        </span>
-
-
-                        <span className="my-writing-language-badge">
-
-                          <Globe2
-                            size={11}
-                          />
-
-                          {getLanguageLabel(
-                            languageCode
-                          )}
 
                         </span>
 
                       </div>
 
 
-                      <span className="my-writing-category">
+                      {/* TITLE */}
 
-                        {writing.category ||
+                      <h2>
+
+                        {
+                          writing.title ||
                           t(
-                            "categories.other"
+                            "common.untitled"
                           )
                         }
 
-                      </span>
-
-                    </div>
+                      </h2>
 
 
-                    <h2>
+                      {/* PREVIEW */}
 
-                      {writing.title ||
-                        t(
-                          "common.untitled"
-                        )
-                      }
+                      <p
+                        className="my-writing-preview"
+                      >
 
-                    </h2>
+                        {
+                          writing.content
+                            ?.trim()
+                            ?.slice(
+                              0,
+                              180
+                            )
+                          ||
+                          t(
+                            "common.noData"
+                          )
+                        }
 
 
-                    <p className="my-writing-preview">
-
-                      {writing.content
-                        ?.trim()
-                        ?.slice(
-                          0,
+                        {
+                          writing.content
+                            ?.length >
                           180
-                        )
-                        ||
-                        t(
-                          "common.noData"
-                        )
-                      }
+                            ? "..."
+                            : ""
+                        }
 
-                      {writing.content
-                        ?.length > 180
-                          ? "..."
-                          : ""
-                      }
-
-                    </p>
+                      </p>
 
 
-                    <div className="my-writing-card-stats">
+                      {/* STATS */}
 
-                      <span>
+                      <div
+                        className="my-writing-card-stats"
+                      >
 
-                        <FileText
-                          size={13}
-                        />
+                        <span>
 
-                        {wordCount}
+                          <FileText
+                            size={13}
+                          />
 
-                        {" "}
+                          {wordCount}
 
-                        {t(
-                          "myWritings.words"
-                        )}
+                          {" "}
 
-                      </span>
+                          {
+                            t(
+                              "myWritings.words"
+                            )
+                          }
 
-
-                      <span>
-
-                        <BookOpen
-                          size={13}
-                        />
-
-                        {readingTime}
-
-                        {" "}
-
-                        {t(
-                          "myWritings.readTime"
-                        )}
-
-                      </span>
+                        </span>
 
 
-                      <span>
+                        <span>
 
-                        <Globe2
-                          size={13}
-                        />
+                          <BookOpen
+                            size={13}
+                          />
 
-                        {getLanguageLabel(
-                          languageCode
-                        )}
+                          {readingTime}
 
-                      </span>
+                          {" "}
 
-                    </div>
+                          {
+                            t(
+                              "myWritings.readTime"
+                            )
+                          }
 
-
-                    <div className="my-writing-meta">
-
-                      <span>
-                        {t(
-                          "myWritings.updated"
-                        )}
-                      </span>
-
-                      <strong>
-                        {formatDate(
-                          writing.updated_at
-                        )}
-                      </strong>
-
-                    </div>
+                        </span>
 
 
-                    {/* ACTIONS */}
+                        <span>
 
-                    <div className="my-writing-actions">
+                          <Globe2
+                            size={13}
+                          />
 
-                      {writing.status === "deleted" ? (
 
-                        <>
+                          {
+                            getLanguageLabel(
+                              languageCode
+                            )
+                          }
 
-                          <button
-                            type="button"
-                            className="primary"
-                            onClick={() =>
-                              handleRestore(
-                                writing.id
-                              )
-                            }
-                            disabled={busy}
-                          >
+                        </span>
 
-                            {busy ? (
+                      </div>
 
-                              <Loader2
-                                size={16}
-                                className="spin"
-                              />
 
-                            ) : (
+                      {/* DATE */}
 
-                              <RotateCcw
-                                size={16}
-                              />
+                      <div
+                        className="my-writing-meta"
+                      >
+
+                        <span>
+
+                          {
+                            t(
+                              "myWritings.updated"
+                            )
+                          }
+
+                        </span>
+
+
+                        <strong>
+
+                          {
+                            formatDate(
+                              writing.updated_at
+                            )
+                          }
+
+                        </strong>
+
+                      </div>
+
+
+                      {/* =====================================
+                          ACTIONS
+                      ====================================== */}
+
+                      <div
+                        className="my-writing-actions"
+                      >
+
+                        {writing.status ===
+                        "deleted"
+                          ? (
+
+                              <>
+
+                                {/* RESTORE */}
+
+                                <button
+                                  type="button"
+                                  className="primary"
+                                  onClick={() =>
+                                    handleRestore(
+                                      writing.id
+                                    )
+                                  }
+                                  disabled={
+                                    busy
+                                  }
+                                >
+
+                                  {busy
+                                    ? (
+
+                                        <Loader2
+                                          size={16}
+                                          className="spin"
+                                        />
+
+                                      )
+                                    : (
+
+                                        <RotateCcw
+                                          size={16}
+                                        />
+
+                                      )}
+
+
+                                  {
+                                    t(
+                                      "myWritings.restore"
+                                    )
+                                  }
+
+                                </button>
+
+
+                                {/* PERMANENT DELETE */}
+
+                                <button
+                                  type="button"
+                                  className="danger"
+                                  onClick={() =>
+                                    handlePermanentDelete(
+                                      writing
+                                    )
+                                  }
+                                  disabled={
+                                    busy
+                                  }
+                                >
+
+                                  <Trash2
+                                    size={16}
+                                  />
+
+
+                                  {
+                                    t(
+                                      "myWritings.deletePermanently"
+                                    )
+                                  }
+
+                                </button>
+
+                              </>
+
+                            )
+                          : (
+
+                              <>
+
+                                {/* EDIT */}
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleEdit(
+                                      writing
+                                    )
+                                  }
+                                  disabled={
+                                    busy
+                                  }
+                                >
+
+                                  <Edit3
+                                    size={16}
+                                  />
+
+
+                                  {
+                                    t(
+                                      "myWritings.edit"
+                                    )
+                                  }
+
+                                </button>
+
+
+                                {/* VIEW */}
+
+                                {writing.status ===
+                                  "published" && (
+
+                                  <Link
+                                    to={
+                                      `/writings/${writing.id}`
+                                    }
+                                  >
+
+                                    <Eye
+                                      size={16}
+                                    />
+
+
+                                    {
+                                      t(
+                                        "myWritings.view"
+                                      )
+                                    }
+
+                                  </Link>
+
+                                )}
+
+
+                                {/* PUBLISH */}
+
+                                {writing.status ===
+                                  "draft" && (
+
+                                  <button
+                                    type="button"
+                                    className="primary"
+                                    onClick={() =>
+                                      handlePublish(
+                                        writing.id
+                                      )
+                                    }
+                                    disabled={
+                                      busy
+                                    }
+                                  >
+
+                                    {busy
+                                      ? (
+
+                                          <Loader2
+                                            size={16}
+                                            className="spin"
+                                          />
+
+                                        )
+                                      : (
+
+                                          <Send
+                                            size={16}
+                                          />
+
+                                        )}
+
+
+                                    {
+                                      t(
+                                        "myWritings.publish"
+                                      )
+                                    }
+
+                                  </button>
+
+                                )}
+
+
+                                {/* UNPUBLISH */}
+
+                                {writing.status ===
+                                  "published" && (
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleUnpublish(
+                                        writing.id
+                                      )
+                                    }
+                                    disabled={
+                                      busy
+                                    }
+                                  >
+
+                                    {busy
+                                      ? (
+
+                                          <Loader2
+                                            size={16}
+                                            className="spin"
+                                          />
+
+                                        )
+                                      : (
+
+                                          <RotateCcw
+                                            size={16}
+                                          />
+
+                                        )}
+
+
+                                    {
+                                      t(
+                                        "myWritings.moveToDraft"
+                                      )
+                                    }
+
+                                  </button>
+
+                                )}
+
+
+                                {/* MOVE TO TRASH */}
+
+                                <button
+                                  type="button"
+                                  className="danger"
+                                  onClick={() =>
+                                    openDeleteModal(
+                                      writing
+                                    )
+                                  }
+                                  disabled={
+                                    busy
+                                  }
+                                >
+
+                                  <Trash2
+                                    size={16}
+                                  />
+
+
+                                  {
+                                    t(
+                                      "myWritings.delete"
+                                    )
+                                  }
+
+                                </button>
+
+                              </>
 
                             )}
 
-                            {t(
-                              "myWritings.restore"
-                            )}
+                      </div>
 
-                          </button>
+                    </article>
 
-
-                          <button
-                            type="button"
-                            className="danger"
-                            onClick={() =>
-                              handlePermanentDelete(
-                                writing
-                              )
-                            }
-                            disabled={busy}
-                          >
-
-                            <Trash2
-                              size={16}
-                            />
-
-                            {t(
-                              "myWritings.deletePermanently"
-                            )}
-
-                          </button>
-
-                        </>
-
-                      ) : (
-
-                        <>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleEdit(
-                                writing
-                              )
-                            }
-                            disabled={busy}
-                          >
-
-                            <Edit3 size={16} />
-
-                            {t(
-                              "myWritings.edit"
-                            )}
-
-                          </button>
-
-
-                          {writing.status ===
-                          "published" && (
-
-                            <Link
-                              to={
-                                `/writings/${writing.id}`
-                              }
-                            >
-
-                              <Eye size={16} />
-
-                              {t(
-                                "myWritings.view"
-                              )}
-
-                            </Link>
-
-                          )}
-
-
-                          {writing.status ===
-                          "draft" && (
-
-                            <button
-                              type="button"
-                              className="primary"
-                              onClick={() =>
-                                handlePublish(
-                                  writing.id
-                                )
-                              }
-                              disabled={busy}
-                            >
-
-                              {busy ? (
-
-                                <Loader2
-                                  size={16}
-                                  className="spin"
-                                />
-
-                              ) : (
-
-                                <Send
-                                  size={16}
-                                />
-
-                              )}
-
-                              {t(
-                                "myWritings.publish"
-                              )}
-
-                            </button>
-
-                          )}
-
-
-                          {writing.status ===
-                          "published" && (
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleUnpublish(
-                                  writing.id
-                                )
-                              }
-                              disabled={busy}
-                            >
-
-                              {busy ? (
-
-                                <Loader2
-                                  size={16}
-                                  className="spin"
-                                />
-
-                              ) : (
-
-                                <RotateCcw
-                                  size={16}
-                                />
-
-                              )}
-
-                              {t(
-                                "myWritings.moveToDraft"
-                              )}
-
-                            </button>
-
-                          )}
-
-
-                          <button
-                            type="button"
-                            className="danger"
-                            onClick={() =>
-                              openDeleteModal(
-                                writing
-                              )
-                            }
-                            disabled={busy}
-                          >
-
-                            <Trash2
-                              size={16}
-                            />
-
-                            {t(
-                              "myWritings.delete"
-                            )}
-
-                          </button>
-
-                        </>
-
-                      )}
-
-                    </div>
-
-                  </article>
-
-                );
-
-              }
-            )}
+                  );
+                }
+              )
+            }
 
           </section>
 
@@ -2173,7 +3367,9 @@ function MyWritings() {
       </div>
 
 
-      {/* DELETE / MOVE TO TRASH MODAL */}
+      {/* ===================================================
+          DELETE / MOVE TO TRASH MODAL
+      ==================================================== */}
 
       {deleteTarget && (
 
@@ -2190,14 +3386,20 @@ function MyWritings() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-modal-title"
-            onMouseDown={(event) =>
+            onMouseDown={(
+              event
+            ) =>
               event.stopPropagation()
             }
           >
 
-            <div className="delete-modal-icon">
+            <div
+              className="delete-modal-icon"
+            >
 
-              <Trash2 size={26} />
+              <Trash2
+                size={26}
+              />
 
             </div>
 
@@ -2218,16 +3420,22 @@ function MyWritings() {
               }
             >
 
-              <X size={18} />
+              <X
+                size={18}
+              />
 
             </button>
 
 
-            <p className="delete-modal-eyebrow">
+            <p
+              className="delete-modal-eyebrow"
+            >
 
-              {t(
-                "myWritings.deleteEyebrow"
-              )}
+              {
+                t(
+                  "myWritings.deleteEyebrow"
+                )
+              }
 
             </p>
 
@@ -2236,14 +3444,18 @@ function MyWritings() {
               id="delete-modal-title"
             >
 
-              {t(
-                "myWritings.deleteTitle"
-              )}
+              {
+                t(
+                  "myWritings.deleteTitle"
+                )
+              }
 
             </h2>
 
 
-            <p className="delete-modal-description">
+            <p
+              className="delete-modal-description"
+            >
 
               <strong>
 
@@ -2256,35 +3468,49 @@ function MyWritings() {
 
               </strong>
 
+
               {" "}
 
-              {t(
-                "myWritings.deleteDescription"
-              )}
+
+              {
+                t(
+                  "myWritings.deleteDescription"
+                )
+              }
 
             </p>
 
 
-            <div className="delete-modal-writing-info">
+            <div
+              className="delete-modal-writing-info"
+            >
 
-              <Globe2 size={14} />
+              <Globe2
+                size={14}
+              />
+
 
               <span>
 
-                {getLanguageLabel(
-                  deleteTarget.language ||
-                  "bn"
-                )}
+                {
+                  getLanguageLabel(
+                    deleteTarget.language ||
+                    "bn"
+                  )
+                }
 
               </span>
+
 
               <span>
                 •
               </span>
 
+
               <span>
 
-                {deleteTarget.category ||
+                {
+                  deleteTarget.category ||
                   t(
                     "categories.other"
                   )
@@ -2295,7 +3521,9 @@ function MyWritings() {
             </div>
 
 
-            <div className="delete-modal-actions">
+            <div
+              className="delete-modal-actions"
+            >
 
               <button
                 type="button"
@@ -2308,9 +3536,11 @@ function MyWritings() {
                 }
               >
 
-                {t(
-                  "common.cancel"
-                )}
+                {
+                  t(
+                    "common.cancel"
+                  )
+                }
 
               </button>
 
@@ -2326,29 +3556,32 @@ function MyWritings() {
                 }
               >
 
-                {deleting ? (
-
-                  <Loader2
-                    size={17}
-                    className="spin"
-                  />
-
-                ) : (
-
-                  <Trash2
-                    size={17}
-                  />
-
-                )}
-
-
                 {deleting
-                  ? t(
-                      "myWritings.deleting"
+                  ? (
+
+                      <Loader2
+                        size={17}
+                        className="spin"
+                      />
+
                     )
-                  : t(
-                      "myWritings.deleteWriting"
-                    )
+                  : (
+
+                      <Trash2
+                        size={17}
+                      />
+
+                    )}
+
+
+                {
+                  deleting
+                    ? t(
+                        "myWritings.deleting"
+                      )
+                    : t(
+                        "myWritings.deleteWriting"
+                      )
                 }
 
               </button>
@@ -2362,9 +3595,7 @@ function MyWritings() {
       )}
 
     </main>
-
   );
-
 }
 
 
