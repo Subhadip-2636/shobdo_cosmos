@@ -1951,21 +1951,30 @@ function Explore() {
                 <option
                   value="latest"
                 >
-                  Latest
+                  {t(
+                    "explore.latest",
+                    "Latest"
+                  )}
                 </option>
 
 
                 <option
                   value="oldest"
                 >
-                  Oldest First
+                  {t(
+                    "explore.oldest",
+                    "Oldest First"
+                  )}
                 </option>
 
 
                 <option
                   value="title"
                 >
-                  Title A-Z
+                  {t(
+                    "explore.titleAZ",
+                    "Title A-Z"
+                  )}
                 </option>
 
               </select>
