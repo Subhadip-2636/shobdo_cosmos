@@ -1,8 +1,4 @@
 import {
-  useState,
-} from "react";
-
-import {
   CalendarDays,
   Download,
   ExternalLink,
@@ -10,6 +6,10 @@ import {
   Globe2,
   UserRound,
 } from "lucide-react";
+
+import {
+  useLanguage,
+} from "../Language/LanguageContext";
 
 import "./DocumentCard.css";
 
@@ -31,7 +31,7 @@ function formatFileSize(
     value <= 0
   ) {
 
-    return "PDF";
+    return "";
   }
 
 
@@ -62,11 +62,40 @@ function formatFileSize(
 
 
 // =========================================================
+// UI LOCALE
+// =========================================================
+
+function getLocale(
+  language
+) {
+
+  if (
+    language === "bn"
+  ) {
+
+    return "bn-BD";
+  }
+
+
+  if (
+    language === "hi"
+  ) {
+
+    return "hi-IN";
+  }
+
+
+  return "en-US";
+}
+
+
+// =========================================================
 // DATE
 // =========================================================
 
 function formatDate(
-  value
+  value,
+  uiLanguage
 ) {
 
   if (!value) {
@@ -88,18 +117,17 @@ function formatDate(
   }
 
 
-  return date.toLocaleDateString(
-    undefined,
+  return new Intl.DateTimeFormat(
+    getLocale(
+      uiLanguage
+    ),
     {
-      day:
-        "numeric",
-
-      month:
-        "short",
-
-      year:
-        "numeric",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     }
+  ).format(
+    date
   );
 }
 
@@ -112,10 +140,11 @@ function DocumentCard({
   document,
 }) {
 
-  const [
-    previewFailed,
-    setPreviewFailed,
-  ] = useState(false);
+  const {
+    t,
+    language:
+      uiLanguage,
+  } = useLanguage();
 
 
   if (!document) {
@@ -123,24 +152,179 @@ function DocumentCard({
   }
 
 
+  // =======================================================
+  // BASIC DATA
+  // =======================================================
+
+  const fileUrl =
+    document.file_url ||
+    document.url ||
+    "";
+
+
+  const thumbnailUrl =
+    document.thumbnail_url ||
+    "";
+
+
   const authorName =
     document.author?.name ||
     document.author?.username ||
-    "SHOBDO Writer";
-
-
-  const date =
-    formatDate(
-      document.published_at ||
-      document.created_at
+    document.user?.name ||
+    document.user?.username ||
+    t(
+      "explore.unknownWriter",
+      "SHOBDO Writer"
     );
 
 
-  const description =
-    (
-      document.description ||
-      ""
-    ).trim();
+  const publishedDate =
+    formatDate(
+      document.published_at ||
+      document.created_at,
+      uiLanguage
+    );
+
+
+  const fileSize =
+    formatFileSize(
+      document.file_size
+    );
+
+
+  const pageCount =
+    Number(
+      document.page_count
+    ) || 0;
+
+
+  // =======================================================
+  // CATEGORY
+  // =======================================================
+
+  function getCategoryLabel(
+    category
+  ) {
+
+    const map = {
+
+      "কবিতা":
+        t(
+          "categories.poetry",
+          "Poetry"
+        ),
+
+      "গল্প":
+        t(
+          "categories.story",
+          "Story"
+        ),
+
+      "অনুভূতি":
+        t(
+          "categories.reflection",
+          "Feelings"
+        ),
+
+      "প্রবন্ধ":
+        t(
+          "categories.essay",
+          "Essay"
+        ),
+
+      "অন্যান্য":
+        t(
+          "categories.other",
+          "Other"
+        ),
+    };
+
+
+    return (
+      map[category] ||
+      category ||
+      t(
+        "categories.other",
+        "Other"
+      )
+    );
+  }
+
+
+  // =======================================================
+  // DOCUMENT LANGUAGE
+  // =======================================================
+
+  function getDocumentLanguageLabel(
+    language
+  ) {
+
+    const normalized =
+      String(
+        language ||
+        ""
+      ).toLowerCase();
+
+
+    if (
+      normalized === "bn"
+    ) {
+
+      return t(
+        "write.bengali",
+        "বাংলা"
+      );
+    }
+
+
+    if (
+      normalized === "en"
+    ) {
+
+      return t(
+        "write.english",
+        "English"
+      );
+    }
+
+
+    if (
+      normalized === "hi"
+    ) {
+
+      return t(
+        "write.hindi",
+        "हिन्दी"
+      );
+    }
+
+
+    return normalized
+      ? normalized.toUpperCase()
+      : "";
+  }
+
+
+  const documentLanguage =
+    getDocumentLanguageLabel(
+      document.language
+    );
+
+
+  // =======================================================
+  // PAGE LABEL
+  // =======================================================
+
+  const pageLabel =
+    pageCount === 1
+      ? t(
+          "explore.pdfPage",
+          "page"
+        )
+      : t(
+          "explore.pdfPages",
+          "pages"
+        );
 
 
   // =======================================================
@@ -154,64 +338,86 @@ function DocumentCard({
     >
 
       {/* =================================================
-          PREVIEW
+          THUMBNAIL
       ================================================== */}
 
       <a
-        className="document-card-preview"
+        className="document-card-thumbnail"
         href={
-          document.file_url
+          fileUrl ||
+          "#"
         }
-        target="_blank"
-        rel="noopener noreferrer"
+        target={
+          fileUrl
+            ? "_blank"
+            : undefined
+        }
+        rel={
+          fileUrl
+            ? "noopener noreferrer"
+            : undefined
+        }
+        onClick={(
+          event
+        ) => {
+
+          if (!fileUrl) {
+
+            event.preventDefault();
+          }
+        }}
       >
 
-        {
-          document.thumbnail_url &&
-          !previewFailed
-            ? (
+        {thumbnailUrl
+          ? (
 
-                <img
-                  src={
-                    document.thumbnail_url
-                  }
-                  alt={
-                    document.title ||
-                    "PDF preview"
-                  }
-                  loading="lazy"
-                  onError={() =>
-                    setPreviewFailed(
-                      true
-                    )
-                  }
-                />
+            <img
+              src={
+                thumbnailUrl
+              }
+              alt={
+                document.title ||
+                t(
+                  "explore.untitledPdf",
+                  "Untitled PDF"
+                )
+              }
+              loading="lazy"
+            />
 
-              )
-            : (
+          )
+          : (
 
-                <div
-                  className="document-card-preview-fallback"
-                >
+            <div
+              className="document-card-thumbnail-fallback"
+            >
 
-                  <FileText
-                    size={52}
-                  />
+              <FileText
+                size={54}
+              />
 
-                  <span>
-                    PDF
-                  </span>
 
-                </div>
+              <span>
+                {t(
+                  "explore.pdfLabel",
+                  "PDF"
+                )}
+              </span>
 
-              )
-        }
+            </div>
+
+          )}
 
 
         <span
           className="document-card-pdf-badge"
         >
-          PDF
+
+          {t(
+            "explore.pdfLabel",
+            "PDF"
+          )}
+
         </span>
 
       </a>
@@ -225,7 +431,9 @@ function DocumentCard({
         className="document-card-body"
       >
 
-        {/* CATEGORY + LANGUAGE */}
+        {/* ===============================================
+            CATEGORY + LANGUAGE
+        ================================================ */}
 
         <div
           className="document-card-meta"
@@ -236,26 +444,27 @@ function DocumentCard({
           >
 
             {
-              document.category ||
-              "অন্যান্য"
+              getCategoryLabel(
+                document.category
+              )
             }
 
           </span>
 
 
-          {document.language && (
+          {documentLanguage && (
 
             <span
               className="document-card-language"
             >
 
               <Globe2
-                size={13}
+                size={14}
               />
 
+
               {
-                document.language
-                  .toUpperCase()
+                documentLanguage
               }
 
             </span>
@@ -265,7 +474,9 @@ function DocumentCard({
         </div>
 
 
-        {/* TITLE */}
+        {/* ===============================================
+            TITLE
+        ================================================ */}
 
         <h3
           className="document-card-title"
@@ -273,30 +484,27 @@ function DocumentCard({
 
           {
             document.title ||
-            "Untitled PDF"
+            t(
+              "explore.untitledPdf",
+              "Untitled PDF"
+            )
           }
 
         </h3>
 
 
-        {/* DESCRIPTION */}
+        {/* ===============================================
+            DESCRIPTION
+        ================================================ */}
 
-        {description && (
+        {document.description && (
 
           <p
             className="document-card-description"
           >
 
             {
-              description.length >
-              160
-                ? `${
-                    description.slice(
-                      0,
-                      160
-                    )
-                  }…`
-                : description
+              document.description
             }
 
           </p>
@@ -304,15 +512,18 @@ function DocumentCard({
         )}
 
 
-        {/* AUTHOR */}
+        {/* ===============================================
+            AUTHOR
+        ================================================ */}
 
         <div
           className="document-card-author"
         >
 
           <UserRound
-            size={15}
+            size={16}
           />
+
 
           <span>
             {authorName}
@@ -321,45 +532,50 @@ function DocumentCard({
         </div>
 
 
-        {/* DOCUMENT DETAILS */}
+        {/* ===============================================
+            DOCUMENT INFO
+        ================================================ */}
 
         <div
           className="document-card-info"
         >
 
-          <span>
+          {pageCount > 0 && (
 
-            {
-              Number(
-                document.page_count
-              ) || 0
-            }
+            <span>
 
-            {" pages"}
+              {pageCount}
 
-          </span>
+              {" "}
 
+              {pageLabel}
 
-          <span>
+            </span>
 
-            {
-              formatFileSize(
-                document.file_size
-              )
-            }
-
-          </span>
+          )}
 
 
-          {date && (
+          {fileSize && (
+
+            <span>
+              {fileSize}
+            </span>
+
+          )}
+
+
+          {publishedDate && (
 
             <span>
 
               <CalendarDays
-                size={13}
+                size={14}
               />
 
-              {date}
+
+              {
+                publishedDate
+              }
 
             </span>
 
@@ -368,58 +584,70 @@ function DocumentCard({
         </div>
 
 
-        {/* =================================================
-            ACTIONS
-        ================================================== */}
+        {/* ===============================================
+            ACTION BUTTONS
+        ================================================ */}
 
-        <div
-          className="document-card-actions"
-        >
+        {fileUrl && (
 
-          <a
-            className="document-card-view"
-            href={
-              document.file_url
-            }
-            target="_blank"
-            rel="noopener noreferrer"
+          <div
+            className="document-card-actions"
           >
 
-            <ExternalLink
-              size={16}
-            />
-
-            View PDF
-
-          </a>
-
-
-          {document.allow_download && (
-
             <a
-              className="document-card-download"
+              className="document-card-view"
               href={
-                document.file_url
+                fileUrl
               }
               target="_blank"
               rel="noopener noreferrer"
-              download={
-                document.original_filename ||
-                undefined
-              }
             >
 
-              <Download
-                size={16}
+              <ExternalLink
+                size={17}
               />
 
-              Download
+
+              {t(
+                "explore.viewPdf",
+                "View PDF"
+              )}
 
             </a>
 
-          )}
 
-        </div>
+            {document.allow_download && (
+
+              <a
+                className="document-card-download"
+                href={
+                  fileUrl
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                download={
+                  document.original_filename ||
+                  undefined
+                }
+              >
+
+                <Download
+                  size={17}
+                />
+
+
+                {t(
+                  "explore.download",
+                  "Download"
+                )}
+
+              </a>
+
+            )}
+
+          </div>
+
+        )}
 
       </div>
 

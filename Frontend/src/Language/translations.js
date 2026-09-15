@@ -314,6 +314,13 @@ export const translations = {
   untitledArtwork: "শিরোনামহীন শিল্পকর্ম",
   viewArtwork: "শিল্পকর্ম দেখুন",
   download: "ডাউনলোড",
+  pdfLabel: "PDF",
+unknownWriter: "SHOBDO লেখক",
+untitledPdf: "শিরোনামহীন PDF",
+viewPdf: "PDF দেখুন",
+pdfPage: "পৃষ্ঠা",
+pdfPages: "পৃষ্ঠা",
+download: "ডাউনলোড",
 },
 
     writingCard: {
@@ -1453,6 +1460,13 @@ export const translations = {
   untitledArtwork: "Untitled Artwork",
   viewArtwork: "View Artwork",
   download: "Download",
+  pdfLabel: "PDF",
+unknownWriter: "SHOBDO Writer",
+untitledPdf: "Untitled PDF",
+viewPdf: "View PDF",
+pdfPage: "page",
+pdfPages: "pages",
+download: "Download",
 },
 
     writingCard: {
@@ -2716,6 +2730,13 @@ export const translations = {
   untitledArtwork: "बिना शीर्षक की कलाकृति",
   viewArtwork: "कलाकृति देखें",
   download: "डाउनलोड",
+  pdfLabel: "PDF",
+unknownWriter: "SHOBDO लेखक",
+untitledPdf: "बिना शीर्षक का PDF",
+viewPdf: "PDF देखें",
+pdfPage: "पृष्ठ",
+pdfPages: "पृष्ठ",
+download: "डाउनलोड",
 },
 
     writingCard: {
