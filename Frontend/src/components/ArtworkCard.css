@@ -1,0 +1,495 @@
+/* =========================================================
+   ARTWORK GRID
+   ========================================================= */
+
+.explore-artwork-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+
+  gap: 24px;
+}
+
+
+/* =========================================================
+   ARTWORK CARD
+   ========================================================= */
+
+.artwork-card {
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  min-width: 0;
+
+  border:
+    1px solid
+    #e8e2eb;
+
+  border-radius: 20px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 12px 35px
+    rgba(
+      35,
+      20,
+      43,
+      0.06
+    );
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+
+.artwork-card:hover {
+  transform:
+    translateY(-4px);
+
+  border-color:
+    #d7c4df;
+
+  box-shadow:
+    0 20px 45px
+    rgba(
+      35,
+      20,
+      43,
+      0.12
+    );
+}
+
+
+/* =========================================================
+   IMAGE
+   ========================================================= */
+
+.artwork-card-image {
+  position: relative;
+
+  display: block;
+
+  overflow: hidden;
+
+  aspect-ratio:
+    4 / 3;
+
+  background:
+    linear-gradient(
+      145deg,
+      #f3edf7,
+      #fcfafc
+    );
+
+  text-decoration: none;
+}
+
+
+.artwork-card-image img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  transition:
+    transform 0.25s ease;
+}
+
+
+.artwork-card:hover
+.artwork-card-image img {
+  transform:
+    scale(1.035);
+}
+
+
+.artwork-card-image-fallback {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  color: #662986;
+}
+
+
+.artwork-card-image-fallback span {
+  font-size: 0.75rem;
+  font-weight: 800;
+
+  letter-spacing: 0.12em;
+}
+
+
+.artwork-card-badge {
+  position: absolute;
+
+  top: 13px;
+  right: 13px;
+
+  padding:
+    6px 10px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(
+      37,
+      17,
+      45,
+      0.86
+    );
+
+  color: #ffffff;
+
+  font-size:
+    0.69rem;
+
+  font-weight:
+    800;
+
+  letter-spacing:
+    0.09em;
+}
+
+
+/* =========================================================
+   BODY
+   ========================================================= */
+
+.artwork-card-body {
+  display: flex;
+  flex-direction: column;
+
+  flex: 1;
+
+  padding: 18px;
+}
+
+
+.artwork-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin-bottom:
+    11px;
+}
+
+
+.artwork-card-category {
+  overflow: hidden;
+
+  max-width: 70%;
+
+  padding:
+    5px 9px;
+
+  border-radius:
+    999px;
+
+  background:
+    #f5eef8;
+
+  color:
+    #5d2879;
+
+  font-size:
+    0.75rem;
+
+  font-weight:
+    700;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.artwork-card-language {
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    4px;
+
+  color:
+    #77707d;
+
+  font-size:
+    0.75rem;
+
+  font-weight:
+    700;
+}
+
+
+.artwork-card-title {
+  margin:
+    0;
+
+  color:
+    #211925;
+
+  font-size:
+    1.12rem;
+
+  line-height:
+    1.42;
+
+  overflow-wrap:
+    anywhere;
+}
+
+
+.artwork-card-description {
+  display:
+    -webkit-box;
+
+  overflow:
+    hidden;
+
+  margin:
+    10px 0 0;
+
+  color:
+    #756d79;
+
+  font-size:
+    0.9rem;
+
+  line-height:
+    1.65;
+
+  -webkit-box-orient:
+    vertical;
+
+  -webkit-line-clamp:
+    3;
+}
+
+
+.artwork-card-author {
+  display: flex;
+  align-items: center;
+
+  gap:
+    7px;
+
+  margin-top:
+    15px;
+
+  color:
+    #504957;
+
+  font-size:
+    0.84rem;
+
+  font-weight:
+    650;
+}
+
+
+.artwork-card-info {
+  display: flex;
+  flex-wrap: wrap;
+
+  align-items: center;
+
+  gap:
+    8px 12px;
+
+  margin-top:
+    12px;
+
+  color:
+    #89818d;
+
+  font-size:
+    0.76rem;
+}
+
+
+.artwork-card-info span {
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    4px;
+}
+
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
+
+.artwork-card-actions {
+  display:
+    flex;
+
+  gap:
+    9px;
+
+  margin-top:
+    auto;
+
+  padding-top:
+    18px;
+}
+
+
+.artwork-card-actions a {
+  min-height:
+    40px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    7px;
+
+  padding:
+    0 13px;
+
+  border-radius:
+    11px;
+
+  text-decoration:
+    none;
+
+  font-size:
+    0.84rem;
+
+  font-weight:
+    750;
+
+  transition:
+    0.15s ease;
+}
+
+
+.artwork-card-actions a:hover {
+  transform:
+    translateY(-1px);
+}
+
+
+.artwork-card-view {
+  flex:
+    1;
+
+  background:
+    #531774;
+
+  color:
+    #ffffff;
+}
+
+
+.artwork-card-view:hover {
+  background:
+    #43115e;
+}
+
+
+.artwork-card-download {
+  border:
+    1px solid
+    #ddd2e4;
+
+  background:
+    #ffffff;
+
+  color:
+    #5e2877;
+}
+
+
+.artwork-card-download:hover {
+  background:
+    #faf7fc;
+
+  border-color:
+    #c9b4d7;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (
+  max-width: 1000px
+) {
+
+  .explore-artwork-grid {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+}
+
+
+@media (
+  max-width: 680px
+) {
+
+  .explore-artwork-grid {
+    grid-template-columns:
+      minmax(
+        0,
+        1fr
+      );
+
+    gap:
+      16px;
+  }
+
+
+  .artwork-card-actions {
+    flex-direction:
+      column;
+  }
+
+
+  .artwork-card-actions a {
+    width:
+      100%;
+  }
+}
