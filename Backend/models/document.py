@@ -1,4 +1,7 @@
-from datetime import datetime, timezone
+from datetime import (
+    datetime,
+    timezone,
+)
 
 from extensions import db
 
@@ -7,8 +10,11 @@ from extensions import db
 # HELPERS
 # =========================================================
 
-
 def utc_now():
+    """
+    Return a timezone-aware UTC datetime.
+    """
+
     return datetime.now(
         timezone.utc
     )
@@ -17,7 +23,6 @@ def utc_now():
 # =========================================================
 # DOCUMENT MODEL
 # =========================================================
-
 
 class Document(db.Model):
 
@@ -58,10 +63,12 @@ class Document(db.Model):
         nullable=False,
     )
 
+
     description = db.Column(
         db.Text,
         nullable=True,
     )
+
 
     category = db.Column(
         db.String(80),
@@ -70,10 +77,46 @@ class Document(db.Model):
         index=True,
     )
 
+
     language = db.Column(
         db.String(10),
         nullable=False,
         default="bn",
+        index=True,
+    )
+
+
+    # =====================================================
+    # SOFT DELETE INFORMATION
+    # =====================================================
+    #
+    # previous_status:
+    #
+    # Stores the status that the document had before
+    # being moved to Trash.
+    #
+    # Example:
+    #
+    # published -> deleted
+    #
+    # previous_status = published
+    #
+    # This allows Restore to return the document to its
+    # original state.
+    #
+    # =====================================================
+
+    previous_status = db.Column(
+        db.String(20),
+        nullable=True,
+    )
+
+
+    deleted_at = db.Column(
+        db.DateTime(
+            timezone=True
+        ),
+        nullable=True,
         index=True,
     )
 
@@ -87,21 +130,23 @@ class Document(db.Model):
         nullable=False,
     )
 
-    # Public or secured URL returned by your
-    # external storage provider.
+
+    # Public Cloudinary PDF URL.
+
     file_url = db.Column(
         db.Text,
         nullable=False,
     )
 
-    # External storage identifier.
-    # Example:
-    # Cloudinary public_id or equivalent.
+
+    # Cloudinary public_id.
+
     storage_public_id = db.Column(
         db.String(500),
         nullable=True,
         unique=True,
     )
+
 
     mime_type = db.Column(
         db.String(100),
@@ -109,11 +154,13 @@ class Document(db.Model):
         default="application/pdf",
     )
 
+
     file_size = db.Column(
         db.BigInteger,
         nullable=False,
         default=0,
     )
+
 
     page_count = db.Column(
         db.Integer,
@@ -176,6 +223,9 @@ class Document(db.Model):
     #
     # draft
     # published
+    # deleted
+    #
+    # deleted = soft deleted / currently in Trash
     #
     # =====================================================
 
@@ -200,6 +250,7 @@ class Document(db.Model):
         index=True,
     )
 
+
     updated_at = db.Column(
         db.DateTime(
             timezone=True
@@ -208,6 +259,7 @@ class Document(db.Model):
         default=utc_now,
         onupdate=utc_now,
     )
+
 
     published_at = db.Column(
         db.DateTime(
@@ -241,15 +293,19 @@ class Document(db.Model):
     # =====================================================
 
     def get_author_dict(
-        self
+        self,
     ):
 
         if not self.user:
+
             return None
 
+
         return {
+
             "id":
                 self.user.id,
+
 
             "name":
                 getattr(
@@ -258,12 +314,14 @@ class Document(db.Model):
                     None,
                 ),
 
+
             "username":
                 getattr(
                     self.user,
                     "username",
                     None,
                 ),
+
 
             "avatar_url":
                 getattr(
@@ -283,6 +341,16 @@ class Document(db.Model):
         include_extracted_text=False,
         include_storage_id=False,
     ):
+        """
+        Convert the Document object to JSON-compatible data.
+
+        Public responses normally exclude:
+        - extracted_text
+        - storage_public_id
+
+        Soft-delete information is included so My Writings
+        can display Trash/Restore state.
+        """
 
         data = {
 
@@ -293,11 +361,14 @@ class Document(db.Model):
             "id":
                 self.id,
 
+
             "content_type":
                 "document",
 
+
             "user_id":
                 self.user_id,
+
 
             # =============================================
             # CONTENT
@@ -306,14 +377,18 @@ class Document(db.Model):
             "title":
                 self.title,
 
+
             "description":
                 self.description,
+
 
             "category":
                 self.category,
 
+
             "language":
                 self.language,
+
 
             # =============================================
             # FILE
@@ -322,17 +397,22 @@ class Document(db.Model):
             "original_filename":
                 self.original_filename,
 
+
             "file_url":
                 self.file_url,
+
 
             "mime_type":
                 self.mime_type,
 
+
             "file_size":
                 self.file_size,
 
+
             "page_count":
                 self.page_count,
+
 
             # =============================================
             # PREVIEW
@@ -340,6 +420,7 @@ class Document(db.Model):
 
             "thumbnail_url":
                 self.thumbnail_url,
+
 
             # =============================================
             # SETTINGS
@@ -350,11 +431,30 @@ class Document(db.Model):
                     self.allow_download
                 ),
 
+
             "visibility":
                 self.visibility,
 
+
+            # =============================================
+            # STATUS / SOFT DELETE
+            # =============================================
+
             "status":
                 self.status,
+
+
+            "previous_status":
+                self.previous_status,
+
+
+            "deleted_at":
+                (
+                    self.deleted_at.isoformat()
+                    if self.deleted_at
+                    else None
+                ),
+
 
             # =============================================
             # TIMESTAMPS
@@ -362,27 +462,27 @@ class Document(db.Model):
 
             "created_at":
                 (
-                    self.created_at
-                    .isoformat()
+                    self.created_at.isoformat()
                     if self.created_at
                     else None
                 ),
 
+
             "updated_at":
                 (
-                    self.updated_at
-                    .isoformat()
+                    self.updated_at.isoformat()
                     if self.updated_at
                     else None
                 ),
 
+
             "published_at":
                 (
-                    self.published_at
-                    .isoformat()
+                    self.published_at.isoformat()
                     if self.published_at
                     else None
                 ),
+
 
             # =============================================
             # AUTHOR
@@ -394,7 +494,7 @@ class Document(db.Model):
 
 
         # =================================================
-        # OPTIONAL SEARCH/OCR CONTENT
+        # OPTIONAL SEARCH / OCR CONTENT
         # =================================================
 
         if include_extracted_text:
@@ -407,10 +507,11 @@ class Document(db.Model):
 
 
         # =================================================
-        # OPTIONAL PRIVATE STORAGE ID
+        # OPTIONAL PRIVATE STORAGE INFORMATION
         # =================================================
         #
-        # Normally do NOT expose storage_public_id publicly.
+        # Do not normally expose the Cloudinary public ID
+        # to public frontend requests.
         #
         # =================================================
 
@@ -436,27 +537,55 @@ class Document(db.Model):
     ):
 
         if user_id is None:
+
             return False
 
+
         return (
-            str(self.user_id)
+            str(
+                self.user_id
+            )
             ==
-            str(user_id)
+            str(
+                user_id
+            )
         )
 
 
     # =====================================================
-    # PUBLISHED CHECK
+    # STATUS HELPERS
     # =====================================================
 
+    def is_draft(
+        self,
+    ):
+
+        return (
+            self.status
+            ==
+            "draft"
+        )
+
+
     def is_published(
-        self
+        self,
     ):
 
         return (
             self.status
             ==
             "published"
+        )
+
+
+    def is_deleted(
+        self,
+    ):
+
+        return (
+            self.status
+            ==
+            "deleted"
         )
 
 
@@ -465,14 +594,16 @@ class Document(db.Model):
     # =====================================================
 
     def is_public(
-        self
+        self,
     ):
 
         return (
             self.status
             ==
             "published"
+
             and
+
             self.visibility
             ==
             "public"
@@ -484,14 +615,16 @@ class Document(db.Model):
     # =====================================================
 
     def is_unlisted(
-        self
+        self,
     ):
 
         return (
             self.status
             ==
             "published"
+
             and
+
             self.visibility
             ==
             "unlisted"
@@ -503,12 +636,23 @@ class Document(db.Model):
     # =====================================================
 
     def mark_published(
-        self
+        self,
     ):
 
         self.status = (
             "published"
         )
+
+
+        self.previous_status = (
+            None
+        )
+
+
+        self.deleted_at = (
+            None
+        )
+
 
         if not self.published_at:
 
@@ -522,15 +666,189 @@ class Document(db.Model):
     # =====================================================
 
     def mark_draft(
-        self
+        self,
     ):
 
         self.status = (
             "draft"
         )
 
+
+        self.previous_status = (
+            None
+        )
+
+
+        self.deleted_at = (
+            None
+        )
+
+
         self.published_at = (
             None
+        )
+
+
+    # =====================================================
+    # MOVE TO TRASH — SOFT DELETE
+    # =====================================================
+
+    def move_to_trash(
+        self,
+    ):
+        """
+        Soft delete the PDF document.
+
+        The Cloudinary PDF is NOT deleted here.
+        """
+
+        if (
+            self.status
+            ==
+            "deleted"
+        ):
+
+            return False
+
+
+        if (
+            self.status
+            in {
+                "draft",
+                "published",
+            }
+        ):
+
+            self.previous_status = (
+                self.status
+            )
+
+        else:
+
+            self.previous_status = (
+                "draft"
+            )
+
+
+        self.status = (
+            "deleted"
+        )
+
+
+        self.deleted_at = (
+            utc_now()
+        )
+
+
+        return True
+
+
+    # =====================================================
+    # RESTORE FROM TRASH
+    # =====================================================
+
+    def restore_from_trash(
+        self,
+    ):
+        """
+        Restore a soft-deleted PDF document.
+
+        Returns the status that the document was restored to.
+        """
+
+        if (
+            self.status
+            !=
+            "deleted"
+        ):
+
+            return None
+
+
+        restore_status = (
+            self.previous_status
+            if self.previous_status
+            in {
+                "draft",
+                "published",
+            }
+            else "draft"
+        )
+
+
+        self.status = (
+            restore_status
+        )
+
+
+        self.previous_status = (
+            None
+        )
+
+
+        self.deleted_at = (
+            None
+        )
+
+
+        if (
+            restore_status
+            ==
+            "published"
+        ):
+
+            if not self.published_at:
+
+                self.published_at = (
+                    utc_now()
+                )
+
+
+        else:
+
+            self.published_at = (
+                None
+            )
+
+
+        return restore_status
+
+
+    # =====================================================
+    # DATE / TIME HELPERS
+    # =====================================================
+
+    def get_activity_datetime(
+        self,
+    ):
+        """
+        Return the most relevant datetime for management UI.
+
+        Trash:
+            deleted_at
+
+        Normal document:
+            updated_at
+            created_at
+        """
+
+        if (
+            self.status
+            ==
+            "deleted"
+
+            and
+
+            self.deleted_at
+        ):
+
+            return self.deleted_at
+
+
+        return (
+            self.updated_at
+            or
+            self.created_at
         )
 
 
@@ -539,7 +857,7 @@ class Document(db.Model):
     # =====================================================
 
     def __repr__(
-        self
+        self,
     ):
 
         return (
@@ -547,5 +865,6 @@ class Document(db.Model):
             f"id={self.id} "
             f"user_id={self.user_id} "
             f"status={self.status!r} "
+            f"previous_status={self.previous_status!r} "
             f"title={self.title!r}>"
         )

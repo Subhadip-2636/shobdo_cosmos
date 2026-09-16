@@ -39,16 +39,21 @@ import {
 } from "../api/api";
 
 import {
+  deleteDocument,
   getMyDocuments,
+  permanentlyDeleteDocument,
+  restoreDocument,
 } from "../api/documents";
 
 import {
+  deleteArtwork,
   getMyArtworks,
+  permanentlyDeleteArtwork,
+  restoreArtwork,
 } from "../api/artworks";
 
 import {
   LANGUAGES,
-  getLanguageLabel,
 } from "../config/languages";
 
 import {
@@ -63,7 +68,7 @@ import ArtworkCard
 
 
 // =========================================================
-// HELPERS
+// RESPONSE HELPERS
 // =========================================================
 
 function extractWritings(
@@ -191,6 +196,42 @@ function extractArtworks(
 
 
 // =========================================================
+// TOTAL HELPER
+// =========================================================
+
+function extractTotal(
+  data,
+  items
+) {
+
+  const possibleTotal =
+    Number(
+      data?.pagination?.total ??
+      data?.total
+    );
+
+
+  if (
+    Number.isFinite(
+      possibleTotal
+    )
+  ) {
+
+    return possibleTotal;
+  }
+
+
+  return (
+    Array.isArray(
+      items
+    )
+      ? items.length
+      : 0
+  );
+}
+
+
+// =========================================================
 // MY WRITINGS
 // =========================================================
 
@@ -208,7 +249,7 @@ function MyWritings() {
 
 
   // =======================================================
-  // MULTILINGUAL TEXT FOR NEW CONTENT
+  // MULTILINGUAL LOCAL TEXT
   // =======================================================
 
   const localText =
@@ -217,13 +258,17 @@ function MyWritings() {
 
         const values = {
 
+          // =================================================
+          // BENGALI
+          // =================================================
+
           bn: {
 
             title:
               "আমার সৃজনশীল সংগ্রহ",
 
             description:
-              "আপনার খসড়া, প্রকাশিত লেখা, PDF ডকুমেন্ট এবং শিল্পকর্ম এক জায়গা থেকে পরিচালনা করুন।",
+              "আপনার খসড়া, প্রকাশিত লেখা, PDF ডকুমেন্ট, শিল্পকর্ম এবং ট্র্যাশ এক জায়গা থেকে পরিচালনা করুন।",
 
             newContent:
               "নতুন কনটেন্ট",
@@ -237,17 +282,44 @@ function MyWritings() {
             artwork:
               "শিল্পকর্ম",
 
+            writings:
+              "লেখা",
+
+            trash:
+              "ট্র্যাশ",
+
+            trashWritings:
+              "লেখা",
+
+            trashDocuments:
+              "PDF ডকুমেন্ট",
+
+            trashArtwork:
+              "শিল্পকর্ম",
+
             searchDocuments:
               "PDF ডকুমেন্ট খুঁজুন…",
 
             searchArtwork:
               "শিল্পকর্ম খুঁজুন…",
 
+            searchTrashWritings:
+              "ট্র্যাশে লেখা খুঁজুন…",
+
+            searchTrashDocuments:
+              "ট্র্যাশে PDF ডকুমেন্ট খুঁজুন…",
+
+            searchTrashArtwork:
+              "ট্র্যাশে শিল্পকর্ম খুঁজুন…",
+
             loadingDocuments:
               "PDF ডকুমেন্ট লোড হচ্ছে…",
 
             loadingArtwork:
               "শিল্পকর্ম লোড হচ্ছে…",
+
+            loadingTrash:
+              "ট্র্যাশ লোড হচ্ছে…",
 
             noDocuments:
               "কোনো PDF ডকুমেন্ট নেই",
@@ -261,16 +333,131 @@ function MyWritings() {
             noArtworkDescription:
               "আপনার সংরক্ষিত বা প্রকাশিত শিল্পকর্ম এখানে দেখা যাবে।",
 
+            noTrashWritings:
+              "ট্র্যাশে কোনো লেখা নেই",
+
+            noTrashWritingsDescription:
+              "মুছে ফেলা লেখাগুলি এখানে দেখা যাবে।",
+
+            noTrashDocuments:
+              "ট্র্যাশে কোনো PDF ডকুমেন্ট নেই",
+
+            noTrashDocumentsDescription:
+              "মুছে ফেলা PDF ডকুমেন্ট এখানে দেখা যাবে এবং পুনরুদ্ধার করা যাবে।",
+
+            noTrashArtwork:
+              "ট্র্যাশে কোনো শিল্পকর্ম নেই",
+
+            noTrashArtworkDescription:
+              "মুছে ফেলা শিল্পকর্ম এখানে দেখা যাবে এবং পুনরুদ্ধার করা যাবে।",
+
             publishPdf:
               "PDF প্রকাশ করুন",
 
             publishArtwork:
               "শিল্পকর্ম প্রকাশ করুন",
 
-            permanentConfirm:
-              "স্থায়ীভাবে এই লেখাটি মুছে ফেলবেন? এই কাজটি আর ফিরিয়ে আনা যাবে না।",
+            updated:
+              "আপডেট",
+
+            deletedAt:
+              "মুছে ফেলার সময়",
+
+            draft:
+              "খসড়া",
+
+            published:
+              "প্রকাশিত",
+
+            deleted:
+              "ট্র্যাশ",
+
+            moveToTrash:
+              "ট্র্যাশে পাঠান",
+
+            movingToTrash:
+              "ট্র্যাশে পাঠানো হচ্ছে…",
+
+            restore:
+              "পুনরুদ্ধার",
+
+            restoring:
+              "পুনরুদ্ধার হচ্ছে…",
+
+            deletePermanently:
+              "স্থায়ীভাবে মুছুন",
+
+            deletingPermanently:
+              "স্থায়ীভাবে মুছে ফেলা হচ্ছে…",
+
+            writingMovedToTrash:
+              "লেখাটি ট্র্যাশে পাঠানো হয়েছে।",
+
+            documentMovedToTrash:
+              "PDF ডকুমেন্টটি ট্র্যাশে পাঠানো হয়েছে।",
+
+            artworkMovedToTrash:
+              "শিল্পকর্মটি ট্র্যাশে পাঠানো হয়েছে।",
+
+            writingRestored:
+              "লেখাটি পুনরুদ্ধার করা হয়েছে।",
+
+            documentRestored:
+              "PDF ডকুমেন্টটি পুনরুদ্ধার করা হয়েছে।",
+
+            artworkRestored:
+              "শিল্পকর্মটি পুনরুদ্ধার করা হয়েছে।",
+
+            writingPermanentlyDeleted:
+              "লেখাটি স্থায়ীভাবে মুছে ফেলা হয়েছে।",
+
+            documentPermanentlyDeleted:
+              "PDF ডকুমেন্টটি স্থায়ীভাবে মুছে ফেলা হয়েছে।",
+
+            artworkPermanentlyDeleted:
+              "শিল্পকর্মটি স্থায়ীভাবে মুছে ফেলা হয়েছে।",
+
+            deleteWritingTitle:
+              "এই লেখাটি ট্র্যাশে পাঠাবেন?",
+
+            deleteWritingDescription:
+              "লেখাটি ট্র্যাশে পাঠানো হবে। পরে এটি পুনরুদ্ধার করতে পারবেন।",
+
+            deleteDocumentTitle:
+              "এই PDF ডকুমেন্টটি ট্র্যাশে পাঠাবেন?",
+
+            deleteDocumentDescription:
+              "PDF ডকুমেন্টটি ট্র্যাশে পাঠানো হবে। আসল PDF ফাইলটি সংরক্ষিত থাকবে এবং পরে পুনরুদ্ধার করা যাবে।",
+
+            deleteArtworkTitle:
+              "এই শিল্পকর্মটি ট্র্যাশে পাঠাবেন?",
+
+            deleteArtworkDescription:
+              "শিল্পকর্মটি ট্র্যাশে পাঠানো হবে। আসল ছবিটি সংরক্ষিত থাকবে এবং পরে পুনরুদ্ধার করা যাবে।",
+
+            permanentWritingConfirm:
+              "এই লেখাটি স্থায়ীভাবে মুছে ফেলবেন? এই কাজটি আর ফিরিয়ে আনা যাবে না।",
+
+            permanentDocumentConfirm:
+              "এই PDF ডকুমেন্টটি স্থায়ীভাবে মুছে ফেলবেন? PDF ফাইলটিও Cloudinary থেকে মুছে যাবে। এই কাজটি আর ফিরিয়ে আনা যাবে না।",
+
+            permanentArtworkConfirm:
+              "এই শিল্পকর্মটি স্থায়ীভাবে মুছে ফেলবেন? ছবিটিও Cloudinary থেকে মুছে যাবে। এই কাজটি আর ফিরিয়ে আনা যাবে না।",
+
+            allLanguages:
+              "সব ভাষা",
+
+            refresh:
+              "রিফ্রেশ",
+
+            noDate:
+              "তারিখ নেই",
           },
 
+
+          // =================================================
+          // ENGLISH
+          // =================================================
 
           en: {
 
@@ -278,7 +465,7 @@ function MyWritings() {
               "My Creative Library",
 
             description:
-              "Manage your drafts, published writings, PDF documents and artwork in one place.",
+              "Manage your drafts, published writings, PDF documents, artwork and Trash in one place.",
 
             newContent:
               "New Content",
@@ -292,17 +479,44 @@ function MyWritings() {
             artwork:
               "Artwork",
 
+            writings:
+              "Writings",
+
+            trash:
+              "Trash",
+
+            trashWritings:
+              "Writings",
+
+            trashDocuments:
+              "PDF Documents",
+
+            trashArtwork:
+              "Artwork",
+
             searchDocuments:
               "Search PDF documents…",
 
             searchArtwork:
               "Search artwork…",
 
+            searchTrashWritings:
+              "Search deleted writings…",
+
+            searchTrashDocuments:
+              "Search deleted PDF documents…",
+
+            searchTrashArtwork:
+              "Search deleted artwork…",
+
             loadingDocuments:
               "Loading PDF documents…",
 
             loadingArtwork:
               "Loading artwork…",
+
+            loadingTrash:
+              "Loading Trash…",
 
             noDocuments:
               "No PDF documents yet",
@@ -316,16 +530,131 @@ function MyWritings() {
             noArtworkDescription:
               "Your saved and published artwork will appear here.",
 
+            noTrashWritings:
+              "No writings in Trash",
+
+            noTrashWritingsDescription:
+              "Deleted writings will appear here.",
+
+            noTrashDocuments:
+              "No PDF documents in Trash",
+
+            noTrashDocumentsDescription:
+              "Deleted PDF documents will appear here and can be restored.",
+
+            noTrashArtwork:
+              "No artwork in Trash",
+
+            noTrashArtworkDescription:
+              "Deleted artwork will appear here and can be restored.",
+
             publishPdf:
               "Publish PDF",
 
             publishArtwork:
               "Publish Artwork",
 
-            permanentConfirm:
+            updated:
+              "Updated",
+
+            deletedAt:
+              "Deleted",
+
+            draft:
+              "Draft",
+
+            published:
+              "Published",
+
+            deleted:
+              "Trash",
+
+            moveToTrash:
+              "Move to Trash",
+
+            movingToTrash:
+              "Moving to Trash…",
+
+            restore:
+              "Restore",
+
+            restoring:
+              "Restoring…",
+
+            deletePermanently:
+              "Delete Permanently",
+
+            deletingPermanently:
+              "Deleting permanently…",
+
+            writingMovedToTrash:
+              "Writing moved to Trash.",
+
+            documentMovedToTrash:
+              "PDF document moved to Trash.",
+
+            artworkMovedToTrash:
+              "Artwork moved to Trash.",
+
+            writingRestored:
+              "Writing restored successfully.",
+
+            documentRestored:
+              "PDF document restored successfully.",
+
+            artworkRestored:
+              "Artwork restored successfully.",
+
+            writingPermanentlyDeleted:
+              "Writing permanently deleted.",
+
+            documentPermanentlyDeleted:
+              "PDF document permanently deleted.",
+
+            artworkPermanentlyDeleted:
+              "Artwork permanently deleted.",
+
+            deleteWritingTitle:
+              "Move this writing to Trash?",
+
+            deleteWritingDescription:
+              "The writing will be moved to Trash. You can restore it later.",
+
+            deleteDocumentTitle:
+              "Move this PDF document to Trash?",
+
+            deleteDocumentDescription:
+              "The PDF document will be moved to Trash. The original PDF file will remain stored and can be restored later.",
+
+            deleteArtworkTitle:
+              "Move this artwork to Trash?",
+
+            deleteArtworkDescription:
+              "The artwork will be moved to Trash. The original image will remain stored and can be restored later.",
+
+            permanentWritingConfirm:
               "Permanently delete this writing? This action cannot be undone.",
+
+            permanentDocumentConfirm:
+              "Permanently delete this PDF document? The PDF will also be removed from Cloudinary. This action cannot be undone.",
+
+            permanentArtworkConfirm:
+              "Permanently delete this artwork? The image will also be removed from Cloudinary. This action cannot be undone.",
+
+            allLanguages:
+              "All languages",
+
+            refresh:
+              "Refresh",
+
+            noDate:
+              "No date",
           },
 
+
+          // =================================================
+          // HINDI
+          // =================================================
 
           hi: {
 
@@ -333,7 +662,7 @@ function MyWritings() {
               "मेरा रचनात्मक संग्रह",
 
             description:
-              "अपने ड्राफ्ट, प्रकाशित रचनाएँ, PDF दस्तावेज़ और कलाकृतियाँ एक ही स्थान से प्रबंधित करें।",
+              "अपने ड्राफ्ट, प्रकाशित रचनाएँ, PDF दस्तावेज़, कलाकृतियाँ और ट्रैश एक ही स्थान से प्रबंधित करें।",
 
             newContent:
               "नई सामग्री",
@@ -347,17 +676,44 @@ function MyWritings() {
             artwork:
               "कलाकृति",
 
+            writings:
+              "रचनाएँ",
+
+            trash:
+              "ट्रैश",
+
+            trashWritings:
+              "रचनाएँ",
+
+            trashDocuments:
+              "PDF दस्तावेज़",
+
+            trashArtwork:
+              "कलाकृति",
+
             searchDocuments:
               "PDF दस्तावेज़ खोजें…",
 
             searchArtwork:
               "कलाकृति खोजें…",
 
+            searchTrashWritings:
+              "हटाई गई रचनाएँ खोजें…",
+
+            searchTrashDocuments:
+              "हटाए गए PDF दस्तावेज़ खोजें…",
+
+            searchTrashArtwork:
+              "हटाई गई कलाकृतियाँ खोजें…",
+
             loadingDocuments:
               "PDF दस्तावेज़ लोड हो रहे हैं…",
 
             loadingArtwork:
               "कलाकृतियाँ लोड हो रही हैं…",
+
+            loadingTrash:
+              "ट्रैश लोड हो रहा है…",
 
             noDocuments:
               "कोई PDF दस्तावेज़ नहीं है",
@@ -371,14 +727,125 @@ function MyWritings() {
             noArtworkDescription:
               "आपकी सहेजी गई और प्रकाशित कलाकृतियाँ यहाँ दिखाई देंगी।",
 
+            noTrashWritings:
+              "ट्रैश में कोई रचना नहीं है",
+
+            noTrashWritingsDescription:
+              "हटाई गई रचनाएँ यहाँ दिखाई देंगी।",
+
+            noTrashDocuments:
+              "ट्रैश में कोई PDF दस्तावेज़ नहीं है",
+
+            noTrashDocumentsDescription:
+              "हटाए गए PDF दस्तावेज़ यहाँ दिखाई देंगे और पुनर्स्थापित किए जा सकेंगे।",
+
+            noTrashArtwork:
+              "ट्रैश में कोई कलाकृति नहीं है",
+
+            noTrashArtworkDescription:
+              "हटाई गई कलाकृतियाँ यहाँ दिखाई देंगी और पुनर्स्थापित की जा सकेंगी।",
+
             publishPdf:
               "PDF प्रकाशित करें",
 
             publishArtwork:
               "कलाकृति प्रकाशित करें",
 
-            permanentConfirm:
+            updated:
+              "अपडेट",
+
+            deletedAt:
+              "हटाने का समय",
+
+            draft:
+              "ड्राफ्ट",
+
+            published:
+              "प्रकाशित",
+
+            deleted:
+              "ट्रैश",
+
+            moveToTrash:
+              "ट्रैश में भेजें",
+
+            movingToTrash:
+              "ट्रैश में भेजा जा रहा है…",
+
+            restore:
+              "पुनर्स्थापित करें",
+
+            restoring:
+              "पुनर्स्थापित किया जा रहा है…",
+
+            deletePermanently:
+              "स्थायी रूप से हटाएँ",
+
+            deletingPermanently:
+              "स्थायी रूप से हटाया जा रहा है…",
+
+            writingMovedToTrash:
+              "रचना ट्रैश में भेज दी गई।",
+
+            documentMovedToTrash:
+              "PDF दस्तावेज़ ट्रैश में भेज दिया गया।",
+
+            artworkMovedToTrash:
+              "कलाकृति ट्रैश में भेज दी गई।",
+
+            writingRestored:
+              "रचना पुनर्स्थापित की गई।",
+
+            documentRestored:
+              "PDF दस्तावेज़ पुनर्स्थापित किया गया।",
+
+            artworkRestored:
+              "कलाकृति पुनर्स्थापित की गई।",
+
+            writingPermanentlyDeleted:
+              "रचना स्थायी रूप से हटा दी गई।",
+
+            documentPermanentlyDeleted:
+              "PDF दस्तावेज़ स्थायी रूप से हटा दिया गया।",
+
+            artworkPermanentlyDeleted:
+              "कलाकृति स्थायी रूप से हटा दी गई।",
+
+            deleteWritingTitle:
+              "इस रचना को ट्रैश में भेजें?",
+
+            deleteWritingDescription:
+              "रचना ट्रैश में भेजी जाएगी। आप इसे बाद में पुनर्स्थापित कर सकते हैं।",
+
+            deleteDocumentTitle:
+              "इस PDF दस्तावेज़ को ट्रैश में भेजें?",
+
+            deleteDocumentDescription:
+              "PDF दस्तावेज़ ट्रैश में भेजा जाएगा। मूल PDF सुरक्षित रहेगा और बाद में पुनर्स्थापित किया जा सकेगा।",
+
+            deleteArtworkTitle:
+              "इस कलाकृति को ट्रैश में भेजें?",
+
+            deleteArtworkDescription:
+              "कलाकृति ट्रैश में भेजी जाएगी। मूल चित्र सुरक्षित रहेगा और बाद में पुनर्स्थापित किया जा सकेगा।",
+
+            permanentWritingConfirm:
               "इस रचना को स्थायी रूप से हटाएँ? यह कार्रवाई वापस नहीं की जा सकती।",
+
+            permanentDocumentConfirm:
+              "इस PDF दस्तावेज़ को स्थायी रूप से हटाएँ? PDF Cloudinary से भी हटा दिया जाएगा। यह कार्रवाई वापस नहीं की जा सकती।",
+
+            permanentArtworkConfirm:
+              "इस कलाकृति को स्थायी रूप से हटाएँ? चित्र Cloudinary से भी हटा दिया जाएगा। यह कार्रवाई वापस नहीं की जा सकती।",
+
+            allLanguages:
+              "सभी भाषाएँ",
+
+            refresh:
+              "रीफ़्रेश",
+
+            noDate:
+              "तारीख उपलब्ध नहीं",
           },
         };
 
@@ -416,9 +883,6 @@ function MyWritings() {
 
   // =======================================================
   // UPLOAD SUB TAB
-  //
-  // documents
-  // artworks
   // =======================================================
 
   const [
@@ -426,6 +890,24 @@ function MyWritings() {
     setUploadTab,
   ] = useState(
     "documents"
+  );
+
+
+  // =======================================================
+  // TRASH SUB TAB
+  // =======================================================
+  //
+  // writings
+  // documents
+  // artworks
+  //
+  // =======================================================
+
+  const [
+    trashTab,
+    setTrashTab,
+  ] = useState(
+    "writings"
   );
 
 
@@ -480,9 +962,27 @@ function MyWritings() {
 
 
   const [
-    trashCount,
-    setTrashCount,
+    deletedWritingCount,
+    setDeletedWritingCount,
   ] = useState(0);
+
+
+  const [
+    deletedDocumentCount,
+    setDeletedDocumentCount,
+  ] = useState(0);
+
+
+  const [
+    deletedArtworkCount,
+    setDeletedArtworkCount,
+  ] = useState(0);
+
+
+  const trashCount =
+    deletedWritingCount +
+    deletedDocumentCount +
+    deletedArtworkCount;
 
 
   // =======================================================
@@ -526,9 +1026,9 @@ function MyWritings() {
 
 
   const [
-    actionId,
-    setActionId,
-  ] = useState(null);
+    actionKey,
+    setActionKey,
+  ] = useState("");
 
 
   const [
@@ -545,6 +1045,11 @@ function MyWritings() {
 
   // =======================================================
   // DELETE MODAL
+  //
+  // {
+  //   type: "writing" | "document" | "artwork",
+  //   item: {...}
+  // }
   // =======================================================
 
   const [
@@ -557,6 +1062,192 @@ function MyWritings() {
     deleting,
     setDeleting,
   ] = useState(false);
+
+
+  // =======================================================
+  // LOCALIZED LANGUAGE LABEL
+  // =======================================================
+
+  function getLocalizedLanguageLabel(
+    languageCode
+  ) {
+
+    const code =
+      String(
+        languageCode ||
+        "bn"
+      )
+        .trim()
+        .toLowerCase();
+
+
+    const values = {
+
+      bn: {
+        bn: "বাংলা",
+        en: "ইংরেজি",
+        hi: "হিন্দি",
+        as: "অসমীয়া",
+        or: "ওড়িয়া",
+        ta: "তামিল",
+        te: "তেলুগু",
+      },
+
+      en: {
+        bn: "Bengali",
+        en: "English",
+        hi: "Hindi",
+        as: "Assamese",
+        or: "Odia",
+        ta: "Tamil",
+        te: "Telugu",
+      },
+
+      hi: {
+        bn: "बंगाली",
+        en: "अंग्रेज़ी",
+        hi: "हिन्दी",
+        as: "असमिया",
+        or: "ओड़िया",
+        ta: "तमिल",
+        te: "तेलुगु",
+      },
+    };
+
+
+    const current =
+      values[
+        uiLanguage
+      ] ||
+      values.en;
+
+
+    return (
+      current[
+        code
+      ] ||
+      code.toUpperCase()
+    );
+  }
+
+
+  // =======================================================
+  // FORMAT DATE + TIME
+  // =======================================================
+
+  function formatDateTime(
+    dateString
+  ) {
+
+    if (
+      !dateString
+    ) {
+
+      return (
+        localText.noDate
+      );
+    }
+
+
+    const date =
+      new Date(
+        dateString
+      );
+
+
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+
+      return (
+        localText.noDate
+      );
+    }
+
+
+    const localeMap = {
+
+      bn:
+        "bn-BD",
+
+      en:
+        "en-US",
+
+      hi:
+        "hi-IN",
+    };
+
+
+    try {
+
+      return (
+        new Intl.DateTimeFormat(
+          localeMap[
+            uiLanguage
+          ] ||
+          "en-US",
+          {
+            day:
+              "numeric",
+
+            month:
+              "short",
+
+            year:
+              "numeric",
+
+            hour:
+              "numeric",
+
+            minute:
+              "2-digit",
+          }
+        )
+          .format(
+            date
+          )
+      );
+
+
+    } catch {
+
+      return (
+        date.toLocaleString()
+      );
+    }
+  }
+
+
+  // =======================================================
+  // BUSY
+  // =======================================================
+
+  function getActionKey(
+    type,
+    id
+  ) {
+
+    return (
+      `${type}-${id}`
+    );
+  }
+
+
+  function isBusy(
+    type,
+    id
+  ) {
+
+    return (
+      actionKey ===
+      getActionKey(
+        type,
+        id
+      )
+    );
+  }
 
 
   // =======================================================
@@ -585,96 +1276,239 @@ function MyWritings() {
                 "deleted",
             }),
 
-            getMyDocuments(),
+            getMyDocuments({
+              status:
+                "active",
+              limit:
+                100,
+            }),
 
-            getMyArtworks(),
+            getMyDocuments({
+              status:
+                "deleted",
+              limit:
+                100,
+            }),
+
+            getMyArtworks({
+              status:
+                "active",
+              limit:
+                100,
+            }),
+
+            getMyArtworks({
+              status:
+                "deleted",
+              limit:
+                100,
+            }),
           ]);
 
 
         const [
           draftsResult,
           publishedResult,
-          trashResult,
-          documentsResult,
-          artworksResult,
+          deletedWritingsResult,
+          activeDocumentsResult,
+          deletedDocumentsResult,
+          activeArtworksResult,
+          deletedArtworksResult,
         ] = results;
 
+
+        // =================================================
+        // WRITING DRAFTS
+        // =================================================
 
         if (
           draftsResult.status ===
           "fulfilled"
         ) {
 
-          setDraftCount(
+          const items =
             extractWritings(
               draftsResult.value
-            ).length
+            );
+
+
+          setDraftCount(
+            extractTotal(
+              draftsResult.value,
+              items
+            )
           );
         }
 
+
+        // =================================================
+        // WRITING PUBLISHED
+        // =================================================
 
         if (
           publishedResult.status ===
           "fulfilled"
         ) {
 
-          setPublishedCount(
+          const items =
             extractWritings(
               publishedResult.value
-            ).length
+            );
+
+
+          setPublishedCount(
+            extractTotal(
+              publishedResult.value,
+              items
+            )
           );
         }
 
 
+        // =================================================
+        // WRITING TRASH
+        // =================================================
+
         if (
-          trashResult.status ===
+          deletedWritingsResult.status ===
           "fulfilled"
         ) {
 
-          setTrashCount(
+          const items =
             extractWritings(
-              trashResult.value
-            ).length
+              deletedWritingsResult.value
+            );
+
+
+          setDeletedWritingCount(
+            extractTotal(
+              deletedWritingsResult.value,
+              items
+            )
           );
         }
 
 
+        // =================================================
+        // ACTIVE PDF
+        // =================================================
+
         if (
-          documentsResult.status ===
+          activeDocumentsResult.status ===
           "fulfilled"
         ) {
+
+          const items =
+            extractDocuments(
+              activeDocumentsResult.value
+            );
+
 
           setDocumentCount(
-            extractDocuments(
-              documentsResult.value
-            ).length
+            extractTotal(
+              activeDocumentsResult.value,
+              items
+            )
           );
 
         } else {
 
           console.error(
             "DOCUMENT COUNT ERROR:",
-            documentsResult.reason
+            activeDocumentsResult.reason
           );
         }
 
 
+        // =================================================
+        // DELETED PDF
+        // =================================================
+
         if (
-          artworksResult.status ===
+          deletedDocumentsResult.status ===
           "fulfilled"
         ) {
 
-          setArtworkCount(
+          const items =
+            extractDocuments(
+              deletedDocumentsResult.value
+            );
+
+
+          setDeletedDocumentCount(
+            extractTotal(
+              deletedDocumentsResult.value,
+              items
+            )
+          );
+
+        } else {
+
+          console.error(
+            "DELETED DOCUMENT COUNT ERROR:",
+            deletedDocumentsResult.reason
+          );
+        }
+
+
+        // =================================================
+        // ACTIVE ARTWORK
+        // =================================================
+
+        if (
+          activeArtworksResult.status ===
+          "fulfilled"
+        ) {
+
+          const items =
             extractArtworks(
-              artworksResult.value
-            ).length
+              activeArtworksResult.value
+            );
+
+
+          setArtworkCount(
+            extractTotal(
+              activeArtworksResult.value,
+              items
+            )
           );
 
         } else {
 
           console.error(
             "ARTWORK COUNT ERROR:",
-            artworksResult.reason
+            activeArtworksResult.reason
+          );
+        }
+
+
+        // =================================================
+        // DELETED ARTWORK
+        // =================================================
+
+        if (
+          deletedArtworksResult.status ===
+          "fulfilled"
+        ) {
+
+          const items =
+            extractArtworks(
+              deletedArtworksResult.value
+            );
+
+
+          setDeletedArtworkCount(
+            extractTotal(
+              deletedArtworksResult.value,
+              items
+            )
+          );
+
+        } else {
+
+          console.error(
+            "DELETED ARTWORK COUNT ERROR:",
+            deletedArtworksResult.reason
           );
         }
 
@@ -744,13 +1578,20 @@ function MyWritings() {
           );
 
 
+          const total =
+            extractTotal(
+              data,
+              items
+            );
+
+
           if (
             status ===
             "draft"
           ) {
 
             setDraftCount(
-              items.length
+              total
             );
           }
 
@@ -761,7 +1602,7 @@ function MyWritings() {
           ) {
 
             setPublishedCount(
-              items.length
+              total
             );
           }
 
@@ -771,8 +1612,8 @@ function MyWritings() {
             "deleted"
           ) {
 
-            setTrashCount(
-              items.length
+            setDeletedWritingCount(
+              total
             );
           }
 
@@ -826,6 +1667,7 @@ function MyWritings() {
   const loadDocuments =
     useCallback(
       async (
+        status = "active",
         showMainLoader = true
       ) => {
 
@@ -853,7 +1695,11 @@ function MyWritings() {
         try {
 
           const data =
-            await getMyDocuments();
+            await getMyDocuments({
+              status,
+              limit:
+                100,
+            });
 
 
           const items =
@@ -867,19 +1713,38 @@ function MyWritings() {
           );
 
 
-          setArtworks(
-            []
-          );
-
-
           setWritings(
             []
           );
 
 
-          setDocumentCount(
-            items.length
+          setArtworks(
+            []
           );
+
+
+          const total =
+            extractTotal(
+              data,
+              items
+            );
+
+
+          if (
+            status ===
+            "deleted"
+          ) {
+
+            setDeletedDocumentCount(
+              total
+            );
+
+          } else {
+
+            setDocumentCount(
+              total
+            );
+          }
 
 
         } catch (
@@ -927,6 +1792,7 @@ function MyWritings() {
   const loadArtworks =
     useCallback(
       async (
+        status = "active",
         showMainLoader = true
       ) => {
 
@@ -954,7 +1820,11 @@ function MyWritings() {
         try {
 
           const data =
-            await getMyArtworks();
+            await getMyArtworks({
+              status,
+              limit:
+                100,
+            });
 
 
           const items =
@@ -978,9 +1848,28 @@ function MyWritings() {
           );
 
 
-          setArtworkCount(
-            items.length
-          );
+          const total =
+            extractTotal(
+              data,
+              items
+            );
+
+
+          if (
+            status ===
+            "deleted"
+          ) {
+
+            setDeletedArtworkCount(
+              total
+            );
+
+          } else {
+
+            setArtworkCount(
+              total
+            );
+          }
 
 
         } catch (
@@ -1069,6 +1958,10 @@ function MyWritings() {
       );
 
 
+      // ===================================================
+      // DOCUMENTS / ARTWORK
+      // ===================================================
+
       if (
         activeTab ===
         "uploads"
@@ -1079,17 +1972,71 @@ function MyWritings() {
           "artworks"
         ) {
 
-          loadArtworks();
+          loadArtworks(
+            "active"
+          );
 
         } else {
 
-          loadDocuments();
+          loadDocuments(
+            "active"
+          );
         }
 
 
         return;
       }
 
+
+      // ===================================================
+      // TRASH
+      // ===================================================
+
+      if (
+        activeTab ===
+        "deleted"
+      ) {
+
+        if (
+          trashTab ===
+          "documents"
+        ) {
+
+          loadDocuments(
+            "deleted"
+          );
+
+
+          return;
+        }
+
+
+        if (
+          trashTab ===
+          "artworks"
+        ) {
+
+          loadArtworks(
+            "deleted"
+          );
+
+
+          return;
+        }
+
+
+        loadWritings(
+          "deleted"
+        );
+
+
+        return;
+      }
+
+
+      // ===================================================
+      // WRITING DRAFT / PUBLISHED
+      // ===================================================
 
       loadWritings(
         activeTab
@@ -1099,94 +2046,12 @@ function MyWritings() {
     [
       activeTab,
       uploadTab,
+      trashTab,
       loadArtworks,
       loadDocuments,
       loadWritings,
     ]
   );
-
-
-  // =======================================================
-  // FORMAT DATE
-  // =======================================================
-
-  function formatDate(
-    dateString
-  ) {
-
-    if (
-      !dateString
-    ) {
-
-      return t(
-        "common.noData"
-      );
-    }
-
-
-    const date =
-      new Date(
-        dateString
-      );
-
-
-    if (
-      Number.isNaN(
-        date.getTime()
-      )
-    ) {
-
-      return t(
-        "common.noData"
-      );
-    }
-
-
-    const localeMap = {
-      bn:
-        "bn-BD",
-      en:
-        "en-US",
-      hi:
-        "hi-IN",
-    };
-
-
-    try {
-
-      return new Intl
-        .DateTimeFormat(
-          localeMap[
-            uiLanguage
-          ] ||
-          undefined,
-          {
-            day:
-              "numeric",
-
-            month:
-              "short",
-
-            year:
-              "numeric",
-
-            hour:
-              "numeric",
-
-            minute:
-              "2-digit",
-          }
-        )
-        .format(
-          date
-        );
-
-    } catch {
-
-      return date
-        .toLocaleString();
-    }
-  }
 
 
   // =======================================================
@@ -1206,15 +2071,17 @@ function MyWritings() {
     }
 
 
-    return content
-      .trim()
-      .split(
-        /\s+/
-      )
-      .filter(
-        Boolean
-      )
-      .length;
+    return (
+      content
+        .trim()
+        .split(
+          /\s+/
+        )
+        .filter(
+          Boolean
+        )
+        .length
+    );
   }
 
 
@@ -1239,11 +2106,12 @@ function MyWritings() {
 
 
   // =======================================================
-  // GENERIC CONTENT FILTER
+  // SEARCH / FILTER / SORT
   // =======================================================
 
-  function filterMediaItems(
-    items
+  function filterItems(
+    items,
+    type
   ) {
 
     const normalizedSearch =
@@ -1277,8 +2145,12 @@ function MyWritings() {
 
             const description =
               String(
-                item.description ||
-                ""
+                type ===
+                "writing"
+                  ? item.content ||
+                    ""
+                  : item.description ||
+                    ""
               )
                 .toLowerCase();
 
@@ -1299,31 +2171,12 @@ function MyWritings() {
                 .toLowerCase();
 
 
-            const languageCode =
-              item.language ||
-              "bn";
-
-
-            let languageLabel =
-              languageCode;
-
-
-            try {
-
-              languageLabel =
-                getLanguageLabel(
-                  languageCode
-                )
-                  .toLowerCase();
-
-            } catch {
-
-              languageLabel =
-                String(
-                  languageCode
-                )
-                  .toLowerCase();
-            }
+            const languageLabel =
+              getLocalizedLanguageLabel(
+                item.language ||
+                "bn"
+              )
+                .toLowerCase();
 
 
             return (
@@ -1376,28 +2229,9 @@ function MyWritings() {
         b
       ) => {
 
-        if (
-          sortBy ===
-          "oldest"
-        ) {
-
-          return (
-            new Date(
-              a.updated_at ||
-              a.published_at ||
-              a.created_at ||
-              0
-            )
-            -
-            new Date(
-              b.updated_at ||
-              b.published_at ||
-              b.created_at ||
-              0
-            )
-          );
-        }
-
+        // =================================================
+        // TITLE
+        // =================================================
 
         if (
           sortBy ===
@@ -1419,6 +2253,10 @@ function MyWritings() {
         }
 
 
+        // =================================================
+        // CREATED
+        // =================================================
+
         if (
           sortBy ===
           "created"
@@ -1438,19 +2276,54 @@ function MyWritings() {
         }
 
 
+        // =================================================
+        // TRASH ITEMS USE DELETION DATE
+        // =================================================
+
+        const firstDate =
+          a.deleted_at ||
+          a.updated_at ||
+          a.published_at ||
+          a.created_at ||
+          0;
+
+
+        const secondDate =
+          b.deleted_at ||
+          b.updated_at ||
+          b.published_at ||
+          b.created_at ||
+          0;
+
+
+        if (
+          sortBy ===
+          "oldest"
+        ) {
+
+          return (
+            new Date(
+              firstDate
+            )
+            -
+            new Date(
+              secondDate
+            )
+          );
+        }
+
+
+        // =================================================
+        // RECENT
+        // =================================================
+
         return (
           new Date(
-            b.updated_at ||
-            b.published_at ||
-            b.created_at ||
-            0
+            secondDate
           )
           -
           new Date(
-            a.updated_at ||
-            a.published_at ||
-            a.created_at ||
-            0
+            firstDate
           )
         );
       }
@@ -1462,281 +2335,140 @@ function MyWritings() {
 
 
   // =======================================================
-  // FILTER WRITINGS
+  // FILTERED ITEMS
   // =======================================================
 
   const filteredWritings =
     useMemo(
-      () => {
-
-        const normalizedSearch =
-          search
-            .trim()
-            .toLowerCase();
-
-
-        let result = [
-          ...writings,
-        ];
-
-
-        if (
-          normalizedSearch
-        ) {
-
-          result =
-            result.filter(
-              (
-                writing
-              ) => {
-
-                const title =
-                  String(
-                    writing.title ||
-                    ""
-                  )
-                    .toLowerCase();
-
-
-                const content =
-                  String(
-                    writing.content ||
-                    ""
-                  )
-                    .toLowerCase();
-
-
-                const category =
-                  String(
-                    writing.category ||
-                    ""
-                  )
-                    .toLowerCase();
-
-
-                const languageCode =
-                  writing.language ||
-                  "bn";
-
-
-                let languageLabel =
-                  languageCode;
-
-
-                try {
-
-                  languageLabel =
-                    getLanguageLabel(
-                      languageCode
-                    )
-                      .toLowerCase();
-
-                } catch {
-
-                  languageLabel =
-                    languageCode;
-                }
-
-
-                return (
-                  title.includes(
-                    normalizedSearch
-                  )
-                  ||
-                  content.includes(
-                    normalizedSearch
-                  )
-                  ||
-                  category.includes(
-                    normalizedSearch
-                  )
-                  ||
-                  languageLabel.includes(
-                    normalizedSearch
-                  )
-                );
-              }
-            );
-        }
-
-
-        if (
-          language
-        ) {
-
-          result =
-            result.filter(
-              (
-                writing
-              ) =>
-                (
-                  writing.language ||
-                  "bn"
-                ) ===
-                language
-            );
-        }
-
-
-        result.sort(
-          (
-            a,
-            b
-          ) => {
-
-            if (
-              sortBy ===
-              "oldest"
-            ) {
-
-              return (
-                new Date(
-                  a.updated_at ||
-                  a.created_at ||
-                  0
-                )
-                -
-                new Date(
-                  b.updated_at ||
-                  b.created_at ||
-                  0
-                )
-              );
-            }
-
-
-            if (
-              sortBy ===
-              "title"
-            ) {
-
-              return (
-                String(
-                  a.title ||
-                  ""
-                )
-                  .localeCompare(
-                    String(
-                      b.title ||
-                      ""
-                    )
-                  )
-              );
-            }
-
-
-            if (
-              sortBy ===
-              "created"
-            ) {
-
-              return (
-                new Date(
-                  b.created_at ||
-                  0
-                )
-                -
-                new Date(
-                  a.created_at ||
-                  0
-                )
-              );
-            }
-
-
-            return (
-              new Date(
-                b.updated_at ||
-                b.created_at ||
-                0
-              )
-              -
-              new Date(
-                a.updated_at ||
-                a.created_at ||
-                0
-              )
-            );
-          }
-        );
-
-
-        return result;
-
-      },
+      () =>
+        filterItems(
+          writings,
+          "writing"
+        ),
       [
         writings,
         search,
         language,
         sortBy,
+        uiLanguage,
       ]
     );
 
 
-  // =======================================================
-  // FILTER DOCUMENTS
-  // =======================================================
-
   const filteredDocuments =
     useMemo(
       () =>
-        filterMediaItems(
-          documents
+        filterItems(
+          documents,
+          "document"
         ),
       [
         documents,
         search,
         language,
         sortBy,
+        uiLanguage,
       ]
     );
 
 
-  // =======================================================
-  // FILTER ARTWORK
-  // =======================================================
-
   const filteredArtworks =
     useMemo(
       () =>
-        filterMediaItems(
-          artworks
+        filterItems(
+          artworks,
+          "artwork"
         ),
       [
         artworks,
         search,
         language,
         sortBy,
+        uiLanguage,
       ]
     );
 
 
   // =======================================================
-  // CURRENT RESULTS
+  // CURRENT ITEMS
   // =======================================================
 
-  const currentItems =
-    activeTab ===
-    "uploads"
-      ? (
-          uploadTab ===
-          "artworks"
-            ? filteredArtworks
-            : filteredDocuments
-        )
-      : filteredWritings;
+  let currentItems =
+    filteredWritings;
 
 
-  const currentTotal =
+  let currentTotal =
+    writings.length;
+
+
+  if (
     activeTab ===
     "uploads"
-      ? (
-          uploadTab ===
-          "artworks"
-            ? artworks.length
-            : documents.length
-        )
-      : writings.length;
+  ) {
+
+    if (
+      uploadTab ===
+      "artworks"
+    ) {
+
+      currentItems =
+        filteredArtworks;
+
+
+      currentTotal =
+        artworks.length;
+
+    } else {
+
+      currentItems =
+        filteredDocuments;
+
+
+      currentTotal =
+        documents.length;
+    }
+  }
+
+
+  if (
+    activeTab ===
+    "deleted"
+  ) {
+
+    if (
+      trashTab ===
+      "documents"
+    ) {
+
+      currentItems =
+        filteredDocuments;
+
+
+      currentTotal =
+        documents.length;
+
+    } else if (
+      trashTab ===
+      "artworks"
+    ) {
+
+      currentItems =
+        filteredArtworks;
+
+
+      currentTotal =
+        artworks.length;
+
+    } else {
+
+      currentItems =
+        filteredWritings;
+
+
+      currentTotal =
+        writings.length;
+    }
+  }
 
 
   // =======================================================
@@ -1747,8 +2479,15 @@ function MyWritings() {
     writingId
   ) {
 
-    setActionId(
-      writingId
+    const key =
+      getActionKey(
+        "writing",
+        writingId
+      );
+
+
+    setActionKey(
+      key
     );
 
 
@@ -1801,23 +2540,30 @@ function MyWritings() {
 
     } finally {
 
-      setActionId(
-        null
+      setActionKey(
+        ""
       );
     }
   }
 
 
   // =======================================================
-  // UNPUBLISH
+  // UNPUBLISH WRITING
   // =======================================================
 
   async function handleUnpublish(
     writingId
   ) {
 
-    setActionId(
-      writingId
+    const key =
+      getActionKey(
+        "writing",
+        writingId
+      );
+
+
+    setActionKey(
+      key
     );
 
 
@@ -1870,233 +2616,26 @@ function MyWritings() {
 
     } finally {
 
-      setActionId(
-        null
+      setActionKey(
+        ""
       );
     }
   }
 
 
   // =======================================================
-  // RESTORE
-  // =======================================================
-
-  async function handleRestore(
-    writingId
-  ) {
-
-    setActionId(
-      writingId
-    );
-
-
-    setError(
-      ""
-    );
-
-
-    setSuccess(
-      ""
-    );
-
-
-    try {
-
-      const response =
-        await restoreWriting(
-          writingId
-        );
-
-
-      const restoredWriting =
-        response?.writing ||
-        response;
-
-
-      setWritings(
-        (
-          current
-        ) =>
-          current.filter(
-            (
-              item
-            ) =>
-              item.id !==
-              writingId
-          )
-      );
-
-
-      setTrashCount(
-        (
-          current
-        ) =>
-          Math.max(
-            0,
-            current - 1
-          )
-      );
-
-
-      if (
-        restoredWriting?.status ===
-        "published"
-      ) {
-
-        setPublishedCount(
-          (
-            current
-          ) =>
-            current + 1
-        );
-
-      } else {
-
-        setDraftCount(
-          (
-            current
-          ) =>
-            current + 1
-        );
-      }
-
-
-      setSuccess(
-        t(
-          "myWritings.restored"
-        )
-      );
-
-
-    } catch (
-      err
-    ) {
-
-      setError(
-        err?.message ||
-        t(
-          "errors.generic"
-        )
-      );
-
-
-    } finally {
-
-      setActionId(
-        null
-      );
-    }
-  }
-
-
-  // =======================================================
-  // PERMANENT DELETE
-  // =======================================================
-
-  async function handlePermanentDelete(
-    writing
-  ) {
-
-    const confirmed =
-      window.confirm(
-        `${localText.permanentConfirm}\n\n“${
-          writing.title ||
-          t(
-            "common.untitled"
-          )
-        }”`
-      );
-
-
-    if (
-      !confirmed
-    ) {
-
-      return;
-    }
-
-
-    setActionId(
-      writing.id
-    );
-
-
-    setError(
-      ""
-    );
-
-
-    try {
-
-      await permanentlyDeleteWriting(
-        writing.id
-      );
-
-
-      setWritings(
-        (
-          current
-        ) =>
-          current.filter(
-            (
-              item
-            ) =>
-              item.id !==
-              writing.id
-          )
-      );
-
-
-      setTrashCount(
-        (
-          current
-        ) =>
-          Math.max(
-            0,
-            current - 1
-          )
-      );
-
-
-      setSuccess(
-        t(
-          "myWritings.permanentlyDeleted"
-        )
-      );
-
-
-    } catch (
-      err
-    ) {
-
-      setError(
-        err?.message ||
-        t(
-          "errors.generic"
-        )
-      );
-
-
-    } finally {
-
-      setActionId(
-        null
-      );
-    }
-  }
-
-
-  // =======================================================
-  // DELETE MODAL
+  // OPEN SOFT DELETE MODAL
   // =======================================================
 
   function openDeleteModal(
-    writing
+    type,
+    item
   ) {
 
-    setDeleteTarget(
-      writing
-    );
+    setDeleteTarget({
+      type,
+      item,
+    });
 
 
     setError(
@@ -2109,6 +2648,10 @@ function MyWritings() {
     );
   }
 
+
+  // =======================================================
+  // CLOSE SOFT DELETE MODAL
+  // =======================================================
 
   function closeDeleteModal() {
 
@@ -2126,14 +2669,95 @@ function MyWritings() {
   }
 
 
+  // =======================================================
+  // DELETE COPY
+  // =======================================================
+
+  function getDeleteModalTitle() {
+
+    if (
+      deleteTarget?.type ===
+      "document"
+    ) {
+
+      return (
+        localText.deleteDocumentTitle
+      );
+    }
+
+
+    if (
+      deleteTarget?.type ===
+      "artwork"
+    ) {
+
+      return (
+        localText.deleteArtworkTitle
+      );
+    }
+
+
+    return (
+      localText.deleteWritingTitle
+    );
+  }
+
+
+  function getDeleteModalDescription() {
+
+    if (
+      deleteTarget?.type ===
+      "document"
+    ) {
+
+      return (
+        localText.deleteDocumentDescription
+      );
+    }
+
+
+    if (
+      deleteTarget?.type ===
+      "artwork"
+    ) {
+
+      return (
+        localText.deleteArtworkDescription
+      );
+    }
+
+
+    return (
+      localText.deleteWritingDescription
+    );
+  }
+
+
+  // =======================================================
+  // CONFIRM SOFT DELETE
+  // =======================================================
+
   async function confirmDelete() {
 
     if (
-      !deleteTarget
+      !deleteTarget?.item
     ) {
 
       return;
     }
+
+
+    const {
+      type,
+      item,
+    } = deleteTarget;
+
+
+    const key =
+      getActionKey(
+        type,
+        item.id
+      );
 
 
     setDeleting(
@@ -2141,8 +2765,8 @@ function MyWritings() {
     );
 
 
-    setActionId(
-      deleteTarget.id
+    setActionKey(
+      key
     );
 
 
@@ -2151,79 +2775,121 @@ function MyWritings() {
     );
 
 
+    setSuccess(
+      ""
+    );
+
+
     try {
 
-      await deleteWriting(
-        deleteTarget.id
-      );
-
-
-      setWritings(
-        (
-          current
-        ) =>
-          current.filter(
-            (
-              item
-            ) =>
-              item.id !==
-              deleteTarget.id
-          )
-      );
-
+      // ===================================================
+      // WRITING
+      // ===================================================
 
       if (
-        activeTab ===
-        "draft"
+        type ===
+        "writing"
       ) {
 
-        setDraftCount(
+        await deleteWriting(
+          item.id
+        );
+
+
+        setWritings(
           (
             current
           ) =>
-            Math.max(
-              0,
-              current - 1
+            current.filter(
+              (
+                currentItem
+              ) =>
+                currentItem.id !==
+                item.id
             )
+        );
+
+
+        setSuccess(
+          localText.writingMovedToTrash
         );
       }
 
 
+      // ===================================================
+      // PDF DOCUMENT
+      // ===================================================
+
       if (
-        activeTab ===
-        "published"
+        type ===
+        "document"
       ) {
 
-        setPublishedCount(
+        await deleteDocument(
+          item.id
+        );
+
+
+        setDocuments(
           (
             current
           ) =>
-            Math.max(
-              0,
-              current - 1
+            current.filter(
+              (
+                currentItem
+              ) =>
+                currentItem.id !==
+                item.id
             )
+        );
+
+
+        setSuccess(
+          localText.documentMovedToTrash
         );
       }
 
 
-      setTrashCount(
-        (
-          current
-        ) =>
-          current + 1
-      );
+      // ===================================================
+      // ARTWORK
+      // ===================================================
+
+      if (
+        type ===
+        "artwork"
+      ) {
+
+        await deleteArtwork(
+          item.id
+        );
 
 
-      setSuccess(
-        t(
-          "myWritings.movedToTrash"
-        )
-      );
+        setArtworks(
+          (
+            current
+          ) =>
+            current.filter(
+              (
+                currentItem
+              ) =>
+                currentItem.id !==
+                item.id
+            )
+        );
+
+
+        setSuccess(
+          localText.artworkMovedToTrash
+        );
+      }
 
 
       setDeleteTarget(
         null
       );
+
+
+      await loadCounts();
 
 
     } catch (
@@ -2245,15 +2911,364 @@ function MyWritings() {
       );
 
 
-      setActionId(
-        null
+      setActionKey(
+        ""
       );
     }
   }
 
 
   // =======================================================
-  // EDIT
+  // RESTORE FROM TRASH
+  // =======================================================
+
+  async function handleRestore(
+    type,
+    item
+  ) {
+
+    const key =
+      getActionKey(
+        type,
+        item.id
+      );
+
+
+    setActionKey(
+      key
+    );
+
+
+    setError(
+      ""
+    );
+
+
+    setSuccess(
+      ""
+    );
+
+
+    try {
+
+      if (
+        type ===
+        "writing"
+      ) {
+
+        await restoreWriting(
+          item.id
+        );
+
+
+        setWritings(
+          (
+            current
+          ) =>
+            current.filter(
+              (
+                currentItem
+              ) =>
+                currentItem.id !==
+                item.id
+            )
+        );
+
+
+        setSuccess(
+          localText.writingRestored
+        );
+      }
+
+
+      if (
+        type ===
+        "document"
+      ) {
+
+        await restoreDocument(
+          item.id
+        );
+
+
+        setDocuments(
+          (
+            current
+          ) =>
+            current.filter(
+              (
+                currentItem
+              ) =>
+                currentItem.id !==
+                item.id
+            )
+        );
+
+
+        setSuccess(
+          localText.documentRestored
+        );
+      }
+
+
+      if (
+        type ===
+        "artwork"
+      ) {
+
+        await restoreArtwork(
+          item.id
+        );
+
+
+        setArtworks(
+          (
+            current
+          ) =>
+            current.filter(
+              (
+                currentItem
+              ) =>
+                currentItem.id !==
+                item.id
+            )
+        );
+
+
+        setSuccess(
+          localText.artworkRestored
+        );
+      }
+
+
+      await loadCounts();
+
+
+    } catch (
+      err
+    ) {
+
+      setError(
+        err?.message ||
+        t(
+          "errors.generic"
+        )
+      );
+
+
+    } finally {
+
+      setActionKey(
+        ""
+      );
+    }
+  }
+
+
+  // =======================================================
+  // PERMANENT DELETE
+  // =======================================================
+
+  async function handlePermanentDelete(
+    type,
+    item
+  ) {
+
+    let confirmationText =
+      localText.permanentWritingConfirm;
+
+
+    if (
+      type ===
+      "document"
+    ) {
+
+      confirmationText =
+        localText.permanentDocumentConfirm;
+    }
+
+
+    if (
+      type ===
+      "artwork"
+    ) {
+
+      confirmationText =
+        localText.permanentArtworkConfirm;
+    }
+
+
+    const confirmed =
+      window.confirm(
+        `${confirmationText}\n\n“${
+          item.title ||
+          t(
+            "common.untitled"
+          )
+        }”`
+      );
+
+
+    if (
+      !confirmed
+    ) {
+
+      return;
+    }
+
+
+    const key =
+      getActionKey(
+        type,
+        item.id
+      );
+
+
+    setActionKey(
+      key
+    );
+
+
+    setError(
+      ""
+    );
+
+
+    setSuccess(
+      ""
+    );
+
+
+    try {
+
+      // ===================================================
+      // WRITING
+      // ===================================================
+
+      if (
+        type ===
+        "writing"
+      ) {
+
+        await permanentlyDeleteWriting(
+          item.id
+        );
+
+
+        setWritings(
+          (
+            current
+          ) =>
+            current.filter(
+              (
+                currentItem
+              ) =>
+                currentItem.id !==
+                item.id
+            )
+        );
+
+
+        setSuccess(
+          localText.writingPermanentlyDeleted
+        );
+      }
+
+
+      // ===================================================
+      // PDF
+      // ===================================================
+
+      if (
+        type ===
+        "document"
+      ) {
+
+        await permanentlyDeleteDocument(
+          item.id
+        );
+
+
+        setDocuments(
+          (
+            current
+          ) =>
+            current.filter(
+              (
+                currentItem
+              ) =>
+                currentItem.id !==
+                item.id
+            )
+        );
+
+
+        setSuccess(
+          localText.documentPermanentlyDeleted
+        );
+      }
+
+
+      // ===================================================
+      // ARTWORK
+      // ===================================================
+
+      if (
+        type ===
+        "artwork"
+      ) {
+
+        await permanentlyDeleteArtwork(
+          item.id
+        );
+
+
+        setArtworks(
+          (
+            current
+          ) =>
+            current.filter(
+              (
+                currentItem
+              ) =>
+                currentItem.id !==
+                item.id
+            )
+        );
+
+
+        setSuccess(
+          localText.artworkPermanentlyDeleted
+        );
+      }
+
+
+      await loadCounts();
+
+
+    } catch (
+      err
+    ) {
+
+      setError(
+        err?.message ||
+        t(
+          "errors.generic"
+        )
+      );
+
+
+    } finally {
+
+      setActionKey(
+        ""
+      );
+    }
+  }
+
+
+  // =======================================================
+  // EDIT WRITING
   // =======================================================
 
   function handleEdit(
@@ -2282,6 +3297,10 @@ function MyWritings() {
     );
 
 
+    // =====================================================
+    // UPLOADS
+    // =====================================================
+
     if (
       activeTab ===
       "uploads"
@@ -2293,18 +3312,24 @@ function MyWritings() {
       ) {
 
         await Promise.all([
+
           loadArtworks(
+            "active",
             false
           ),
+
           loadCounts(),
         ]);
 
       } else {
 
         await Promise.all([
+
           loadDocuments(
+            "active",
             false
           ),
+
           loadCounts(),
         ]);
       }
@@ -2313,6 +3338,74 @@ function MyWritings() {
       return;
     }
 
+
+    // =====================================================
+    // TRASH
+    // =====================================================
+
+    if (
+      activeTab ===
+      "deleted"
+    ) {
+
+      if (
+        trashTab ===
+        "documents"
+      ) {
+
+        await Promise.all([
+
+          loadDocuments(
+            "deleted",
+            false
+          ),
+
+          loadCounts(),
+        ]);
+
+
+        return;
+      }
+
+
+      if (
+        trashTab ===
+        "artworks"
+      ) {
+
+        await Promise.all([
+
+          loadArtworks(
+            "deleted",
+            false
+          ),
+
+          loadCounts(),
+        ]);
+
+
+        return;
+      }
+
+
+      await Promise.all([
+
+        loadWritings(
+          "deleted",
+          false
+        ),
+
+        loadCounts(),
+      ]);
+
+
+      return;
+    }
+
+
+    // =====================================================
+    // WRITING
+    // =====================================================
 
     await Promise.all([
 
@@ -2370,6 +3463,39 @@ function MyWritings() {
 
     if (
       activeTab ===
+      "deleted"
+    ) {
+
+      if (
+        trashTab ===
+        "documents"
+      ) {
+
+        return (
+          localText.searchTrashDocuments
+        );
+      }
+
+
+      if (
+        trashTab ===
+        "artworks"
+      ) {
+
+        return (
+          localText.searchTrashArtwork
+        );
+      }
+
+
+      return (
+        localText.searchTrashWritings
+      );
+    }
+
+
+    if (
+      activeTab ===
       "draft"
     ) {
 
@@ -2379,25 +3505,14 @@ function MyWritings() {
     }
 
 
-    if (
-      activeTab ===
-      "published"
-    ) {
-
-      return t(
-        "myWritings.searchPublished"
-      );
-    }
-
-
     return t(
-      "myWritings.trash"
+      "myWritings.searchPublished"
     );
   }
 
 
   // =======================================================
-  // CURRENT TITLE
+  // CURRENT TAB TITLE
   // =======================================================
 
   function getCurrentTabTitle() {
@@ -2438,24 +3553,208 @@ function MyWritings() {
     }
 
 
-    return t(
-      "myWritings.trash"
+    if (
+      trashTab ===
+      "documents"
+    ) {
+
+      return (
+        `${localText.trash} · ${localText.trashDocuments}`
+      );
+    }
+
+
+    if (
+      trashTab ===
+      "artworks"
+    ) {
+
+      return (
+        `${localText.trash} · ${localText.trashArtwork}`
+      );
+    }
+
+
+    return (
+      `${localText.trash} · ${localText.trashWritings}`
     );
   }
 
 
   // =======================================================
-  // UPLOAD TAB STYLE
+  // EMPTY TITLE
   // =======================================================
 
-  function uploadButtonStyle(
+  function getEmptyTitle() {
+
+    if (
+      search ||
+      language
+    ) {
+
+      return t(
+        "myWritings.noResults"
+      );
+    }
+
+
+    if (
+      activeTab ===
+      "uploads"
+    ) {
+
+      return (
+        uploadTab ===
+        "artworks"
+          ? localText.noArtwork
+          : localText.noDocuments
+      );
+    }
+
+
+    if (
+      activeTab ===
+      "deleted"
+    ) {
+
+      if (
+        trashTab ===
+        "documents"
+      ) {
+
+        return (
+          localText.noTrashDocuments
+        );
+      }
+
+
+      if (
+        trashTab ===
+        "artworks"
+      ) {
+
+        return (
+          localText.noTrashArtwork
+        );
+      }
+
+
+      return (
+        localText.noTrashWritings
+      );
+    }
+
+
+    if (
+      activeTab ===
+      "draft"
+    ) {
+
+      return t(
+        "myWritings.noDrafts"
+      );
+    }
+
+
+    return t(
+      "myWritings.noPublished"
+    );
+  }
+
+
+  // =======================================================
+  // EMPTY DESCRIPTION
+  // =======================================================
+
+  function getEmptyDescription() {
+
+    if (
+      search ||
+      language
+    ) {
+
+      return t(
+        "myWritings.noResultsDescription"
+      );
+    }
+
+
+    if (
+      activeTab ===
+      "uploads"
+    ) {
+
+      return (
+        uploadTab ===
+        "artworks"
+          ? localText.noArtworkDescription
+          : localText.noDocumentsDescription
+      );
+    }
+
+
+    if (
+      activeTab ===
+      "deleted"
+    ) {
+
+      if (
+        trashTab ===
+        "documents"
+      ) {
+
+        return (
+          localText.noTrashDocumentsDescription
+        );
+      }
+
+
+      if (
+        trashTab ===
+        "artworks"
+      ) {
+
+        return (
+          localText.noTrashArtworkDescription
+        );
+      }
+
+
+      return (
+        localText.noTrashWritingsDescription
+      );
+    }
+
+
+    if (
+      activeTab ===
+      "draft"
+    ) {
+
+      return t(
+        "myWritings.noDraftsDescription"
+      );
+    }
+
+
+    return t(
+      "myWritings.noPublishedDescription"
+    );
+  }
+
+
+  // =======================================================
+  // SUBTAB BUTTON STYLE
+  // =======================================================
+
+  function subTabButtonStyle(
     selected
   ) {
 
     return {
 
       flex:
-        "1 1 220px",
+        "1 1 190px",
 
       minHeight:
         "50px",
@@ -2505,6 +3804,261 @@ function MyWritings() {
       transition:
         "0.18s ease",
     };
+  }
+
+
+  // =======================================================
+  // MEDIA MANAGEMENT FOOTER
+  // =======================================================
+
+  function renderMediaManagement(
+    type,
+    item
+  ) {
+
+    const busy =
+      isBusy(
+        type,
+        item.id
+      );
+
+
+    const isDeleted =
+      item.status ===
+      "deleted";
+
+
+    const activityDate =
+      isDeleted
+        ? (
+            item.deleted_at ||
+            item.updated_at ||
+            item.created_at
+          )
+        : (
+            item.updated_at ||
+            item.published_at ||
+            item.created_at
+          );
+
+
+    return (
+
+      <div
+        style={{
+          padding:
+            "14px 16px",
+
+          border:
+            "1px solid #eadfd6",
+
+          borderRadius:
+            "14px",
+
+          background:
+            "#ffffff",
+
+          display:
+            "grid",
+
+          gap:
+            "12px",
+        }}
+      >
+
+        {/* ===============================================
+            STATUS + LANGUAGE
+        ================================================ */}
+
+        <div
+          style={{
+            display:
+              "flex",
+
+            flexWrap:
+              "wrap",
+
+            alignItems:
+              "center",
+
+            justifyContent:
+              "space-between",
+
+            gap:
+              "10px",
+          }}
+        >
+
+          <span
+            className={
+              isDeleted
+                ? "my-writing-status deleted"
+                : item.status ===
+                  "draft"
+                  ? "my-writing-status draft"
+                  : "my-writing-status published"
+            }
+          >
+
+            {
+              isDeleted
+                ? localText.deleted
+                : item.status ===
+                  "draft"
+                  ? localText.draft
+                  : localText.published
+            }
+
+          </span>
+
+
+          <span
+            className="my-writing-language-badge"
+          >
+
+            <Globe2
+              size={11}
+            />
+
+            {getLocalizedLanguageLabel(
+              item.language ||
+              "bn"
+            )}
+
+          </span>
+
+        </div>
+
+
+        {/* ===============================================
+            DATE + TIME
+        ================================================ */}
+
+        <div
+          className="my-writing-meta"
+        >
+
+          <span>
+
+            {
+              isDeleted
+                ? localText.deletedAt
+                : localText.updated
+            }
+
+          </span>
+
+
+          <strong>
+
+            {formatDateTime(
+              activityDate
+            )}
+
+          </strong>
+
+        </div>
+
+
+        {/* ===============================================
+            ACTIONS
+        ================================================ */}
+
+        <div
+          className="my-writing-actions"
+        >
+
+          {isDeleted
+            ? (
+
+                <>
+                  <button
+                    type="button"
+                    className="primary"
+                    onClick={() =>
+                      handleRestore(
+                        type,
+                        item
+                      )
+                    }
+                    disabled={
+                      busy
+                    }
+                  >
+
+                    {busy
+                      ? (
+                          <Loader2
+                            size={16}
+                            className="spin"
+                          />
+                        )
+                      : (
+                          <RotateCcw
+                            size={16}
+                          />
+                        )}
+
+
+                    {localText.restore}
+
+                  </button>
+
+
+                  <button
+                    type="button"
+                    className="danger"
+                    onClick={() =>
+                      handlePermanentDelete(
+                        type,
+                        item
+                      )
+                    }
+                    disabled={
+                      busy
+                    }
+                  >
+
+                    <Trash2
+                      size={16}
+                    />
+
+                    {localText.deletePermanently}
+
+                  </button>
+                </>
+
+              )
+            : (
+
+                <button
+                  type="button"
+                  className="danger"
+                  onClick={() =>
+                    openDeleteModal(
+                      type,
+                      item
+                    )
+                  }
+                  disabled={
+                    busy
+                  }
+                >
+
+                  <Trash2
+                    size={16}
+                  />
+
+                  {localText.moveToTrash}
+
+                </button>
+
+              )}
+
+        </div>
+
+      </div>
+    );
   }
 
 
@@ -2615,7 +4169,6 @@ function MyWritings() {
                 )}
               </span>
 
-
               <strong>
                 {draftCount}
               </strong>
@@ -2661,7 +4214,6 @@ function MyWritings() {
                 )}
               </span>
 
-
               <strong>
                 {publishedCount}
               </strong>
@@ -2681,13 +4233,11 @@ function MyWritings() {
                 ? "my-writing-summary-card active"
                 : "my-writing-summary-card"
             }
-            onClick={() => {
-
+            onClick={() =>
               setActiveTab(
                 "uploads"
-              );
-
-            }}
+              )
+            }
           >
 
             <span
@@ -2706,7 +4256,6 @@ function MyWritings() {
               <span>
                 {localText.creativeUploads}
               </span>
-
 
               <strong>
                 {
@@ -2751,11 +4300,8 @@ function MyWritings() {
             <div>
 
               <span>
-                {t(
-                  "myWritings.trash"
-                )}
+                {localText.trash}
               </span>
-
 
               <strong>
                 {trashCount}
@@ -2805,7 +4351,7 @@ function MyWritings() {
 
 
         {/* =================================================
-            DOCUMENT / ARTWORK SUB TABS
+            DOCUMENT / ARTWORK SUBTABS
         ================================================== */}
 
         {activeTab ===
@@ -2842,7 +4388,7 @@ function MyWritings() {
             <button
               type="button"
               style={
-                uploadButtonStyle(
+                subTabButtonStyle(
                   uploadTab ===
                   "documents"
                 )
@@ -2872,7 +4418,7 @@ function MyWritings() {
             <button
               type="button"
               style={
-                uploadButtonStyle(
+                subTabButtonStyle(
                   uploadTab ===
                   "artworks"
                 )
@@ -2894,6 +4440,141 @@ function MyWritings() {
 
               <strong>
                 {artworkCount}
+              </strong>
+
+            </button>
+
+          </section>
+
+        )}
+
+
+        {/* =================================================
+            TRASH SUBTABS
+        ================================================== */}
+
+        {activeTab ===
+          "deleted" && (
+
+          <section
+            style={{
+              display:
+                "flex",
+
+              flexWrap:
+                "wrap",
+
+              gap:
+                "10px",
+
+              padding:
+                "7px",
+
+              margin:
+                "4px 0 18px",
+
+              border:
+                "1px solid #eadfd6",
+
+              borderRadius:
+                "15px",
+
+              background:
+                "#fbf8f4",
+            }}
+          >
+
+            {/* WRITINGS */}
+
+            <button
+              type="button"
+              style={
+                subTabButtonStyle(
+                  trashTab ===
+                  "writings"
+                )
+              }
+              onClick={() =>
+                setTrashTab(
+                  "writings"
+                )
+              }
+            >
+
+              <BookOpen
+                size={18}
+              />
+
+              <span>
+                {localText.trashWritings}
+              </span>
+
+              <strong>
+                {deletedWritingCount}
+              </strong>
+
+            </button>
+
+
+            {/* PDF */}
+
+            <button
+              type="button"
+              style={
+                subTabButtonStyle(
+                  trashTab ===
+                  "documents"
+                )
+              }
+              onClick={() =>
+                setTrashTab(
+                  "documents"
+                )
+              }
+            >
+
+              <FileText
+                size={18}
+              />
+
+              <span>
+                {localText.trashDocuments}
+              </span>
+
+              <strong>
+                {deletedDocumentCount}
+              </strong>
+
+            </button>
+
+
+            {/* ARTWORK */}
+
+            <button
+              type="button"
+              style={
+                subTabButtonStyle(
+                  trashTab ===
+                  "artworks"
+                )
+              }
+              onClick={() =>
+                setTrashTab(
+                  "artworks"
+                )
+              }
+            >
+
+              <ImageIcon
+                size={18}
+              />
+
+              <span>
+                {localText.trashArtwork}
+              </span>
+
+              <strong>
+                {deletedArtworkCount}
               </strong>
 
             </button>
@@ -3004,11 +4685,7 @@ function MyWritings() {
               <option
                 value=""
               >
-
-                {t(
-                  "myWritings.allLanguages"
-                )}
-
+                {localText.allLanguages}
               </option>
 
 
@@ -3026,12 +4703,9 @@ function MyWritings() {
                     }
                   >
 
-                    {
-                      item.nativeName ===
-                      item.name
-                        ? item.name
-                        : `${item.nativeName} — ${item.name}`
-                    }
+                    {getLocalizedLanguageLabel(
+                      item.code
+                    )}
 
                   </option>
 
@@ -3130,11 +4804,8 @@ function MyWritings() {
               }
             />
 
-
             <span>
-              {t(
-                "myWritings.refresh"
-              )}
+              {localText.refresh}
             </span>
 
           </button>
@@ -3167,10 +4838,12 @@ function MyWritings() {
                 search ||
                 language
               ) && (
+
                 <>
                   {" / "}
                   {currentTotal}
                 </>
+
               )}
 
             </span>
@@ -3186,7 +4859,7 @@ function MyWritings() {
                   size={12}
                 />
 
-                {getLanguageLabel(
+                {getLocalizedLanguageLabel(
                   language
                 )}
 
@@ -3250,9 +4923,12 @@ function MyWritings() {
                         ? localText.loadingArtwork
                         : localText.loadingDocuments
                     )
-                  : t(
-                      "myWritings.loading"
-                    )
+                  : activeTab ===
+                    "deleted"
+                    ? localText.loadingTrash
+                    : t(
+                        "myWritings.loading"
+                      )
               }
 
             </p>
@@ -3304,99 +4980,35 @@ function MyWritings() {
                           )
                     )
                   : activeTab ===
-                    "draft"
+                    "deleted"
                     ? (
-
-                        <FileText
+                        <Trash2
                           size={30}
                         />
-
                       )
                     : activeTab ===
-                      "deleted"
+                      "draft"
                       ? (
-
-                          <Trash2
+                          <FileText
                             size={30}
                           />
-
                         )
                       : (
-
                           <BookOpen
                             size={30}
                           />
-
                         )}
 
             </div>
 
 
             <h2>
-
-              {
-                search ||
-                language
-                  ? t(
-                      "myWritings.noResults"
-                    )
-                  : activeTab ===
-                    "uploads"
-                    ? (
-                        uploadTab ===
-                        "artworks"
-                          ? localText.noArtwork
-                          : localText.noDocuments
-                      )
-                    : activeTab ===
-                      "draft"
-                      ? t(
-                          "myWritings.noDrafts"
-                        )
-                      : activeTab ===
-                        "deleted"
-                        ? t(
-                            "myWritings.noTrash"
-                          )
-                        : t(
-                            "myWritings.noPublished"
-                          )
-              }
-
+              {getEmptyTitle()}
             </h2>
 
 
             <p>
-
-              {
-                search ||
-                language
-                  ? t(
-                      "myWritings.noResultsDescription"
-                    )
-                  : activeTab ===
-                    "uploads"
-                    ? (
-                        uploadTab ===
-                        "artworks"
-                          ? localText.noArtworkDescription
-                          : localText.noDocumentsDescription
-                      )
-                    : activeTab ===
-                      "draft"
-                      ? t(
-                          "myWritings.noDraftsDescription"
-                        )
-                      : activeTab ===
-                        "deleted"
-                        ? t(
-                            "myWritings.noTrashDescription"
-                          )
-                        : t(
-                            "myWritings.noPublishedDescription"
-                          )
-              }
-
+              {getEmptyDescription()}
             </p>
 
 
@@ -3433,18 +5045,14 @@ function MyWritings() {
                       uploadTab ===
                         "artworks"
                         ? (
-
                             <ImageIcon
                               size={17}
                             />
-
                           )
                         : (
-
                             <Edit3
                               size={17}
                             />
-
                           )}
 
 
@@ -3473,13 +5081,25 @@ function MyWritings() {
 
 
         {/* =================================================
-            DOCUMENT GRID
+            PDF GRID
+            ACTIVE + TRASH
         ================================================== */}
 
-        {activeTab ===
-          "uploads" &&
-        uploadTab ===
-          "documents" &&
+        {(
+          (
+            activeTab ===
+            "uploads" &&
+            uploadTab ===
+            "documents"
+          )
+          ||
+          (
+            activeTab ===
+            "deleted" &&
+            trashTab ===
+            "documents"
+          )
+        ) &&
         !loading &&
         filteredDocuments.length >
           0 && (
@@ -3493,14 +5113,35 @@ function MyWritings() {
                 document
               ) => (
 
-                <DocumentCard
+                <div
                   key={
                     document.id
                   }
-                  document={
+                  style={{
+                    display:
+                      "grid",
+
+                    gap:
+                      "10px",
+
+                    alignContent:
+                      "start",
+                  }}
+                >
+
+                  <DocumentCard
+                    document={
+                      document
+                    }
+                  />
+
+
+                  {renderMediaManagement(
+                    "document",
                     document
-                  }
-                />
+                  )}
+
+                </div>
 
               )
             )}
@@ -3512,12 +5153,24 @@ function MyWritings() {
 
         {/* =================================================
             ARTWORK GRID
+            ACTIVE + TRASH
         ================================================== */}
 
-        {activeTab ===
-          "uploads" &&
-        uploadTab ===
-          "artworks" &&
+        {(
+          (
+            activeTab ===
+            "uploads" &&
+            uploadTab ===
+            "artworks"
+          )
+          ||
+          (
+            activeTab ===
+            "deleted" &&
+            trashTab ===
+            "artworks"
+          )
+        ) &&
         !loading &&
         filteredArtworks.length >
           0 && (
@@ -3531,14 +5184,35 @@ function MyWritings() {
                 artwork
               ) => (
 
-                <ArtworkCard
+                <div
                   key={
                     artwork.id
                   }
-                  artwork={
+                  style={{
+                    display:
+                      "grid",
+
+                    gap:
+                      "10px",
+
+                    alignContent:
+                      "start",
+                  }}
+                >
+
+                  <ArtworkCard
+                    artwork={
+                      artwork
+                    }
+                  />
+
+
+                  {renderMediaManagement(
+                    "artwork",
                     artwork
-                  }
-                />
+                  )}
+
+                </div>
 
               )
             )}
@@ -3549,11 +5223,23 @@ function MyWritings() {
 
 
         {/* =================================================
-            WRITINGS GRID
+            WRITING GRID
         ================================================== */}
 
-        {activeTab !==
-          "uploads" &&
+        {(
+          activeTab ===
+          "draft"
+          ||
+          activeTab ===
+          "published"
+          ||
+          (
+            activeTab ===
+            "deleted" &&
+            trashTab ===
+            "writings"
+          )
+        ) &&
         !loading &&
         filteredWritings.length >
           0 && (
@@ -3568,8 +5254,10 @@ function MyWritings() {
               ) => {
 
                 const busy =
-                  actionId ===
-                  writing.id;
+                  isBusy(
+                    "writing",
+                    writing.id
+                  );
 
 
                 const wordCount =
@@ -3589,6 +5277,11 @@ function MyWritings() {
                   "bn";
 
 
+                const isDeleted =
+                  writing.status ===
+                  "deleted";
+
+
                 return (
 
                   <article
@@ -3598,7 +5291,9 @@ function MyWritings() {
                     className="my-writing-card"
                   >
 
-                    {/* TOP */}
+                    {/* =====================================
+                        TOP
+                    ====================================== */}
 
                     <div
                       className="my-writing-card-top"
@@ -3613,8 +5308,7 @@ function MyWritings() {
                             writing.status ===
                             "published"
                               ? "my-writing-status published"
-                              : writing.status ===
-                                "deleted"
+                              : isDeleted
                                 ? "my-writing-status deleted"
                                 : "my-writing-status draft"
                           }
@@ -3623,17 +5317,10 @@ function MyWritings() {
                           {
                             writing.status ===
                             "published"
-                              ? t(
-                                  "myWritings.published"
-                                )
-                              : writing.status ===
-                                "deleted"
-                                ? t(
-                                    "myWritings.trash"
-                                  )
-                                : t(
-                                    "myWritings.drafts"
-                                  )
+                              ? localText.published
+                              : isDeleted
+                                ? localText.deleted
+                                : localText.draft
                           }
 
                         </span>
@@ -3647,7 +5334,7 @@ function MyWritings() {
                             size={11}
                           />
 
-                          {getLanguageLabel(
+                          {getLocalizedLanguageLabel(
                             languageCode
                           )}
 
@@ -3672,7 +5359,9 @@ function MyWritings() {
                     </div>
 
 
-                    {/* TITLE */}
+                    {/* =====================================
+                        TITLE
+                    ====================================== */}
 
                     <h2>
 
@@ -3686,7 +5375,9 @@ function MyWritings() {
                     </h2>
 
 
-                    {/* PREVIEW */}
+                    {/* =====================================
+                        PREVIEW
+                    ====================================== */}
 
                     <p
                       className="my-writing-preview"
@@ -3717,7 +5408,9 @@ function MyWritings() {
                     </p>
 
 
-                    {/* STATS */}
+                    {/* =====================================
+                        STATS
+                    ====================================== */}
 
                     <div
                       className="my-writing-card-stats"
@@ -3763,7 +5456,7 @@ function MyWritings() {
                           size={13}
                         />
 
-                        {getLanguageLabel(
+                        {getLocalizedLanguageLabel(
                           languageCode
                         )}
 
@@ -3772,7 +5465,9 @@ function MyWritings() {
                     </div>
 
 
-                    {/* DATE */}
+                    {/* =====================================
+                        DATE + TIME
+                    ====================================== */}
 
                     <div
                       className="my-writing-meta"
@@ -3780,18 +5475,28 @@ function MyWritings() {
 
                       <span>
 
-                        {t(
-                          "myWritings.updated"
-                        )}
+                        {
+                          isDeleted
+                            ? localText.deletedAt
+                            : localText.updated
+                        }
 
                       </span>
 
 
                       <strong>
 
-                        {formatDate(
-                          writing.updated_at ||
-                          writing.created_at
+                        {formatDateTime(
+                          isDeleted
+                            ? (
+                                writing.deleted_at ||
+                                writing.updated_at ||
+                                writing.created_at
+                              )
+                            : (
+                                writing.updated_at ||
+                                writing.created_at
+                              )
                         )}
 
                       </strong>
@@ -3799,24 +5504,25 @@ function MyWritings() {
                     </div>
 
 
-                    {/* ACTIONS */}
+                    {/* =====================================
+                        ACTIONS
+                    ====================================== */}
 
                     <div
                       className="my-writing-actions"
                     >
 
-                      {writing.status ===
-                      "deleted"
+                      {isDeleted
                         ? (
 
                             <>
-
                               <button
                                 type="button"
                                 className="primary"
                                 onClick={() =>
                                   handleRestore(
-                                    writing.id
+                                    "writing",
+                                    writing
                                   )
                                 }
                                 disabled={
@@ -3826,25 +5532,19 @@ function MyWritings() {
 
                                 {busy
                                   ? (
-
                                       <Loader2
                                         size={16}
                                         className="spin"
                                       />
-
                                     )
                                   : (
-
                                       <RotateCcw
                                         size={16}
                                       />
-
                                     )}
 
 
-                                {t(
-                                  "myWritings.restore"
-                                )}
+                                {localText.restore}
 
                               </button>
 
@@ -3854,6 +5554,7 @@ function MyWritings() {
                                 className="danger"
                                 onClick={() =>
                                   handlePermanentDelete(
+                                    "writing",
                                     writing
                                   )
                                 }
@@ -3866,19 +5567,15 @@ function MyWritings() {
                                   size={16}
                                 />
 
-                                {t(
-                                  "myWritings.deletePermanently"
-                                )}
+                                {localText.deletePermanently}
 
                               </button>
-
                             </>
 
                           )
                         : (
 
                             <>
-
                               <button
                                 type="button"
                                 onClick={() =>
@@ -3942,19 +5639,15 @@ function MyWritings() {
 
                                   {busy
                                     ? (
-
                                         <Loader2
                                           size={16}
                                           className="spin"
                                         />
-
                                       )
                                     : (
-
                                         <Send
                                           size={16}
                                         />
-
                                       )}
 
 
@@ -3984,19 +5677,15 @@ function MyWritings() {
 
                                   {busy
                                     ? (
-
                                         <Loader2
                                           size={16}
                                           className="spin"
                                         />
-
                                       )
                                     : (
-
                                         <RotateCcw
                                           size={16}
                                         />
-
                                       )}
 
 
@@ -4014,6 +5703,7 @@ function MyWritings() {
                                 className="danger"
                                 onClick={() =>
                                   openDeleteModal(
+                                    "writing",
                                     writing
                                   )
                                 }
@@ -4026,12 +5716,9 @@ function MyWritings() {
                                   size={16}
                                 />
 
-                                {t(
-                                  "myWritings.delete"
-                                )}
+                                {localText.moveToTrash}
 
                               </button>
-
                             </>
 
                           )}
@@ -4052,7 +5739,7 @@ function MyWritings() {
 
 
       {/* ===================================================
-          DELETE MODAL
+          SOFT DELETE MODAL
       ==================================================== */}
 
       {deleteTarget && (
@@ -4115,9 +5802,7 @@ function MyWritings() {
               className="delete-modal-eyebrow"
             >
 
-              {t(
-                "myWritings.deleteEyebrow"
-              )}
+              {localText.moveToTrash}
 
             </p>
 
@@ -4126,9 +5811,7 @@ function MyWritings() {
               id="delete-modal-title"
             >
 
-              {t(
-                "myWritings.deleteTitle"
-              )}
+              {getDeleteModalTitle()}
 
             </h2>
 
@@ -4140,7 +5823,7 @@ function MyWritings() {
               <strong>
 
                 “{
-                  deleteTarget.title ||
+                  deleteTarget.item?.title ||
                   t(
                     "common.untitled"
                   )
@@ -4150,9 +5833,7 @@ function MyWritings() {
 
               {" "}
 
-              {t(
-                "myWritings.deleteDescription"
-              )}
+              {getDeleteModalDescription()}
 
             </p>
 
@@ -4165,26 +5846,37 @@ function MyWritings() {
                 size={14}
               />
 
+
               <span>
 
-                {getLanguageLabel(
-                  deleteTarget.language ||
+                {getLocalizedLanguageLabel(
+                  deleteTarget.item?.language ||
                   "bn"
                 )}
 
               </span>
 
+
               <span>
                 •
               </span>
 
+
               <span>
 
                 {
-                  deleteTarget.category ||
-                  t(
-                    "categories.other"
-                  )
+                  deleteTarget.type ===
+                  "document"
+                    ? localText.pdfDocuments
+                    : deleteTarget.type ===
+                      "artwork"
+                      ? localText.artwork
+                      : (
+                          deleteTarget.item?.category ||
+                          t(
+                            "categories.other"
+                          )
+                        )
                 }
 
               </span>
@@ -4227,30 +5919,22 @@ function MyWritings() {
 
                 {deleting
                   ? (
-
                       <Loader2
                         size={17}
                         className="spin"
                       />
-
                     )
                   : (
-
                       <Trash2
                         size={17}
                       />
-
                     )}
 
 
                 {
                   deleting
-                    ? t(
-                        "myWritings.deleting"
-                      )
-                    : t(
-                        "myWritings.deleteWriting"
-                      )
+                    ? localText.movingToTrash
+                    : localText.moveToTrash
                 }
 
               </button>
