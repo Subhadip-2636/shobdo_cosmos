@@ -24,8 +24,11 @@ import {
 } from "react-router-dom";
 
 import {
+  FACEBOOK_APP_ID,
   GOOGLE_CLIENT_ID,
+  isFacebookAuthConfigured,
   isGoogleAuthConfigured,
+  loginWithFacebook,
   loginWithGoogle,
   registerUser,
 } from "../api/auth";
@@ -47,7 +50,34 @@ const GOOGLE_SCRIPT_URL =
 
 
 // =========================================================
-// LOAD GOOGLE IDENTITY SERVICES SCRIPT
+// FACEBOOK JAVASCRIPT SDK
+// =========================================================
+
+const FACEBOOK_SCRIPT_ID =
+  "shobdo-facebook-javascript-sdk";
+
+const FACEBOOK_SCRIPT_URL =
+  "https://connect.facebook.net/en_US/sdk.js";
+
+
+const FACEBOOK_GRAPH_API_VERSION =
+  String(
+    import.meta.env
+      .VITE_FACEBOOK_GRAPH_API_VERSION ||
+    "v26.0"
+  ).trim();
+
+
+// =========================================================
+// FACEBOOK SDK PROMISE
+// =========================================================
+
+let facebookSdkPromise =
+  null;
+
+
+// =========================================================
+// GOOGLE SCRIPT LOADER
 // =========================================================
 
 function loadGoogleIdentityServices() {
@@ -57,10 +87,6 @@ function loadGoogleIdentityServices() {
       resolve,
       reject
     ) => {
-
-      // ---------------------------------------------------
-      // ALREADY AVAILABLE
-      // ---------------------------------------------------
 
       if (
         window.google?.accounts?.id
@@ -74,10 +100,6 @@ function loadGoogleIdentityServices() {
 
       }
 
-
-      // ---------------------------------------------------
-      // SCRIPT ALREADY ADDED
-      // ---------------------------------------------------
 
       const existingScript =
         document.getElementById(
@@ -132,15 +154,18 @@ function loadGoogleIdentityServices() {
         const cleanup =
           () => {
 
-            existingScript.removeEventListener(
-              "load",
-              handleLoad
-            );
+            existingScript
+              .removeEventListener(
+                "load",
+                handleLoad
+              );
 
-            existingScript.removeEventListener(
-              "error",
-              handleError
-            );
+
+            existingScript
+              .removeEventListener(
+                "error",
+                handleError
+              );
 
           };
 
@@ -161,10 +186,6 @@ function loadGoogleIdentityServices() {
 
       }
 
-
-      // ---------------------------------------------------
-      // CREATE SCRIPT
-      // ---------------------------------------------------
 
       const script =
         document.createElement(
@@ -235,6 +256,390 @@ function loadGoogleIdentityServices() {
 
 
 // =========================================================
+// FACEBOOK SDK LOADER
+// =========================================================
+
+function loadFacebookSdk() {
+
+  if (
+    typeof window ===
+    "undefined"
+  ) {
+
+    return Promise.reject(
+      new Error(
+        "Facebook SDK requires a browser."
+      )
+    );
+
+  }
+
+
+  if (
+    window.FB?.init &&
+    window.FB?.login
+  ) {
+
+    return Promise.resolve(
+      window.FB
+    );
+
+  }
+
+
+  if (facebookSdkPromise) {
+
+    return facebookSdkPromise;
+
+  }
+
+
+  facebookSdkPromise =
+    new Promise(
+      (
+        resolve,
+        reject
+      ) => {
+
+        let finished =
+          false;
+
+
+        let timeoutId =
+          null;
+
+
+        const previousAsyncInit =
+          window.fbAsyncInit;
+
+
+        function cleanup() {
+
+          if (timeoutId) {
+
+            window.clearTimeout(
+              timeoutId
+            );
+
+          }
+
+        }
+
+
+        function finish() {
+
+          if (finished) {
+
+            return;
+
+          }
+
+
+          if (
+            !window.FB?.init ||
+            !window.FB?.login
+          ) {
+
+            return;
+
+          }
+
+
+          finished =
+            true;
+
+
+          cleanup();
+
+
+          resolve(
+            window.FB
+          );
+
+        }
+
+
+        function fail(
+          error
+        ) {
+
+          if (finished) {
+
+            return;
+
+          }
+
+
+          finished =
+            true;
+
+
+          cleanup();
+
+
+          reject(
+            error instanceof Error
+              ? error
+              : new Error(
+                  "Unable to load Facebook SDK."
+                )
+          );
+
+        }
+
+
+        window.fbAsyncInit =
+          () => {
+
+            try {
+
+              if (
+                typeof previousAsyncInit ===
+                "function"
+              ) {
+
+                previousAsyncInit();
+
+              }
+
+            } catch {
+
+              // Ignore errors from previous callbacks.
+
+            }
+
+
+            finish();
+
+          };
+
+
+        const existingScript =
+          document.getElementById(
+            FACEBOOK_SCRIPT_ID
+          );
+
+
+        if (existingScript) {
+
+          existingScript.addEventListener(
+            "load",
+            finish,
+            {
+              once:
+                true,
+            }
+          );
+
+
+          existingScript.addEventListener(
+            "error",
+            () => {
+
+              fail(
+                new Error(
+                  "Unable to load Facebook SDK."
+                )
+              );
+
+            },
+            {
+              once:
+                true,
+            }
+          );
+
+
+          timeoutId =
+            window.setTimeout(
+              () => {
+
+                if (
+                  window.FB?.init &&
+                  window.FB?.login
+                ) {
+
+                  finish();
+
+                } else {
+
+                  fail(
+                    new Error(
+                      "Facebook SDK initialization timed out."
+                    )
+                  );
+
+                }
+
+              },
+              10000
+            );
+
+
+          return;
+
+        }
+
+
+        const script =
+          document.createElement(
+            "script"
+          );
+
+
+        script.id =
+          FACEBOOK_SCRIPT_ID;
+
+
+        script.src =
+          FACEBOOK_SCRIPT_URL;
+
+
+        script.async =
+          true;
+
+
+        script.defer =
+          true;
+
+
+        script.crossOrigin =
+          "anonymous";
+
+
+        script.onload =
+          () => {
+
+            window.setTimeout(
+              finish,
+              0
+            );
+
+          };
+
+
+        script.onerror =
+          () => {
+
+            fail(
+              new Error(
+                "Unable to load Facebook SDK."
+              )
+            );
+
+          };
+
+
+        document.body.appendChild(
+          script
+        );
+
+
+        timeoutId =
+          window.setTimeout(
+            () => {
+
+              if (
+                window.FB?.init &&
+                window.FB?.login
+              ) {
+
+                finish();
+
+              } else {
+
+                fail(
+                  new Error(
+                    "Facebook SDK initialization timed out."
+                  )
+                );
+
+              }
+
+            },
+            10000
+          );
+
+      }
+    )
+      .catch(
+        (
+          error
+        ) => {
+
+          facebookSdkPromise =
+            null;
+
+
+          throw error;
+
+        }
+      );
+
+
+  return facebookSdkPromise;
+
+}
+
+
+// =========================================================
+// FACEBOOK INITIALIZER
+// =========================================================
+
+function initializeFacebookSdk() {
+
+  if (
+    !window.FB?.init
+  ) {
+
+    throw new Error(
+      "Facebook SDK API is unavailable."
+    );
+
+  }
+
+
+  const initializationKey =
+    `${FACEBOOK_APP_ID}:${FACEBOOK_GRAPH_API_VERSION}`;
+
+
+  if (
+    window.__shobdoFacebookInitializationKey ===
+    initializationKey
+  ) {
+
+    return;
+
+  }
+
+
+  window.FB.init({
+
+    appId:
+      FACEBOOK_APP_ID,
+
+
+    cookie:
+      true,
+
+
+    xfbml:
+      false,
+
+
+    version:
+      FACEBOOK_GRAPH_API_VERSION,
+
+  });
+
+
+  window.__shobdoFacebookInitializationKey =
+    initializationKey;
+
+}
+
+
+// =========================================================
 // REGISTER PAGE
 // =========================================================
 
@@ -248,13 +653,14 @@ function Register({
 
   const {
     t,
+
     language:
       uiLanguage,
   } = useLanguage();
 
 
   // =======================================================
-  // GOOGLE REFERENCES
+  // REFERENCES
   // =======================================================
 
   const googleButtonRef =
@@ -342,6 +748,28 @@ function Register({
 
 
   // =======================================================
+  // FACEBOOK STATE
+  // =======================================================
+
+  const [
+    facebookLoading,
+    setFacebookLoading,
+  ] = useState(false);
+
+
+  const [
+    facebookReady,
+    setFacebookReady,
+  ] = useState(false);
+
+
+  const [
+    facebookLoadError,
+    setFacebookLoadError,
+  ] = useState("");
+
+
+  // =======================================================
   // MESSAGE STATE
   // =======================================================
 
@@ -358,16 +786,17 @@ function Register({
 
 
   // =======================================================
-  // BUSY
+  // BUSY STATE
   // =======================================================
 
   const busy =
     loading ||
-    googleLoading;
+    googleLoading ||
+    facebookLoading;
 
 
   // =======================================================
-  // MULTILINGUAL FALLBACKS
+  // MULTILINGUAL FALLBACK TEXT
   // =======================================================
 
   const REGISTER_TEXT = {
@@ -379,6 +808,7 @@ function Register({
 
       note:
         "নিজের ভাষায় লিখুন। নিজের কণ্ঠস্বর নিজেরই রাখুন।",
+
 
       googleLoading:
         "Google দিয়ে অ্যাকাউন্ট তৈরি হচ্ছে...",
@@ -395,14 +825,47 @@ function Register({
       googleAccountConflict:
         "এই SHOBDO অ্যাকাউন্টটি অন্য একটি Google অ্যাকাউন্টের সঙ্গে যুক্ত রয়েছে।",
 
-      accountLinkRequired:
-        "এই ইমেইলে ইতিমধ্যে একটি SHOBDO অ্যাকাউন্ট রয়েছে। প্রথমে আপনার SHOBDO পাসওয়ার্ড দিয়ে লগইন করুন।",
+      googleAccountLinkRequired:
+        "এই ইমেইলে ইতিমধ্যে একটি SHOBDO অ্যাকাউন্ট রয়েছে। প্রথমে আপনার বিদ্যমান SHOBDO অ্যাকাউন্টে লগইন করুন।",
+
+      googleSectionLabel:
+        "Google দিয়ে চালিয়ে যান",
+
+
+      continueWithFacebook:
+        "Facebook দিয়ে চালিয়ে যান",
+
+      facebookLoading:
+        "Facebook দিয়ে অ্যাকাউন্ট তৈরি হচ্ছে...",
+
+      facebookUnavailable:
+        "Facebook নিবন্ধন এই মুহূর্তে উপলব্ধ নয়।",
+
+      facebookConfigurationMissing:
+        "Facebook নিবন্ধন এখনও কনফিগার করা হয়নি।",
+
+      facebookGenericError:
+        "Facebook দিয়ে চালিয়ে যাওয়া যায়নি। আবার চেষ্টা করুন।",
+
+      facebookCancelled:
+        "Facebook লগইন বাতিল করা হয়েছে।",
+
+      facebookAccountConflict:
+        "এই Facebook অ্যাকাউন্টটি ইতিমধ্যে অন্য একটি SHOBDO অ্যাকাউন্টের সঙ্গে যুক্ত।",
+
+      facebookAccountLinkRequired:
+        "এই ইমেইলে ইতিমধ্যে একটি SHOBDO অ্যাকাউন্ট রয়েছে। প্রথমে আপনার বিদ্যমান SHOBDO অ্যাকাউন্টে লগইন করুন, তারপর Facebook সংযুক্ত করুন।",
+
+      facebookEmailRequired:
+        "Facebook আপনার ইমেইল ঠিকানা দেয়নি। ইমেইল অনুমতি দিন অথবা অন্য নিবন্ধন পদ্ধতি ব্যবহার করুন।",
+
+      facebookSectionLabel:
+        "Facebook দিয়ে চালিয়ে যান",
+
 
       networkError:
         "SHOBDO সার্ভারের সঙ্গে সংযোগ করা যাচ্ছে না। আবার চেষ্টা করুন।",
 
-      googleSectionLabel:
-        "Google দিয়ে চালিয়ে যান",
 
       ruleLength:
         "৮+ অক্ষর",
@@ -419,6 +882,12 @@ function Register({
       passwordsMatch:
         "পাসওয়ার্ড মিলেছে",
 
+      hidePassword:
+        "পাসওয়ার্ড লুকান",
+
+      showPassword:
+        "পাসওয়ার্ড দেখুন",
+
     },
 
 
@@ -429,6 +898,7 @@ function Register({
 
       note:
         "Write in your language. Keep your voice yours.",
+
 
       googleLoading:
         "Creating your account with Google...",
@@ -445,14 +915,47 @@ function Register({
       googleAccountConflict:
         "This SHOBDO account is already connected to another Google account.",
 
-      accountLinkRequired:
-        "A SHOBDO account already exists with this email. Sign in with your SHOBDO password first.",
+      googleAccountLinkRequired:
+        "A SHOBDO account already exists with this email. Sign in to your existing SHOBDO account first.",
+
+      googleSectionLabel:
+        "Continue with Google",
+
+
+      continueWithFacebook:
+        "Continue with Facebook",
+
+      facebookLoading:
+        "Creating your account with Facebook...",
+
+      facebookUnavailable:
+        "Facebook registration is currently unavailable.",
+
+      facebookConfigurationMissing:
+        "Facebook registration has not been configured yet.",
+
+      facebookGenericError:
+        "Unable to continue with Facebook. Please try again.",
+
+      facebookCancelled:
+        "Facebook sign-in was cancelled.",
+
+      facebookAccountConflict:
+        "This Facebook account is already connected to another SHOBDO account.",
+
+      facebookAccountLinkRequired:
+        "A SHOBDO account already exists with this email. Sign in to your existing SHOBDO account first, then connect Facebook.",
+
+      facebookEmailRequired:
+        "Facebook did not provide your email address. Allow email access or use another registration method.",
+
+      facebookSectionLabel:
+        "Continue with Facebook",
+
 
       networkError:
         "Unable to connect to SHOBDO. Please try again.",
 
-      googleSectionLabel:
-        "Continue with Google",
 
       ruleLength:
         "8+ characters",
@@ -469,6 +972,12 @@ function Register({
       passwordsMatch:
         "Passwords match",
 
+      hidePassword:
+        "Hide password",
+
+      showPassword:
+        "Show password",
+
     },
 
 
@@ -479,6 +988,7 @@ function Register({
 
       note:
         "अपनी भाषा में लिखें। अपनी आवाज़ को अपनी ही रहने दें।",
+
 
       googleLoading:
         "Google से खाता बनाया जा रहा है...",
@@ -495,14 +1005,47 @@ function Register({
       googleAccountConflict:
         "यह SHOBDO खाता पहले से किसी अन्य Google खाते से जुड़ा है।",
 
-      accountLinkRequired:
-        "इस ईमेल से पहले से एक SHOBDO खाता मौजूद है। पहले अपने SHOBDO पासवर्ड से लॉग इन करें।",
+      googleAccountLinkRequired:
+        "इस ईमेल से पहले से एक SHOBDO खाता मौजूद है। पहले अपने मौजूदा SHOBDO खाते में लॉग इन करें।",
+
+      googleSectionLabel:
+        "Google से जारी रखें",
+
+
+      continueWithFacebook:
+        "Facebook से जारी रखें",
+
+      facebookLoading:
+        "Facebook से खाता बनाया जा रहा है...",
+
+      facebookUnavailable:
+        "Facebook पंजीकरण अभी उपलब्ध नहीं है।",
+
+      facebookConfigurationMissing:
+        "Facebook पंजीकरण अभी कॉन्फ़िगर नहीं किया गया है।",
+
+      facebookGenericError:
+        "Facebook से आगे नहीं बढ़ सके। कृपया फिर से प्रयास करें।",
+
+      facebookCancelled:
+        "Facebook लॉगिन रद्द कर दिया गया।",
+
+      facebookAccountConflict:
+        "यह Facebook खाता पहले से किसी अन्य SHOBDO खाते से जुड़ा है।",
+
+      facebookAccountLinkRequired:
+        "इस ईमेल से पहले से एक SHOBDO खाता मौजूद है। पहले अपने मौजूदा SHOBDO खाते में लॉग इन करें और फिर Facebook कनेक्ट करें।",
+
+      facebookEmailRequired:
+        "Facebook ने आपका ईमेल पता उपलब्ध नहीं कराया। ईमेल अनुमति दें या कोई अन्य पंजीकरण तरीका उपयोग करें।",
+
+      facebookSectionLabel:
+        "Facebook से जारी रखें",
+
 
       networkError:
         "SHOBDO सर्वर से कनेक्ट नहीं हो सका। कृपया फिर से प्रयास करें।",
 
-      googleSectionLabel:
-        "Google से जारी रखें",
 
       ruleLength:
         "8+ अक्षर",
@@ -519,6 +1062,12 @@ function Register({
       passwordsMatch:
         "पासवर्ड मेल खाते हैं",
 
+      hidePassword:
+        "पासवर्ड छिपाएँ",
+
+      showPassword:
+        "पासवर्ड दिखाएँ",
+
     },
 
   };
@@ -532,7 +1081,7 @@ function Register({
 
 
   // =======================================================
-  // SAFE TRANSLATION HELPER
+  // SAFE TRANSLATION
   // =======================================================
 
   function translate(
@@ -559,7 +1108,7 @@ function Register({
 
     } catch {
 
-      // Use fallback.
+      // Fallback below.
 
     }
 
@@ -570,7 +1119,7 @@ function Register({
 
 
   // =======================================================
-  // GOOGLE BUTTON LOCALE
+  // GOOGLE LOCALE
   // =======================================================
 
   const googleLocale =
@@ -590,7 +1139,8 @@ function Register({
       () => ({
 
         length:
-          password.length >= 8,
+          password.length >=
+          8,
 
 
         uppercase:
@@ -624,9 +1174,11 @@ function Register({
   const passwordScore =
     Object.values(
       passwordRules
-    ).filter(
-      Boolean
-    ).length;
+    )
+      .filter(
+        Boolean
+      )
+      .length;
 
 
   // =======================================================
@@ -654,13 +1206,7 @@ function Register({
 
 
   // =======================================================
-  // FINISH AUTHENTICATED FLOW
-  // =======================================================
-  //
-  // Both password registration and Google registration
-  // return a SHOBDO JWT, therefore the user is already
-  // authenticated after successful registration.
-  //
+  // FINISH AUTHENTICATION
   // =======================================================
 
   async function finishAuthentication() {
@@ -675,7 +1221,8 @@ function Register({
     navigate(
       "/",
       {
-        replace: true,
+        replace:
+          true,
       }
     );
 
@@ -706,6 +1253,8 @@ function Register({
 
     setGoogleLoadError("");
 
+    setFacebookLoadError("");
+
 
     const cleanName =
       name.trim();
@@ -716,10 +1265,6 @@ function Register({
         .trim()
         .toLowerCase();
 
-
-    // =====================================================
-    // NAME
-    // =====================================================
 
     if (!cleanName) {
 
@@ -734,10 +1279,6 @@ function Register({
     }
 
 
-    // =====================================================
-    // EMAIL
-    // =====================================================
-
     if (!normalizedEmail) {
 
       setError(
@@ -751,12 +1292,9 @@ function Register({
     }
 
 
-    // =====================================================
-    // PASSWORD LENGTH
-    // =====================================================
-
     if (
-      password.length < 8
+      password.length <
+      8
     ) {
 
       setError(
@@ -769,10 +1307,6 @@ function Register({
 
     }
 
-
-    // =====================================================
-    // PASSWORD RULES
-    // =====================================================
 
     if (
       !passwordRules.uppercase ||
@@ -791,10 +1325,6 @@ function Register({
     }
 
 
-    // =====================================================
-    // PASSWORD MATCH
-    // =====================================================
-
     if (
       password !==
       confirmPassword
@@ -811,10 +1341,6 @@ function Register({
     }
 
 
-    // =====================================================
-    // REGISTER
-    // =====================================================
-
     setLoading(
       true
     );
@@ -822,25 +1348,27 @@ function Register({
 
     try {
 
-      await registerUser({
+      const result =
+        await registerUser({
 
-        name:
-          cleanName,
-
-
-        email:
-          normalizedEmail,
+          name:
+            cleanName,
 
 
-        password,
+          email:
+            normalizedEmail,
 
 
-        confirmPassword,
+          password,
 
-      });
+
+          confirmPassword,
+
+        });
 
 
       setSuccess(
+        result?.message ||
         t(
           "register.success"
         )
@@ -872,17 +1400,13 @@ function Register({
 
 
   // =======================================================
-  // GOOGLE CREDENTIAL CALLBACK
+  // GOOGLE CALLBACK
   // =======================================================
 
   googleCallbackRef.current =
     async (
       credentialResponse
     ) => {
-
-      // ---------------------------------------------------
-      // GOOGLE DID NOT PROVIDE TOKEN
-      // ---------------------------------------------------
 
       if (
         !credentialResponse?.credential
@@ -914,10 +1438,6 @@ function Register({
 
       try {
 
-        // -------------------------------------------------
-        // SEND GOOGLE ID TOKEN TO SHOBDO BACKEND
-        // -------------------------------------------------
-
         const result =
           await loginWithGoogle({
 
@@ -935,10 +1455,6 @@ function Register({
         );
 
 
-        // -------------------------------------------------
-        // REFRESH APP AUTH STATE
-        // -------------------------------------------------
-
         await finishAuthentication();
 
 
@@ -950,10 +1466,6 @@ function Register({
         );
 
 
-        // ===============================================
-        // MANUAL ACCOUNT LINK REQUIRED
-        // ===============================================
-
         if (
           err?.code ===
           "account_link_required"
@@ -962,7 +1474,7 @@ function Register({
           setError(
             translate(
               "register.googleAccountLinkRequired",
-              localText.accountLinkRequired
+              localText.googleAccountLinkRequired
             )
           );
 
@@ -970,10 +1482,6 @@ function Register({
 
         }
 
-
-        // ===============================================
-        // GOOGLE ACCOUNT CONFLICT
-        // ===============================================
 
         if (
           err?.code ===
@@ -992,10 +1500,6 @@ function Register({
         }
 
 
-        // ===============================================
-        // NETWORK
-        // ===============================================
-
         if (
           err?.code ===
           "network_error"
@@ -1012,10 +1516,6 @@ function Register({
 
         }
 
-
-        // ===============================================
-        // BACKEND MESSAGE
-        // ===============================================
 
         setError(
           err?.message ||
@@ -1038,6 +1538,252 @@ function Register({
 
 
   // =======================================================
+  // FACEBOOK AUTHENTICATION
+  // =======================================================
+
+  async function finishFacebookAuthentication(
+    accessToken
+  ) {
+
+    try {
+
+      const result =
+        await loginWithFacebook({
+
+          accessToken,
+
+        });
+
+
+      setSuccess(
+        result?.message ||
+        t(
+          "register.success"
+        )
+      );
+
+
+      await finishAuthentication();
+
+
+    } catch (err) {
+
+      console.error(
+        "FACEBOOK REGISTER ERROR:",
+        err
+      );
+
+
+      if (
+        err?.code ===
+        "account_link_required"
+      ) {
+
+        setError(
+          translate(
+            "register.facebookAccountLinkRequired",
+            localText.facebookAccountLinkRequired
+          )
+        );
+
+        return;
+
+      }
+
+
+      if (
+        err?.code ===
+        "facebook_account_conflict"
+      ) {
+
+        setError(
+          translate(
+            "register.facebookAccountConflict",
+            localText.facebookAccountConflict
+          )
+        );
+
+        return;
+
+      }
+
+
+      if (
+        err?.code ===
+        "facebook_email_required"
+      ) {
+
+        setError(
+          translate(
+            "register.facebookEmailRequired",
+            localText.facebookEmailRequired
+          )
+        );
+
+        return;
+
+      }
+
+
+      if (
+        err?.code ===
+        "network_error"
+      ) {
+
+        setError(
+          translate(
+            "register.networkError",
+            localText.networkError
+          )
+        );
+
+        return;
+
+      }
+
+
+      setError(
+        err?.message ||
+        translate(
+          "register.facebookGenericError",
+          localText.facebookGenericError
+        )
+      );
+
+    }
+
+  }
+
+
+  // =======================================================
+  // FACEBOOK BUTTON
+  // =======================================================
+
+  function handleFacebookRegistration() {
+
+    if (
+      busy ||
+      !facebookReady
+    ) {
+
+      return;
+
+    }
+
+
+    setError("");
+
+    setSuccess("");
+
+    setFacebookLoadError("");
+
+
+    if (
+      !window.FB?.login
+    ) {
+
+      setError(
+        translate(
+          "register.facebookUnavailable",
+          localText.facebookUnavailable
+        )
+      );
+
+      return;
+
+    }
+
+
+    setFacebookLoading(
+      true
+    );
+
+
+    try {
+
+      window.FB.login(
+        (
+          response
+        ) => {
+
+          const accessToken =
+            response
+              ?.authResponse
+              ?.accessToken;
+
+
+          if (!accessToken) {
+
+            setFacebookLoading(
+              false
+            );
+
+
+            setError(
+              translate(
+                "register.facebookCancelled",
+                localText.facebookCancelled
+              )
+            );
+
+
+            return;
+
+          }
+
+
+          Promise.resolve(
+            finishFacebookAuthentication(
+              accessToken
+            )
+          )
+            .finally(
+              () => {
+
+                setFacebookLoading(
+                  false
+                );
+
+              }
+            );
+
+        },
+        {
+          scope:
+            "public_profile,email",
+
+          return_scopes:
+            true,
+        }
+      );
+
+
+    } catch (err) {
+
+      console.error(
+        "FACEBOOK SDK REGISTER ERROR:",
+        err
+      );
+
+
+      setFacebookLoading(
+        false
+      );
+
+
+      setError(
+        translate(
+          "register.facebookGenericError",
+          localText.facebookGenericError
+        )
+      );
+
+    }
+
+  }
+
+
+  // =======================================================
   // GOOGLE INITIALIZATION
   // =======================================================
 
@@ -1049,10 +1795,6 @@ function Register({
 
 
       async function setupGoogleRegistration() {
-
-        // ===============================================
-        // CONFIGURATION
-        // ===============================================
 
         if (
           !isGoogleAuthConfigured() ||
@@ -1082,10 +1824,6 @@ function Register({
           setGoogleLoadError("");
 
 
-          // =============================================
-          // LOAD GIS
-          // =============================================
-
           await loadGoogleIdentityServices();
 
 
@@ -1106,10 +1844,6 @@ function Register({
 
           }
 
-
-          // =============================================
-          // INITIALIZE
-          // =============================================
 
           if (
             !googleInitializedRef.current
@@ -1149,10 +1883,6 @@ function Register({
           }
 
 
-          // =============================================
-          // BUTTON CONTAINER
-          // =============================================
-
           const container =
             googleButtonRef.current;
 
@@ -1164,15 +1894,9 @@ function Register({
           }
 
 
-          // Remove previous button version.
-
           container.innerHTML =
             "";
 
-
-          // =============================================
-          // RESPONSIVE WIDTH
-          // =============================================
 
           const measuredWidth =
             container.clientWidth ||
@@ -1188,10 +1912,6 @@ function Register({
               )
             );
 
-
-          // =============================================
-          // RENDER GOOGLE BUTTON
-          // =============================================
 
           window.google.accounts.id.renderButton(
             container,
@@ -1222,7 +1942,9 @@ function Register({
 
 
               width:
-                buttonWidth,
+                String(
+                  buttonWidth
+                ),
 
 
               locale:
@@ -1284,6 +2006,125 @@ function Register({
     [
       googleLocale,
     ]
+  );
+
+
+  // =======================================================
+  // FACEBOOK INITIALIZATION
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      let cancelled =
+        false;
+
+
+      async function setupFacebookRegistration() {
+
+        if (
+          !isFacebookAuthConfigured() ||
+          !FACEBOOK_APP_ID
+        ) {
+
+          setFacebookReady(
+            false
+          );
+
+
+          setFacebookLoadError(
+            translate(
+              "register.facebookConfigurationMissing",
+              localText.facebookConfigurationMissing
+            )
+          );
+
+
+          return;
+
+        }
+
+
+        try {
+
+          setFacebookLoadError("");
+
+
+          await loadFacebookSdk();
+
+
+          if (cancelled) {
+
+            return;
+
+          }
+
+
+          if (
+            !window.FB?.init ||
+            !window.FB?.login
+          ) {
+
+            throw new Error(
+              "Facebook SDK API is unavailable."
+            );
+
+          }
+
+
+          initializeFacebookSdk();
+
+
+          if (!cancelled) {
+
+            setFacebookReady(
+              true
+            );
+
+          }
+
+
+        } catch (err) {
+
+          console.error(
+            "FACEBOOK SDK LOAD ERROR:",
+            err
+          );
+
+
+          if (!cancelled) {
+
+            setFacebookReady(
+              false
+            );
+
+
+            setFacebookLoadError(
+              translate(
+                "register.facebookUnavailable",
+                localText.facebookUnavailable
+              )
+            );
+
+          }
+
+        }
+
+      }
+
+
+      setupFacebookRegistration();
+
+
+      return () => {
+
+        cancelled =
+          true;
+
+      };
+
+    },
+    []
   );
 
 
@@ -1509,11 +2350,9 @@ function Register({
                 "100%",
 
               marginBottom:
-                "18px",
+                "12px",
             }}
           >
-
-            {/* GOOGLE LOADING */}
 
             {googleLoading && (
 
@@ -1542,8 +2381,6 @@ function Register({
 
             )}
 
-
-            {/* OFFICIAL GOOGLE BUTTON */}
 
             {!googleLoading && (
 
@@ -1582,8 +2419,6 @@ function Register({
             )}
 
 
-            {/* GOOGLE CONFIG/LOAD ERROR */}
-
             {
               googleLoadError &&
               !googleReady &&
@@ -1593,23 +2428,230 @@ function Register({
                   role="status"
                   style={{
                     marginTop:
-                      "10px",
+                      "9px",
 
                     textAlign:
                       "center",
 
                     fontSize:
-                      "0.82rem",
+                      "0.78rem",
 
                     lineHeight:
                       1.5,
 
                     opacity:
-                      0.75,
+                      0.72,
                   }}
                 >
 
                   {googleLoadError}
+
+                </div>
+              )
+            }
+
+          </div>
+
+
+          {/* ===========================================
+              FACEBOOK
+          ============================================ */}
+
+          <div
+            className="shobdo-facebook-register-section"
+            aria-label={
+              localText.facebookSectionLabel
+            }
+            style={{
+              width:
+                "100%",
+
+              marginBottom:
+                "18px",
+            }}
+          >
+
+            <button
+              type="button"
+
+              onClick={
+                handleFacebookRegistration
+              }
+
+              disabled={
+                busy ||
+                !facebookReady
+              }
+
+              aria-label={
+                localText.continueWithFacebook
+              }
+
+              style={{
+                width:
+                  "100%",
+
+                minHeight:
+                  "44px",
+
+                border:
+                  "1px solid #1877f2",
+
+                borderRadius:
+                  "6px",
+
+                background:
+                  facebookReady
+                    ? "#1877f2"
+                    : "#9cbde8",
+
+                color:
+                  "#ffffff",
+
+                display:
+                  "flex",
+
+                alignItems:
+                  "center",
+
+                justifyContent:
+                  "center",
+
+                gap:
+                  "11px",
+
+                padding:
+                  "0 16px",
+
+                fontSize:
+                  "14px",
+
+                fontWeight:
+                  600,
+
+                cursor:
+                  busy ||
+                  !facebookReady
+                    ? "not-allowed"
+                    : "pointer",
+
+                opacity:
+                  busy &&
+                  !facebookLoading
+                    ? 0.65
+                    : 1,
+
+                transition:
+                  "opacity 0.2s ease, transform 0.2s ease",
+              }}
+            >
+
+              {
+                facebookLoading
+                  ? (
+                      <Loader2
+                        size={19}
+                        className="spin"
+                      />
+                    )
+                  : (
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          width:
+                            "22px",
+
+                          height:
+                            "22px",
+
+                          borderRadius:
+                            "50%",
+
+                          background:
+                            "#ffffff",
+
+                          color:
+                            "#1877f2",
+
+                          display:
+                            "inline-flex",
+
+                          alignItems:
+                            "flex-end",
+
+                          justifyContent:
+                            "center",
+
+                          fontFamily:
+                            "Arial, Helvetica, sans-serif",
+
+                          fontSize:
+                            "20px",
+
+                          lineHeight:
+                            1,
+
+                          fontWeight:
+                            700,
+
+                          overflow:
+                            "hidden",
+
+                          paddingTop:
+                            "4px",
+                        }}
+                      >
+                        f
+                      </span>
+                    )
+              }
+
+
+              <span>
+
+                {
+                  facebookLoading
+                    ? translate(
+                        "register.facebookLoading",
+                        localText.facebookLoading
+                      )
+                    : translate(
+                        "register.continueWithFacebook",
+                        localText.continueWithFacebook
+                      )
+                }
+
+              </span>
+
+            </button>
+
+
+            {
+              facebookLoadError &&
+              !facebookReady &&
+              !facebookLoading &&
+              (
+                <div
+                  role="status"
+                  style={{
+                    marginTop:
+                      "9px",
+
+                    textAlign:
+                      "center",
+
+                    fontSize:
+                      "0.78rem",
+
+                    lineHeight:
+                      1.5,
+
+                    opacity:
+                      0.72,
+                  }}
+                >
+
+                  {facebookLoadError}
 
                 </div>
               )
@@ -1881,11 +2923,11 @@ function Register({
                     showPassword
                       ? translate(
                           "register.hidePassword",
-                          "Hide password"
+                          localText.hidePassword
                         )
                       : translate(
                           "register.showPassword",
-                          "Show password"
+                          localText.showPassword
                         )
                   }
                 >
@@ -2117,11 +3159,11 @@ function Register({
                     showConfirmPassword
                       ? translate(
                           "register.hidePassword",
-                          "Hide password"
+                          localText.hidePassword
                         )
                       : translate(
                           "register.showPassword",
-                          "Show password"
+                          localText.showPassword
                         )
                   }
                 >
@@ -2144,8 +3186,6 @@ function Register({
 
               </div>
 
-
-              {/* PASSWORD MATCH */}
 
               {confirmPassword && (
 

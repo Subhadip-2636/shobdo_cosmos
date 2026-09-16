@@ -7,6 +7,8 @@
 // - Email/password registration
 // - Email/password login
 // - Google Sign-In
+// - Facebook Sign-In
+// - Facebook account linking
 // - Current authenticated user
 // - Logout
 // - Forgot password
@@ -34,7 +36,7 @@ const RAW_API_URL =
 // API URL NORMALIZATION
 // =========================================================
 //
-// Supports either:
+// Supports:
 //
 // VITE_API_URL=http://127.0.0.1:5000
 //
@@ -42,7 +44,7 @@ const RAW_API_URL =
 //
 // VITE_API_URL=http://127.0.0.1:5000/api
 //
-// without accidentally producing:
+// without producing:
 //
 // /api/api
 //
@@ -58,18 +60,40 @@ const API_URL =
 // GOOGLE CLIENT ID
 // =========================================================
 //
-// This value is public configuration for Google Identity
-// Services. It is NOT the Google Client Secret.
-//
 // Frontend/.env:
 //
 // VITE_GOOGLE_CLIENT_ID=xxxxx.apps.googleusercontent.com
+//
+// This value is public frontend configuration.
+// It is NOT the Google Client Secret.
 //
 // =========================================================
 
 export const GOOGLE_CLIENT_ID =
   String(
     import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+    ""
+  ).trim();
+
+
+// =========================================================
+// FACEBOOK APP ID
+// =========================================================
+//
+// Frontend/.env:
+//
+// VITE_FACEBOOK_APP_ID=1234567890
+//
+// The Facebook App ID is public frontend configuration.
+//
+// NEVER put FACEBOOK_APP_SECRET in Vite.
+// The App Secret belongs only on the Flask backend.
+//
+// =========================================================
+
+export const FACEBOOK_APP_ID =
+  String(
+    import.meta.env.VITE_FACEBOOK_APP_ID ||
     ""
   ).trim();
 
@@ -111,10 +135,8 @@ function getStoredToken() {
 
   try {
 
-    return (
-      localStorage.getItem(
-        TOKEN_KEY
-      )
+    return localStorage.getItem(
+      TOKEN_KEY
     );
 
   } catch {
@@ -153,8 +175,8 @@ function storeToken(
 
   } catch {
 
-    // Local storage may be unavailable in privacy mode.
-    // Authentication response is still returned to caller.
+    // Storage may be blocked in privacy mode.
+    // Authentication result is still returned.
 
   }
 
@@ -182,7 +204,7 @@ function removeStoredToken() {
 
   } catch {
 
-    // Ignore local-storage cleanup errors.
+    // Ignore storage cleanup errors.
 
   }
 
@@ -190,7 +212,7 @@ function removeStoredToken() {
 
 
 // =========================================================
-// EXTRACT TOKEN
+// EXTRACT SHOBDO JWT
 // =========================================================
 
 function extractAccessToken(
@@ -242,24 +264,27 @@ function createApiError({
 
 
   // -------------------------------------------------------
-  // HTTP information
+  // HTTP INFORMATION
   // -------------------------------------------------------
 
   error.status =
     response.status;
+
 
   error.statusText =
     response.statusText;
 
 
   // -------------------------------------------------------
-  // Backend application error code
+  // BACKEND APPLICATION ERROR CODE
   // -------------------------------------------------------
   //
-  // Example:
+  // Examples:
   //
   // account_link_required
   // google_account_conflict
+  // facebook_account_conflict
+  // facebook_email_required
   //
   // -------------------------------------------------------
 
@@ -268,7 +293,18 @@ function createApiError({
     null;
 
 
-  // Entire backend response, useful to calling components.
+  // -------------------------------------------------------
+  // PROVIDER
+  // -------------------------------------------------------
+
+  error.provider =
+    data?.provider ||
+    null;
+
+
+  // -------------------------------------------------------
+  // FULL BACKEND RESPONSE
+  // -------------------------------------------------------
 
   error.data =
     data ||
@@ -290,10 +326,6 @@ async function parseResponse(
 
   let data = {};
 
-
-  // -------------------------------------------------------
-  // READ BODY
-  // -------------------------------------------------------
 
   const responseText =
     await response.text();
@@ -319,10 +351,6 @@ async function parseResponse(
 
   }
 
-
-  // -------------------------------------------------------
-  // ERROR RESPONSE
-  // -------------------------------------------------------
 
   if (!response.ok) {
 
@@ -356,8 +384,10 @@ function createNetworkError(
   error.code =
     "network_error";
 
+
   error.status =
     0;
+
 
   error.originalError =
     originalError;
@@ -379,8 +409,10 @@ async function authRequest(
 
   const {
     includeAuth = true,
+
     headers:
       customHeaders = {},
+
     ...fetchOptions
   } = options;
 
@@ -398,7 +430,7 @@ async function authRequest(
 
 
   // -------------------------------------------------------
-  // JWT
+  // SHOBDO JWT
   // -------------------------------------------------------
 
   if (
@@ -430,9 +462,11 @@ async function authRequest(
 
   } catch (error) {
 
-    // API-generated error.
+    // API-generated errors already have status information.
+
     if (
-      error?.status !== undefined
+      error?.status !==
+      undefined
     ) {
 
       throw error;
@@ -440,7 +474,6 @@ async function authRequest(
     }
 
 
-    // Browser/network fetch error.
     throw createNetworkError(
       error
     );
@@ -451,7 +484,7 @@ async function authRequest(
 
 
 // =========================================================
-// SAVE AUTH RESPONSE
+// SAVE AUTHENTICATION RESPONSE
 // =========================================================
 
 function saveAuthenticationResponse(
@@ -581,12 +614,9 @@ export async function loginUser(
 ) {
 
   let email;
+
   let password;
 
-
-  // -------------------------------------------------------
-  // OBJECT STYLE
-  // -------------------------------------------------------
 
   if (
     typeof credentials ===
@@ -597,20 +627,15 @@ export async function loginUser(
     email =
       credentials.email;
 
+
     password =
       credentials.password;
 
-  }
-
-
-  // -------------------------------------------------------
-  // LEGACY STYLE
-  // -------------------------------------------------------
-
-  else {
+  } else {
 
     email =
       credentials;
+
 
     password =
       legacyPassword;
@@ -667,35 +692,21 @@ export async function loginUser(
 // GOOGLE SIGN-IN
 // =========================================================
 //
-// Google Identity Services calls the frontend with:
+// Google Identity Services provides:
 //
 // response.credential
 //
-// That credential is Google's ID-token JWT.
-//
-// We send it to:
+// The credential is sent to:
 //
 // POST /api/auth/google
 //
-// The Flask backend verifies it before issuing the normal
-// SHOBDO JWT.
+// Flask verifies it and returns the normal SHOBDO JWT.
 //
 // =========================================================
 
 export async function loginWithGoogle(
   input
 ) {
-
-  // -------------------------------------------------------
-  // SUPPORT BOTH:
-  //
-  // loginWithGoogle("credential")
-  //
-  // loginWithGoogle({
-  //   credential: "credential"
-  // })
-  //
-  // -------------------------------------------------------
 
   const credential =
     typeof input ===
@@ -729,6 +740,10 @@ export async function loginWithGoogle(
 
     error.code =
       "google_credential_missing";
+
+
+    error.provider =
+      "google";
 
 
     throw error;
@@ -765,12 +780,6 @@ export async function loginWithGoogle(
 // =========================================================
 // GOOGLE LOGIN ALIASES
 // =========================================================
-//
-// These aliases make future components easier to integrate
-// without breaking if a component uses another reasonable
-// function name.
-//
-// =========================================================
 
 export const googleLogin =
   loginWithGoogle;
@@ -781,7 +790,7 @@ export const loginUserWithGoogle =
 
 
 // =========================================================
-// GOOGLE CONFIGURATION CHECK
+// GOOGLE CONFIG CHECK
 // =========================================================
 
 export function isGoogleAuthConfigured() {
@@ -803,6 +812,249 @@ export function getGoogleClientId() {
     GOOGLE_CLIENT_ID ||
     null
   );
+
+}
+
+
+// =========================================================
+// FACEBOOK ACCESS TOKEN NORMALIZER
+// =========================================================
+
+function normalizeFacebookAccessToken(
+  input
+) {
+
+  const accessToken =
+    typeof input ===
+      "object" &&
+    input !== null
+
+      ? (
+          input.accessToken ||
+          input.access_token ||
+          input.token ||
+          ""
+        )
+
+      : input;
+
+
+  return String(
+    accessToken ||
+    ""
+  ).trim();
+
+}
+
+
+// =========================================================
+// FACEBOOK SIGN-IN
+// =========================================================
+//
+// Facebook JavaScript SDK returns:
+//
+// authResponse.accessToken
+//
+// We send it to:
+//
+// POST /api/auth/facebook
+//
+// The Flask backend verifies the token with Meta before
+// issuing the normal SHOBDO JWT.
+//
+// =========================================================
+
+export async function loginWithFacebook(
+  input
+) {
+
+  const cleanAccessToken =
+    normalizeFacebookAccessToken(
+      input
+    );
+
+
+  if (!cleanAccessToken) {
+
+    const error =
+      new Error(
+        "Facebook access token is missing."
+      );
+
+
+    error.code =
+      "facebook_access_token_missing";
+
+
+    error.provider =
+      "facebook";
+
+
+    throw error;
+
+  }
+
+
+  const data =
+    await authRequest(
+      "/auth/facebook",
+      {
+        method:
+          "POST",
+
+        includeAuth:
+          false,
+
+        body:
+          JSON.stringify({
+            access_token:
+              cleanAccessToken,
+          }),
+      }
+    );
+
+
+  return saveAuthenticationResponse(
+    data
+  );
+
+}
+
+
+// =========================================================
+// FACEBOOK LOGIN ALIASES
+// =========================================================
+
+export const facebookLogin =
+  loginWithFacebook;
+
+
+export const loginUserWithFacebook =
+  loginWithFacebook;
+
+
+// =========================================================
+// FACEBOOK ACCOUNT LINKING
+// =========================================================
+//
+// Requires an existing authenticated SHOBDO user.
+//
+// POST /api/auth/facebook/link
+//
+// Authorization:
+//
+// Bearer <shobdo_token>
+//
+// =========================================================
+
+export async function linkFacebookAccount(
+  input
+) {
+
+  const cleanAccessToken =
+    normalizeFacebookAccessToken(
+      input
+    );
+
+
+  if (!cleanAccessToken) {
+
+    const error =
+      new Error(
+        "Facebook access token is missing."
+      );
+
+
+    error.code =
+      "facebook_access_token_missing";
+
+
+    error.provider =
+      "facebook";
+
+
+    throw error;
+
+  }
+
+
+  return authRequest(
+    "/auth/facebook/link",
+    {
+      method:
+        "POST",
+
+      includeAuth:
+        true,
+
+      body:
+        JSON.stringify({
+          access_token:
+            cleanAccessToken,
+        }),
+    }
+  );
+
+}
+
+
+// =========================================================
+// FACEBOOK CONFIG CHECK
+// =========================================================
+
+export function isFacebookAuthConfigured() {
+
+  return Boolean(
+    FACEBOOK_APP_ID
+  );
+
+}
+
+
+// =========================================================
+// GET FACEBOOK APP ID
+// =========================================================
+
+export function getFacebookAppId() {
+
+  return (
+    FACEBOOK_APP_ID ||
+    null
+  );
+
+}
+
+
+// =========================================================
+// AUTH PROVIDER CONFIGURATION
+// =========================================================
+//
+// Useful for account/security UI later.
+//
+// =========================================================
+
+export function getAuthProviderConfig() {
+
+  return {
+
+    google: {
+      configured:
+        isGoogleAuthConfigured(),
+
+      clientId:
+        getGoogleClientId(),
+    },
+
+
+    facebook: {
+      configured:
+        isFacebookAuthConfigured(),
+
+      appId:
+        getFacebookAppId(),
+    },
+
+  };
 
 }
 
@@ -841,16 +1093,18 @@ export async function getCurrentUser() {
       null
     );
 
+
   } catch (error) {
 
     // -----------------------------------------------------
-    // Remove token only when authentication is invalid.
+    // REMOVE TOKEN ONLY WHEN AUTHENTICATION IS INVALID
+    // -----------------------------------------------------
     //
-    // Do NOT automatically log the user out because of:
+    // Do not log the user out for:
     //
-    // - temporary network failure
-    // - backend outage
-    // - 500 response
+    // - network failure
+    // - temporary backend outage
+    // - HTTP 500
     //
     // -----------------------------------------------------
 
@@ -881,10 +1135,6 @@ export async function logoutUser() {
     getStoredToken();
 
 
-  // -------------------------------------------------------
-  // ALREADY LOGGED OUT
-  // -------------------------------------------------------
-
   if (!token) {
 
     removeStoredToken();
@@ -897,10 +1147,6 @@ export async function logoutUser() {
 
   }
 
-
-  // -------------------------------------------------------
-  // SERVER LOGOUT
-  // -------------------------------------------------------
 
   try {
 
@@ -919,12 +1165,13 @@ export async function logoutUser() {
 
     return data;
 
+
   } catch {
 
-    // JWT is client-managed currently.
+    // JWT is currently client-managed.
     //
-    // Even if backend logout cannot be reached, removing
-    // the local token logs the current browser session out.
+    // Removing the local JWT logs this browser session out
+    // even if the backend cannot currently be reached.
 
     removeStoredToken();
 
@@ -1103,12 +1350,9 @@ export async function resetPassword(
 
 
   let password;
+
   let confirmPassword;
 
-
-  // -------------------------------------------------------
-  // OBJECT STYLE
-  // -------------------------------------------------------
 
   if (
     typeof input ===
@@ -1125,14 +1369,7 @@ export async function resetPassword(
       input.confirm_password ??
       input.password;
 
-  }
-
-
-  // -------------------------------------------------------
-  // LEGACY STYLE
-  // -------------------------------------------------------
-
-  else {
+  } else {
 
     password =
       input;
@@ -1211,11 +1448,6 @@ export function getAuthToken() {
 // =========================================================
 // SET AUTH TOKEN
 // =========================================================
-//
-// Useful if another authentication flow receives a
-// SHOBDO JWT and needs to store it.
-//
-// =========================================================
 
 export function setAuthToken(
   token
@@ -1258,10 +1490,6 @@ export const AUTH_TOKEN_KEY =
 
 // =========================================================
 // AUTH API URL
-// =========================================================
-//
-// Useful for debugging only.
-//
 // =========================================================
 
 export const AUTH_API_URL =

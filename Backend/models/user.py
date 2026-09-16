@@ -64,10 +64,11 @@ class User(db.Model):
     #
     # nullable=True is intentional.
     #
-    # A Google-only account may not have a SHOBDO password.
+    # A user who registered only through Google or Facebook
+    # may initially have no SHOBDO password.
     #
-    # Existing email/password accounts continue to store
-    # their normal Werkzeug password hash.
+    # Existing email/password accounts continue to work
+    # normally.
     #
     # =====================================================
 
@@ -81,15 +82,10 @@ class User(db.Model):
     # GOOGLE AUTHENTICATION
     # =====================================================
     #
-    # google_sub:
+    # google_sub is Google's stable unique account ID.
     #
-    # Google's stable unique identifier for the account.
-    #
-    # Never use the email address as Google's permanent
-    # identity key.
-    #
-    # Existing SHOBDO accounts can later be linked to
-    # Google by storing the verified Google "sub" here.
+    # Never use the Google email address as the permanent
+    # Google identity key.
     #
     # =====================================================
 
@@ -110,13 +106,49 @@ class User(db.Model):
 
 
     # =====================================================
+    # FACEBOOK AUTHENTICATION
+    # =====================================================
+    #
+    # Facebook / Meta returns an app-scoped user ID.
+    #
+    # That ID is the stable identity we associate with the
+    # SHOBDO account.
+    #
+    # Do not use a Facebook email address as the permanent
+    # Facebook identity key.
+    #
+    # =====================================================
+
+    facebook_user_id = db.Column(
+        db.String(255),
+        unique=True,
+        nullable=True,
+        index=True,
+    )
+
+
+    facebook_linked_at = db.Column(
+        db.DateTime(
+            timezone=True
+        ),
+        nullable=True,
+    )
+
+
+    # =====================================================
     # EMAIL VERIFICATION
     # =====================================================
     #
-    # Password-created accounts can remain False until
-    # SHOBDO email verification is implemented.
+    # This refers to SHOBDO's knowledge that an email
+    # address has been verified.
     #
-    # A verified Google identity can set this to True.
+    # Google can provide an explicit verified-email claim.
+    #
+    # Facebook does not provide exactly the same verified
+    # email claim in the normal profile response, therefore
+    # Facebook linking must not automatically mark an email
+    # verified unless the backend has another trusted reason
+    # to do so.
     #
     # =====================================================
 
@@ -253,9 +285,8 @@ class User(db.Model):
         """
         Hash and store a SHOBDO password.
 
-        Google-only accounts may initially have no
-        password. If they later create one, this method
-        can be used normally.
+        Social-login-only users may initially have no
+        SHOBDO password. They can later create one.
         """
 
         if (
@@ -284,11 +315,10 @@ class User(db.Model):
         password,
     ):
         """
-        Check a plain-text password.
+        Check a plain-text password against the saved
+        password hash.
 
-        Google-only users have password_hash=None,
-        so password login must fail safely rather than
-        raising an exception.
+        Social-login-only accounts safely return False.
         """
 
         if (
@@ -325,7 +355,7 @@ class User(db.Model):
         self,
     ):
         """
-        Whether this user currently has a SHOBDO password.
+        Whether this user has a SHOBDO password.
         """
 
         return bool(
@@ -341,7 +371,7 @@ class User(db.Model):
         self,
     ):
         """
-        Whether Google authentication is linked.
+        Whether a Google account is linked.
         """
 
         return bool(
@@ -357,11 +387,11 @@ class User(db.Model):
         avatar_url=None,
     ):
         """
-        Link a verified Google identity to this user.
+        Link a verified Google identity.
 
         IMPORTANT:
-        Only call this after Google's ID token has been
-        successfully verified by the backend.
+        Only call this after the backend has successfully
+        verified Google's ID token.
         """
 
         normalized_sub = str(
@@ -398,14 +428,12 @@ class User(db.Model):
             )
 
 
-        # Only use Google's profile photo automatically
-        # when the user does not already have a SHOBDO
-        # profile picture.
-
         normalized_avatar = str(
             avatar_url or ""
         ).strip()
 
+
+        # Keep the user's manually selected SHOBDO avatar.
 
         if (
             normalized_avatar
@@ -422,11 +450,11 @@ class User(db.Model):
         self,
     ):
         """
-        Remove Google login from the account.
+        Remove Google authentication from the account.
 
-        This should only be allowed by a future API route
-        when the account still has another valid sign-in
-        method, such as a SHOBDO password.
+        A future API endpoint should prevent unlinking
+        when this would leave the user with no valid
+        authentication method.
         """
 
         self.google_sub = (
@@ -440,12 +468,124 @@ class User(db.Model):
 
 
     # =====================================================
+    # FACEBOOK ACCOUNT HELPERS
+    # =====================================================
+
+    def has_facebook_account(
+        self,
+    ):
+        """
+        Whether a Facebook account is linked.
+        """
+
+        return bool(
+            self.facebook_user_id
+        )
+
+
+    def link_facebook_account(
+        self,
+        facebook_user_id,
+        *,
+        avatar_url=None,
+        mark_email_verified=False,
+    ):
+        """
+        Link a verified Facebook / Meta identity.
+
+        IMPORTANT:
+        Only call this after the backend has verified the
+        Facebook user access token with Meta.
+
+        mark_email_verified defaults to False because
+        Facebook's normal profile response should not be
+        treated the same as Google's explicit
+        `email_verified` claim.
+        """
+
+        normalized_user_id = str(
+            facebook_user_id or ""
+        ).strip()
+
+
+        if not normalized_user_id:
+
+            raise ValueError(
+                "Facebook account identifier is required."
+            )
+
+
+        self.facebook_user_id = (
+            normalized_user_id
+        )
+
+
+        if (
+            self.facebook_linked_at
+            is None
+        ):
+
+            self.facebook_linked_at = (
+                utc_now()
+            )
+
+
+        if mark_email_verified:
+
+            self.email_verified = (
+                True
+            )
+
+
+        normalized_avatar = str(
+            avatar_url or ""
+        ).strip()
+
+
+        # Do not overwrite a custom SHOBDO avatar.
+
+        if (
+            normalized_avatar
+            and
+            not self.avatar_url
+        ):
+
+            self.avatar_url = (
+                normalized_avatar
+            )
+
+
+    def unlink_facebook_account(
+        self,
+    ):
+        """
+        Remove Facebook authentication from the account.
+
+        A future account-security endpoint should block
+        this operation if Facebook is the user's only
+        remaining authentication method.
+        """
+
+        self.facebook_user_id = (
+            None
+        )
+
+
+        self.facebook_linked_at = (
+            None
+        )
+
+
+    # =====================================================
     # EMAIL VERIFICATION HELPERS
     # =====================================================
 
     def mark_email_verified(
         self,
     ):
+        """
+        Mark the SHOBDO account email as verified.
+        """
 
         self.email_verified = (
             True
@@ -497,8 +637,8 @@ class User(db.Model):
         self,
     ):
         """
-        Return the sign-in methods currently available
-        for this account.
+        Return all authentication methods currently
+        connected to the account.
 
         Examples:
 
@@ -506,7 +646,13 @@ class User(db.Model):
 
         ["google"]
 
+        ["facebook"]
+
         ["password", "google"]
+
+        ["google", "facebook"]
+
+        ["password", "google", "facebook"]
         """
 
         methods = []
@@ -526,7 +672,27 @@ class User(db.Model):
             )
 
 
+        if self.has_facebook_account():
+
+            methods.append(
+                "facebook"
+            )
+
+
         return methods
+
+
+    def has_any_auth_method(
+        self,
+    ):
+        """
+        Whether the account has at least one usable
+        authentication method.
+        """
+
+        return bool(
+            self.get_auth_methods()
+        )
 
 
     # =====================================================
@@ -544,6 +710,7 @@ class User(db.Model):
 
         - password_hash
         - google_sub
+        - facebook_user_id
         - password_reset_token
         - password_reset_expires
         """
@@ -607,7 +774,7 @@ class User(db.Model):
 
 
             # =============================================
-            # AUTH METHODS
+            # AUTHENTICATION METHODS
             # =============================================
 
             "has_password":
@@ -618,18 +785,34 @@ class User(db.Model):
                 self.has_google_account(),
 
 
+            "facebook_connected":
+                self.has_facebook_account(),
+
+
             "auth_methods":
                 self.get_auth_methods(),
 
 
             # =============================================
-            # GOOGLE LINK DATE
+            # GOOGLE
             # =============================================
 
             "google_linked_at":
                 (
                     self.google_linked_at.isoformat()
                     if self.google_linked_at
+                    else None
+                ),
+
+
+            # =============================================
+            # FACEBOOK
+            # =============================================
+
+            "facebook_linked_at":
+                (
+                    self.facebook_linked_at.isoformat()
+                    if self.facebook_linked_at
                     else None
                 ),
 
@@ -680,5 +863,7 @@ class User(db.Model):
             f"id={self.id} "
             f"email={self.email!r} "
             f"google_connected="
-            f"{self.has_google_account()}>"
+            f"{self.has_google_account()} "
+            f"facebook_connected="
+            f"{self.has_facebook_account()}>"
         )

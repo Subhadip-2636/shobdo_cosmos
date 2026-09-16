@@ -9,6 +9,10 @@ from datetime import (
     timezone,
 )
 
+from html import escape
+
+import requests as http_requests
+
 from flask import (
     Blueprint,
     current_app,
@@ -52,28 +56,6 @@ from models.user import User
 # =========================================================
 # AUTHENTICATION BLUEPRINT
 # =========================================================
-#
-# app.py should register this blueprint using:
-#
-# app.register_blueprint(
-#     auth_bp,
-#     url_prefix="/api/auth",
-# )
-#
-# Final routes:
-#
-# POST /api/auth/register
-# POST /api/auth/login
-# POST /api/auth/google
-# GET  /api/auth/me
-#
-# POST /api/auth/forgot-password
-# GET  /api/auth/reset-password/<token>
-# POST /api/auth/reset-password/<token>
-#
-# POST /api/auth/logout
-#
-# =========================================================
 
 auth_bp = Blueprint(
     "auth",
@@ -93,6 +75,8 @@ MAX_NAME_LENGTH = 120
 
 MAX_EMAIL_LENGTH = 150
 
+HTTP_TIMEOUT_SECONDS = 12
+
 
 GOOGLE_ISSUERS = {
     "accounts.google.com",
@@ -100,14 +84,16 @@ GOOGLE_ISSUERS = {
 }
 
 
+FACEBOOK_GRAPH_ROOT = (
+    "https://graph.facebook.com"
+)
+
+
 # =========================================================
 # TIME
 # =========================================================
 
 def utc_now():
-    """
-    Return a timezone-aware UTC datetime.
-    """
 
     return datetime.now(
         timezone.utc
@@ -121,12 +107,6 @@ def utc_now():
 def ensure_utc(
     value,
 ):
-    """
-    Normalize a datetime into timezone-aware UTC.
-
-    This also keeps compatibility with older database
-    rows that may contain naive UTC datetimes.
-    """
 
     if value is None:
 
@@ -146,7 +126,7 @@ def ensure_utc(
 
 
 # =========================================================
-# RESET EXPIRATION CHECK
+# RESET TOKEN EXPIRATION
 # =========================================================
 
 def reset_token_expired(
@@ -170,15 +150,12 @@ def reset_token_expired(
 
 
 # =========================================================
-# EMAIL NORMALIZER
+# EMAIL NORMALIZATION
 # =========================================================
 
 def normalize_email(
     email,
 ):
-    """
-    Normalize an email before saving/searching.
-    """
 
     if not isinstance(
         email,
@@ -203,12 +180,9 @@ def valid_email(
     email,
 ):
 
-    if not email:
-
-        return False
-
-
     if (
+        not email
+        or
         len(email) >
         MAX_EMAIL_LENGTH
     ):
@@ -216,17 +190,85 @@ def valid_email(
         return False
 
 
-    pattern = (
-        r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
-    )
-
-
     return bool(
         re.match(
-            pattern,
+            r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
             email,
         )
     )
+
+
+# =========================================================
+# NAME NORMALIZATION
+# =========================================================
+
+def normalize_name(
+    name,
+    fallback="SHOBDO User",
+):
+
+    value = str(
+        name or ""
+    ).strip()[
+        :MAX_NAME_LENGTH
+    ]
+
+
+    if (
+        len(value) <
+        2
+    ):
+
+        value = (
+            fallback[
+                :MAX_NAME_LENGTH
+            ]
+        )
+
+
+    return value
+
+
+# =========================================================
+# AVATAR URL NORMALIZATION
+# =========================================================
+
+def normalize_avatar_url(
+    value,
+):
+
+    url = str(
+        value or ""
+    ).strip()
+
+
+    if not url:
+
+        return None
+
+
+    if (
+        len(url) >
+        500
+    ):
+
+        return None
+
+
+    if not (
+        url.startswith(
+            "https://"
+        )
+        or
+        url.startswith(
+            "http://"
+        )
+    ):
+
+        return None
+
+
+    return url
 
 
 # =========================================================
@@ -236,15 +278,6 @@ def valid_email(
 def validate_password(
     password,
 ):
-    """
-    Validate SHOBDO password strength.
-
-    Requirements:
-    - 8+ characters
-    - uppercase letter
-    - lowercase letter
-    - number
-    """
 
     if not isinstance(
         password,
@@ -326,12 +359,6 @@ def validate_password(
 def hash_reset_token(
     token,
 ):
-    """
-    Store only a SHA-256 hash of password-reset tokens.
-
-    The raw token is sent to the user but is never
-    persisted in the database.
-    """
 
     return hashlib.sha256(
         token.encode(
@@ -341,7 +368,7 @@ def hash_reset_token(
 
 
 # =========================================================
-# CURRENT USER LOOKUP
+# USER LOOKUP FROM JWT
 # =========================================================
 
 def get_user_by_identity(
@@ -353,6 +380,7 @@ def get_user_by_identity(
         user_id = int(
             identity
         )
+
 
     except (
         TypeError,
@@ -369,7 +397,7 @@ def get_user_by_identity(
 
 
 # =========================================================
-# CREATE JWT RESPONSE
+# COMMON LOGIN RESPONSE
 # =========================================================
 
 def create_login_response(
@@ -379,10 +407,6 @@ def create_login_response(
     status_code=200,
     auth_provider=None,
 ):
-    """
-    Issue the same SHOBDO JWT response for password
-    authentication and Google authentication.
-    """
 
     access_token = (
         create_access_token(
@@ -398,16 +422,19 @@ def create_login_response(
         "message":
             message,
 
-        # Current preferred name.
+
         "access_token":
             access_token,
 
-        # Compatibility with existing frontend code.
+
+        # Backward compatibility
         "token":
             access_token,
 
+
         "user":
             user.to_dict(),
+
     }
 
 
@@ -424,16 +451,10 @@ def create_login_response(
 
 
 # =========================================================
-# GOOGLE CLIENT ID
+# GOOGLE CONFIG
 # =========================================================
 
 def get_google_client_id():
-    """
-    Read the Google Web Client ID.
-
-    Supports either Flask configuration or environment
-    configuration.
-    """
 
     value = (
         current_app.config.get(
@@ -493,30 +514,16 @@ def google_is_authoritative_for_email(
     email_verified,
     hosted_domain,
 ):
-    """
-    Determine whether Google is authoritative for the
-    supplied email address.
-
-    This matters when automatically linking Google to
-    an EXISTING SHOBDO account.
-
-    Safe automatic cases:
-
-    1. @gmail.com
-    2. verified Google Workspace account with `hd`
-
-    A Google account can also be created using an
-    external email provider. In that situation, we do
-    not silently attach it to an existing SHOBDO account.
-    """
 
     if not email_verified:
 
         return False
 
 
-    normalized_email = normalize_email(
-        email
+    normalized_email = (
+        normalize_email(
+            email
+        )
     )
 
 
@@ -542,18 +549,12 @@ def google_is_authoritative_for_email(
 
 
 # =========================================================
-# VERIFY GOOGLE ID TOKEN
+# VERIFY GOOGLE TOKEN
 # =========================================================
 
 def verify_google_credential(
     credential,
 ):
-    """
-    Verify a Google Identity Services ID token.
-
-    google-auth verifies token signature, audience,
-    expiration and related OpenID Connect information.
-    """
 
     google_client_id = (
         get_google_client_id()
@@ -570,18 +571,21 @@ def verify_google_credential(
     id_info = (
         google_id_token
         .verify_oauth2_token(
+
             credential,
+
             google_requests.Request(),
+
             google_client_id,
+
         )
     )
 
 
-    # Additional explicit issuer validation.
     issuer = str(
         id_info.get(
             "iss",
-            ""
+            "",
         )
     ).strip()
 
@@ -600,11 +604,466 @@ def verify_google_credential(
 
 
 # =========================================================
-# REGISTER
+# FACEBOOK CONFIG
+# =========================================================
+
+def get_facebook_app_id():
+
+    value = (
+        current_app.config.get(
+            "FACEBOOK_APP_ID"
+        )
+        or
+        os.getenv(
+            "FACEBOOK_APP_ID"
+        )
+        or
+        ""
+    )
+
+
+    return str(
+        value
+    ).strip()
+
+
+def get_facebook_app_secret():
+
+    value = (
+        current_app.config.get(
+            "FACEBOOK_APP_SECRET"
+        )
+        or
+        os.getenv(
+            "FACEBOOK_APP_SECRET"
+        )
+        or
+        ""
+    )
+
+
+    return str(
+        value
+    ).strip()
+
+
+# =========================================================
+# FACEBOOK GRAPH API VERSION
 # =========================================================
 #
-# POST /api/auth/register
+# Optional:
 #
+# FACEBOOK_GRAPH_API_VERSION=vXX.X
+#
+# If omitted, graph.facebook.com uses the app/default
+# version configured by Meta.
+#
+# =========================================================
+
+def get_facebook_graph_api_version():
+
+    value = (
+        current_app.config.get(
+            "FACEBOOK_GRAPH_API_VERSION"
+        )
+        or
+        os.getenv(
+            "FACEBOOK_GRAPH_API_VERSION"
+        )
+        or
+        ""
+    )
+
+
+    value = str(
+        value
+    ).strip()
+
+
+    if not value:
+
+        return ""
+
+
+    if not re.fullmatch(
+        r"v\d+\.\d+",
+        value,
+    ):
+
+        raise RuntimeError(
+            (
+                "FACEBOOK_GRAPH_API_VERSION "
+                "must look like vXX.X."
+            )
+        )
+
+
+    return value
+
+
+# =========================================================
+# FACEBOOK GRAPH URL
+# =========================================================
+
+def facebook_graph_url(
+    path,
+):
+
+    path = str(
+        path or ""
+    ).strip().lstrip(
+        "/"
+    )
+
+
+    version = (
+        get_facebook_graph_api_version()
+    )
+
+
+    if version:
+
+        return (
+            f"{FACEBOOK_GRAPH_ROOT}/"
+            f"{version}/"
+            f"{path}"
+        )
+
+
+    return (
+        f"{FACEBOOK_GRAPH_ROOT}/"
+        f"{path}"
+    )
+
+
+# =========================================================
+# FACEBOOK APP ACCESS TOKEN
+# =========================================================
+
+def get_facebook_app_access_token():
+
+    app_id = (
+        get_facebook_app_id()
+    )
+
+
+    app_secret = (
+        get_facebook_app_secret()
+    )
+
+
+    if (
+        not app_id
+        or
+        not app_secret
+    ):
+
+        raise RuntimeError(
+            (
+                "Facebook authentication "
+                "is not configured."
+            )
+        )
+
+
+    return (
+        f"{app_id}|"
+        f"{app_secret}"
+    )
+
+
+# =========================================================
+# FACEBOOK JSON RESPONSE
+# =========================================================
+
+def facebook_response_json(
+    response,
+):
+
+    try:
+
+        payload = (
+            response.json()
+        )
+
+
+    except ValueError as error:
+
+        raise RuntimeError(
+            (
+                "Facebook returned "
+                "an invalid response."
+            )
+        ) from error
+
+
+    if not isinstance(
+        payload,
+        dict,
+    ):
+
+        raise RuntimeError(
+            (
+                "Facebook returned "
+                "an invalid response."
+            )
+        )
+
+
+    return payload
+
+
+# =========================================================
+# VERIFY FACEBOOK ACCESS TOKEN
+# =========================================================
+
+def verify_facebook_access_token(
+    user_access_token,
+):
+
+    app_id = (
+        get_facebook_app_id()
+    )
+
+
+    if not app_id:
+
+        raise RuntimeError(
+            (
+                "Facebook authentication "
+                "is not configured."
+            )
+        )
+
+
+    response = (
+        http_requests.get(
+
+            facebook_graph_url(
+                "debug_token"
+            ),
+
+            params={
+
+                "input_token":
+                    user_access_token,
+
+
+                "access_token":
+                    get_facebook_app_access_token(),
+
+            },
+
+            timeout=
+                HTTP_TIMEOUT_SECONDS,
+
+        )
+    )
+
+
+    payload = (
+        facebook_response_json(
+            response
+        )
+    )
+
+
+    if (
+        response.status_code >=
+        400
+    ):
+
+        raise ValueError(
+            (
+                "Facebook access token "
+                "could not be verified."
+            )
+        )
+
+
+    data = payload.get(
+        "data"
+    )
+
+
+    if not isinstance(
+        data,
+        dict,
+    ):
+
+        raise ValueError(
+            (
+                "Facebook token debug "
+                "data is missing."
+            )
+        )
+
+
+    if (
+        data.get(
+            "is_valid"
+        )
+        is not True
+    ):
+
+        raise ValueError(
+            (
+                "Facebook access token "
+                "is invalid."
+            )
+        )
+
+
+    token_app_id = str(
+        data.get(
+            "app_id",
+            "",
+        )
+    ).strip()
+
+
+    if (
+        token_app_id !=
+        app_id
+    ):
+
+        raise ValueError(
+            (
+                "Facebook access token "
+                "belongs to another app."
+            )
+        )
+
+
+    user_id = str(
+        data.get(
+            "user_id",
+            "",
+        )
+    ).strip()
+
+
+    if not user_id:
+
+        raise ValueError(
+            (
+                "Facebook token does not "
+                "contain a user identifier."
+            )
+        )
+
+
+    return data
+
+
+# =========================================================
+# FACEBOOK PROFILE
+# =========================================================
+
+def fetch_facebook_profile(
+    user_access_token,
+):
+
+    response = (
+        http_requests.get(
+
+            facebook_graph_url(
+                "me"
+            ),
+
+            params={
+
+                "fields":
+                    (
+                        "id,"
+                        "name,"
+                        "email,"
+                        "picture.type(large)"
+                    ),
+
+
+                "access_token":
+                    user_access_token,
+
+            },
+
+            timeout=
+                HTTP_TIMEOUT_SECONDS,
+
+        )
+    )
+
+
+    payload = (
+        facebook_response_json(
+            response
+        )
+    )
+
+
+    if (
+        response.status_code >=
+        400
+        or
+        payload.get(
+            "error"
+        )
+    ):
+
+        raise ValueError(
+            (
+                "Facebook profile could "
+                "not be retrieved."
+            )
+        )
+
+
+    return payload
+
+
+# =========================================================
+# FACEBOOK PROFILE PICTURE
+# =========================================================
+
+def facebook_picture_url(
+    profile,
+):
+
+    picture = profile.get(
+        "picture"
+    )
+
+
+    if not isinstance(
+        picture,
+        dict,
+    ):
+
+        return None
+
+
+    data = picture.get(
+        "data"
+    )
+
+
+    if not isinstance(
+        data,
+        dict,
+    ):
+
+        return None
+
+
+    return normalize_avatar_url(
+        data.get(
+            "url"
+        )
+    )
+
+
+# =========================================================
+# REGISTER
 # =========================================================
 
 @auth_bp.route(
@@ -623,10 +1082,6 @@ def register():
     )
 
 
-    # =====================================================
-    # NAME
-    # =====================================================
-
     name = str(
         data.get(
             "name",
@@ -636,10 +1091,6 @@ def register():
     ).strip()
 
 
-    # =====================================================
-    # EMAIL
-    # =====================================================
-
     email = normalize_email(
         data.get(
             "email",
@@ -648,15 +1099,9 @@ def register():
     )
 
 
-    # =====================================================
-    # PASSWORD
-    # =====================================================
-
-    password = (
-        data.get(
-            "password",
-            "",
-        )
+    password = data.get(
+        "password",
+        "",
     )
 
 
@@ -668,7 +1113,7 @@ def register():
 
 
     # =====================================================
-    # NAME VALIDATION
+    # NAME
     # =====================================================
 
     if not name:
@@ -708,7 +1153,7 @@ def register():
 
 
     # =====================================================
-    # EMAIL VALIDATION
+    # EMAIL
     # =====================================================
 
     if not email:
@@ -725,12 +1170,15 @@ def register():
 
         return jsonify({
             "message":
-                "Please enter a valid email address."
+                (
+                    "Please enter a valid "
+                    "email address."
+                )
         }), 400
 
 
     # =====================================================
-    # PASSWORD VALIDATION
+    # PASSWORD
     # =====================================================
 
     (
@@ -748,8 +1196,6 @@ def register():
                 password_error
         }), 400
 
-
-    # Optional confirmation support.
 
     if (
         confirm_password
@@ -769,7 +1215,7 @@ def register():
 
 
     # =====================================================
-    # EXISTING ACCOUNT
+    # EXISTING
     # =====================================================
 
     existing_user = (
@@ -793,25 +1239,25 @@ def register():
 
 
     # =====================================================
-    # CREATE ACCOUNT
+    # CREATE
     # =====================================================
 
     try:
 
         user = User(
+
             name=
                 name,
 
             email=
                 email,
 
-            # Password-created accounts still need
-            # independent email verification.
             email_verified=
                 False,
 
             last_login_at=
                 utc_now(),
+
         )
 
 
@@ -829,12 +1275,18 @@ def register():
 
 
         return create_login_response(
+
             user,
-            message=(
-                "Account created successfully."
-            ),
-            status_code=201,
-            auth_provider="password",
+
+            message=
+                "Account created successfully.",
+
+            status_code=
+                201,
+
+            auth_provider=
+                "password",
+
         )
 
 
@@ -875,10 +1327,6 @@ def register():
 # =========================================================
 # PASSWORD LOGIN
 # =========================================================
-#
-# POST /api/auth/login
-#
-# =========================================================
 
 @auth_bp.route(
     "/login",
@@ -904,17 +1352,11 @@ def login():
     )
 
 
-    password = (
-        data.get(
-            "password",
-            "",
-        )
+    password = data.get(
+        "password",
+        "",
     )
 
-
-    # =====================================================
-    # REQUIRED FIELDS
-    # =====================================================
 
     if (
         not email
@@ -931,10 +1373,6 @@ def login():
         }), 400
 
 
-    # =====================================================
-    # FIND USER
-    # =====================================================
-
     user = (
         User.query
         .filter_by(
@@ -943,9 +1381,6 @@ def login():
         .first()
     )
 
-
-    # Same error for unknown email and wrong password,
-    # preventing account enumeration.
 
     if (
         not user
@@ -961,10 +1396,6 @@ def login():
         }), 401
 
 
-    # =====================================================
-    # ACTIVE STATUS
-    # =====================================================
-
     if not user.is_active:
 
         return jsonify({
@@ -976,10 +1407,6 @@ def login():
         }), 403
 
 
-    # =====================================================
-    # LOGIN ACTIVITY
-    # =====================================================
-
     try:
 
         user.mark_login()
@@ -988,9 +1415,6 @@ def login():
 
 
     except Exception as error:
-
-        # Login should not fail merely because
-        # last-login analytics could not be stored.
 
         db.session.rollback()
 
@@ -1005,34 +1429,21 @@ def login():
         )
 
 
-    # =====================================================
-    # JWT
-    # =====================================================
-
     return create_login_response(
+
         user,
+
         message=
             "Login successful.",
+
         auth_provider=
             "password",
+
     )
 
 
 # =========================================================
 # GOOGLE LOGIN
-# =========================================================
-#
-# POST /api/auth/google
-#
-# JSON:
-#
-# {
-#     "credential": "<GOOGLE_ID_TOKEN>"
-# }
-#
-# Google Identity Services returns the ID token in the
-# `credential` field.
-#
 # =========================================================
 
 @auth_bp.route(
@@ -1051,22 +1462,24 @@ def google_login():
     )
 
 
-    # =====================================================
-    # CREDENTIAL
-    # =====================================================
-
     credential = str(
+
         data.get(
             "credential",
-            ""
+            "",
         )
+
         or
+
         data.get(
             "id_token",
-            ""
+            "",
         )
+
         or
+
         ""
+
     ).strip()
 
 
@@ -1081,17 +1494,10 @@ def google_login():
         }), 400
 
 
-    # =====================================================
-    # CONFIGURATION
-    # =====================================================
-
     if not get_google_client_id():
 
         current_app.logger.error(
-            (
-                "GOOGLE_CLIENT_ID is missing. "
-                "Google authentication cannot run."
-            )
+            "GOOGLE_CLIENT_ID is missing."
         )
 
 
@@ -1103,10 +1509,6 @@ def google_login():
                 )
         }), 503
 
-
-    # =====================================================
-    # VERIFY GOOGLE TOKEN
-    # =====================================================
 
     try:
 
@@ -1138,8 +1540,8 @@ def google_login():
 
         current_app.logger.exception(
             (
-                "Google authentication transport "
-                "error: %s"
+                "Google authentication "
+                "transport error: %s"
             ),
             error,
         )
@@ -1158,7 +1560,10 @@ def google_login():
     except GoogleAuthError as error:
 
         current_app.logger.exception(
-            "Google authentication error: %s",
+            (
+                "Google authentication "
+                "error: %s"
+            ),
             error,
         )
 
@@ -1166,8 +1571,8 @@ def google_login():
         return jsonify({
             "message":
                 (
-                    "Google sign-in could not be "
-                    "completed."
+                    "Google sign-in could not "
+                    "be completed."
                 )
         }), 401
 
@@ -1175,7 +1580,10 @@ def google_login():
     except RuntimeError as error:
 
         current_app.logger.error(
-            "Google configuration error: %s",
+            (
+                "Google configuration "
+                "error: %s"
+            ),
             error,
         )
 
@@ -1216,7 +1624,7 @@ def google_login():
     google_sub = str(
         google_profile.get(
             "sub",
-            ""
+            "",
         )
         or ""
     ).strip()
@@ -1225,7 +1633,7 @@ def google_login():
     email = normalize_email(
         google_profile.get(
             "email",
-            ""
+            "",
         )
     )
 
@@ -1242,7 +1650,7 @@ def google_login():
     hosted_domain = str(
         google_profile.get(
             "hd",
-            ""
+            "",
         )
         or ""
     ).strip()
@@ -1251,24 +1659,20 @@ def google_login():
     google_name = str(
         google_profile.get(
             "name",
-            ""
+            "",
         )
         or ""
     ).strip()
 
 
-    google_picture = str(
-        google_profile.get(
-            "picture",
-            ""
+    google_picture = (
+        normalize_avatar_url(
+            google_profile.get(
+                "picture"
+            )
         )
-        or ""
-    ).strip()
+    )
 
-
-    # =====================================================
-    # REQUIRED GOOGLE CLAIMS
-    # =====================================================
 
     if not google_sub:
 
@@ -1292,8 +1696,8 @@ def google_login():
         return jsonify({
             "message":
                 (
-                    "Google did not provide a "
-                    "valid email address."
+                    "Google did not provide "
+                    "a valid email address."
                 )
         }), 400
 
@@ -1310,13 +1714,7 @@ def google_login():
 
 
     # =====================================================
-    # 1. EXISTING GOOGLE-LINKED USER
-    # =====================================================
-    #
-    # `sub` is Google's stable account identifier.
-    #
-    # Once linked, this is always the primary lookup.
-    #
+    # EXISTING GOOGLE USER
     # =====================================================
 
     user = (
@@ -1344,7 +1742,6 @@ def google_login():
 
         try:
 
-            # Do not overwrite a user's chosen avatar.
             if (
                 google_picture
                 and
@@ -1391,16 +1788,20 @@ def google_login():
 
 
         return create_login_response(
+
             user,
+
             message=
                 "Google sign-in successful.",
+
             auth_provider=
                 "google",
+
         )
 
 
     # =====================================================
-    # 2. CHECK EXISTING SHOBDO EMAIL ACCOUNT
+    # MATCH EXISTING EMAIL
     # =====================================================
 
     existing_user = (
@@ -1414,10 +1815,6 @@ def google_login():
 
     if existing_user:
 
-        # =================================================
-        # DISABLED ACCOUNT
-        # =================================================
-
         if not existing_user.is_active:
 
             return jsonify({
@@ -1428,10 +1825,6 @@ def google_login():
                     )
             }), 403
 
-
-        # =================================================
-        # CONFLICTING GOOGLE LINK
-        # =================================================
 
         if (
             existing_user.google_sub
@@ -1455,19 +1848,6 @@ def google_login():
             }), 409
 
 
-        # =================================================
-        # SAFE AUTOMATIC LINKING CHECK
-        # =================================================
-        #
-        # Google warns that it is not authoritative for
-        # every third-party email used to create a Google
-        # account.
-        #
-        # For an existing SHOBDO account, automatically
-        # link only Gmail or verified Workspace identities.
-        #
-        # =================================================
-
         authoritative_email = (
             google_is_authoritative_for_email(
 
@@ -1479,6 +1859,7 @@ def google_login():
 
                 hosted_domain=
                     hosted_domain,
+
             )
         )
 
@@ -1490,21 +1871,19 @@ def google_login():
                 "code":
                     "account_link_required",
 
+                "provider":
+                    "google",
+
                 "message":
                     (
                         "A SHOBDO account already exists "
                         "with this email address. Sign in "
-                        "with your SHOBDO password first "
-                        "before connecting this Google "
-                        "account."
+                        "with an existing SHOBDO method "
+                        "first before connecting Google."
                     ),
 
             }), 409
 
-
-        # =================================================
-        # LINK EXISTING ACCOUNT
-        # =================================================
 
         try:
 
@@ -1515,10 +1894,9 @@ def google_login():
                 email_verified=
                     True,
 
-                avatar_url=(
-                    google_picture
-                    or None
-                ),
+                avatar_url=
+                    google_picture,
+
             )
 
 
@@ -1555,8 +1933,8 @@ def google_login():
 
             current_app.logger.exception(
                 (
-                    "Existing SHOBDO account Google "
-                    "link failed: %s"
+                    "Existing SHOBDO account "
+                    "Google link failed: %s"
                 ),
                 error,
             )
@@ -1572,52 +1950,39 @@ def google_login():
 
 
         return create_login_response(
+
             existing_user,
-            message=(
-                "Google account connected and "
-                "sign-in completed successfully."
-            ),
+
+            message=
+                (
+                    "Google account connected and "
+                    "sign-in completed successfully."
+                ),
+
             auth_provider=
                 "google",
+
         )
 
 
     # =====================================================
-    # 3. CREATE NEW GOOGLE-ONLY SHOBDO USER
+    # NEW GOOGLE USER
     # =====================================================
 
-    if not google_name:
+    google_name = normalize_name(
 
-        # Safe fallback when Google did not supply a name.
+        google_name,
 
-        google_name = (
-            email
-            .split(
+        fallback=(
+            email.split(
                 "@",
                 1,
             )[0]
-        )
-
-
-    google_name = (
-        google_name[
-            :MAX_NAME_LENGTH
-        ]
-        .strip()
-    )
-
-
-    if (
-        len(
-            google_name
-        )
-        <
-        2
-    ):
-
-        google_name = (
+            or
             "SHOBDO User"
-        )
+        ),
+
+    )
 
 
     try:
@@ -1630,8 +1995,6 @@ def google_login():
             email=
                 email,
 
-            # Google-only user initially has
-            # no SHOBDO password.
             password_hash=
                 None,
 
@@ -1644,13 +2007,12 @@ def google_login():
             email_verified=
                 True,
 
-            avatar_url=(
-                google_picture
-                or None
-            ),
+            avatar_url=
+                google_picture,
 
             last_login_at=
                 utc_now(),
+
         )
 
 
@@ -1676,10 +2038,6 @@ def google_login():
         )
 
 
-        # Race-condition safety:
-        # another request may have created the same
-        # Google user immediately before this commit.
-
         user = (
             User.query
             .filter_by(
@@ -1697,11 +2055,15 @@ def google_login():
         ):
 
             return create_login_response(
+
                 user,
+
                 message=
                     "Google sign-in successful.",
+
                 auth_provider=
                     "google",
+
             )
 
 
@@ -1738,23 +2100,1055 @@ def google_login():
 
 
     return create_login_response(
+
         user,
-        message=(
-            "SHOBDO account created successfully "
-            "with Google."
-        ),
-        status_code=201,
+
+        message=
+            (
+                "SHOBDO account created "
+                "successfully with Google."
+            ),
+
+        status_code=
+            201,
+
         auth_provider=
             "google",
+
     )
 
 
 # =========================================================
-# CURRENT USER
+# FACEBOOK LOGIN
 # =========================================================
 #
-# GET /api/auth/me
+# POST /api/auth/facebook
 #
+# JSON:
+#
+# {
+#     "access_token": "<FACEBOOK_USER_ACCESS_TOKEN>"
+# }
+#
+# The browser Facebook SDK obtains the user access token.
+#
+# The backend does NOT trust it directly.
+#
+# Flow:
+#
+# user token
+#     ↓
+# /debug_token
+#     ↓
+# validate app_id + is_valid + user_id
+#     ↓
+# /me
+#     ↓
+# compare IDs
+#     ↓
+# issue SHOBDO JWT
+#
+# =========================================================
+
+@auth_bp.route(
+    "/facebook",
+    methods=[
+        "POST",
+    ],
+)
+def facebook_login():
+
+    data = (
+        request.get_json(
+            silent=True
+        )
+        or {}
+    )
+
+
+    user_access_token = str(
+
+        data.get(
+            "access_token",
+            "",
+        )
+
+        or
+
+        data.get(
+            "token",
+            "",
+        )
+
+        or
+
+        ""
+
+    ).strip()
+
+
+    if not user_access_token:
+
+        return jsonify({
+            "message":
+                (
+                    "Facebook access token "
+                    "is required."
+                )
+        }), 400
+
+
+    # =====================================================
+    # CONFIGURATION
+    # =====================================================
+
+    if (
+        not get_facebook_app_id()
+        or
+        not get_facebook_app_secret()
+    ):
+
+        current_app.logger.error(
+            (
+                "FACEBOOK_APP_ID or "
+                "FACEBOOK_APP_SECRET is missing."
+            )
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Facebook sign-in is temporarily "
+                    "unavailable."
+                )
+        }), 503
+
+
+    # =====================================================
+    # VERIFY TOKEN + FETCH PROFILE
+    # =====================================================
+
+    try:
+
+        debug_data = (
+            verify_facebook_access_token(
+                user_access_token
+            )
+        )
+
+
+        facebook_profile = (
+            fetch_facebook_profile(
+                user_access_token
+            )
+        )
+
+
+    except http_requests.exceptions.Timeout as error:
+
+        current_app.logger.exception(
+            (
+                "Facebook authentication "
+                "timed out: %s"
+            ),
+            error,
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Facebook authentication "
+                    "timed out. Please try again."
+                )
+        }), 503
+
+
+    except (
+        http_requests
+        .exceptions
+        .RequestException
+    ) as error:
+
+        current_app.logger.exception(
+            (
+                "Facebook authentication "
+                "network error: %s"
+            ),
+            error,
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Unable to contact Facebook "
+                    "authentication services. "
+                    "Please try again."
+                )
+        }), 503
+
+
+    except ValueError as error:
+
+        current_app.logger.warning(
+            (
+                "Invalid Facebook authentication "
+                "response: %s"
+            ),
+            error,
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Facebook sign-in could not "
+                    "be verified. Please try again."
+                )
+        }), 401
+
+
+    except RuntimeError as error:
+
+        current_app.logger.error(
+            (
+                "Facebook authentication "
+                "configuration/service error: %s"
+            ),
+            error,
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Facebook sign-in is temporarily "
+                    "unavailable."
+                )
+        }), 503
+
+
+    except Exception as error:
+
+        current_app.logger.exception(
+            (
+                "Unexpected Facebook sign-in "
+                "error: %s"
+            ),
+            error,
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Unable to complete Facebook "
+                    "sign-in right now."
+                )
+        }), 500
+
+
+    # =====================================================
+    # FACEBOOK PROFILE VALUES
+    # =====================================================
+
+    facebook_user_id = str(
+        facebook_profile.get(
+            "id",
+            "",
+        )
+        or ""
+    ).strip()
+
+
+    debug_user_id = str(
+        debug_data.get(
+            "user_id",
+            "",
+        )
+        or ""
+    ).strip()
+
+
+    facebook_name = str(
+        facebook_profile.get(
+            "name",
+            "",
+        )
+        or ""
+    ).strip()
+
+
+    email = normalize_email(
+        facebook_profile.get(
+            "email",
+            "",
+        )
+    )
+
+
+    facebook_picture = (
+        facebook_picture_url(
+            facebook_profile
+        )
+    )
+
+
+    # =====================================================
+    # VERIFY SAME FACEBOOK USER
+    # =====================================================
+
+    if (
+        not facebook_user_id
+        or
+        facebook_user_id !=
+        debug_user_id
+    ):
+
+        current_app.logger.warning(
+            (
+                "Facebook user ID mismatch "
+                "during authentication."
+            )
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Facebook sign-in could "
+                    "not be verified."
+                )
+        }), 401
+
+
+    # =====================================================
+    # EXISTING FACEBOOK-LINKED USER
+    # =====================================================
+
+    user = (
+        User.query
+        .filter_by(
+            facebook_user_id=
+                facebook_user_id
+        )
+        .first()
+    )
+
+
+    if user:
+
+        if not user.is_active:
+
+            return jsonify({
+                "message":
+                    (
+                        "This account is currently "
+                        "disabled."
+                    )
+            }), 403
+
+
+        try:
+
+            if (
+                facebook_picture
+                and
+                not user.avatar_url
+            ):
+
+                user.avatar_url = (
+                    facebook_picture
+                )
+
+
+            user.mark_login()
+
+
+            db.session.commit()
+
+
+        except Exception as error:
+
+            db.session.rollback()
+
+
+            current_app.logger.exception(
+                (
+                    "Facebook-linked account "
+                    "update failed: %s"
+                ),
+                error,
+            )
+
+
+            return jsonify({
+                "message":
+                    (
+                        "Unable to complete Facebook "
+                        "sign-in right now."
+                    )
+            }), 500
+
+
+        return create_login_response(
+
+            user,
+
+            message=
+                "Facebook sign-in successful.",
+
+            auth_provider=
+                "facebook",
+
+        )
+
+
+    # =====================================================
+    # FACEBOOK EMAIL REQUIRED FOR NEW ACCOUNT
+    # =====================================================
+
+    if (
+        not email
+        or
+        not valid_email(
+            email
+        )
+    ):
+
+        return jsonify({
+
+            "code":
+                "facebook_email_required",
+
+            "provider":
+                "facebook",
+
+            "message":
+                (
+                    "Facebook did not provide an email "
+                    "address. Please allow email access "
+                    "or use another SHOBDO sign-in "
+                    "method."
+                ),
+
+        }), 422
+
+
+    # =====================================================
+    # EXISTING SHOBDO EMAIL
+    # =====================================================
+
+    existing_user = (
+        User.query
+        .filter_by(
+            email=email
+        )
+        .first()
+    )
+
+
+    if existing_user:
+
+        if not existing_user.is_active:
+
+            return jsonify({
+                "message":
+                    (
+                        "This account is currently "
+                        "disabled."
+                    )
+            }), 403
+
+
+        if (
+            existing_user.facebook_user_id
+            and
+            existing_user.facebook_user_id
+            != facebook_user_id
+        ):
+
+            return jsonify({
+
+                "code":
+                    "facebook_account_conflict",
+
+                "provider":
+                    "facebook",
+
+                "message":
+                    (
+                        "This SHOBDO account is already "
+                        "connected to another Facebook "
+                        "account."
+                    ),
+
+            }), 409
+
+
+        # -------------------------------------------------
+        # IMPORTANT SECURITY RULE
+        # -------------------------------------------------
+        #
+        # We do not automatically link an existing SHOBDO
+        # account only because Facebook returned the same
+        # email address.
+        #
+        # The user should first authenticate to SHOBDO,
+        # then use /facebook/link.
+        #
+        # -------------------------------------------------
+
+        return jsonify({
+
+            "code":
+                "account_link_required",
+
+            "provider":
+                "facebook",
+
+            "message":
+                (
+                    "A SHOBDO account already exists "
+                    "with this email address. Sign in "
+                    "using an existing SHOBDO method "
+                    "first, then connect Facebook to "
+                    "that account."
+                ),
+
+        }), 409
+
+
+    # =====================================================
+    # NEW FACEBOOK USER
+    # =====================================================
+
+    facebook_name = normalize_name(
+
+        facebook_name,
+
+        fallback=(
+            email.split(
+                "@",
+                1,
+            )[0]
+            or
+            "SHOBDO User"
+        ),
+
+    )
+
+
+    try:
+
+        user = User(
+
+            name=
+                facebook_name,
+
+            email=
+                email,
+
+            password_hash=
+                None,
+
+            facebook_user_id=
+                facebook_user_id,
+
+            facebook_linked_at=
+                utc_now(),
+
+            # Facebook profile email is intentionally not
+            # treated as Google's email_verified claim.
+            email_verified=
+                False,
+
+            avatar_url=
+                facebook_picture,
+
+            last_login_at=
+                utc_now(),
+
+        )
+
+
+        db.session.add(
+            user
+        )
+
+
+        db.session.commit()
+
+
+    except IntegrityError as error:
+
+        db.session.rollback()
+
+
+        current_app.logger.warning(
+            (
+                "Facebook account creation "
+                "integrity conflict: %s"
+            ),
+            error,
+        )
+
+
+        user = (
+            User.query
+            .filter_by(
+                facebook_user_id=
+                    facebook_user_id
+            )
+            .first()
+        )
+
+
+        if (
+            user
+            and
+            user.is_active
+        ):
+
+            return create_login_response(
+
+                user,
+
+                message=
+                    "Facebook sign-in successful.",
+
+                auth_provider=
+                    "facebook",
+
+            )
+
+
+        return jsonify({
+            "message":
+                (
+                    "An account already exists "
+                    "for this Facebook identity."
+                )
+        }), 409
+
+
+    except Exception as error:
+
+        db.session.rollback()
+
+
+        current_app.logger.exception(
+            (
+                "Facebook account creation "
+                "failed: %s"
+            ),
+            error,
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Unable to create your SHOBDO "
+                    "account using Facebook."
+                )
+        }), 500
+
+
+    return create_login_response(
+
+        user,
+
+        message=
+            (
+                "SHOBDO account created successfully "
+                "with Facebook."
+            ),
+
+        status_code=
+            201,
+
+        auth_provider=
+            "facebook",
+
+    )
+
+
+# =========================================================
+# LINK FACEBOOK TO LOGGED-IN USER
+# =========================================================
+#
+# POST /api/auth/facebook/link
+#
+# Authorization:
+#
+# Bearer <SHOBDO JWT>
+#
+# Body:
+#
+# {
+#     "access_token": "<FACEBOOK_TOKEN>"
+# }
+#
+# This route solves the safe account-linking case where a
+# Facebook email already belongs to an existing SHOBDO user.
+#
+# =========================================================
+
+@auth_bp.route(
+    "/facebook/link",
+    methods=[
+        "POST",
+    ],
+)
+@jwt_required()
+def link_facebook_account():
+
+    identity = (
+        get_jwt_identity()
+    )
+
+
+    user = (
+        get_user_by_identity(
+            identity
+        )
+    )
+
+
+    if not user:
+
+        return jsonify({
+            "message":
+                (
+                    "User account was not found."
+                )
+        }), 404
+
+
+    if not user.is_active:
+
+        return jsonify({
+            "message":
+                (
+                    "This account is currently "
+                    "disabled."
+                )
+        }), 403
+
+
+    data = (
+        request.get_json(
+            silent=True
+        )
+        or {}
+    )
+
+
+    user_access_token = str(
+
+        data.get(
+            "access_token",
+            "",
+        )
+
+        or
+
+        data.get(
+            "token",
+            "",
+        )
+
+        or
+
+        ""
+
+    ).strip()
+
+
+    if not user_access_token:
+
+        return jsonify({
+            "message":
+                (
+                    "Facebook access token "
+                    "is required."
+                )
+        }), 400
+
+
+    try:
+
+        debug_data = (
+            verify_facebook_access_token(
+                user_access_token
+            )
+        )
+
+
+        facebook_profile = (
+            fetch_facebook_profile(
+                user_access_token
+            )
+        )
+
+
+    except http_requests.exceptions.Timeout as error:
+
+        current_app.logger.exception(
+            (
+                "Facebook link request "
+                "timed out: %s"
+            ),
+            error,
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Facebook authentication timed "
+                    "out. Please try again."
+                )
+        }), 503
+
+
+    except (
+        http_requests
+        .exceptions
+        .RequestException
+    ) as error:
+
+        current_app.logger.exception(
+            (
+                "Facebook link network "
+                "error: %s"
+            ),
+            error,
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Unable to contact Facebook "
+                    "authentication services. "
+                    "Please try again."
+                )
+        }), 503
+
+
+    except (
+        ValueError,
+        RuntimeError,
+    ) as error:
+
+        current_app.logger.warning(
+            (
+                "Facebook link verification "
+                "failed: %s"
+            ),
+            error,
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Facebook account could "
+                    "not be verified."
+                )
+        }), 401
+
+
+    facebook_user_id = str(
+        facebook_profile.get(
+            "id",
+            "",
+        )
+        or ""
+    ).strip()
+
+
+    debug_user_id = str(
+        debug_data.get(
+            "user_id",
+            "",
+        )
+        or ""
+    ).strip()
+
+
+    facebook_picture = (
+        facebook_picture_url(
+            facebook_profile
+        )
+    )
+
+
+    if (
+        not facebook_user_id
+        or
+        facebook_user_id !=
+        debug_user_id
+    ):
+
+        return jsonify({
+            "message":
+                (
+                    "Facebook account could "
+                    "not be verified."
+                )
+        }), 401
+
+
+    # =====================================================
+    # CHECK IF FACEBOOK ACCOUNT BELONGS TO ANOTHER USER
+    # =====================================================
+
+    other_user = (
+        User.query
+        .filter(
+
+            User.facebook_user_id
+            ==
+            facebook_user_id,
+
+            User.id
+            !=
+            user.id,
+
+        )
+        .first()
+    )
+
+
+    if other_user:
+
+        return jsonify({
+
+            "code":
+                "facebook_account_conflict",
+
+            "message":
+                (
+                    "This Facebook account is already "
+                    "connected to another SHOBDO "
+                    "account."
+                ),
+
+        }), 409
+
+
+    # =====================================================
+    # CURRENT USER ALREADY HAS DIFFERENT FACEBOOK
+    # =====================================================
+
+    if (
+        user.facebook_user_id
+        and
+        user.facebook_user_id
+        != facebook_user_id
+    ):
+
+        return jsonify({
+
+            "code":
+                "facebook_account_conflict",
+
+            "message":
+                (
+                    "Your SHOBDO account is already "
+                    "connected to another Facebook "
+                    "account."
+                ),
+
+        }), 409
+
+
+    # =====================================================
+    # LINK
+    # =====================================================
+
+    try:
+
+        user.link_facebook_account(
+
+            facebook_user_id,
+
+            avatar_url=
+                facebook_picture,
+
+            mark_email_verified=
+                False,
+
+        )
+
+
+        db.session.commit()
+
+
+    except IntegrityError:
+
+        db.session.rollback()
+
+
+        return jsonify({
+
+            "code":
+                "facebook_account_conflict",
+
+            "message":
+                (
+                    "This Facebook account is already "
+                    "connected to another SHOBDO "
+                    "account."
+                ),
+
+        }), 409
+
+
+    except Exception as error:
+
+        db.session.rollback()
+
+
+        current_app.logger.exception(
+            (
+                "Facebook account linking "
+                "failed: %s"
+            ),
+            error,
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Unable to connect your Facebook "
+                    "account right now."
+                )
+        }), 500
+
+
+    return jsonify({
+
+        "message":
+            (
+                "Facebook account connected "
+                "successfully."
+            ),
+
+        "user":
+            user.to_dict(),
+
+    }), 200
+
+
+# =========================================================
+# CURRENT USER
 # =========================================================
 
 @auth_bp.route(
@@ -1782,7 +3176,9 @@ def current_user():
 
         return jsonify({
             "message":
-                "User account was not found."
+                (
+                    "User account was not found."
+                )
         }), 404
 
 
@@ -1807,10 +3203,6 @@ def current_user():
 
 # =========================================================
 # FORGOT PASSWORD
-# =========================================================
-#
-# POST /api/auth/forgot-password
-#
 # =========================================================
 
 @auth_bp.route(
@@ -1841,7 +3233,9 @@ def forgot_password():
 
         return jsonify({
             "message":
-                "Email address is required."
+                (
+                    "Email address is required."
+                )
         }), 400
 
 
@@ -1851,17 +3245,15 @@ def forgot_password():
 
         return jsonify({
             "message":
-                "Please enter a valid email address."
+                (
+                    "Please enter a valid "
+                    "email address."
+                )
         }), 400
 
 
     # =====================================================
     # GENERIC RESPONSE
-    # =====================================================
-    #
-    # Same response for existing and non-existing users
-    # prevents account enumeration.
-    #
     # =====================================================
 
     generic_message = (
@@ -1880,15 +3272,11 @@ def forgot_password():
     )
 
 
-    if not user:
-
-        return jsonify({
-            "message":
-                generic_message
-        }), 200
-
-
-    if not user.is_active:
+    if (
+        not user
+        or
+        not user.is_active
+    ):
 
         return jsonify({
             "message":
@@ -1897,7 +3285,7 @@ def forgot_password():
 
 
     # =====================================================
-    # GENERATE SECURE RESET TOKEN
+    # TOKEN
     # =====================================================
 
     raw_token = (
@@ -1907,30 +3295,24 @@ def forgot_password():
     )
 
 
-    token_hash = (
+    user.password_reset_token = (
         hash_reset_token(
             raw_token
         )
     )
 
 
-    expiry_time = (
+    user.password_reset_expires = (
+
         utc_now()
+
         +
+
         timedelta(
             minutes=
                 RESET_TOKEN_EXPIRY_MINUTES
         )
-    )
 
-
-    user.password_reset_token = (
-        token_hash
-    )
-
-
-    user.password_reset_expires = (
-        expiry_time
     )
 
 
@@ -1963,34 +3345,38 @@ def forgot_password():
 
 
     # =====================================================
-    # FRONTEND RESET URL
+    # RESET URL
     # =====================================================
 
     frontend_url = (
+
         current_app.config.get(
             "FRONTEND_URL"
         )
+
         or
+
         os.getenv(
             "FRONTEND_URL"
         )
+
         or
+
         os.getenv(
             "PRODUCTION_FRONTEND_URL"
         )
+
         or
+
         "http://localhost:5173"
+
     )
 
 
-    frontend_url = (
-        str(
-            frontend_url
-        )
-        .strip()
-        .rstrip(
-            "/"
-        )
+    frontend_url = str(
+        frontend_url
+    ).strip().rstrip(
+        "/"
     )
 
 
@@ -2002,17 +3388,13 @@ def forgot_password():
 
 
     # =====================================================
-    # EMAIL SUBJECT
+    # EMAIL
     # =====================================================
 
     subject = (
         "Reset your SHOBDO password"
     )
 
-
-    # =====================================================
-    # PLAIN TEXT EMAIL
-    # =====================================================
 
     text_body = f"""
 Hello {user.name},
@@ -2032,9 +3414,20 @@ SHOBDO
 """.strip()
 
 
-    # =====================================================
-    # HTML EMAIL
-    # =====================================================
+    safe_name = escape(
+        str(
+            user.name
+            or
+            "SHOBDO user"
+        )
+    )
+
+
+    safe_reset_url = escape(
+        reset_url,
+        quote=True,
+    )
+
 
     html_body = f"""
 <!DOCTYPE html>
@@ -2048,10 +3441,10 @@ SHOBDO
 </head>
 
 <body style="
-    margin: 0;
-    padding: 0;
-    background: #f6f3ec;
-    font-family: Arial, Helvetica, sans-serif;
+    margin:0;
+    padding:0;
+    background:#f6f3ec;
+    font-family:Arial,Helvetica,sans-serif;
 ">
 
 <table
@@ -2060,11 +3453,13 @@ SHOBDO
     cellspacing="0"
     role="presentation"
     style="
-        background: #f6f3ec;
-        padding: 40px 16px;
+        background:#f6f3ec;
+        padding:40px 16px;
     "
 >
+
 <tr>
+
 <td align="center">
 
 <table
@@ -2073,38 +3468,39 @@ SHOBDO
     cellspacing="0"
     role="presentation"
     style="
-        width: 100%;
-        max-width: 560px;
-        background: #ffffff;
-        border: 1px solid #e5dfd4;
-        border-radius: 14px;
+        width:100%;
+        max-width:560px;
+        background:#ffffff;
+        border:1px solid #e5dfd4;
+        border-radius:14px;
     "
 >
 
 <tr>
+
 <td style="
-    padding: 42px 40px;
+    padding:42px 40px;
 ">
 
 <div style="
-    text-align: center;
-    margin-bottom: 32px;
+    text-align:center;
+    margin-bottom:32px;
 ">
 
 <div style="
-    font-family: Georgia, serif;
-    font-size: 26px;
-    font-weight: bold;
-    letter-spacing: 4px;
-    color: #4d1778;
+    font-family:Georgia,serif;
+    font-size:26px;
+    font-weight:bold;
+    letter-spacing:4px;
+    color:#4d1778;
 ">
 SHOBDO
 </div>
 
 <div style="
-    margin-top: 5px;
-    color: #927641;
-    font-size: 13px;
+    margin-top:5px;
+    color:#927641;
+    font-size:13px;
 ">
 তোমার শব্দ, তোমার গল্প।
 </div>
@@ -2113,30 +3509,30 @@ SHOBDO
 
 
 <h1 style="
-    margin: 0 0 18px;
-    font-family: Georgia, serif;
-    font-size: 28px;
-    color: #191816;
+    margin:0 0 18px;
+    font-family:Georgia,serif;
+    font-size:28px;
+    color:#191816;
 ">
 Reset your password
 </h1>
 
 
 <p style="
-    margin: 0 0 16px;
-    color: #655f55;
-    font-size: 15px;
-    line-height: 1.7;
+    margin:0 0 16px;
+    color:#655f55;
+    font-size:15px;
+    line-height:1.7;
 ">
-Hello {user.name},
+Hello {safe_name},
 </p>
 
 
 <p style="
-    margin: 0 0 26px;
-    color: #655f55;
-    font-size: 15px;
-    line-height: 1.7;
+    margin:0 0 26px;
+    color:#655f55;
+    font-size:15px;
+    line-height:1.7;
 ">
 We received a request to reset the password for your
 SHOBDO account. Click the button below to create a
@@ -2145,21 +3541,21 @@ new password.
 
 
 <div style="
-    text-align: center;
-    margin: 32px 0;
+    text-align:center;
+    margin:32px 0;
 ">
 
 <a
-    href="{reset_url}"
+    href="{safe_reset_url}"
     style="
-        display: inline-block;
-        padding: 15px 28px;
-        border-radius: 10px;
-        background: #181817;
-        color: #ffffff;
-        text-decoration: none;
-        font-size: 15px;
-        font-weight: bold;
+        display:inline-block;
+        padding:15px 28px;
+        border-radius:10px;
+        background:#181817;
+        color:#ffffff;
+        text-decoration:none;
+        font-size:15px;
+        font-weight:bold;
     "
 >
 Reset Password
@@ -2169,10 +3565,10 @@ Reset Password
 
 
 <p style="
-    margin: 26px 0 0;
-    color: #81786b;
-    font-size: 13px;
-    line-height: 1.7;
+    margin:26px 0 0;
+    color:#81786b;
+    font-size:13px;
+    line-height:1.7;
 ">
 This secure link expires in
 {RESET_TOKEN_EXPIRY_MINUTES} minutes
@@ -2181,10 +3577,10 @@ and can only be used once.
 
 
 <p style="
-    margin: 18px 0 0;
-    color: #81786b;
-    font-size: 13px;
-    line-height: 1.7;
+    margin:18px 0 0;
+    color:#81786b;
+    font-size:13px;
+    line-height:1.7;
 ">
 If you did not request this password reset,
 no action is required.
@@ -2192,24 +3588,27 @@ no action is required.
 
 
 <div style="
-    margin-top: 32px;
-    padding-top: 22px;
-    border-top: 1px solid #eee8dd;
-    color: #a09789;
-    font-size: 11px;
-    line-height: 1.6;
+    margin-top:32px;
+    padding-top:22px;
+    border-top:1px solid #eee8dd;
+    color:#a09789;
+    font-size:11px;
+    line-height:1.6;
 ">
 For security, never share this password-reset
 link with another person.
 </div>
 
 </td>
+
 </tr>
 
 </table>
 
 </td>
+
 </tr>
+
 </table>
 
 </body>
@@ -2217,19 +3616,17 @@ link with another person.
 """.strip()
 
 
-    # =====================================================
-    # SEND EMAIL
-    # =====================================================
-
     try:
 
         message = Message(
+
             subject=
                 subject,
 
             recipients=[
                 user.email,
             ],
+
         )
 
 
@@ -2259,15 +3656,13 @@ link with another person.
         )
 
 
-        # The user never received the token,
-        # therefore invalidate it.
-
         user.clear_password_reset_token()
 
 
         try:
 
             db.session.commit()
+
 
         except Exception:
 
@@ -2291,11 +3686,7 @@ link with another person.
 
 
 # =========================================================
-# VALIDATE PASSWORD RESET TOKEN
-# =========================================================
-#
-# GET /api/auth/reset-password/<token>
-#
+# VALIDATE RESET TOKEN
 # =========================================================
 
 @auth_bp.route(
@@ -2357,10 +3748,6 @@ def validate_reset_token(
         }), 400
 
 
-    # =====================================================
-    # EXPIRATION
-    # =====================================================
-
     if reset_token_expired(
         user.password_reset_expires
     ):
@@ -2371,6 +3758,7 @@ def validate_reset_token(
         try:
 
             db.session.commit()
+
 
         except Exception:
 
@@ -2390,10 +3778,6 @@ def validate_reset_token(
 
         }), 400
 
-
-    # =====================================================
-    # ACCOUNT STATUS
-    # =====================================================
 
     if not user.is_active:
 
@@ -2427,13 +3811,6 @@ def validate_reset_token(
 # =========================================================
 # RESET PASSWORD
 # =========================================================
-#
-# POST /api/auth/reset-password/<token>
-#
-# Allows a Google-only user to create a SHOBDO password
-# as well.
-#
-# =========================================================
 
 @auth_bp.route(
     "/reset-password/<token>",
@@ -2453,25 +3830,17 @@ def reset_password(
     )
 
 
-    password = (
-        data.get(
-            "password",
-            "",
-        )
+    password = data.get(
+        "password",
+        "",
     )
 
 
-    confirm_password = (
-        data.get(
-            "confirm_password",
-            "",
-        )
+    confirm_password = data.get(
+        "confirm_password",
+        "",
     )
 
-
-    # =====================================================
-    # PASSWORD VALIDATION
-    # =====================================================
 
     (
         password_valid,
@@ -2499,10 +3868,6 @@ def reset_password(
                 "Passwords do not match."
         }), 400
 
-
-    # =====================================================
-    # LOOK UP TOKEN
-    # =====================================================
 
     token_hash = (
         hash_reset_token(
@@ -2533,10 +3898,6 @@ def reset_password(
         }), 400
 
 
-    # =====================================================
-    # EXPIRATION
-    # =====================================================
-
     if reset_token_expired(
         user.password_reset_expires
     ):
@@ -2547,6 +3908,7 @@ def reset_password(
         try:
 
             db.session.commit()
+
 
         except Exception:
 
@@ -2563,10 +3925,6 @@ def reset_password(
         }), 400
 
 
-    # =====================================================
-    # ACCOUNT STATUS
-    # =====================================================
-
     if not user.is_active:
 
         return jsonify({
@@ -2577,15 +3935,6 @@ def reset_password(
                 )
         }), 403
 
-
-    # =====================================================
-    # PREVENT REUSING CURRENT PASSWORD
-    # =====================================================
-    #
-    # Google-only accounts return False safely because
-    # password_hash is None.
-    #
-    # =====================================================
 
     if user.check_password(
         password
@@ -2601,10 +3950,6 @@ def reset_password(
         }), 400
 
 
-    # =====================================================
-    # SET NEW PASSWORD
-    # =====================================================
-
     try:
 
         user.set_password(
@@ -2612,7 +3957,6 @@ def reset_password(
         )
 
 
-        # Reset token is single-use.
         user.clear_password_reset_token()
 
 
@@ -2655,16 +3999,6 @@ def reset_password(
 
 # =========================================================
 # LOGOUT
-# =========================================================
-#
-# POST /api/auth/logout
-#
-# JWT is currently stored client-side.
-#
-# The frontend removes shobdo_token during logout.
-#
-# Token revocation / blocklisting can be added later.
-#
 # =========================================================
 
 @auth_bp.route(
