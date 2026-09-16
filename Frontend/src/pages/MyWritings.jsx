@@ -11,7 +11,9 @@ import {
   Edit3,
   Eye,
   FileText,
+  Files,
   Globe2,
+  Image as ImageIcon,
   Loader2,
   RefreshCw,
   RotateCcw,
@@ -41,6 +43,10 @@ import {
 } from "../api/documents";
 
 import {
+  getMyArtworks,
+} from "../api/artworks";
+
+import {
   LANGUAGES,
   getLanguageLabel,
 } from "../config/languages";
@@ -51,6 +57,137 @@ import {
 
 import DocumentCard
   from "../components/DocumentCard";
+
+import ArtworkCard
+  from "../components/ArtworkCard";
+
+
+// =========================================================
+// HELPERS
+// =========================================================
+
+function extractWritings(
+  data
+) {
+
+  if (
+    Array.isArray(
+      data
+    )
+  ) {
+
+    return data;
+  }
+
+
+  if (
+    Array.isArray(
+      data?.writings
+    )
+  ) {
+
+    return data.writings;
+  }
+
+
+  if (
+    Array.isArray(
+      data?.items
+    )
+  ) {
+
+    return data.items;
+  }
+
+
+  return [];
+}
+
+
+function extractDocuments(
+  data
+) {
+
+  if (
+    Array.isArray(
+      data
+    )
+  ) {
+
+    return data;
+  }
+
+
+  if (
+    Array.isArray(
+      data?.documents
+    )
+  ) {
+
+    return data.documents;
+  }
+
+
+  if (
+    Array.isArray(
+      data?.items
+    )
+  ) {
+
+    return data.items;
+  }
+
+
+  return [];
+}
+
+
+function extractArtworks(
+  data
+) {
+
+  if (
+    Array.isArray(
+      data
+    )
+  ) {
+
+    return data;
+  }
+
+
+  if (
+    Array.isArray(
+      data?.artworks
+    )
+  ) {
+
+    return data.artworks;
+  }
+
+
+  if (
+    Array.isArray(
+      data?.items
+    )
+  ) {
+
+    return data.items;
+  }
+
+
+  if (
+    Array.isArray(
+      data?.data?.artworks
+    )
+  ) {
+
+    return data.data.artworks;
+  }
+
+
+  return [];
+}
 
 
 // =========================================================
@@ -65,15 +202,207 @@ function MyWritings() {
 
   const {
     t,
+    language:
+      uiLanguage,
   } = useLanguage();
 
 
   // =======================================================
-  // MAIN STATE
+  // MULTILINGUAL TEXT FOR NEW CONTENT
+  // =======================================================
+
+  const localText =
+    useMemo(
+      () => {
+
+        const values = {
+
+          bn: {
+
+            title:
+              "আমার সৃজনশীল সংগ্রহ",
+
+            description:
+              "আপনার খসড়া, প্রকাশিত লেখা, PDF ডকুমেন্ট এবং শিল্পকর্ম এক জায়গা থেকে পরিচালনা করুন।",
+
+            newContent:
+              "নতুন কনটেন্ট",
+
+            creativeUploads:
+              "ডকুমেন্ট ও শিল্পকর্ম",
+
+            pdfDocuments:
+              "PDF ডকুমেন্ট",
+
+            artwork:
+              "শিল্পকর্ম",
+
+            searchDocuments:
+              "PDF ডকুমেন্ট খুঁজুন…",
+
+            searchArtwork:
+              "শিল্পকর্ম খুঁজুন…",
+
+            loadingDocuments:
+              "PDF ডকুমেন্ট লোড হচ্ছে…",
+
+            loadingArtwork:
+              "শিল্পকর্ম লোড হচ্ছে…",
+
+            noDocuments:
+              "কোনো PDF ডকুমেন্ট নেই",
+
+            noDocumentsDescription:
+              "আপনার সংরক্ষিত বা প্রকাশিত PDF ডকুমেন্ট এখানে দেখা যাবে।",
+
+            noArtwork:
+              "কোনো শিল্পকর্ম নেই",
+
+            noArtworkDescription:
+              "আপনার সংরক্ষিত বা প্রকাশিত শিল্পকর্ম এখানে দেখা যাবে।",
+
+            publishPdf:
+              "PDF প্রকাশ করুন",
+
+            publishArtwork:
+              "শিল্পকর্ম প্রকাশ করুন",
+
+            permanentConfirm:
+              "স্থায়ীভাবে এই লেখাটি মুছে ফেলবেন? এই কাজটি আর ফিরিয়ে আনা যাবে না।",
+          },
+
+
+          en: {
+
+            title:
+              "My Creative Library",
+
+            description:
+              "Manage your drafts, published writings, PDF documents and artwork in one place.",
+
+            newContent:
+              "New Content",
+
+            creativeUploads:
+              "Documents & Artwork",
+
+            pdfDocuments:
+              "PDF Documents",
+
+            artwork:
+              "Artwork",
+
+            searchDocuments:
+              "Search PDF documents…",
+
+            searchArtwork:
+              "Search artwork…",
+
+            loadingDocuments:
+              "Loading PDF documents…",
+
+            loadingArtwork:
+              "Loading artwork…",
+
+            noDocuments:
+              "No PDF documents yet",
+
+            noDocumentsDescription:
+              "Your saved and published PDF documents will appear here.",
+
+            noArtwork:
+              "No artwork yet",
+
+            noArtworkDescription:
+              "Your saved and published artwork will appear here.",
+
+            publishPdf:
+              "Publish PDF",
+
+            publishArtwork:
+              "Publish Artwork",
+
+            permanentConfirm:
+              "Permanently delete this writing? This action cannot be undone.",
+          },
+
+
+          hi: {
+
+            title:
+              "मेरा रचनात्मक संग्रह",
+
+            description:
+              "अपने ड्राफ्ट, प्रकाशित रचनाएँ, PDF दस्तावेज़ और कलाकृतियाँ एक ही स्थान से प्रबंधित करें।",
+
+            newContent:
+              "नई सामग्री",
+
+            creativeUploads:
+              "दस्तावेज़ और कलाकृति",
+
+            pdfDocuments:
+              "PDF दस्तावेज़",
+
+            artwork:
+              "कलाकृति",
+
+            searchDocuments:
+              "PDF दस्तावेज़ खोजें…",
+
+            searchArtwork:
+              "कलाकृति खोजें…",
+
+            loadingDocuments:
+              "PDF दस्तावेज़ लोड हो रहे हैं…",
+
+            loadingArtwork:
+              "कलाकृतियाँ लोड हो रही हैं…",
+
+            noDocuments:
+              "कोई PDF दस्तावेज़ नहीं है",
+
+            noDocumentsDescription:
+              "आपके सहेजे गए और प्रकाशित PDF दस्तावेज़ यहाँ दिखाई देंगे।",
+
+            noArtwork:
+              "कोई कलाकृति नहीं है",
+
+            noArtworkDescription:
+              "आपकी सहेजी गई और प्रकाशित कलाकृतियाँ यहाँ दिखाई देंगी।",
+
+            publishPdf:
+              "PDF प्रकाशित करें",
+
+            publishArtwork:
+              "कलाकृति प्रकाशित करें",
+
+            permanentConfirm:
+              "इस रचना को स्थायी रूप से हटाएँ? यह कार्रवाई वापस नहीं की जा सकती।",
+          },
+        };
+
+
+        return (
+          values[
+            uiLanguage
+          ] ||
+          values.en
+        );
+
+      },
+      [
+        uiLanguage,
+      ]
+    );
+
+
+  // =======================================================
+  // MAIN TAB
   //
   // draft
   // published
-  // documents
+  // uploads
   // deleted
   // =======================================================
 
@@ -84,6 +413,25 @@ function MyWritings() {
     "draft"
   );
 
+
+  // =======================================================
+  // UPLOAD SUB TAB
+  //
+  // documents
+  // artworks
+  // =======================================================
+
+  const [
+    uploadTab,
+    setUploadTab,
+  ] = useState(
+    "documents"
+  );
+
+
+  // =======================================================
+  // DATA
+  // =======================================================
 
   const [
     writings,
@@ -96,6 +444,16 @@ function MyWritings() {
     setDocuments,
   ] = useState([]);
 
+
+  const [
+    artworks,
+    setArtworks,
+  ] = useState([]);
+
+
+  // =======================================================
+  // COUNTS
+  // =======================================================
 
   const [
     draftCount,
@@ -112,6 +470,12 @@ function MyWritings() {
   const [
     documentCount,
     setDocumentCount,
+  ] = useState(0);
+
+
+  const [
+    artworkCount,
+    setArtworkCount,
   ] = useState(0);
 
 
@@ -203,95 +567,114 @@ function MyWritings() {
     useCallback(
       async () => {
 
-        try {
+        const results =
+          await Promise.allSettled([
 
-          const [
-            draftsData,
-            publishedData,
-            trashData,
-            documentsData,
-          ] =
-            await Promise.all([
+            getMyWritings({
+              status:
+                "draft",
+            }),
 
-              getMyWritings({
-                status:
-                  "draft",
-              }),
+            getMyWritings({
+              status:
+                "published",
+            }),
 
-              getMyWritings({
-                status:
-                  "published",
-              }),
+            getMyWritings({
+              status:
+                "deleted",
+            }),
 
-              getMyWritings({
-                status:
-                  "deleted",
-              }),
+            getMyDocuments(),
 
-              getMyDocuments(),
-
-            ]);
+            getMyArtworks(),
+          ]);
 
 
-          const drafts =
-            Array.isArray(
-              draftsData?.writings
-            )
-              ? draftsData.writings
-              : [];
+        const [
+          draftsResult,
+          publishedResult,
+          trashResult,
+          documentsResult,
+          artworksResult,
+        ] = results;
 
 
-          const published =
-            Array.isArray(
-              publishedData?.writings
-            )
-              ? publishedData.writings
-              : [];
-
-
-          const trash =
-            Array.isArray(
-              trashData?.writings
-            )
-              ? trashData.writings
-              : [];
-
-
-          const myDocuments =
-            Array.isArray(
-              documentsData?.documents
-            )
-              ? documentsData.documents
-              : [];
-
-
-          setDraftCount(
-            drafts.length
-          );
-
-
-          setPublishedCount(
-            published.length
-          );
-
-
-          setTrashCount(
-            trash.length
-          );
-
-
-          setDocumentCount(
-            myDocuments.length
-          );
-
-
-        } catch (
-          err
+        if (
+          draftsResult.status ===
+          "fulfilled"
         ) {
 
+          setDraftCount(
+            extractWritings(
+              draftsResult.value
+            ).length
+          );
+        }
+
+
+        if (
+          publishedResult.status ===
+          "fulfilled"
+        ) {
+
+          setPublishedCount(
+            extractWritings(
+              publishedResult.value
+            ).length
+          );
+        }
+
+
+        if (
+          trashResult.status ===
+          "fulfilled"
+        ) {
+
+          setTrashCount(
+            extractWritings(
+              trashResult.value
+            ).length
+          );
+        }
+
+
+        if (
+          documentsResult.status ===
+          "fulfilled"
+        ) {
+
+          setDocumentCount(
+            extractDocuments(
+              documentsResult.value
+            ).length
+          );
+
+        } else {
+
           console.error(
-            "COUNT LOAD ERROR:",
-            err
+            "DOCUMENT COUNT ERROR:",
+            documentsResult.reason
+          );
+        }
+
+
+        if (
+          artworksResult.status ===
+          "fulfilled"
+        ) {
+
+          setArtworkCount(
+            extractArtworks(
+              artworksResult.value
+            ).length
+          );
+
+        } else {
+
+          console.error(
+            "ARTWORK COUNT ERROR:",
+            artworksResult.reason
           );
         }
 
@@ -341,11 +724,9 @@ function MyWritings() {
 
 
           const items =
-            Array.isArray(
-              data?.writings
-            )
-              ? data.writings
-              : [];
+            extractWritings(
+              data
+            );
 
 
           setWritings(
@@ -354,6 +735,11 @@ function MyWritings() {
 
 
           setDocuments(
+            []
+          );
+
+
+          setArtworks(
             []
           );
 
@@ -401,16 +787,16 @@ function MyWritings() {
           );
 
 
+          setWritings(
+            []
+          );
+
+
           setError(
             err?.message ||
             t(
               "errors.generic"
             )
-          );
-
-
-          setWritings(
-            []
           );
 
 
@@ -471,15 +857,18 @@ function MyWritings() {
 
 
           const items =
-            Array.isArray(
-              data?.documents
-            )
-              ? data.documents
-              : [];
+            extractDocuments(
+              data
+            );
 
 
           setDocuments(
             items
+          );
+
+
+          setArtworks(
+            []
           );
 
 
@@ -532,6 +921,107 @@ function MyWritings() {
 
 
   // =======================================================
+  // LOAD ARTWORK
+  // =======================================================
+
+  const loadArtworks =
+    useCallback(
+      async (
+        showMainLoader = true
+      ) => {
+
+        if (
+          showMainLoader
+        ) {
+
+          setLoading(
+            true
+          );
+
+        } else {
+
+          setRefreshing(
+            true
+          );
+        }
+
+
+        setError(
+          ""
+        );
+
+
+        try {
+
+          const data =
+            await getMyArtworks();
+
+
+          const items =
+            extractArtworks(
+              data
+            );
+
+
+          setArtworks(
+            items
+          );
+
+
+          setDocuments(
+            []
+          );
+
+
+          setWritings(
+            []
+          );
+
+
+          setArtworkCount(
+            items.length
+          );
+
+
+        } catch (
+          err
+        ) {
+
+          console.error(
+            "MY ARTWORK ERROR:",
+            err
+          );
+
+
+          setArtworks(
+            []
+          );
+
+
+          setError(
+            err?.message ||
+            "Unable to load your artwork."
+          );
+
+
+        } finally {
+
+          setLoading(
+            false
+          );
+
+
+          setRefreshing(
+            false
+          );
+        }
+
+      },
+      []
+    );
+
+
+  // =======================================================
   // INITIAL COUNTS
   // =======================================================
 
@@ -548,7 +1038,7 @@ function MyWritings() {
 
 
   // =======================================================
-  // ACTIVE TAB LOAD
+  // ACTIVE CONTENT LOAD
   // =======================================================
 
   useEffect(
@@ -564,6 +1054,11 @@ function MyWritings() {
       );
 
 
+      setSortBy(
+        "recent"
+      );
+
+
       setSuccess(
         ""
       );
@@ -576,10 +1071,21 @@ function MyWritings() {
 
       if (
         activeTab ===
-        "documents"
+        "uploads"
       ) {
 
-        loadDocuments();
+        if (
+          uploadTab ===
+          "artworks"
+        ) {
+
+          loadArtworks();
+
+        } else {
+
+          loadDocuments();
+        }
+
 
         return;
       }
@@ -592,6 +1098,8 @@ function MyWritings() {
     },
     [
       activeTab,
+      uploadTab,
+      loadArtworks,
       loadDocuments,
       loadWritings,
     ]
@@ -599,7 +1107,7 @@ function MyWritings() {
 
 
   // =======================================================
-  // DATE FORMAT
+  // FORMAT DATE
   // =======================================================
 
   function formatDate(
@@ -634,10 +1142,23 @@ function MyWritings() {
     }
 
 
+    const localeMap = {
+      bn:
+        "bn-BD",
+      en:
+        "en-US",
+      hi:
+        "hi-IN",
+    };
+
+
     try {
 
       return new Intl
         .DateTimeFormat(
+          localeMap[
+            uiLanguage
+          ] ||
           undefined,
           {
             day:
@@ -705,19 +1226,238 @@ function MyWritings() {
     content
   ) {
 
-    const count =
-      getWordCount(
-        content
-      );
-
-
     return Math.max(
       1,
       Math.ceil(
-        count /
+        getWordCount(
+          content
+        ) /
         180
       )
     );
+  }
+
+
+  // =======================================================
+  // GENERIC CONTENT FILTER
+  // =======================================================
+
+  function filterMediaItems(
+    items
+  ) {
+
+    const normalizedSearch =
+      search
+        .trim()
+        .toLowerCase();
+
+
+    let result = [
+      ...items,
+    ];
+
+
+    if (
+      normalizedSearch
+    ) {
+
+      result =
+        result.filter(
+          (
+            item
+          ) => {
+
+            const title =
+              String(
+                item.title ||
+                ""
+              )
+                .toLowerCase();
+
+
+            const description =
+              String(
+                item.description ||
+                ""
+              )
+                .toLowerCase();
+
+
+            const category =
+              String(
+                item.category ||
+                ""
+              )
+                .toLowerCase();
+
+
+            const filename =
+              String(
+                item.original_filename ||
+                ""
+              )
+                .toLowerCase();
+
+
+            const languageCode =
+              item.language ||
+              "bn";
+
+
+            let languageLabel =
+              languageCode;
+
+
+            try {
+
+              languageLabel =
+                getLanguageLabel(
+                  languageCode
+                )
+                  .toLowerCase();
+
+            } catch {
+
+              languageLabel =
+                String(
+                  languageCode
+                )
+                  .toLowerCase();
+            }
+
+
+            return (
+              title.includes(
+                normalizedSearch
+              )
+              ||
+              description.includes(
+                normalizedSearch
+              )
+              ||
+              category.includes(
+                normalizedSearch
+              )
+              ||
+              filename.includes(
+                normalizedSearch
+              )
+              ||
+              languageLabel.includes(
+                normalizedSearch
+              )
+            );
+          }
+        );
+    }
+
+
+    if (
+      language
+    ) {
+
+      result =
+        result.filter(
+          (
+            item
+          ) =>
+            (
+              item.language ||
+              "bn"
+            ) ===
+            language
+        );
+    }
+
+
+    result.sort(
+      (
+        a,
+        b
+      ) => {
+
+        if (
+          sortBy ===
+          "oldest"
+        ) {
+
+          return (
+            new Date(
+              a.updated_at ||
+              a.published_at ||
+              a.created_at ||
+              0
+            )
+            -
+            new Date(
+              b.updated_at ||
+              b.published_at ||
+              b.created_at ||
+              0
+            )
+          );
+        }
+
+
+        if (
+          sortBy ===
+          "title"
+        ) {
+
+          return (
+            String(
+              a.title ||
+              ""
+            )
+              .localeCompare(
+                String(
+                  b.title ||
+                  ""
+                )
+              )
+          );
+        }
+
+
+        if (
+          sortBy ===
+          "created"
+        ) {
+
+          return (
+            new Date(
+              b.created_at ||
+              0
+            )
+            -
+            new Date(
+              a.created_at ||
+              0
+            )
+          );
+        }
+
+
+        return (
+          new Date(
+            b.updated_at ||
+            b.published_at ||
+            b.created_at ||
+            0
+          )
+          -
+          new Date(
+            a.updated_at ||
+            a.published_at ||
+            a.created_at ||
+            0
+          )
+        );
+      }
+    );
+
+
+    return result;
   }
 
 
@@ -740,10 +1480,6 @@ function MyWritings() {
         ];
 
 
-        // -------------------------------------------------
-        // SEARCH
-        // -------------------------------------------------
-
         if (
           normalizedSearch
         ) {
@@ -755,7 +1491,7 @@ function MyWritings() {
               ) => {
 
                 const title =
-                  (
+                  String(
                     writing.title ||
                     ""
                   )
@@ -763,7 +1499,7 @@ function MyWritings() {
 
 
                 const content =
-                  (
+                  String(
                     writing.content ||
                     ""
                   )
@@ -771,7 +1507,7 @@ function MyWritings() {
 
 
                 const category =
-                  (
+                  String(
                     writing.category ||
                     ""
                   )
@@ -783,11 +1519,23 @@ function MyWritings() {
                   "bn";
 
 
-                const languageLabel =
-                  getLanguageLabel(
-                    languageCode
-                  )
-                    .toLowerCase();
+                let languageLabel =
+                  languageCode;
+
+
+                try {
+
+                  languageLabel =
+                    getLanguageLabel(
+                      languageCode
+                    )
+                      .toLowerCase();
+
+                } catch {
+
+                  languageLabel =
+                    languageCode;
+                }
 
 
                 return (
@@ -812,10 +1560,6 @@ function MyWritings() {
         }
 
 
-        // -------------------------------------------------
-        // LANGUAGE
-        // -------------------------------------------------
-
         if (
           language
         ) {
@@ -833,10 +1577,6 @@ function MyWritings() {
             );
         }
 
-
-        // -------------------------------------------------
-        // SORT
-        // -------------------------------------------------
 
         result.sort(
           (
@@ -871,13 +1611,15 @@ function MyWritings() {
             ) {
 
               return (
-                (
+                String(
                   a.title ||
                   ""
                 )
                   .localeCompare(
-                    b.title ||
-                    ""
+                    String(
+                      b.title ||
+                      ""
+                    )
                   )
               );
             }
@@ -937,230 +1679,31 @@ function MyWritings() {
 
   const filteredDocuments =
     useMemo(
-      () => {
-
-        const normalizedSearch =
-          search
-            .trim()
-            .toLowerCase();
-
-
-        let result = [
-          ...documents,
-        ];
-
-
-        // -------------------------------------------------
-        // SEARCH
-        // -------------------------------------------------
-
-        if (
-          normalizedSearch
-        ) {
-
-          result =
-            result.filter(
-              (
-                document
-              ) => {
-
-                const title =
-                  (
-                    document.title ||
-                    ""
-                  )
-                    .toLowerCase();
-
-
-                const description =
-                  (
-                    document.description ||
-                    ""
-                  )
-                    .toLowerCase();
-
-
-                const category =
-                  (
-                    document.category ||
-                    ""
-                  )
-                    .toLowerCase();
-
-
-                const filename =
-                  (
-                    document.original_filename ||
-                    ""
-                  )
-                    .toLowerCase();
-
-
-                const languageCode =
-                  document.language ||
-                  "bn";
-
-
-                let languageLabel =
-                  languageCode;
-
-
-                try {
-
-                  languageLabel =
-                    getLanguageLabel(
-                      languageCode
-                    )
-                      .toLowerCase();
-
-                } catch {
-
-                  languageLabel =
-                    languageCode
-                      .toLowerCase();
-                }
-
-
-                return (
-                  title.includes(
-                    normalizedSearch
-                  )
-                  ||
-                  description.includes(
-                    normalizedSearch
-                  )
-                  ||
-                  category.includes(
-                    normalizedSearch
-                  )
-                  ||
-                  filename.includes(
-                    normalizedSearch
-                  )
-                  ||
-                  languageLabel.includes(
-                    normalizedSearch
-                  )
-                );
-              }
-            );
-        }
-
-
-        // -------------------------------------------------
-        // LANGUAGE
-        // -------------------------------------------------
-
-        if (
-          language
-        ) {
-
-          result =
-            result.filter(
-              (
-                document
-              ) =>
-                (
-                  document.language ||
-                  "bn"
-                ) ===
-                language
-            );
-        }
-
-
-        // -------------------------------------------------
-        // SORT
-        // -------------------------------------------------
-
-        result.sort(
-          (
-            a,
-            b
-          ) => {
-
-            if (
-              sortBy ===
-              "oldest"
-            ) {
-
-              return (
-                new Date(
-                  a.updated_at ||
-                  a.created_at ||
-                  0
-                )
-                -
-                new Date(
-                  b.updated_at ||
-                  b.created_at ||
-                  0
-                )
-              );
-            }
-
-
-            if (
-              sortBy ===
-              "title"
-            ) {
-
-              return (
-                (
-                  a.title ||
-                  ""
-                )
-                  .localeCompare(
-                    b.title ||
-                    ""
-                  )
-              );
-            }
-
-
-            if (
-              sortBy ===
-              "created"
-            ) {
-
-              return (
-                new Date(
-                  b.created_at ||
-                  0
-                )
-                -
-                new Date(
-                  a.created_at ||
-                  0
-                )
-              );
-            }
-
-
-            return (
-              new Date(
-                b.updated_at ||
-                b.published_at ||
-                b.created_at ||
-                0
-              )
-              -
-              new Date(
-                a.updated_at ||
-                a.published_at ||
-                a.created_at ||
-                0
-              )
-            );
-          }
-        );
-
-
-        return result;
-
-      },
+      () =>
+        filterMediaItems(
+          documents
+        ),
       [
         documents,
+        search,
+        language,
+        sortBy,
+      ]
+    );
+
+
+  // =======================================================
+  // FILTER ARTWORK
+  // =======================================================
+
+  const filteredArtworks =
+    useMemo(
+      () =>
+        filterMediaItems(
+          artworks
+        ),
+      [
+        artworks,
         search,
         language,
         sortBy,
@@ -1174,15 +1717,25 @@ function MyWritings() {
 
   const currentItems =
     activeTab ===
-    "documents"
-      ? filteredDocuments
+    "uploads"
+      ? (
+          uploadTab ===
+          "artworks"
+            ? filteredArtworks
+            : filteredDocuments
+        )
       : filteredWritings;
 
 
   const currentTotal =
     activeTab ===
-    "documents"
-      ? documents.length
+    "uploads"
+      ? (
+          uploadTab ===
+          "artworks"
+            ? artworks.length
+            : documents.length
+        )
       : writings.length;
 
 
@@ -1231,7 +1784,6 @@ function MyWritings() {
         ),
 
         loadCounts(),
-
       ]);
 
 
@@ -1257,7 +1809,7 @@ function MyWritings() {
 
 
   // =======================================================
-  // UNPUBLISH WRITING
+  // UNPUBLISH
   // =======================================================
 
   async function handleUnpublish(
@@ -1301,7 +1853,6 @@ function MyWritings() {
         ),
 
         loadCounts(),
-
       ]);
 
 
@@ -1327,7 +1878,7 @@ function MyWritings() {
 
 
   // =======================================================
-  // RESTORE WRITING
+  // RESTORE
   // =======================================================
 
   async function handleRestore(
@@ -1421,12 +1972,6 @@ function MyWritings() {
       err
     ) {
 
-      console.error(
-        "RESTORE WRITING ERROR:",
-        err
-      );
-
-
       setError(
         err?.message ||
         t(
@@ -1445,7 +1990,7 @@ function MyWritings() {
 
 
   // =======================================================
-  // PERMANENT DELETE WRITING
+  // PERMANENT DELETE
   // =======================================================
 
   async function handlePermanentDelete(
@@ -1454,13 +1999,19 @@ function MyWritings() {
 
     const confirmed =
       window.confirm(
-        `Permanently delete "${writing.title}"?\n\nThis action cannot be undone.`
+        `${localText.permanentConfirm}\n\n“${
+          writing.title ||
+          t(
+            "common.untitled"
+          )
+        }”`
       );
 
 
     if (
       !confirmed
     ) {
+
       return;
     }
 
@@ -1471,11 +2022,6 @@ function MyWritings() {
 
 
     setError(
-      ""
-    );
-
-
-    setSuccess(
       ""
     );
 
@@ -1523,12 +2069,6 @@ function MyWritings() {
       err
     ) {
 
-      console.error(
-        "PERMANENT DELETE ERROR:",
-        err
-      );
-
-
       setError(
         err?.message ||
         t(
@@ -1575,6 +2115,7 @@ function MyWritings() {
     if (
       deleting
     ) {
+
       return;
     }
 
@@ -1585,15 +2126,12 @@ function MyWritings() {
   }
 
 
-  // =======================================================
-  // MOVE WRITING TO TRASH
-  // =======================================================
-
   async function confirmDelete() {
 
     if (
       !deleteTarget
     ) {
+
       return;
     }
 
@@ -1609,11 +2147,6 @@ function MyWritings() {
 
 
     setError(
-      ""
-    );
-
-
-    setSuccess(
       ""
     );
 
@@ -1720,7 +2253,7 @@ function MyWritings() {
 
 
   // =======================================================
-  // EDIT WRITING
+  // EDIT
   // =======================================================
 
   function handleEdit(
@@ -1751,18 +2284,30 @@ function MyWritings() {
 
     if (
       activeTab ===
-      "documents"
+      "uploads"
     ) {
 
-      await Promise.all([
+      if (
+        uploadTab ===
+        "artworks"
+      ) {
 
-        loadDocuments(
-          false
-        ),
+        await Promise.all([
+          loadArtworks(
+            false
+          ),
+          loadCounts(),
+        ]);
 
-        loadCounts(),
+      } else {
 
-      ]);
+        await Promise.all([
+          loadDocuments(
+            false
+          ),
+          loadCounts(),
+        ]);
+      }
 
 
       return;
@@ -1777,7 +2322,6 @@ function MyWritings() {
       ),
 
       loadCounts(),
-
     ]);
   }
 
@@ -1812,10 +2356,15 @@ function MyWritings() {
 
     if (
       activeTab ===
-      "documents"
+      "uploads"
     ) {
 
-      return "PDF ডকুমেন্ট খুঁজুন";
+      return (
+        uploadTab ===
+        "artworks"
+          ? localText.searchArtwork
+          : localText.searchDocuments
+      );
     }
 
 
@@ -1825,7 +2374,7 @@ function MyWritings() {
     ) {
 
       return t(
-        "myWritings.drafts"
+        "myWritings.searchDrafts"
       );
     }
 
@@ -1836,7 +2385,7 @@ function MyWritings() {
     ) {
 
       return t(
-        "myWritings.published"
+        "myWritings.searchPublished"
       );
     }
 
@@ -1848,7 +2397,7 @@ function MyWritings() {
 
 
   // =======================================================
-  // CURRENT TAB TITLE
+  // CURRENT TITLE
   // =======================================================
 
   function getCurrentTabTitle() {
@@ -1877,16 +2426,85 @@ function MyWritings() {
 
     if (
       activeTab ===
-      "documents"
+      "uploads"
     ) {
 
-      return "PDF ডকুমেন্ট";
+      return (
+        uploadTab ===
+        "artworks"
+          ? localText.artwork
+          : localText.pdfDocuments
+      );
     }
 
 
     return t(
       "myWritings.trash"
     );
+  }
+
+
+  // =======================================================
+  // UPLOAD TAB STYLE
+  // =======================================================
+
+  function uploadButtonStyle(
+    selected
+  ) {
+
+    return {
+
+      flex:
+        "1 1 220px",
+
+      minHeight:
+        "50px",
+
+      display:
+        "flex",
+
+      alignItems:
+        "center",
+
+      justifyContent:
+        "center",
+
+      gap:
+        "9px",
+
+      padding:
+        "10px 16px",
+
+      border:
+        selected
+          ? "1px solid #641a82"
+          : "1px solid #e6ddd3",
+
+      borderRadius:
+        "12px",
+
+      background:
+        selected
+          ? "#641a82"
+          : "#ffffff",
+
+      color:
+        selected
+          ? "#ffffff"
+          : "#5f5146",
+
+      font:
+        "inherit",
+
+      fontWeight:
+        "700",
+
+      cursor:
+        "pointer",
+
+      transition:
+        "0.18s ease",
+    };
   }
 
 
@@ -1918,34 +2536,20 @@ function MyWritings() {
               className="my-writings-eyebrow"
             >
 
-              {
-                t(
-                  "myWritings.eyebrow"
-                )
-              }
+              {t(
+                "myWritings.eyebrow"
+              )}
 
             </p>
 
 
             <h1>
-
-              {
-                t(
-                  "myWritings.title"
-                )
-              }
-
+              {localText.title}
             </h1>
 
 
             <p>
-
-              {
-                t(
-                  "myWritings.description"
-                )
-              }
-
+              {localText.description}
             </p>
 
           </div>
@@ -1960,12 +2564,7 @@ function MyWritings() {
               size={18}
             />
 
-
-            {
-              t(
-                "myWritings.newWriting"
-              )
-            }
+            {localText.newContent}
 
           </Link>
 
@@ -2011,13 +2610,9 @@ function MyWritings() {
             <div>
 
               <span>
-
-                {
-                  t(
-                    "myWritings.drafts"
-                  )
-                }
-
+                {t(
+                  "myWritings.drafts"
+                )}
               </span>
 
 
@@ -2061,13 +2656,9 @@ function MyWritings() {
             <div>
 
               <span>
-
-                {
-                  t(
-                    "myWritings.published"
-                  )
-                }
-
+                {t(
+                  "myWritings.published"
+                )}
               </span>
 
 
@@ -2080,28 +2671,30 @@ function MyWritings() {
           </button>
 
 
-          {/* PDF DOCUMENTS */}
+          {/* DOCUMENTS + ARTWORK */}
 
           <button
             type="button"
             className={
               activeTab ===
-              "documents"
+              "uploads"
                 ? "my-writing-summary-card active"
                 : "my-writing-summary-card"
             }
-            onClick={() =>
+            onClick={() => {
+
               setActiveTab(
-                "documents"
-              )
-            }
+                "uploads"
+              );
+
+            }}
           >
 
             <span
               className="my-writing-summary-icon document"
             >
 
-              <FileText
+              <Files
                 size={20}
               />
 
@@ -2111,12 +2704,15 @@ function MyWritings() {
             <div>
 
               <span>
-                PDF ডকুমেন্ট
+                {localText.creativeUploads}
               </span>
 
 
               <strong>
-                {documentCount}
+                {
+                  documentCount +
+                  artworkCount
+                }
               </strong>
 
             </div>
@@ -2155,13 +2751,9 @@ function MyWritings() {
             <div>
 
               <span>
-
-                {
-                  t(
-                    "myWritings.trash"
-                  )
-                }
-
+                {t(
+                  "myWritings.trash"
+                )}
               </span>
 
 
@@ -2203,12 +2795,110 @@ function MyWritings() {
               size={18}
             />
 
-
             <span>
               {success}
             </span>
 
           </div>
+
+        )}
+
+
+        {/* =================================================
+            DOCUMENT / ARTWORK SUB TABS
+        ================================================== */}
+
+        {activeTab ===
+          "uploads" && (
+
+          <section
+            style={{
+              display:
+                "flex",
+
+              flexWrap:
+                "wrap",
+
+              gap:
+                "10px",
+
+              padding:
+                "7px",
+
+              margin:
+                "4px 0 18px",
+
+              border:
+                "1px solid #e9dfd5",
+
+              borderRadius:
+                "15px",
+
+              background:
+                "#fbf8f4",
+            }}
+          >
+
+            <button
+              type="button"
+              style={
+                uploadButtonStyle(
+                  uploadTab ===
+                  "documents"
+                )
+              }
+              onClick={() =>
+                setUploadTab(
+                  "documents"
+                )
+              }
+            >
+
+              <FileText
+                size={18}
+              />
+
+              <span>
+                {localText.pdfDocuments}
+              </span>
+
+              <strong>
+                {documentCount}
+              </strong>
+
+            </button>
+
+
+            <button
+              type="button"
+              style={
+                uploadButtonStyle(
+                  uploadTab ===
+                  "artworks"
+                )
+              }
+              onClick={() =>
+                setUploadTab(
+                  "artworks"
+                )
+              }
+            >
+
+              <ImageIcon
+                size={18}
+              />
+
+              <span>
+                {localText.artwork}
+              </span>
+
+              <strong>
+                {artworkCount}
+              </strong>
+
+            </button>
+
+          </section>
 
         )}
 
@@ -2315,42 +3005,38 @@ function MyWritings() {
                 value=""
               >
 
-                {
-                  t(
-                    "myWritings.allLanguages"
-                  )
-                }
+                {t(
+                  "myWritings.allLanguages"
+                )}
 
               </option>
 
 
-              {
-                LANGUAGES.map(
-                  (
-                    item
-                  ) => (
+              {LANGUAGES.map(
+                (
+                  item
+                ) => (
 
-                    <option
-                      key={
-                        item.code
-                      }
-                      value={
-                        item.code
-                      }
-                    >
+                  <option
+                    key={
+                      item.code
+                    }
+                    value={
+                      item.code
+                    }
+                  >
 
-                      {
-                        item.nativeName ===
-                        item.name
-                          ? item.name
-                          : `${item.nativeName} — ${item.name}`
-                      }
+                    {
+                      item.nativeName ===
+                      item.name
+                        ? item.name
+                        : `${item.nativeName} — ${item.name}`
+                    }
 
-                    </option>
+                  </option>
 
-                  )
                 )
-              }
+              )}
 
             </select>
 
@@ -2384,52 +3070,36 @@ function MyWritings() {
               <option
                 value="recent"
               >
-
-                {
-                  t(
-                    "myWritings.recentlyUpdated"
-                  )
-                }
-
+                {t(
+                  "myWritings.recentlyUpdated"
+                )}
               </option>
 
 
               <option
                 value="created"
               >
-
-                {
-                  t(
-                    "myWritings.recentlyCreated"
-                  )
-                }
-
+                {t(
+                  "myWritings.recentlyCreated"
+                )}
               </option>
 
 
               <option
                 value="oldest"
               >
-
-                {
-                  t(
-                    "myWritings.oldestFirst"
-                  )
-                }
-
+                {t(
+                  "myWritings.oldestFirst"
+                )}
               </option>
 
 
               <option
                 value="title"
               >
-
-                {
-                  t(
-                    "myWritings.titleAZ"
-                  )
-                }
-
+                {t(
+                  "myWritings.titleAZ"
+                )}
               </option>
 
             </select>
@@ -2462,13 +3132,9 @@ function MyWritings() {
 
 
             <span>
-
-              {
-                t(
-                  "myWritings.refresh"
-                )
-              }
-
+              {t(
+                "myWritings.refresh"
+              )}
             </span>
 
           </button>
@@ -2490,25 +3156,22 @@ function MyWritings() {
 
             <span>
 
-              {
-                getCurrentTabTitle()
-              }
-
+              {getCurrentTabTitle()}
 
               {" · "}
 
-
-              {
-                currentItems.length
-              }
+              {currentItems.length}
 
 
-              {
+              {(
                 search ||
                 language
-                  ? ` / ${currentTotal}`
-                  : ""
-              }
+              ) && (
+                <>
+                  {" / "}
+                  {currentTotal}
+                </>
+              )}
 
             </span>
 
@@ -2523,12 +3186,9 @@ function MyWritings() {
                   size={12}
                 />
 
-
-                {
-                  getLanguageLabel(
-                    language
-                  )
-                }
+                {getLanguageLabel(
+                  language
+                )}
 
               </span>
 
@@ -2552,12 +3212,9 @@ function MyWritings() {
                 size={13}
               />
 
-
-              {
-                t(
-                  "myWritings.clearFilters"
-                )
-              }
+              {t(
+                "myWritings.clearFilters"
+              )}
 
             </button>
 
@@ -2586,8 +3243,13 @@ function MyWritings() {
 
               {
                 activeTab ===
-                "documents"
-                  ? "PDF ডকুমেন্ট লোড হচ্ছে..."
+                "uploads"
+                  ? (
+                      uploadTab ===
+                      "artworks"
+                        ? localText.loadingArtwork
+                        : localText.loadingDocuments
+                    )
                   : t(
                       "myWritings.loading"
                     )
@@ -2626,16 +3288,23 @@ function MyWritings() {
 
                   )
                 : activeTab ===
-                  "draft"
+                  "uploads"
                   ? (
-
-                      <FileText
-                        size={30}
-                      />
-
+                      uploadTab ===
+                      "artworks"
+                        ? (
+                            <ImageIcon
+                              size={30}
+                            />
+                          )
+                        : (
+                            <FileText
+                              size={30}
+                            />
+                          )
                     )
                   : activeTab ===
-                    "documents"
+                    "draft"
                     ? (
 
                         <FileText
@@ -2672,21 +3341,26 @@ function MyWritings() {
                       "myWritings.noResults"
                     )
                   : activeTab ===
-                    "draft"
-                    ? t(
-                        "myWritings.noDrafts"
+                    "uploads"
+                    ? (
+                        uploadTab ===
+                        "artworks"
+                          ? localText.noArtwork
+                          : localText.noDocuments
                       )
                     : activeTab ===
-                      "documents"
-                      ? "কোনও PDF ডকুমেন্ট নেই"
-                    : activeTab ===
-                      "deleted"
+                      "draft"
                       ? t(
-                          "myWritings.noTrash"
+                          "myWritings.noDrafts"
                         )
-                      : t(
-                          "myWritings.noPublished"
-                        )
+                      : activeTab ===
+                        "deleted"
+                        ? t(
+                            "myWritings.noTrash"
+                          )
+                        : t(
+                            "myWritings.noPublished"
+                          )
               }
 
             </h2>
@@ -2701,21 +3375,26 @@ function MyWritings() {
                       "myWritings.noResultsDescription"
                     )
                   : activeTab ===
-                    "draft"
-                    ? t(
-                        "myWritings.noDraftsDescription"
+                    "uploads"
+                    ? (
+                        uploadTab ===
+                        "artworks"
+                          ? localText.noArtworkDescription
+                          : localText.noDocumentsDescription
                       )
                     : activeTab ===
-                      "documents"
-                      ? "আপনার প্রকাশিত অথবা সংরক্ষিত PDF ডকুমেন্ট এখানে দেখা যাবে।"
-                    : activeTab ===
-                      "deleted"
+                      "draft"
                       ? t(
-                          "myWritings.noTrashDescription"
+                          "myWritings.noDraftsDescription"
                         )
-                      : t(
-                          "myWritings.noPublishedDescription"
-                        )
+                      : activeTab ===
+                        "deleted"
+                        ? t(
+                            "myWritings.noTrashDescription"
+                          )
+                        : t(
+                            "myWritings.noPublishedDescription"
+                          )
               }
 
             </p>
@@ -2733,11 +3412,9 @@ function MyWritings() {
                     }
                   >
 
-                    {
-                      t(
-                        "myWritings.clearFilters"
-                      )
-                    }
+                    {t(
+                      "myWritings.clearFilters"
+                    )}
 
                   </button>
 
@@ -2751,15 +3428,35 @@ function MyWritings() {
                       className="my-writings-new-button"
                     >
 
-                      <Edit3
-                        size={17}
-                      />
+                      {activeTab ===
+                      "uploads" &&
+                      uploadTab ===
+                        "artworks"
+                        ? (
+
+                            <ImageIcon
+                              size={17}
+                            />
+
+                          )
+                        : (
+
+                            <Edit3
+                              size={17}
+                            />
+
+                          )}
 
 
                       {
                         activeTab ===
-                        "documents"
-                          ? "PDF প্রকাশ করুন"
+                        "uploads"
+                          ? (
+                              uploadTab ===
+                              "artworks"
+                                ? localText.publishArtwork
+                                : localText.publishPdf
+                            )
                           : t(
                               "myWritings.startWriting"
                             )
@@ -2780,6 +3477,8 @@ function MyWritings() {
         ================================================== */}
 
         {activeTab ===
+          "uploads" &&
+        uploadTab ===
           "documents" &&
         !loading &&
         filteredDocuments.length >
@@ -2789,24 +3488,60 @@ function MyWritings() {
             className="explore-document-grid"
           >
 
-            {
-              filteredDocuments.map(
-                (
-                  document
-                ) => (
+            {filteredDocuments.map(
+              (
+                document
+              ) => (
 
-                  <DocumentCard
-                    key={
-                      document.id
-                    }
-                    document={
-                      document
-                    }
-                  />
+                <DocumentCard
+                  key={
+                    document.id
+                  }
+                  document={
+                    document
+                  }
+                />
 
-                )
               )
-            }
+            )}
+
+          </section>
+
+        )}
+
+
+        {/* =================================================
+            ARTWORK GRID
+        ================================================== */}
+
+        {activeTab ===
+          "uploads" &&
+        uploadTab ===
+          "artworks" &&
+        !loading &&
+        filteredArtworks.length >
+          0 && (
+
+          <section
+            className="explore-artwork-grid"
+          >
+
+            {filteredArtworks.map(
+              (
+                artwork
+              ) => (
+
+                <ArtworkCard
+                  key={
+                    artwork.id
+                  }
+                  artwork={
+                    artwork
+                  }
+                />
+
+              )
+            )}
 
           </section>
 
@@ -2818,7 +3553,7 @@ function MyWritings() {
         ================================================== */}
 
         {activeTab !==
-          "documents" &&
+          "uploads" &&
         !loading &&
         filteredWritings.length >
           0 && (
@@ -2827,280 +3562,418 @@ function MyWritings() {
             className="my-writings-grid"
           >
 
-            {
-              filteredWritings.map(
-                (
-                  writing
-                ) => {
+            {filteredWritings.map(
+              (
+                writing
+              ) => {
 
-                  const busy =
-                    actionId ===
-                    writing.id;
-
-
-                  const wordCount =
-                    getWordCount(
-                      writing.content
-                    );
+                const busy =
+                  actionId ===
+                  writing.id;
 
 
-                  const readingTime =
-                    getReadingTime(
-                      writing.content
-                    );
+                const wordCount =
+                  getWordCount(
+                    writing.content
+                  );
 
 
-                  const languageCode =
-                    writing.language ||
-                    "bn";
+                const readingTime =
+                  getReadingTime(
+                    writing.content
+                  );
 
 
-                  return (
+                const languageCode =
+                  writing.language ||
+                  "bn";
 
-                    <article
-                      key={
-                        writing.id
-                      }
-                      className="my-writing-card"
+
+                return (
+
+                  <article
+                    key={
+                      writing.id
+                    }
+                    className="my-writing-card"
+                  >
+
+                    {/* TOP */}
+
+                    <div
+                      className="my-writing-card-top"
                     >
 
-                      {/* =====================================
-                          TOP
-                      ====================================== */}
-
                       <div
-                        className="my-writing-card-top"
+                        className="my-writing-card-badges"
                       >
 
-                        <div
-                          className="my-writing-card-badges"
+                        <span
+                          className={
+                            writing.status ===
+                            "published"
+                              ? "my-writing-status published"
+                              : writing.status ===
+                                "deleted"
+                                ? "my-writing-status deleted"
+                                : "my-writing-status draft"
+                          }
                         >
 
-                          <span
-                            className={
-                              writing.status ===
-                              "published"
-                                ? "my-writing-status published"
-                                : writing.status ===
-                                  "deleted"
-                                  ? "my-writing-status deleted"
-                                  : "my-writing-status draft"
-                            }
-                          >
-
-                            {
-                              writing.status ===
-                              "published"
+                          {
+                            writing.status ===
+                            "published"
+                              ? t(
+                                  "myWritings.published"
+                                )
+                              : writing.status ===
+                                "deleted"
                                 ? t(
-                                    "myWritings.published"
+                                    "myWritings.trash"
                                   )
-                                : writing.status ===
-                                  "deleted"
-                                  ? t(
-                                      "myWritings.trash"
-                                    )
-                                  : t(
-                                      "myWritings.drafts"
-                                    )
-                            }
+                                : t(
+                                    "myWritings.drafts"
+                                  )
+                          }
 
-                          </span>
-
-
-                          <span
-                            className="my-writing-language-badge"
-                          >
-
-                            <Globe2
-                              size={11}
-                            />
-
-
-                            {
-                              getLanguageLabel(
-                                languageCode
-                              )
-                            }
-
-                          </span>
-
-                        </div>
+                        </span>
 
 
                         <span
-                          className="my-writing-category"
+                          className="my-writing-language-badge"
                         >
 
-                          {
-                            writing.category ||
-                            t(
-                              "categories.other"
-                            )
-                          }
-
-                        </span>
-
-                      </div>
-
-
-                      {/* TITLE */}
-
-                      <h2>
-
-                        {
-                          writing.title ||
-                          t(
-                            "common.untitled"
-                          )
-                        }
-
-                      </h2>
-
-
-                      {/* PREVIEW */}
-
-                      <p
-                        className="my-writing-preview"
-                      >
-
-                        {
-                          writing.content
-                            ?.trim()
-                            ?.slice(
-                              0,
-                              180
-                            )
-                          ||
-                          t(
-                            "common.noData"
-                          )
-                        }
-
-
-                        {
-                          writing.content
-                            ?.length >
-                          180
-                            ? "..."
-                            : ""
-                        }
-
-                      </p>
-
-
-                      {/* STATS */}
-
-                      <div
-                        className="my-writing-card-stats"
-                      >
-
-                        <span>
-
-                          <FileText
-                            size={13}
-                          />
-
-                          {wordCount}
-
-                          {" "}
-
-                          {
-                            t(
-                              "myWritings.words"
-                            )
-                          }
-
-                        </span>
-
-
-                        <span>
-
-                          <BookOpen
-                            size={13}
-                          />
-
-                          {readingTime}
-
-                          {" "}
-
-                          {
-                            t(
-                              "myWritings.readTime"
-                            )
-                          }
-
-                        </span>
-
-
-                        <span>
-
                           <Globe2
-                            size={13}
+                            size={11}
                           />
 
-
-                          {
-                            getLanguageLabel(
-                              languageCode
-                            )
-                          }
+                          {getLanguageLabel(
+                            languageCode
+                          )}
 
                         </span>
 
                       </div>
 
 
-                      {/* DATE */}
-
-                      <div
-                        className="my-writing-meta"
+                      <span
+                        className="my-writing-category"
                       >
 
-                        <span>
+                        {
+                          writing.category ||
+                          t(
+                            "categories.other"
+                          )
+                        }
 
-                          {
-                            t(
-                              "myWritings.updated"
-                            )
-                          }
+                      </span>
 
-                        </span>
-
-
-                        <strong>
-
-                          {
-                            formatDate(
-                              writing.updated_at
-                            )
-                          }
-
-                        </strong>
-
-                      </div>
+                    </div>
 
 
-                      {/* =====================================
-                          ACTIONS
-                      ====================================== */}
+                    {/* TITLE */}
 
-                      <div
-                        className="my-writing-actions"
-                      >
+                    <h2>
 
-                        {writing.status ===
-                        "deleted"
-                          ? (
+                      {
+                        writing.title ||
+                        t(
+                          "common.untitled"
+                        )
+                      }
 
-                              <>
+                    </h2>
 
-                                {/* RESTORE */}
+
+                    {/* PREVIEW */}
+
+                    <p
+                      className="my-writing-preview"
+                    >
+
+                      {
+                        writing.content
+                          ?.trim()
+                          ?.slice(
+                            0,
+                            180
+                          )
+                        ||
+                        t(
+                          "common.noData"
+                        )
+                      }
+
+
+                      {
+                        writing.content
+                          ?.length >
+                        180
+                          ? "..."
+                          : ""
+                      }
+
+                    </p>
+
+
+                    {/* STATS */}
+
+                    <div
+                      className="my-writing-card-stats"
+                    >
+
+                      <span>
+
+                        <FileText
+                          size={13}
+                        />
+
+                        {wordCount}
+
+                        {" "}
+
+                        {t(
+                          "myWritings.words"
+                        )}
+
+                      </span>
+
+
+                      <span>
+
+                        <BookOpen
+                          size={13}
+                        />
+
+                        {readingTime}
+
+                        {" "}
+
+                        {t(
+                          "myWritings.readTime"
+                        )}
+
+                      </span>
+
+
+                      <span>
+
+                        <Globe2
+                          size={13}
+                        />
+
+                        {getLanguageLabel(
+                          languageCode
+                        )}
+
+                      </span>
+
+                    </div>
+
+
+                    {/* DATE */}
+
+                    <div
+                      className="my-writing-meta"
+                    >
+
+                      <span>
+
+                        {t(
+                          "myWritings.updated"
+                        )}
+
+                      </span>
+
+
+                      <strong>
+
+                        {formatDate(
+                          writing.updated_at ||
+                          writing.created_at
+                        )}
+
+                      </strong>
+
+                    </div>
+
+
+                    {/* ACTIONS */}
+
+                    <div
+                      className="my-writing-actions"
+                    >
+
+                      {writing.status ===
+                      "deleted"
+                        ? (
+
+                            <>
+
+                              <button
+                                type="button"
+                                className="primary"
+                                onClick={() =>
+                                  handleRestore(
+                                    writing.id
+                                  )
+                                }
+                                disabled={
+                                  busy
+                                }
+                              >
+
+                                {busy
+                                  ? (
+
+                                      <Loader2
+                                        size={16}
+                                        className="spin"
+                                      />
+
+                                    )
+                                  : (
+
+                                      <RotateCcw
+                                        size={16}
+                                      />
+
+                                    )}
+
+
+                                {t(
+                                  "myWritings.restore"
+                                )}
+
+                              </button>
+
+
+                              <button
+                                type="button"
+                                className="danger"
+                                onClick={() =>
+                                  handlePermanentDelete(
+                                    writing
+                                  )
+                                }
+                                disabled={
+                                  busy
+                                }
+                              >
+
+                                <Trash2
+                                  size={16}
+                                />
+
+                                {t(
+                                  "myWritings.deletePermanently"
+                                )}
+
+                              </button>
+
+                            </>
+
+                          )
+                        : (
+
+                            <>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleEdit(
+                                    writing
+                                  )
+                                }
+                                disabled={
+                                  busy
+                                }
+                              >
+
+                                <Edit3
+                                  size={16}
+                                />
+
+                                {t(
+                                  "myWritings.edit"
+                                )}
+
+                              </button>
+
+
+                              {writing.status ===
+                                "published" && (
+
+                                <Link
+                                  to={
+                                    `/writings/${writing.id}`
+                                  }
+                                >
+
+                                  <Eye
+                                    size={16}
+                                  />
+
+                                  {t(
+                                    "myWritings.view"
+                                  )}
+
+                                </Link>
+
+                              )}
+
+
+                              {writing.status ===
+                                "draft" && (
 
                                 <button
                                   type="button"
                                   className="primary"
                                   onClick={() =>
-                                    handleRestore(
+                                    handlePublish(
+                                      writing.id
+                                    )
+                                  }
+                                  disabled={
+                                    busy
+                                  }
+                                >
+
+                                  {busy
+                                    ? (
+
+                                        <Loader2
+                                          size={16}
+                                          className="spin"
+                                        />
+
+                                      )
+                                    : (
+
+                                        <Send
+                                          size={16}
+                                        />
+
+                                      )}
+
+
+                                  {t(
+                                    "myWritings.publish"
+                                  )}
+
+                                </button>
+
+                              )}
+
+
+                              {writing.status ===
+                                "published" && (
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleUnpublish(
                                       writing.id
                                     )
                                   }
@@ -3127,238 +4000,49 @@ function MyWritings() {
                                       )}
 
 
-                                  {
-                                    t(
-                                      "myWritings.restore"
-                                    )
-                                  }
+                                  {t(
+                                    "myWritings.moveToDraft"
+                                  )}
 
                                 </button>
 
-
-                                {/* PERMANENT DELETE */}
-
-                                <button
-                                  type="button"
-                                  className="danger"
-                                  onClick={() =>
-                                    handlePermanentDelete(
-                                      writing
-                                    )
-                                  }
-                                  disabled={
-                                    busy
-                                  }
-                                >
-
-                                  <Trash2
-                                    size={16}
-                                  />
+                              )}
 
 
-                                  {
-                                    t(
-                                      "myWritings.deletePermanently"
-                                    )
-                                  }
+                              <button
+                                type="button"
+                                className="danger"
+                                onClick={() =>
+                                  openDeleteModal(
+                                    writing
+                                  )
+                                }
+                                disabled={
+                                  busy
+                                }
+                              >
 
-                                </button>
+                                <Trash2
+                                  size={16}
+                                />
 
-                              </>
-
-                            )
-                          : (
-
-                              <>
-
-                                {/* EDIT */}
-
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleEdit(
-                                      writing
-                                    )
-                                  }
-                                  disabled={
-                                    busy
-                                  }
-                                >
-
-                                  <Edit3
-                                    size={16}
-                                  />
-
-
-                                  {
-                                    t(
-                                      "myWritings.edit"
-                                    )
-                                  }
-
-                                </button>
-
-
-                                {/* VIEW */}
-
-                                {writing.status ===
-                                  "published" && (
-
-                                  <Link
-                                    to={
-                                      `/writings/${writing.id}`
-                                    }
-                                  >
-
-                                    <Eye
-                                      size={16}
-                                    />
-
-
-                                    {
-                                      t(
-                                        "myWritings.view"
-                                      )
-                                    }
-
-                                  </Link>
-
+                                {t(
+                                  "myWritings.delete"
                                 )}
 
+                              </button>
 
-                                {/* PUBLISH */}
+                            </>
 
-                                {writing.status ===
-                                  "draft" && (
+                          )}
 
-                                  <button
-                                    type="button"
-                                    className="primary"
-                                    onClick={() =>
-                                      handlePublish(
-                                        writing.id
-                                      )
-                                    }
-                                    disabled={
-                                      busy
-                                    }
-                                  >
+                    </div>
 
-                                    {busy
-                                      ? (
+                  </article>
 
-                                          <Loader2
-                                            size={16}
-                                            className="spin"
-                                          />
-
-                                        )
-                                      : (
-
-                                          <Send
-                                            size={16}
-                                          />
-
-                                        )}
-
-
-                                    {
-                                      t(
-                                        "myWritings.publish"
-                                      )
-                                    }
-
-                                  </button>
-
-                                )}
-
-
-                                {/* UNPUBLISH */}
-
-                                {writing.status ===
-                                  "published" && (
-
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleUnpublish(
-                                        writing.id
-                                      )
-                                    }
-                                    disabled={
-                                      busy
-                                    }
-                                  >
-
-                                    {busy
-                                      ? (
-
-                                          <Loader2
-                                            size={16}
-                                            className="spin"
-                                          />
-
-                                        )
-                                      : (
-
-                                          <RotateCcw
-                                            size={16}
-                                          />
-
-                                        )}
-
-
-                                    {
-                                      t(
-                                        "myWritings.moveToDraft"
-                                      )
-                                    }
-
-                                  </button>
-
-                                )}
-
-
-                                {/* MOVE TO TRASH */}
-
-                                <button
-                                  type="button"
-                                  className="danger"
-                                  onClick={() =>
-                                    openDeleteModal(
-                                      writing
-                                    )
-                                  }
-                                  disabled={
-                                    busy
-                                  }
-                                >
-
-                                  <Trash2
-                                    size={16}
-                                  />
-
-
-                                  {
-                                    t(
-                                      "myWritings.delete"
-                                    )
-                                  }
-
-                                </button>
-
-                              </>
-
-                            )}
-
-                      </div>
-
-                    </article>
-
-                  );
-                }
-              )
-            }
+                );
+              }
+            )}
 
           </section>
 
@@ -3368,7 +4052,7 @@ function MyWritings() {
 
 
       {/* ===================================================
-          DELETE / MOVE TO TRASH MODAL
+          DELETE MODAL
       ==================================================== */}
 
       {deleteTarget && (
@@ -3431,11 +4115,9 @@ function MyWritings() {
               className="delete-modal-eyebrow"
             >
 
-              {
-                t(
-                  "myWritings.deleteEyebrow"
-                )
-              }
+              {t(
+                "myWritings.deleteEyebrow"
+              )}
 
             </p>
 
@@ -3444,11 +4126,9 @@ function MyWritings() {
               id="delete-modal-title"
             >
 
-              {
-                t(
-                  "myWritings.deleteTitle"
-                )
-              }
+              {t(
+                "myWritings.deleteTitle"
+              )}
 
             </h2>
 
@@ -3468,15 +4148,11 @@ function MyWritings() {
 
               </strong>
 
-
               {" "}
 
-
-              {
-                t(
-                  "myWritings.deleteDescription"
-                )
-              }
+              {t(
+                "myWritings.deleteDescription"
+              )}
 
             </p>
 
@@ -3489,23 +4165,18 @@ function MyWritings() {
                 size={14}
               />
 
-
               <span>
 
-                {
-                  getLanguageLabel(
-                    deleteTarget.language ||
-                    "bn"
-                  )
-                }
+                {getLanguageLabel(
+                  deleteTarget.language ||
+                  "bn"
+                )}
 
               </span>
-
 
               <span>
                 •
               </span>
-
 
               <span>
 
@@ -3536,11 +4207,9 @@ function MyWritings() {
                 }
               >
 
-                {
-                  t(
-                    "common.cancel"
-                  )
-                }
+                {t(
+                  "common.cancel"
+                )}
 
               </button>
 

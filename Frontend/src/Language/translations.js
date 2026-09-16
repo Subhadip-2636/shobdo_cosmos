@@ -948,6 +948,10 @@ download: "ডাউনলোড",
         "এই লেখাটি ট্র্যাশে সরানো হবে। পরে চাইলে এটি পুনরুদ্ধার করতে পারবেন।",
       deleting: "ট্র্যাশে পাঠানো হচ্ছে...",
       deleteWriting: "ট্র্যাশে পাঠান",
+      // Bengali
+      creativeUploads: "ডকুমেন্ট ও শিল্পকর্ম",
+      pdfDocuments: "PDF ডকুমেন্ট",
+      artworks: "শিল্পকর্ম",
     },
 
     profile: {
@@ -2202,6 +2206,10 @@ download: "Download",
         "This writing will be moved to Trash. You can restore it later.",
       deleting: "Moving to Trash...",
       deleteWriting: "Move to Trash",
+      // English
+      creativeUploads: "Documents & Artwork",
+      pdfDocuments: "PDF Documents",
+      artworks: "Artwork",
     },
 
     profile: {
@@ -3511,6 +3519,10 @@ download: "डाउनलोड",
         "यह लेखन ट्रैश में भेज दिया जाएगा। आप इसे बाद में पुनर्स्थापित कर सकते हैं।",
       deleting: "ट्रैश में भेजा जा रहा है...",
       deleteWriting: "ट्रैश में भेजें",
+      // Hindi
+      creativeUploads: "दस्तावेज़ और कलाकृति",
+      pdfDocuments: "PDF दस्तावेज़",
+      artworks: "कलाकृति",
     },
 
     profile: {

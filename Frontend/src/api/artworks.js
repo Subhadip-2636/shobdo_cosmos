@@ -20,7 +20,20 @@ const API_URL =
 
 
 // =========================================================
-// RESPONSE HANDLER
+// TOKEN
+// =========================================================
+
+function getArtworkToken() {
+  return (
+    localStorage.getItem(
+      "shobdo_token"
+    ) || ""
+  );
+}
+
+
+// =========================================================
+// RESPONSE PARSER
 // =========================================================
 
 async function parseResponse(
@@ -43,11 +56,23 @@ async function parseResponse(
 
   if (!response.ok) {
 
-    throw new Error(
-      data?.message ||
-      data?.error ||
-      `Artwork request failed with status ${response.status}.`
-    );
+    const error =
+      new Error(
+        data?.message ||
+        data?.error ||
+        `Artwork request failed with status ${response.status}.`
+      );
+
+
+    error.status =
+      response.status;
+
+
+    error.data =
+      data;
+
+
+    throw error;
   }
 
 
@@ -56,7 +81,7 @@ async function parseResponse(
 
 
 // =========================================================
-// GET PUBLIC ARTWORKS
+// PUBLIC ARTWORKS
 //
 // GET /api/artworks
 // =========================================================
@@ -142,7 +167,7 @@ export async function getArtworks({
 
 
 // =========================================================
-// GET ONE PUBLIC ARTWORK
+// SINGLE PUBLIC ARTWORK
 //
 // GET /api/artworks/<id>
 // =========================================================
@@ -177,6 +202,49 @@ export async function getArtwork(
         headers: {
           Accept:
             "application/json",
+        },
+      }
+    );
+
+
+  return parseResponse(
+    response
+  );
+}
+
+
+// =========================================================
+// CURRENT USER ARTWORKS
+//
+// GET /api/artworks/mine
+// =========================================================
+
+export async function getMyArtworks() {
+
+  const token =
+    getArtworkToken();
+
+
+  if (!token) {
+
+    throw new Error(
+      "Please log in to view your artwork."
+    );
+  }
+
+
+  const response =
+    await fetch(
+      `${API_URL}/artworks/mine`,
+      {
+        method: "GET",
+
+        headers: {
+          Accept:
+            "application/json",
+
+          Authorization:
+            `Bearer ${token}`,
         },
       }
     );
