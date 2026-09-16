@@ -54,7 +54,7 @@ import ArtworkCard
 
 
 // =========================================================
-// WRITING CATEGORY VALUES
+// WRITING / DOCUMENT CATEGORY VALUES
 // =========================================================
 
 const WRITING_CATEGORY_VALUES = [
@@ -69,6 +69,13 @@ const WRITING_CATEGORY_VALUES = [
 
 // =========================================================
 // ARTWORK CATEGORY VALUES
+//
+// IMPORTANT:
+//
+// These values stay in English because they are the
+// canonical values stored in the database.
+//
+// Only their DISPLAY LABELS are translated.
 // =========================================================
 
 const ARTWORK_CATEGORY_VALUES = [
@@ -156,6 +163,9 @@ function Explore() {
 
   // =======================================================
   // WRITING FEED
+  //
+  // all
+  // following
   // =======================================================
 
   const [
@@ -322,6 +332,194 @@ function Explore() {
 
 
   // =======================================================
+  // ARTWORK CATEGORY LABEL
+  // =======================================================
+
+  function getArtworkCategoryLabel(
+    value
+  ) {
+
+    const map = {
+
+      "":
+        t(
+          "explore.allCategories",
+          "All Categories"
+        ),
+
+      "Digital Art":
+        t(
+          "explore.digitalArt",
+          "Digital Art"
+        ),
+
+      Painting:
+        t(
+          "explore.painting",
+          "Painting"
+        ),
+
+      Sketch:
+        t(
+          "explore.sketch",
+          "Sketch"
+        ),
+
+      Illustration:
+        t(
+          "explore.illustration",
+          "Illustration"
+        ),
+
+      Photography:
+        t(
+          "explore.photography",
+          "Photography"
+        ),
+
+      Calligraphy:
+        t(
+          "explore.calligraphy",
+          "Calligraphy"
+        ),
+
+      Other:
+        t(
+          "explore.otherArtwork",
+          "Other"
+        ),
+    };
+
+
+    return (
+      map[value] ||
+      value
+    );
+  }
+
+
+  // =======================================================
+  // CATEGORY LABEL
+  // =======================================================
+
+  function getCategoryLabel(
+    value
+  ) {
+
+    if (
+      contentMode ===
+      "artworks"
+    ) {
+
+      return (
+        getArtworkCategoryLabel(
+          value
+        )
+      );
+    }
+
+
+    return (
+      getWritingCategoryLabel(
+        value
+      )
+    );
+  }
+
+
+  // =======================================================
+  // LANGUAGE LABEL
+  // =======================================================
+
+  function getLanguageLabel(
+    code,
+    fallbackItem = null
+  ) {
+
+    const normalized =
+      String(
+        code ||
+        ""
+      )
+        .trim()
+        .toLowerCase();
+
+
+    const map = {
+
+      bn:
+        t(
+          "explore.languageBengali",
+          "Bengali"
+        ),
+
+      en:
+        t(
+          "explore.languageEnglish",
+          "English"
+        ),
+
+      hi:
+        t(
+          "explore.languageHindi",
+          "Hindi"
+        ),
+
+      as:
+        t(
+          "explore.languageAssamese",
+          "Assamese"
+        ),
+
+      or:
+        t(
+          "explore.languageOdia",
+          "Odia"
+        ),
+
+      ta:
+        t(
+          "explore.languageTamil",
+          "Tamil"
+        ),
+
+      te:
+        t(
+          "explore.languageTelugu",
+          "Telugu"
+        ),
+    };
+
+
+    if (
+      map[normalized]
+    ) {
+
+      return (
+        map[normalized]
+      );
+    }
+
+
+    if (
+      fallbackItem
+    ) {
+
+      return (
+        fallbackItem.nativeName ||
+        fallbackItem.name ||
+        normalized.toUpperCase()
+      );
+    }
+
+
+    return (
+      normalized.toUpperCase()
+    );
+  }
+
+
+  // =======================================================
   // CURRENT CATEGORY OPTIONS
   // =======================================================
 
@@ -344,6 +542,7 @@ function Explore() {
       mode ===
       contentMode
     ) {
+
       return;
     }
 
@@ -403,341 +602,434 @@ function Explore() {
   // UPDATE URL
   // =======================================================
 
-  useEffect(() => {
+  useEffect(
+    () => {
 
-    const params =
-      new URLSearchParams();
+      const params =
+        new URLSearchParams();
 
 
-    // -----------------------------------------------------
-    // CONTENT TYPE
-    // -----------------------------------------------------
+      // ===================================================
+      // CONTENT TYPE
+      // ===================================================
 
-    if (
-      contentMode ===
-      "documents"
-    ) {
-
-      params.set(
-        "type",
+      if (
+        contentMode ===
         "documents"
-      );
-    }
+      ) {
+
+        params.set(
+          "type",
+          "documents"
+        );
+      }
 
 
-    if (
-      contentMode ===
-      "artworks"
-    ) {
-
-      params.set(
-        "type",
+      if (
+        contentMode ===
         "artworks"
-      );
-    }
+      ) {
+
+        params.set(
+          "type",
+          "artworks"
+        );
+      }
 
 
-    // -----------------------------------------------------
-    // FOLLOWING
-    // -----------------------------------------------------
+      // ===================================================
+      // FOLLOWING
+      // ===================================================
 
-    if (
-      contentMode ===
-        "writings" &&
-      feedMode ===
-        "following"
-    ) {
+      if (
+        contentMode ===
+          "writings" &&
+        feedMode ===
+          "following"
+      ) {
+
+        setSearchParams(
+          params,
+          {
+            replace:
+              true,
+          }
+        );
+
+
+        return;
+      }
+
+
+      // ===================================================
+      // WRITING SEARCH
+      // ===================================================
+
+      if (
+        contentMode ===
+          "writings" &&
+        submittedSearch
+      ) {
+
+        params.set(
+          "search",
+          submittedSearch
+        );
+      }
+
+
+      // ===================================================
+      // LANGUAGE
+      // ===================================================
+
+      if (
+        language
+      ) {
+
+        params.set(
+          "language",
+          language
+        );
+      }
+
+
+      // ===================================================
+      // CATEGORY
+      // ===================================================
+
+      if (
+        category
+      ) {
+
+        params.set(
+          "category",
+          category
+        );
+      }
+
 
       setSearchParams(
         params,
         {
-          replace: true,
+          replace:
+            true,
         }
       );
 
-
-      return;
-    }
-
-
-    // -----------------------------------------------------
-    // WRITING SEARCH
-    // -----------------------------------------------------
-
-    if (
-      contentMode ===
-        "writings" &&
-      submittedSearch
-    ) {
-
-      params.set(
-        "search",
-        submittedSearch
-      );
-    }
-
-
-    // -----------------------------------------------------
-    // LANGUAGE
-    // -----------------------------------------------------
-
-    if (
-      language
-    ) {
-
-      params.set(
-        "language",
-        language
-      );
-    }
-
-
-    // -----------------------------------------------------
-    // CATEGORY
-    // -----------------------------------------------------
-
-    if (
-      category
-    ) {
-
-      params.set(
-        "category",
-        category
-      );
-    }
-
-
-    setSearchParams(
-      params,
-      {
-        replace: true,
-      }
-    );
-
-  }, [
-    contentMode,
-    feedMode,
-    submittedSearch,
-    language,
-    category,
-    setSearchParams,
-  ]);
+    },
+    [
+      contentMode,
+      feedMode,
+      submittedSearch,
+      language,
+      category,
+      setSearchParams,
+    ]
+  );
 
 
   // =======================================================
   // LOAD CONTENT
   // =======================================================
 
-  useEffect(() => {
+  useEffect(
+    () => {
 
-    let mounted =
-      true;
-
-
-    async function loadContent() {
-
-      setLoading(
-        true
-      );
+      let mounted =
+        true;
 
 
-      setError(
-        ""
-      );
+      async function loadContent() {
+
+        setLoading(
+          true
+        );
 
 
-      try {
+        setError(
+          ""
+        );
 
-        // =================================================
-        // DOCUMENTS
-        // =================================================
 
-        if (
-          contentMode ===
-          "documents"
-        ) {
+        try {
 
-          const data =
-            await getDocuments({
-
-              page,
-
-              limit:
-                12,
-
-              language,
-
-              category,
-            });
-
+          // =================================================
+          // DOCUMENTS
+          // =================================================
 
           if (
-            !mounted
+            contentMode ===
+            "documents"
           ) {
-            return;
-          }
 
+            const data =
+              await getDocuments({
 
-          const items =
-            Array.isArray(
-              data?.documents
-            )
-              ? data.documents
-              : [];
+                page,
 
+                limit:
+                  12,
 
-          setDocuments(
-            items
-          );
+                language,
 
+                category,
+              });
 
-          setWritings(
-            []
-          );
-
-
-          setArtworks(
-            []
-          );
-
-
-          setPagination(
-            data?.pagination ||
-            null
-          );
-
-
-          return;
-        }
-
-
-        // =================================================
-        // ARTWORKS
-        // =================================================
-
-        if (
-          contentMode ===
-          "artworks"
-        ) {
-
-          const data =
-            await getArtworks({
-
-              page,
-
-              limit:
-                12,
-
-              language,
-
-              category,
-            });
-
-
-          if (
-            !mounted
-          ) {
-            return;
-          }
-
-
-          const items =
-            Array.isArray(
-              data?.artworks
-            )
-              ? data.artworks
-              : Array.isArray(
-                  data?.items
-                )
-                ? data.items
-                : Array.isArray(
-                    data?.data?.artworks
-                  )
-                  ? data.data.artworks
-                  : [];
-
-
-          setArtworks(
-            items
-          );
-
-
-          setWritings(
-            []
-          );
-
-
-          setDocuments(
-            []
-          );
-
-
-          setPagination(
-            data?.pagination ||
-            data?.data?.pagination ||
-            null
-          );
-
-
-          return;
-        }
-
-
-        // =================================================
-        // FOLLOWING WRITINGS
-        // =================================================
-
-        if (
-          feedMode ===
-          "following"
-        ) {
-
-          if (
-            !isLoggedIn
-          ) {
 
             if (
-              mounted
+              !mounted
             ) {
 
-              setWritings(
-                []
-              );
-
-
-              setDocuments(
-                []
-              );
-
-
-              setArtworks(
-                []
-              );
-
-
-              setPagination(
-                null
-              );
+              return;
             }
 
 
+            const items =
+              Array.isArray(
+                data?.documents
+              )
+                ? data.documents
+                : [];
+
+
+            setDocuments(
+              items
+            );
+
+
+            setWritings(
+              []
+            );
+
+
+            setArtworks(
+              []
+            );
+
+
+            setPagination(
+              data?.pagination ||
+              null
+            );
+
+
             return;
           }
 
 
+          // =================================================
+          // ARTWORK
+          // =================================================
+
+          if (
+            contentMode ===
+            "artworks"
+          ) {
+
+            const data =
+              await getArtworks({
+
+                page,
+
+                limit:
+                  12,
+
+                language,
+
+                category,
+              });
+
+
+            if (
+              !mounted
+            ) {
+
+              return;
+            }
+
+
+            const items =
+              Array.isArray(
+                data?.artworks
+              )
+                ? data.artworks
+                : Array.isArray(
+                    data?.items
+                  )
+                  ? data.items
+                  : Array.isArray(
+                      data?.data?.artworks
+                    )
+                    ? data.data.artworks
+                    : [];
+
+
+            setArtworks(
+              items
+            );
+
+
+            setWritings(
+              []
+            );
+
+
+            setDocuments(
+              []
+            );
+
+
+            setPagination(
+              data?.pagination ||
+              data?.data?.pagination ||
+              null
+            );
+
+
+            return;
+          }
+
+
+          // =================================================
+          // FOLLOWING WRITINGS
+          // =================================================
+
+          if (
+            feedMode ===
+            "following"
+          ) {
+
+            if (
+              !isLoggedIn
+            ) {
+
+              if (
+                mounted
+              ) {
+
+                setWritings(
+                  []
+                );
+
+
+                setDocuments(
+                  []
+                );
+
+
+                setArtworks(
+                  []
+                );
+
+
+                setPagination(
+                  null
+                );
+              }
+
+
+              return;
+            }
+
+
+            const data =
+              await getFollowingFeed({
+
+                page,
+
+                limit:
+                  12,
+              });
+
+
+            if (
+              !mounted
+            ) {
+
+              return;
+            }
+
+
+            setWritings(
+              Array.isArray(
+                data?.writings
+              )
+                ? data.writings
+                : []
+            );
+
+
+            setDocuments(
+              []
+            );
+
+
+            setArtworks(
+              []
+            );
+
+
+            setPagination({
+
+              page:
+                Number(
+                  data?.page
+                ) ||
+                page,
+
+              pages:
+                Number(
+                  data?.pages
+                ) ||
+                0,
+
+              total:
+                Number(
+                  data?.total
+                ) ||
+                0,
+
+              has_prev:
+                Boolean(
+                  data?.has_prev
+                ),
+
+              has_next:
+                Boolean(
+                  data?.has_next
+                ),
+            });
+
+
+            return;
+          }
+
+
+          // =================================================
+          // ALL WRITINGS
+          // =================================================
+
           const data =
-            await getFollowingFeed({
+            await getWritings({
 
               page,
 
               limit:
                 12,
+
+              search:
+                submittedSearch,
+
+              language,
+
+              category,
             });
 
 
           if (
             !mounted
           ) {
+
             return;
           }
 
@@ -761,171 +1053,94 @@ function Explore() {
           );
 
 
-          setPagination({
-
-            page:
-              Number(
-                data?.page
-              ) || page,
-
-            pages:
-              Number(
-                data?.pages
-              ) || 0,
-
-            total:
-              Number(
-                data?.total
-              ) || 0,
-
-            has_prev:
-              Boolean(
-                data?.has_prev
-              ),
-
-            has_next:
-              Boolean(
-                data?.has_next
-              ),
-          });
-
-
-          return;
-        }
-
-
-        // =================================================
-        // ALL WRITINGS
-        // =================================================
-
-        const data =
-          await getWritings({
-
-            page,
-
-            limit:
-              12,
-
-            search:
-              submittedSearch,
-
-            language,
-
-            category,
-          });
-
-
-        if (
-          !mounted
-        ) {
-          return;
-        }
-
-
-        setWritings(
-          Array.isArray(
-            data?.writings
-          )
-            ? data.writings
-            : []
-        );
-
-
-        setDocuments(
-          []
-        );
-
-
-        setArtworks(
-          []
-        );
-
-
-        setPagination(
-          data?.pagination ||
-          null
-        );
-
-
-      } catch (
-        requestError
-      ) {
-
-        console.error(
-          "EXPLORE ERROR:",
-          requestError
-        );
-
-
-        if (
-          !mounted
-        ) {
-          return;
-        }
-
-
-        setWritings(
-          []
-        );
-
-
-        setDocuments(
-          []
-        );
-
-
-        setArtworks(
-          []
-        );
-
-
-        setPagination(
-          null
-        );
-
-
-        setError(
-          requestError?.message ||
-          t(
-            "explore.loadError",
-            "Unable to load content."
-          )
-        );
-
-
-      } finally {
-
-        if (
-          mounted
-        ) {
-
-          setLoading(
-            false
+          setPagination(
+            data?.pagination ||
+            null
           );
+
+
+        } catch (
+          requestError
+        ) {
+
+          console.error(
+            "EXPLORE ERROR:",
+            requestError
+          );
+
+
+          if (
+            !mounted
+          ) {
+
+            return;
+          }
+
+
+          setWritings(
+            []
+          );
+
+
+          setDocuments(
+            []
+          );
+
+
+          setArtworks(
+            []
+          );
+
+
+          setPagination(
+            null
+          );
+
+
+          setError(
+            requestError?.message ||
+            t(
+              "explore.loadError",
+              "Unable to load content."
+            )
+          );
+
+
+        } finally {
+
+          if (
+            mounted
+          ) {
+
+            setLoading(
+              false
+            );
+          }
         }
       }
-    }
 
 
-    loadContent();
+      loadContent();
 
 
-    return () => {
+      return () => {
 
-      mounted =
-        false;
-    };
+        mounted =
+          false;
+      };
 
-  }, [
-    contentMode,
-    feedMode,
-    page,
-    submittedSearch,
-    language,
-    category,
-    isLoggedIn,
-    t,
-  ]);
+    },
+    [
+      contentMode,
+      feedMode,
+      page,
+      submittedSearch,
+      language,
+      category,
+      isLoggedIn,
+      t,
+    ]
+  );
 
 
   // =======================================================
@@ -940,6 +1155,7 @@ function Explore() {
       mode ===
       feedMode
     ) {
+
       return;
     }
 
@@ -1116,9 +1332,9 @@ function Explore() {
             b
           ) => {
 
-            // ---------------------------------------------
+            // =============================================
             // OLDEST
-            // ---------------------------------------------
+            // =============================================
 
             if (
               sortBy ===
@@ -1141,9 +1357,9 @@ function Explore() {
             }
 
 
-            // ---------------------------------------------
+            // =============================================
             // TITLE
-            // ---------------------------------------------
+            // =============================================
 
             if (
               sortBy ===
@@ -1151,21 +1367,23 @@ function Explore() {
             ) {
 
               return (
-                (
+                String(
                   a.title ||
                   ""
                 )
                   .localeCompare(
-                    b.title ||
-                    ""
+                    String(
+                      b.title ||
+                      ""
+                    )
                   )
               );
             }
 
 
-            // ---------------------------------------------
+            // =============================================
             // LATEST
-            // ---------------------------------------------
+            // =============================================
 
             return (
               new Date(
@@ -1195,12 +1413,11 @@ function Explore() {
 
 
   // =======================================================
-  // FILTER STATUS
+  // ACTIVE FILTERS
   // =======================================================
 
   const hasActiveFilters =
     Boolean(
-
       (
         contentMode ===
           "writings" &&
@@ -1249,7 +1466,7 @@ function Explore() {
 
       return t(
         "explore.documentsFound",
-        "documents found"
+        "PDF documents found"
       );
     }
 
@@ -1281,6 +1498,163 @@ function Explore() {
     return t(
       "explore.writingsFound",
       "writings found"
+    );
+  }
+
+
+  // =======================================================
+  // EMPTY TITLE
+  // =======================================================
+
+  function getEmptyTitle() {
+
+    if (
+      contentMode ===
+      "artworks"
+    ) {
+
+      return t(
+        "explore.noArtwork",
+        "No artwork found"
+      );
+    }
+
+
+    if (
+      contentMode ===
+      "documents"
+    ) {
+
+      return t(
+        "explore.noDocuments",
+        "No PDF documents found"
+      );
+    }
+
+
+    if (
+      feedMode ===
+      "following"
+    ) {
+
+      if (
+        !isLoggedIn
+      ) {
+
+        return t(
+          "explore.signInFollowingTitle",
+          "Sign in required"
+        );
+      }
+
+
+      return t(
+        "explore.followingEmpty",
+        "Following feed is empty"
+      );
+    }
+
+
+    return t(
+      "explore.noResultsTitle",
+      "No writings found"
+    );
+  }
+
+
+  // =======================================================
+  // EMPTY DESCRIPTION
+  // =======================================================
+
+  function getEmptyDescription() {
+
+    if (
+      contentMode ===
+      "artworks"
+    ) {
+
+      return t(
+        "explore.noArtworkDescription",
+        "Published public artwork will appear here."
+      );
+    }
+
+
+    if (
+      contentMode ===
+      "documents"
+    ) {
+
+      return t(
+        "explore.noDocumentsDescription",
+        "Published public PDF documents will appear here."
+      );
+    }
+
+
+    if (
+      feedMode ===
+      "following"
+    ) {
+
+      if (
+        !isLoggedIn
+      ) {
+
+        return t(
+          "explore.signInFollowing",
+          "Sign in to see writings from authors you follow."
+        );
+      }
+
+
+      return t(
+        "explore.followingEmptyDescription",
+        "New writings from authors you follow will appear here."
+      );
+    }
+
+
+    return t(
+      "explore.noResultsDescription",
+      "Try another search term, category or language."
+    );
+  }
+
+
+  // =======================================================
+  // LOADING TEXT
+  // =======================================================
+
+  function getLoadingText() {
+
+    if (
+      contentMode ===
+      "documents"
+    ) {
+
+      return t(
+        "explore.loadingDocuments",
+        "Loading PDF documents..."
+      );
+    }
+
+
+    if (
+      contentMode ===
+      "artworks"
+    ) {
+
+      return t(
+        "explore.loadingArtwork",
+        "Loading artwork..."
+      );
+    }
+
+
+    return t(
+      "explore.loading",
+      "Loading writings..."
     );
   }
 
@@ -1318,12 +1692,10 @@ function Explore() {
 
             <span>
 
-              {
-                t(
-                  "explore.eyebrow",
-                  "DISCOVER"
-                )
-              }
+              {t(
+                "explore.eyebrow",
+                "DISCOVER"
+              )}
 
             </span>
 
@@ -1332,24 +1704,20 @@ function Explore() {
 
           <h1>
 
-            {
-              t(
-                "explore.title",
-                "Explore SHOBDO"
-              )
-            }
+            {t(
+              "explore.title",
+              "Explore SHOBDO"
+            )}
 
           </h1>
 
 
           <p>
 
-            {
-              t(
-                "explore.description",
-                "Discover writings, PDF documents and artwork from the SHOBDO community."
-              )
-            }
+            {t(
+              "explore.description",
+              "Discover writings, PDF documents and artwork from the SHOBDO community."
+            )}
 
           </p>
 
@@ -1395,12 +1763,10 @@ function Explore() {
 
             <span>
 
-              {
-                t(
-                  "explore.writingsTab",
-                  "Writings"
-                )
-              }
+              {t(
+                "explore.writingsTab",
+                "Writings"
+              )}
 
             </span>
 
@@ -1436,12 +1802,10 @@ function Explore() {
 
             <span>
 
-              {
-                t(
-                  "explore.documentsTab",
-                  "PDF Documents"
-                )
-              }
+              {t(
+                "explore.documentsTab",
+                "PDF Documents"
+              )}
 
             </span>
 
@@ -1477,12 +1841,10 @@ function Explore() {
 
             <span>
 
-              {
-                t(
-                  "explore.artworkTab",
-                  "Artwork"
-                )
-              }
+              {t(
+                "explore.artworkTab",
+                "Artwork"
+              )}
 
             </span>
 
@@ -1528,12 +1890,10 @@ function Explore() {
               />
 
 
-              {
-                t(
-                  "explore.allWritings",
-                  "All Writings"
-                )
-              }
+              {t(
+                "explore.allWritings",
+                "All Writings"
+              )}
 
             </button>
 
@@ -1563,12 +1923,10 @@ function Explore() {
               />
 
 
-              {
-                t(
-                  "explore.following",
-                  "Following"
-                )
-              }
+              {t(
+                "explore.following",
+                "Following"
+              )}
 
             </button>
 
@@ -1634,12 +1992,10 @@ function Explore() {
 
             <span>
 
-              {
-                t(
-                  "explore.documentsDescription",
-                  "Browse PDF books, essays, poetry collections and manuscripts published by the SHOBDO community."
-                )
-              }
+              {t(
+                "explore.documentsDescription",
+                "Browse PDF books, essays, poetry collections and manuscripts published by the SHOBDO community."
+              )}
 
             </span>
 
@@ -1666,12 +2022,10 @@ function Explore() {
 
             <span>
 
-              {
-                t(
-                  "explore.artworksDescription",
-                  "Discover paintings, illustrations, photography, sketches and digital artwork from SHOBDO creators."
-                )
-              }
+              {t(
+                "explore.artworksDescription",
+                "Discover paintings, illustrations, photography, sketches and digital artwork from SHOBDO creators."
+              )}
 
             </span>
 
@@ -1716,7 +2070,7 @@ function Explore() {
               placeholder={
                 t(
                   "explore.searchPlaceholder",
-                  "Search poems, stories, topics or writers..."
+                  "Search poems, stories, topics or authors..."
                 )
               }
             />
@@ -1729,6 +2083,12 @@ function Explore() {
                 className="explore-search-clear"
                 onClick={
                   clearSearch
+                }
+                aria-label={
+                  t(
+                    "common.clear",
+                    "Clear"
+                  )
                 }
               >
 
@@ -1746,12 +2106,10 @@ function Explore() {
               className="explore-search-submit"
             >
 
-              {
-                t(
-                  "explore.searchButton",
-                  "Search"
-                )
-              }
+              {t(
+                "explore.searchButton",
+                "Search"
+              )}
 
             </button>
 
@@ -1809,43 +2167,37 @@ function Explore() {
                   value=""
                 >
 
-                  {
-                    t(
-                      "explore.allLanguages",
-                      "All Languages"
-                    )
-                  }
+                  {t(
+                    "explore.allLanguages",
+                    "All Languages"
+                  )}
 
                 </option>
 
 
-                {
-                  LANGUAGES.map(
-                    (
-                      item
-                    ) => (
+                {LANGUAGES.map(
+                  (
+                    item
+                  ) => (
 
-                      <option
-                        key={
-                          item.code
-                        }
-                        value={
-                          item.code
-                        }
-                      >
+                    <option
+                      key={
+                        item.code
+                      }
+                      value={
+                        item.code
+                      }
+                    >
 
-                        {
-                          item.nativeName ===
-                          item.name
-                            ? item.name
-                            : `${item.nativeName} — ${item.name}`
-                        }
+                      {getLanguageLabel(
+                        item.code,
+                        item
+                      )}
 
-                      </option>
+                    </option>
 
-                    )
                   )
-                }
+                )}
 
               </select>
 
@@ -1882,42 +2234,29 @@ function Explore() {
                 }}
               >
 
-                {
-                  categoryOptions.map(
-                    (
-                      item
-                    ) => (
+                {categoryOptions.map(
+                  (
+                    item
+                  ) => (
 
-                      <option
-                        key={
-                          item ||
-                          "all"
-                        }
-                        value={
-                          item
-                        }
-                      >
+                    <option
+                      key={
+                        item ||
+                        "all"
+                      }
+                      value={
+                        item
+                      }
+                    >
 
-                        {
-                          contentMode ===
-                          "artworks"
-                            ? (
-                                item ||
-                                t(
-                                  "explore.allCategories",
-                                  "All Categories"
-                                )
-                              )
-                            : getWritingCategoryLabel(
-                                item
-                              )
-                        }
+                      {getCategoryLabel(
+                        item
+                      )}
 
-                      </option>
+                    </option>
 
-                    )
                   )
-                }
+                )}
 
               </select>
 
@@ -1951,36 +2290,44 @@ function Explore() {
                 <option
                   value="latest"
                 >
+
                   {t(
                     "explore.latest",
                     "Latest"
                   )}
+
                 </option>
 
 
                 <option
                   value="oldest"
                 >
+
                   {t(
                     "explore.oldest",
                     "Oldest First"
                   )}
+
                 </option>
 
 
                 <option
                   value="title"
                 >
+
                   {t(
                     "explore.titleAZ",
                     "Title A-Z"
                   )}
+
                 </option>
 
               </select>
 
             </div>
 
+
+            {/* RESET */}
 
             {hasActiveFilters && (
 
@@ -1996,7 +2343,11 @@ function Explore() {
                   size={15}
                 />
 
-                Clear Filters
+
+                {t(
+                  "explore.clearFilters",
+                  "Clear Filters"
+                )}
 
               </button>
 
@@ -2021,9 +2372,7 @@ function Explore() {
 
             {" "}
 
-            {
-              getResultLabel()
-            }
+            {getResultLabel()}
 
           </span>
 
@@ -2054,10 +2403,10 @@ function Explore() {
               />
 
 
-              {
+              {getLanguageLabel(
+                selectedLanguage.code,
                 selectedLanguage
-                  .nativeName
-              }
+              )}
 
             </span>
 
@@ -2070,7 +2419,9 @@ function Explore() {
               className="explore-active-filter"
             >
 
-              {category}
+              {getCategoryLabel(
+                category
+              )}
 
             </span>
 
@@ -2096,17 +2447,7 @@ function Explore() {
 
 
             <p>
-
-              {
-                contentMode ===
-                "documents"
-                  ? "Loading PDF documents..."
-                  : contentMode ===
-                    "artworks"
-                    ? "Loading artwork..."
-                    : "Loading writings..."
-              }
-
+              {getLoadingText()}
             </p>
 
           </div>
@@ -2149,7 +2490,12 @@ function Explore() {
 
 
             <h2>
-              Unable to load content
+
+              {t(
+                "explore.loadContentError",
+                "Unable to load content"
+              )}
+
             </h2>
 
 
@@ -2165,7 +2511,12 @@ function Explore() {
                   .reload()
               }
             >
-              Try Again
+
+              {t(
+                "explore.retry",
+                "Try Again"
+              )}
+
             </button>
 
           </section>
@@ -2174,7 +2525,7 @@ function Explore() {
 
 
         {/* =================================================
-            EMPTY
+            EMPTY STATE
         ================================================== */}
 
         {!loading &&
@@ -2217,35 +2568,12 @@ function Explore() {
 
 
             <h2>
-
-              {
-                contentMode ===
-                "artworks"
-                  ? "No artwork found"
-                  : contentMode ===
-                    "documents"
-                    ? "No PDF documents found"
-                    : feedMode ===
-                      "following"
-                      ? "Following feed is empty"
-                      : "No writings found"
-              }
-
+              {getEmptyTitle()}
             </h2>
 
 
             <p>
-
-              {
-                contentMode ===
-                "artworks"
-                  ? "Published public artwork will appear here."
-                  : contentMode ===
-                    "documents"
-                    ? "Published public PDF documents will appear here."
-                    : "Try another search term or change your filters."
-              }
-
+              {getEmptyDescription()}
             </p>
 
 
@@ -2257,7 +2585,12 @@ function Explore() {
                   resetFilters
                 }
               >
-                Clear Filters
+
+                {t(
+                  "explore.clearFilters",
+                  "Clear Filters"
+                )}
+
               </button>
 
             )}
@@ -2282,24 +2615,22 @@ function Explore() {
             className="explore-writing-grid"
           >
 
-            {
-              sortedItems.map(
-                (
-                  writing
-                ) => (
+            {sortedItems.map(
+              (
+                writing
+              ) => (
 
-                  <WritingCard
-                    key={
-                      writing.id
-                    }
-                    writing={
-                      writing
-                    }
-                  />
+                <WritingCard
+                  key={
+                    writing.id
+                  }
+                  writing={
+                    writing
+                  }
+                />
 
-                )
               )
-            }
+            )}
 
           </section>
 
@@ -2321,24 +2652,22 @@ function Explore() {
             className="explore-document-grid"
           >
 
-            {
-              sortedItems.map(
-                (
-                  document
-                ) => (
+            {sortedItems.map(
+              (
+                document
+              ) => (
 
-                  <DocumentCard
-                    key={
-                      document.id
-                    }
-                    document={
-                      document
-                    }
-                  />
+                <DocumentCard
+                  key={
+                    document.id
+                  }
+                  document={
+                    document
+                  }
+                />
 
-                )
               )
-            }
+            )}
 
           </section>
 
@@ -2360,24 +2689,22 @@ function Explore() {
             className="explore-artwork-grid"
           >
 
-            {
-              sortedItems.map(
-                (
-                  artwork
-                ) => (
+            {sortedItems.map(
+              (
+                artwork
+              ) => (
 
-                  <ArtworkCard
-                    key={
-                      artwork.id
-                    }
-                    artwork={
-                      artwork
-                    }
-                  />
+                <ArtworkCard
+                  key={
+                    artwork.id
+                  }
+                  artwork={
+                    artwork
+                  }
+                />
 
-                )
               )
-            }
+            )}
 
           </section>
 
@@ -2418,20 +2745,30 @@ function Explore() {
 
 
                 window.scrollTo({
-                  top: 0,
+                  top:
+                    0,
+
                   behavior:
                     "smooth",
                 });
 
               }}
             >
-              Previous
+
+              {t(
+                "explore.previous",
+                "Previous"
+              )}
+
             </button>
 
 
             <span>
 
-              Page
+              {t(
+                "explore.page",
+                "Page"
+              )}
 
               {" "}
 
@@ -2443,7 +2780,10 @@ function Explore() {
 
               {" "}
 
-              of
+              {t(
+                "explore.of",
+                "of"
+              )}
 
               {" "}
 
@@ -2471,14 +2811,21 @@ function Explore() {
 
 
                 window.scrollTo({
-                  top: 0,
+                  top:
+                    0,
+
                   behavior:
                     "smooth",
                 });
 
               }}
             >
-              Next
+
+              {t(
+                "explore.next",
+                "Next"
+              )}
+
             </button>
 
           </nav>
