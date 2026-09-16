@@ -1,502 +1,322 @@
 import {
-  ArrowLeft,
-  BookOpen,
   Database,
   Eye,
-  FileLock2,
-  Mail,
+  LockKeyhole,
   ShieldCheck,
-  UserCheck,
+  UserRoundCheck,
 } from "lucide-react";
 
-import {
-  Link,
-} from "react-router-dom";
+import "./legal.css";
 
-import {
-  useLanguage,
-} from "../Language/LanguageContext";
+
+const SUPPORT_EMAIL =
+  String(
+    import.meta.env.VITE_SUPPORT_EMAIL ||
+    ""
+  ).trim();
 
 
 function Privacy() {
 
-  const {
-    t,
-  } = useLanguage();
-
-
   return (
-    <main className="legal-page">
 
-      {/* =================================================
-          HERO
-      ================================================== */}
+    <main className="legal-page">
 
       <section className="legal-hero">
 
-        <div className="legal-hero-shell">
+        <div className="legal-badge">
 
-          <div className="legal-hero-icon">
-            <ShieldCheck size={34} />
-          </div>
+          <ShieldCheck size={16} />
 
+          SHOBDO Legal
 
-          <div className="legal-hero-copy">
-
-            <span className="legal-eyebrow">
-              {t("privacy.eyebrow")}
-            </span>
+        </div>
 
 
-            <h1>
-              {t("privacy.title")}
-            </h1>
+        <h1>
+          Privacy Policy
+        </h1>
 
 
-            <p>
-              {t("privacy.description")}
-            </p>
+        <p>
+          This Privacy Policy explains how SHOBDO
+          collects, uses and protects information when
+          you use our website, authentication services
+          and community features.
+        </p>
 
 
-            <div className="legal-meta">
-
-              <span>
-                {t("privacy.lastUpdated")}
-              </span>
-
-              <strong>
-                {t("privacy.updatedDate")}
-              </strong>
-
-            </div>
-
-          </div>
-
+        <div className="legal-updated">
+          Last updated: 17 September 2026
         </div>
 
       </section>
 
 
-      {/* =================================================
-          CONTENT
-      ================================================== */}
+      <section className="legal-container">
 
-      <section className="legal-content-section">
+        <article className="legal-card">
 
-        <div className="legal-content-shell">
+          <h2>
+            1. Information we collect
+          </h2>
 
+          <p>
+            Depending on the features you use, SHOBDO
+            may process information such as your name,
+            email address, username, profile information,
+            profile image and account authentication
+            information.
+          </p>
 
-          {/* ===============================================
-              SIDEBAR
-          ================================================ */}
+          <p>
+            When you publish or interact with content,
+            SHOBDO may also store writings, comments,
+            likes, follows, artwork, documents,
+            notifications and related activity.
+          </p>
 
-          <aside className="legal-sidebar">
+        </article>
 
-            <div className="legal-sidebar-box">
 
-              <span>
-                {t("privacy.onThisPage")}
-              </span>
+        <article className="legal-card">
 
+          <div className="legal-icon-title">
 
-              <a href="#information">
-                {t("privacy.informationTitle")}
-              </a>
+            <UserRoundCheck size={20} />
 
-              <a href="#use">
-                {t("privacy.useTitle")}
-              </a>
+            <h2>
+              2. Social sign-in
+            </h2>
 
-              <a href="#writings">
-                {t("privacy.writingsTitle")}
-              </a>
+          </div>
 
-              <a href="#security">
-                {t("privacy.securityTitle")}
-              </a>
+          <p>
+            SHOBDO may allow authentication through
+            third-party identity providers such as
+            Google or Facebook.
+          </p>
 
-              <a href="#choices">
-                {t("privacy.choicesTitle")}
-              </a>
+          <p>
+            When you choose social sign-in, we may
+            receive information made available by that
+            provider, such as your provider-specific
+            account identifier, name, verified email
+            address and profile image.
+          </p>
 
-              <a href="#contact">
-                {t("privacy.contactTitle")}
-              </a>
+          <p>
+            SHOBDO does not require your Google or
+            Facebook password and does not store those
+            passwords.
+          </p>
 
-            </div>
+        </article>
 
-          </aside>
 
+        <article className="legal-card">
 
-          {/* ===============================================
-              ARTICLE
-          ================================================ */}
+          <div className="legal-icon-title">
 
-          <article className="legal-article">
+            <Database size={20} />
 
+            <h2>
+              3. How information is used
+            </h2>
 
-            {/* INTRO */}
+          </div>
 
-            <section className="legal-intro">
+          <p>
+            Information may be used to operate your
+            account, authenticate users, display public
+            profiles, publish content, provide community
+            interactions, deliver notifications, improve
+            security and maintain the SHOBDO service.
+          </p>
 
-              <p>
-                {t("privacy.intro")}
-              </p>
+        </article>
 
-            </section>
 
+        <article className="legal-card">
 
-            {/* =============================================
-                INFORMATION
-            ============================================== */}
+          <div className="legal-icon-title">
 
-            <section
-              id="information"
-              className="legal-section"
-            >
+            <Eye size={20} />
 
-              <div className="legal-section-icon">
-                <Database size={21} />
-              </div>
+            <h2>
+              4. Public information
+            </h2>
 
-              <span className="legal-section-number">
-                01
-              </span>
+          </div>
 
-              <h2>
-                {t("privacy.informationTitle")}
-              </h2>
+          <p>
+            Information you intentionally make public,
+            including published writings, public profile
+            information and other public content, may be
+            visible to other visitors.
+          </p>
 
-              <p>
-                {t("privacy.informationDescription")}
-              </p>
+          <p>
+            Your password hash, authentication tokens
+            and private security credentials are not
+            intentionally displayed as public profile
+            information.
+          </p>
 
-              <ul>
-                <li>
-                  {t("privacy.accountInfo")}
-                </li>
+        </article>
 
-                <li>
-                  {t("privacy.authInfo")}
-                </li>
 
-                <li>
-                  {t("privacy.writingInfo")}
-                </li>
+        <article className="legal-card">
 
-                <li>
-                  {t("privacy.activityInfo")}
-                </li>
+          <div className="legal-icon-title">
 
-                <li>
-                  {t("privacy.technicalInfo")}
-                </li>
-              </ul>
+            <LockKeyhole size={20} />
 
-            </section>
+            <h2>
+              5. Security
+            </h2>
 
+          </div>
 
-            {/* =============================================
-                HOW WE USE INFORMATION
-            ============================================== */}
+          <p>
+            SHOBDO uses reasonable technical measures
+            intended to protect accounts and data,
+            including password hashing and authenticated
+            API access.
+          </p>
 
-            <section
-              id="use"
-              className="legal-section"
-            >
+          <p>
+            No online service can guarantee absolute
+            security, so users should also protect their
+            passwords, devices and account access.
+          </p>
 
-              <div className="legal-section-icon">
-                <Eye size={21} />
-              </div>
+        </article>
 
-              <span className="legal-section-number">
-                02
-              </span>
 
-              <h2>
-                {t("privacy.useTitle")}
-              </h2>
+        <article className="legal-card">
 
-              <p>
-                {t("privacy.useDescription")}
-              </p>
+          <h2>
+            6. Third-party services
+          </h2>
 
-              <ul>
-                <li>
-                  {t("privacy.useAccounts")}
-                </li>
+          <p>
+            SHOBDO may rely on third-party infrastructure
+            and services for authentication, hosting,
+            database storage, media storage and related
+            platform functionality.
+          </p>
 
-                <li>
-                  {t("privacy.usePublishing")}
-                </li>
+          <p>
+            Those providers may process information
+            according to their own applicable policies
+            and agreements.
+          </p>
 
-                <li>
-                  {t("privacy.usePersonalization")}
-                </li>
+        </article>
 
-                <li>
-                  {t("privacy.useSecurity")}
-                </li>
 
-                <li>
-                  {t("privacy.useImprovement")}
-                </li>
-              </ul>
+        <article className="legal-card">
 
-            </section>
+          <h2>
+            7. Data retention and deletion
+          </h2>
 
+          <p>
+            Information may be retained while necessary
+            to operate your account, provide requested
+            features, maintain security and satisfy
+            applicable obligations.
+          </p>
 
-            {/* =============================================
-                WRITINGS
-            ============================================== */}
+          <p>
+            You may request deletion of your SHOBDO
+            account and associated personal information
+            through our Data Deletion page.
+          </p>
 
-            <section
-              id="writings"
-              className="legal-section legal-highlight-section"
-            >
 
-              <div className="legal-section-icon">
-                <BookOpen size={21} />
-              </div>
+          <a
+            className="legal-action"
+            href="/data-deletion"
+          >
+            View Data Deletion Instructions
+          </a>
 
-              <span className="legal-section-number">
-                03
-              </span>
+        </article>
 
-              <h2>
-                {t("privacy.writingsTitle")}
-              </h2>
 
-              <p>
-                {t("privacy.writingsDescription")}
-              </p>
+        <article className="legal-card">
 
+          <h2>
+            8. Children
+          </h2>
 
-              <div className="legal-note">
+          <p>
+            Users must comply with the minimum age
+            requirements applicable to them and to any
+            third-party authentication provider they use.
+          </p>
 
-                <strong>
-                  {t("privacy.originalVoiceTitle")}
-                </strong>
+        </article>
 
-                <p>
-                  {t("privacy.originalVoiceDescription")}
-                </p>
 
-              </div>
+        <article className="legal-card">
 
-            </section>
+          <h2>
+            9. Changes to this policy
+          </h2>
 
+          <p>
+            This Privacy Policy may be updated as SHOBDO
+            develops. Material changes may be reflected
+            by updating the date shown on this page.
+          </p>
 
-            {/* =============================================
-                SECURITY
-            ============================================== */}
+        </article>
 
-            <section
-              id="security"
-              className="legal-section"
-            >
 
-              <div className="legal-section-icon">
-                <FileLock2 size={21} />
-              </div>
+        <article className="legal-card">
 
-              <span className="legal-section-number">
-                04
-              </span>
+          <h2>
+            10. Contact
+          </h2>
 
-              <h2>
-                {t("privacy.securityTitle")}
-              </h2>
 
-              <p>
-                {t("privacy.securityDescription")}
-              </p>
+          {SUPPORT_EMAIL ? (
 
-              <p>
-                {t("privacy.passwordDescription")}
-              </p>
+            <p>
 
-            </section>
+              Privacy questions or requests can be sent
+              to{" "}
 
-
-            {/* =============================================
-                CHOICES
-            ============================================== */}
-
-            <section
-              id="choices"
-              className="legal-section"
-            >
-
-              <div className="legal-section-icon">
-                <UserCheck size={21} />
-              </div>
-
-              <span className="legal-section-number">
-                05
-              </span>
-
-              <h2>
-                {t("privacy.choicesTitle")}
-              </h2>
-
-              <p>
-                {t("privacy.choicesDescription")}
-              </p>
-
-              <ul>
-                <li>
-                  {t("privacy.choiceDraft")}
-                </li>
-
-                <li>
-                  {t("privacy.choiceEdit")}
-                </li>
-
-                <li>
-                  {t("privacy.choiceDelete")}
-                </li>
-
-                <li>
-                  {t("privacy.choiceLanguage")}
-                </li>
-              </ul>
-
-            </section>
-
-
-            {/* =============================================
-                THIRD PARTY
-            ============================================== */}
-
-            <section className="legal-section">
-
-              <span className="legal-section-number">
-                06
-              </span>
-
-              <h2>
-                {t("privacy.thirdPartyTitle")}
-              </h2>
-
-              <p>
-                {t("privacy.thirdPartyDescription")}
-              </p>
-
-            </section>
-
-
-            {/* =============================================
-                CHILDREN
-            ============================================== */}
-
-            <section className="legal-section">
-
-              <span className="legal-section-number">
-                07
-              </span>
-
-              <h2>
-                {t("privacy.childrenTitle")}
-              </h2>
-
-              <p>
-                {t("privacy.childrenDescription")}
-              </p>
-
-            </section>
-
-
-            {/* =============================================
-                CHANGES
-            ============================================== */}
-
-            <section className="legal-section">
-
-              <span className="legal-section-number">
-                08
-              </span>
-
-              <h2>
-                {t("privacy.changesTitle")}
-              </h2>
-
-              <p>
-                {t("privacy.changesDescription")}
-              </p>
-
-            </section>
-
-
-            {/* =============================================
-                CONTACT
-            ============================================== */}
-
-            <section
-              id="contact"
-              className="legal-section legal-contact-section"
-            >
-
-              <div className="legal-section-icon">
-                <Mail size={21} />
-              </div>
-
-              <span className="legal-section-number">
-                09
-              </span>
-
-              <h2>
-                {t("privacy.contactTitle")}
-              </h2>
-
-              <p>
-                {t("privacy.contactDescription")}
-              </p>
-
-            </section>
-
-
-            {/* =============================================
-                BOTTOM NAVIGATION
-            ============================================== */}
-
-            <div className="legal-bottom-navigation">
-
-              <Link
-                to="/"
-                className="legal-back-link"
+              <a
+                href={
+                  `mailto:${SUPPORT_EMAIL}`
+                }
               >
+                {SUPPORT_EMAIL}
+              </a>.
 
-                <ArrowLeft size={16} />
+            </p>
 
-                {t("privacy.backHome")}
+          ) : (
 
-              </Link>
+            <p>
+              Privacy and data requests can be submitted
+              through the official SHOBDO contact
+              channel. A dedicated support email can
+              also be configured for this website.
+            </p>
 
+          )}
 
-              <Link
-                to="/terms"
-                className="legal-next-link"
-              >
-
-                {t("privacy.readTerms")}
-
-                <ArrowLeft
-                  size={16}
-                  className="legal-arrow-forward"
-                />
-
-              </Link>
-
-            </div>
-
-          </article>
-
-        </div>
+        </article>
 
       </section>
 
     </main>
+
   );
 
 }

@@ -57,6 +57,7 @@ import ResetPassword from "./pages/ResetPassword";
 import About from "./pages/About";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import DataDeletion from "./pages/DataDeletion";
 
 
 // =========================================================
@@ -95,10 +96,6 @@ function PrivateRoute({
   children,
 }) {
 
-  // -------------------------------------------------------
-  // WAIT FOR AUTH CHECK
-  // -------------------------------------------------------
-
   if (authLoading) {
 
     return (
@@ -109,10 +106,6 @@ function PrivateRoute({
 
   }
 
-
-  // -------------------------------------------------------
-  // NOT LOGGED IN
-  // -------------------------------------------------------
 
   if (!user) {
 
@@ -126,10 +119,6 @@ function PrivateRoute({
   }
 
 
-  // -------------------------------------------------------
-  // AUTHENTICATED
-  // -------------------------------------------------------
-
   return children;
 
 }
@@ -141,14 +130,15 @@ function PrivateRoute({
 
 function App() {
 
-  // =====================================================
+  // =======================================================
   // AUTH STATE
-  // =====================================================
+  // =======================================================
 
   const [
     user,
     setUser,
   ] = useState(null);
+
 
   const [
     authLoading,
@@ -156,14 +146,15 @@ function App() {
   ] = useState(true);
 
 
-  // =====================================================
+  // =======================================================
   // WRITINGS STATE
-  // =====================================================
+  // =======================================================
 
   const [
     writings,
     setWritings,
   ] = useState([]);
+
 
   const [
     writingsLoading,
@@ -171,9 +162,9 @@ function App() {
   ] = useState(true);
 
 
-  // =====================================================
+  // =======================================================
   // REAL-TIME NOTIFICATION STATE
-  // =====================================================
+  // =======================================================
 
   const [
     realtimeNotification,
@@ -181,9 +172,9 @@ function App() {
   ] = useState(null);
 
 
-  // =====================================================
+  // =======================================================
   // LOAD CURRENT USER
-  // =====================================================
+  // =======================================================
 
   const loadCurrentUser =
     useCallback(
@@ -202,6 +193,7 @@ function App() {
 
           return currentUser;
 
+
         } catch (error) {
 
           console.error(
@@ -217,6 +209,7 @@ function App() {
 
           return null;
 
+
         } finally {
 
           setAuthLoading(
@@ -230,9 +223,9 @@ function App() {
     );
 
 
-  // =====================================================
-  // LOAD PUBLIC WRITINGS
-  // =====================================================
+  // =======================================================
+  // LOAD WRITINGS
+  // =======================================================
 
   const loadWritings =
     useCallback(
@@ -260,6 +253,7 @@ function App() {
               : []
           );
 
+
         } catch (error) {
 
           console.error(
@@ -271,6 +265,7 @@ function App() {
           setWritings(
             []
           );
+
 
         } finally {
 
@@ -285,340 +280,292 @@ function App() {
     );
 
 
-  // =====================================================
+  // =======================================================
   // INITIAL LOAD
-  // =====================================================
+  // =======================================================
 
-  useEffect(() => {
+  useEffect(
+    () => {
 
-    loadCurrentUser();
+      loadCurrentUser();
 
-    loadWritings();
+      loadWritings();
 
-  }, [
-    loadCurrentUser,
-    loadWritings,
-  ]);
+    },
+    [
+      loadCurrentUser,
+      loadWritings,
+    ]
+  );
 
 
-  // =====================================================
+  // =======================================================
   // SOCKET.IO CONNECTION
-  // =====================================================
+  // =======================================================
 
-  useEffect(() => {
+  useEffect(
+    () => {
 
-    // ---------------------------------------------------
-    // WAIT UNTIL AUTH CHECK IS FINISHED
-    // ---------------------------------------------------
+      if (authLoading) {
 
-    if (authLoading) {
+        return undefined;
 
-      return undefined;
-
-    }
+      }
 
 
-    // ---------------------------------------------------
-    // LOGGED OUT
-    // ---------------------------------------------------
+      if (!user) {
 
-    if (!user) {
+        disconnectSocket();
 
-      disconnectSocket();
+        setRealtimeNotification(
+          null
+        );
 
-      setRealtimeNotification(
-        null
-      );
+        return undefined;
 
-      return undefined;
-
-    }
+      }
 
 
-    // ---------------------------------------------------
-    // CONNECT
-    // ---------------------------------------------------
-
-    const socket =
-      connectSocket();
+      const socket =
+        connectSocket();
 
 
-    if (!socket) {
+      if (!socket) {
 
-      console.warn(
-        "SHOBDO SOCKET: No socket created."
-      );
+        console.warn(
+          "SHOBDO SOCKET: No socket created."
+        );
 
-      return undefined;
+        return undefined;
 
-    }
-
-
-    // ---------------------------------------------------
-    // CONNECTED
-    // ---------------------------------------------------
-
-    function handleConnect() {
-
-      console.log(
-        "SHOBDO SOCKET CONNECTED:",
-        socket.id
-      );
-
-    }
+      }
 
 
-    // ---------------------------------------------------
-    // PRIVATE ROOM READY
-    // ---------------------------------------------------
+      function handleConnect() {
 
-    function handleSocketReady(
-      data
-    ) {
+        console.log(
+          "SHOBDO SOCKET CONNECTED:",
+          socket.id
+        );
 
-      console.log(
-        "SHOBDO SOCKET READY:",
+      }
+
+
+      function handleSocketReady(
         data
-      );
+      ) {
 
-    }
+        console.log(
+          "SHOBDO SOCKET READY:",
+          data
+        );
 
-
-    // ---------------------------------------------------
-    // CONNECTION ERROR
-    // ---------------------------------------------------
-
-    function handleConnectError(
-      error
-    ) {
-
-      console.error(
-        "SHOBDO SOCKET CONNECTION ERROR:",
-        error?.message || error
-      );
-
-    }
+      }
 
 
-    // ---------------------------------------------------
-    // DISCONNECTED
-    // ---------------------------------------------------
+      function handleConnectError(
+        error
+      ) {
 
-    function handleDisconnect(
-      reason
-    ) {
+        console.error(
+          "SHOBDO SOCKET CONNECTION ERROR:",
+          error?.message ||
+          error
+        );
 
-      console.log(
-        "SHOBDO SOCKET DISCONNECTED:",
+      }
+
+
+      function handleDisconnect(
         reason
-      );
+      ) {
 
-    }
+        console.log(
+          "SHOBDO SOCKET DISCONNECTED:",
+          reason
+        );
+
+      }
 
 
-    // ---------------------------------------------------
-    // NEW REAL-TIME NOTIFICATION
-    // ---------------------------------------------------
-
-    function handleNewNotification(
-      notification
-    ) {
-
-      console.log(
-        "SHOBDO NEW NOTIFICATION:",
+      function handleNewNotification(
         notification
-      );
+      ) {
+
+        console.log(
+          "SHOBDO NEW NOTIFICATION:",
+          notification
+        );
 
 
-      // -------------------------------------------------
-      // SHOW TOAST
-      // -------------------------------------------------
-
-      setRealtimeNotification(
-        notification
-      );
+        setRealtimeNotification(
+          notification
+        );
 
 
-      // -------------------------------------------------
-      // INFORM NAVBAR + NOTIFICATION PAGE
-      // -------------------------------------------------
+        window.dispatchEvent(
+          new CustomEvent(
+            "shobdo:notifications-changed",
+            {
+              detail:
+                notification,
+            }
+          )
+        );
 
-      window.dispatchEvent(
-        new CustomEvent(
-          "shobdo:notifications-changed",
-          {
-            detail:
-              notification,
-          }
-        )
-      );
-
-    }
+      }
 
 
-    // ---------------------------------------------------
-    // TEST PONG
-    // ---------------------------------------------------
-
-    function handleSocketPong(
-      data
-    ) {
-
-      console.log(
-        "SHOBDO SOCKET PONG:",
+      function handleSocketPong(
         data
-      );
+      ) {
 
-    }
+        console.log(
+          "SHOBDO SOCKET PONG:",
+          data
+        );
 
-
-    // ---------------------------------------------------
-    // REGISTER LISTENERS
-    // ---------------------------------------------------
-
-    socket.on(
-      "connect",
-      handleConnect
-    );
+      }
 
 
-    socket.on(
-      "socket:ready",
-      handleSocketReady
-    );
-
-
-    socket.on(
-      "connect_error",
-      handleConnectError
-    );
-
-
-    socket.on(
-      "disconnect",
-      handleDisconnect
-    );
-
-
-    socket.on(
-      "notification:new",
-      handleNewNotification
-    );
-
-
-    socket.on(
-      "socket:pong",
-      handleSocketPong
-    );
-
-
-    // ---------------------------------------------------
-    // HANDLE ALREADY CONNECTED SOCKET
-    // ---------------------------------------------------
-
-    if (
-      socket.connected
-    ) {
-
-      console.log(
-        "SHOBDO SOCKET ALREADY CONNECTED:",
-        socket.id
-      );
-
-    }
-
-
-    // ---------------------------------------------------
-    // CLEANUP LISTENERS
-    // ---------------------------------------------------
-
-    return () => {
-
-      socket.off(
+      socket.on(
         "connect",
         handleConnect
       );
 
 
-      socket.off(
+      socket.on(
         "socket:ready",
         handleSocketReady
       );
 
 
-      socket.off(
+      socket.on(
         "connect_error",
         handleConnectError
       );
 
 
-      socket.off(
+      socket.on(
         "disconnect",
         handleDisconnect
       );
 
 
-      socket.off(
+      socket.on(
         "notification:new",
         handleNewNotification
       );
 
 
-      socket.off(
+      socket.on(
         "socket:pong",
         handleSocketPong
       );
 
-    };
 
-  }, [
-    user?.id,
-    authLoading,
-  ]);
+      if (socket.connected) {
 
+        console.log(
+          "SHOBDO SOCKET ALREADY CONNECTED:",
+          socket.id
+        );
 
-  // =====================================================
-  // AUTO-HIDE REAL-TIME NOTIFICATION TOAST
-  // =====================================================
-
-  useEffect(() => {
-
-    if (!realtimeNotification) {
-
-      return undefined;
-
-    }
+      }
 
 
-    const timer =
-      window.setTimeout(
-        () => {
+      return () => {
 
-          setRealtimeNotification(
-            null
-          );
-
-        },
-        5000
-      );
+        socket.off(
+          "connect",
+          handleConnect
+        );
 
 
-    return () => {
-
-      window.clearTimeout(
-        timer
-      );
-
-    };
-
-  }, [
-    realtimeNotification,
-  ]);
+        socket.off(
+          "socket:ready",
+          handleSocketReady
+        );
 
 
-  // =====================================================
-  // AUTH CALLBACK
-  // =====================================================
+        socket.off(
+          "connect_error",
+          handleConnectError
+        );
+
+
+        socket.off(
+          "disconnect",
+          handleDisconnect
+        );
+
+
+        socket.off(
+          "notification:new",
+          handleNewNotification
+        );
+
+
+        socket.off(
+          "socket:pong",
+          handleSocketPong
+        );
+
+      };
+
+    },
+    [
+      user?.id,
+      authLoading,
+    ]
+  );
+
+
+  // =======================================================
+  // AUTO-HIDE NOTIFICATION
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      if (!realtimeNotification) {
+
+        return undefined;
+
+      }
+
+
+      const timer =
+        window.setTimeout(
+          () => {
+
+            setRealtimeNotification(
+              null
+            );
+
+          },
+          5000
+        );
+
+
+      return () => {
+
+        window.clearTimeout(
+          timer
+        );
+
+      };
+
+    },
+    [
+      realtimeNotification,
+    ]
+  );
+
+
+  // =======================================================
+  // AUTH SUCCESS
+  // =======================================================
 
   async function handleAuthSuccess() {
 
@@ -627,9 +574,9 @@ function App() {
   }
 
 
-  // =====================================================
-  // WRITING CREATED / UPDATED
-  // =====================================================
+  // =======================================================
+  // WRITING CHANGED
+  // =======================================================
 
   async function handleWritingChanged() {
 
@@ -638,9 +585,9 @@ function App() {
   }
 
 
-  // =====================================================
+  // =======================================================
   // UI
-  // =====================================================
+  // =======================================================
 
   return (
 
@@ -649,30 +596,23 @@ function App() {
       <ScrollToTop />
 
 
-      {/* =============================================
-          REAL-TIME NOTIFICATION TOAST
-      ============================================== */}
-
       <NotificationToast
         notification={
           realtimeNotification
         }
-        onClose={() => {
+        onClose={
+          () => {
 
-          setRealtimeNotification(
-            null
-          );
+            setRealtimeNotification(
+              null
+            );
 
-        }}
+          }
+        }
       />
 
 
       <div className="app-shell">
-
-
-        {/* =============================================
-            NAVBAR
-        ============================================== */}
 
         <Navbar
           user={
@@ -683,10 +623,6 @@ function App() {
           }
         />
 
-
-        {/* =============================================
-            PAGE CONTENT
-        ============================================== */}
 
         <div className="app-content">
 
@@ -700,7 +636,6 @@ function App() {
             <Route
               path="/"
               element={
-
                 <Home
                   writings={
                     writings
@@ -709,7 +644,6 @@ function App() {
                     writingsLoading
                   }
                 />
-
               }
             />
 
@@ -745,26 +679,20 @@ function App() {
             <Route
               path="/login"
               element={
-
                 user
                   ? (
-
                     <Navigate
                       to="/"
                       replace
                     />
-
                   )
                   : (
-
                     <Login
                       onLogin={
                         handleAuthSuccess
                       }
                     />
-
                   )
-
               }
             />
 
@@ -772,26 +700,20 @@ function App() {
             <Route
               path="/register"
               element={
-
                 user
                   ? (
-
                     <Navigate
                       to="/"
                       replace
                     />
-
                   )
                   : (
-
                     <Register
                       onRegister={
                         handleAuthSuccess
                       }
                     />
-
                   )
-
               }
             />
 
@@ -819,7 +741,6 @@ function App() {
             <Route
               path="/write"
               element={
-
                 <PrivateRoute
                   user={
                     user
@@ -839,7 +760,6 @@ function App() {
                   />
 
                 </PrivateRoute>
-
               }
             />
 
@@ -851,7 +771,6 @@ function App() {
             <Route
               path="/write/:id"
               element={
-
                 <PrivateRoute
                   user={
                     user
@@ -871,7 +790,6 @@ function App() {
                   />
 
                 </PrivateRoute>
-
               }
             />
 
@@ -883,7 +801,6 @@ function App() {
             <Route
               path="/my-writings"
               element={
-
                 <PrivateRoute
                   user={
                     user
@@ -896,7 +813,6 @@ function App() {
                   <MyWritings />
 
                 </PrivateRoute>
-
               }
             />
 
@@ -908,7 +824,6 @@ function App() {
             <Route
               path="/notifications"
               element={
-
                 <PrivateRoute
                   user={
                     user
@@ -921,7 +836,6 @@ function App() {
                   <Notifications />
 
                 </PrivateRoute>
-
               }
             />
 
@@ -933,7 +847,6 @@ function App() {
             <Route
               path="/profile/edit"
               element={
-
                 <PrivateRoute
                   user={
                     user
@@ -953,7 +866,6 @@ function App() {
                   />
 
                 </PrivateRoute>
-
               }
             />
 
@@ -986,6 +898,14 @@ function App() {
             />
 
 
+            <Route
+              path="/data-deletion"
+              element={
+                <DataDeletion />
+              }
+            />
+
+
             {/* =========================================
                 404
             ========================================== */}
@@ -993,27 +913,19 @@ function App() {
             <Route
               path="*"
               element={
-
                 <Navigate
                   to="/"
                   replace
                 />
-
               }
             />
-
 
           </Routes>
 
         </div>
 
 
-        {/* =============================================
-            FOOTER
-        ============================================== */}
-
         <Footer />
-
 
       </div>
 

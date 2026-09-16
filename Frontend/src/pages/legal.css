@@ -1,0 +1,296 @@
+/* =========================================================
+   SHOBDO LEGAL PAGES
+========================================================= */
+
+.legal-page {
+  min-height: 100vh;
+  background:
+    linear-gradient(
+      180deg,
+      #faf8f4 0%,
+      #ffffff 460px
+    );
+  color: #211f1c;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.legal-hero {
+  width: min(920px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 72px 0 46px;
+  text-align: center;
+}
+
+
+.legal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-bottom: 18px;
+  padding: 8px 13px;
+
+  border: 1px solid #ddd5e6;
+  border-radius: 999px;
+
+  background: #ffffff;
+
+  color: #5a267d;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+
+.legal-hero h1 {
+  margin: 0;
+
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+
+  font-size: clamp(
+    2.2rem,
+    6vw,
+    4rem
+  );
+
+  line-height: 1.08;
+  color: #1c181d;
+}
+
+
+.legal-hero > p {
+  max-width: 720px;
+
+  margin:
+    22px auto
+    0;
+
+  color: #69625c;
+
+  font-size: 1.04rem;
+  line-height: 1.8;
+}
+
+
+.legal-updated {
+  margin-top: 17px;
+
+  color: #958d84;
+
+  font-size: 0.78rem;
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.legal-container {
+  width: min(
+    860px,
+    calc(100% - 32px)
+  );
+
+  margin: 0 auto;
+
+  padding-bottom: 90px;
+}
+
+
+/* =========================================================
+   CARD
+========================================================= */
+
+.legal-card {
+  margin-bottom: 18px;
+
+  padding: 30px 32px;
+
+  border:
+    1px solid
+    #ebe6df;
+
+  border-radius: 18px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.96
+    );
+
+  box-shadow:
+    0 8px 30px
+    rgba(
+      36,
+      25,
+      17,
+      0.04
+    );
+}
+
+
+.legal-card h2 {
+  margin:
+    0 0
+    14px;
+
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+
+  font-size: 1.35rem;
+  color: #282321;
+}
+
+
+.legal-card p {
+  margin:
+    0 0
+    14px;
+
+  color: #69615b;
+
+  font-size: 0.96rem;
+  line-height: 1.8;
+}
+
+
+.legal-card p:last-child {
+  margin-bottom: 0;
+}
+
+
+.legal-card a:not(
+  .legal-action
+) {
+  color: #5d267f;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   ICON TITLE
+========================================================= */
+
+.legal-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-bottom: 14px;
+
+  color: #5d267f;
+}
+
+
+.legal-icon-title h2 {
+  margin: 0;
+}
+
+
+/* =========================================================
+   ACTION
+========================================================= */
+
+.legal-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  margin-top: 7px;
+
+  padding:
+    11px
+    17px;
+
+  border-radius: 10px;
+
+  background: #282426;
+
+  color: #ffffff;
+
+  text-decoration: none;
+
+  font-size: 0.88rem;
+  font-weight: 700;
+
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+
+.legal-action:hover {
+  transform:
+    translateY(-1px);
+
+  opacity: 0.92;
+}
+
+
+.legal-danger-action {
+  background: #6e2730;
+}
+
+
+/* =========================================================
+   NOTICE
+========================================================= */
+
+.legal-notice {
+  margin-top: 16px;
+
+  padding:
+    14px
+    16px;
+
+  border:
+    1px solid
+    #eadfbd;
+
+  border-radius: 10px;
+
+  background: #fffaf0;
+
+  color: #74613b;
+
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+  max-width: 640px
+) {
+
+  .legal-hero {
+    padding-top: 48px;
+  }
+
+
+  .legal-card {
+    padding: 23px 20px;
+    border-radius: 14px;
+  }
+
+
+  .legal-action {
+    width: 100%;
+  }
+
+}
