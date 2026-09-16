@@ -1,40 +1,282 @@
-const API_URL = (
-  import.meta.env.VITE_API_URL ||
-  "http://127.0.0.1:5000"
-).replace(/\/+$/, "") + "/api";
+// =========================================================
+// SHOBDO AUTHENTICATION API
+// =========================================================
+//
+// Supports:
+//
+// - Email/password registration
+// - Email/password login
+// - Google Sign-In
+// - Current authenticated user
+// - Logout
+// - Forgot password
+// - Password-reset token validation
+// - Password reset
+// - JWT token storage
+//
+// =========================================================
 
+
+// =========================================================
+// ENVIRONMENT
+// =========================================================
+
+const RAW_API_URL =
+  (
+    import.meta.env.VITE_API_URL ||
+    "http://127.0.0.1:5000"
+  )
+    .trim()
+    .replace(/\/+$/, "");
+
+
+// =========================================================
+// API URL NORMALIZATION
+// =========================================================
+//
+// Supports either:
+//
+// VITE_API_URL=http://127.0.0.1:5000
+//
+// OR:
+//
+// VITE_API_URL=http://127.0.0.1:5000/api
+//
+// without accidentally producing:
+//
+// /api/api
+//
+// =========================================================
+
+const API_URL =
+  RAW_API_URL.endsWith("/api")
+    ? RAW_API_URL
+    : `${RAW_API_URL}/api`;
+
+
+// =========================================================
+// GOOGLE CLIENT ID
+// =========================================================
+//
+// This value is public configuration for Google Identity
+// Services. It is NOT the Google Client Secret.
+//
+// Frontend/.env:
+//
+// VITE_GOOGLE_CLIENT_ID=xxxxx.apps.googleusercontent.com
+//
+// =========================================================
+
+export const GOOGLE_CLIENT_ID =
+  String(
+    import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+    ""
+  ).trim();
+
+
+// =========================================================
+// TOKEN CONFIGURATION
+// =========================================================
 
 const TOKEN_KEY =
   "shobdo_token";
 
 
 // =========================================================
-// TOKEN HELPERS
+// STORAGE AVAILABILITY
+// =========================================================
+
+function canUseLocalStorage() {
+
+  return (
+    typeof window !== "undefined" &&
+    typeof window.localStorage !== "undefined"
+  );
+
+}
+
+
+// =========================================================
+// GET STORED TOKEN
 // =========================================================
 
 function getStoredToken() {
-  return localStorage.getItem(
-    TOKEN_KEY
-  );
+
+  if (!canUseLocalStorage()) {
+
+    return null;
+
+  }
+
+
+  try {
+
+    return (
+      localStorage.getItem(
+        TOKEN_KEY
+      )
+    );
+
+  } catch {
+
+    return null;
+
+  }
+
 }
 
+
+// =========================================================
+// STORE TOKEN
+// =========================================================
 
 function storeToken(
   token
 ) {
-  if (token) {
+
+  if (
+    !token ||
+    !canUseLocalStorage()
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
     localStorage.setItem(
       TOKEN_KEY,
-      token
+      String(token)
     );
+
+  } catch {
+
+    // Local storage may be unavailable in privacy mode.
+    // Authentication response is still returned to caller.
+
   }
+
 }
 
 
+// =========================================================
+// REMOVE TOKEN
+// =========================================================
+
 function removeStoredToken() {
-  localStorage.removeItem(
-    TOKEN_KEY
+
+  if (!canUseLocalStorage()) {
+
+    return;
+
+  }
+
+
+  try {
+
+    localStorage.removeItem(
+      TOKEN_KEY
+    );
+
+  } catch {
+
+    // Ignore local-storage cleanup errors.
+
+  }
+
+}
+
+
+// =========================================================
+// EXTRACT TOKEN
+// =========================================================
+
+function extractAccessToken(
+  data
+) {
+
+  if (
+    !data ||
+    typeof data !== "object"
+  ) {
+
+    return null;
+
+  }
+
+
+  return (
+    data.access_token ||
+    data.token ||
+    null
   );
+
+}
+
+
+// =========================================================
+// CREATE API ERROR
+// =========================================================
+
+function createApiError({
+  response,
+  data,
+}) {
+
+  const message =
+    data?.message ||
+    data?.error ||
+    (
+      response.status >= 500
+        ? "The server could not complete the request."
+        : "Something went wrong. Please try again."
+    );
+
+
+  const error =
+    new Error(
+      message
+    );
+
+
+  // -------------------------------------------------------
+  // HTTP information
+  // -------------------------------------------------------
+
+  error.status =
+    response.status;
+
+  error.statusText =
+    response.statusText;
+
+
+  // -------------------------------------------------------
+  // Backend application error code
+  // -------------------------------------------------------
+  //
+  // Example:
+  //
+  // account_link_required
+  // google_account_conflict
+  //
+  // -------------------------------------------------------
+
+  error.code =
+    data?.code ||
+    null;
+
+
+  // Entire backend response, useful to calling components.
+
+  error.data =
+    data ||
+    {};
+
+
+  return error;
+
 }
 
 
@@ -48,29 +290,81 @@ async function parseResponse(
 
   let data = {};
 
-  try {
 
-    data =
-      await response.json();
+  // -------------------------------------------------------
+  // READ BODY
+  // -------------------------------------------------------
 
-  } catch {
+  const responseText =
+    await response.text();
 
-    data = {};
+
+  if (responseText) {
+
+    try {
+
+      data =
+        JSON.parse(
+          responseText
+        );
+
+    } catch {
+
+      data = {
+        message:
+          responseText,
+      };
+
+    }
 
   }
 
 
+  // -------------------------------------------------------
+  // ERROR RESPONSE
+  // -------------------------------------------------------
+
   if (!response.ok) {
 
-    throw new Error(
-      data.message ||
-      "Something went wrong. Please try again."
-    );
+    throw createApiError({
+      response,
+      data,
+    });
 
   }
 
 
   return data;
+
+}
+
+
+// =========================================================
+// NETWORK ERROR
+// =========================================================
+
+function createNetworkError(
+  originalError
+) {
+
+  const error =
+    new Error(
+      "Unable to connect to SHOBDO. Please check your internet connection and try again."
+    );
+
+
+  error.code =
+    "network_error";
+
+  error.status =
+    0;
+
+  error.originalError =
+    originalError;
+
+
+  return error;
+
 }
 
 
@@ -83,6 +377,14 @@ async function authRequest(
   options = {}
 ) {
 
+  const {
+    includeAuth = true,
+    headers:
+      customHeaders = {},
+    ...fetchOptions
+  } = options;
+
+
   const token =
     getStoredToken();
 
@@ -91,11 +393,18 @@ async function authRequest(
     "Content-Type":
       "application/json",
 
-    ...(options.headers || {}),
+    ...customHeaders,
   };
 
 
-  if (token) {
+  // -------------------------------------------------------
+  // JWT
+  // -------------------------------------------------------
+
+  if (
+    includeAuth &&
+    token
+  ) {
 
     headers.Authorization =
       `Bearer ${token}`;
@@ -103,19 +412,69 @@ async function authRequest(
   }
 
 
-  const response =
-    await fetch(
-      `${API_URL}${endpoint}`,
-      {
-        ...options,
-        headers,
-      }
+  try {
+
+    const response =
+      await fetch(
+        `${API_URL}${endpoint}`,
+        {
+          ...fetchOptions,
+          headers,
+        }
+      );
+
+
+    return await parseResponse(
+      response
+    );
+
+  } catch (error) {
+
+    // API-generated error.
+    if (
+      error?.status !== undefined
+    ) {
+
+      throw error;
+
+    }
+
+
+    // Browser/network fetch error.
+    throw createNetworkError(
+      error
+    );
+
+  }
+
+}
+
+
+// =========================================================
+// SAVE AUTH RESPONSE
+// =========================================================
+
+function saveAuthenticationResponse(
+  data
+) {
+
+  const token =
+    extractAccessToken(
+      data
     );
 
 
-  return parseResponse(
-    response
-  );
+  if (token) {
+
+    storeToken(
+      token
+    );
+
+  }
+
+
+  return data;
+
 }
 
 
@@ -132,13 +491,15 @@ export async function registerUser({
 
   const cleanName =
     String(
-      name || ""
+      name ||
+      ""
     ).trim();
 
 
   const cleanEmail =
     String(
-      email || ""
+      email ||
+      ""
     )
       .trim()
       .toLowerCase();
@@ -146,7 +507,8 @@ export async function registerUser({
 
   const cleanPassword =
     String(
-      password || ""
+      password ||
+      ""
     );
 
 
@@ -162,7 +524,11 @@ export async function registerUser({
     await authRequest(
       "/auth/register",
       {
-        method: "POST",
+        method:
+          "POST",
+
+        includeAuth:
+          false,
 
         body:
           JSON.stringify({
@@ -182,43 +548,31 @@ export async function registerUser({
     );
 
 
-  const token =
-    data.access_token ||
-    data.token;
+  return saveAuthenticationResponse(
+    data
+  );
 
-
-  if (token) {
-
-    storeToken(
-      token
-    );
-
-  }
-
-
-  return data;
 }
 
 
 // =========================================================
-// LOGIN
+// PASSWORD LOGIN
 // =========================================================
 //
-// Supports BOTH:
+// Supports:
 //
 // loginUser({
 //   email,
 //   password,
 // })
 //
-// and:
+// AND:
 //
 // loginUser(
 //   email,
 //   password
 // )
 //
-// This keeps older components compatible.
 // =========================================================
 
 export async function loginUser(
@@ -230,10 +584,13 @@ export async function loginUser(
   let password;
 
 
+  // -------------------------------------------------------
+  // OBJECT STYLE
+  // -------------------------------------------------------
+
   if (
     typeof credentials ===
-    "object"
-    &&
+      "object" &&
     credentials !== null
   ) {
 
@@ -243,7 +600,14 @@ export async function loginUser(
     password =
       credentials.password;
 
-  } else {
+  }
+
+
+  // -------------------------------------------------------
+  // LEGACY STYLE
+  // -------------------------------------------------------
+
+  else {
 
     email =
       credentials;
@@ -256,7 +620,8 @@ export async function loginUser(
 
   const cleanEmail =
     String(
-      email || ""
+      email ||
+      ""
     )
       .trim()
       .toLowerCase();
@@ -264,7 +629,8 @@ export async function loginUser(
 
   const cleanPassword =
     String(
-      password || ""
+      password ||
+      ""
     );
 
 
@@ -272,7 +638,11 @@ export async function loginUser(
     await authRequest(
       "/auth/login",
       {
-        method: "POST",
+        method:
+          "POST",
+
+        includeAuth:
+          false,
 
         body:
           JSON.stringify({
@@ -286,21 +656,154 @@ export async function loginUser(
     );
 
 
-  const token =
-    data.access_token ||
-    data.token;
+  return saveAuthenticationResponse(
+    data
+  );
+
+}
 
 
-  if (token) {
+// =========================================================
+// GOOGLE SIGN-IN
+// =========================================================
+//
+// Google Identity Services calls the frontend with:
+//
+// response.credential
+//
+// That credential is Google's ID-token JWT.
+//
+// We send it to:
+//
+// POST /api/auth/google
+//
+// The Flask backend verifies it before issuing the normal
+// SHOBDO JWT.
+//
+// =========================================================
 
-    storeToken(
-      token
-    );
+export async function loginWithGoogle(
+  input
+) {
+
+  // -------------------------------------------------------
+  // SUPPORT BOTH:
+  //
+  // loginWithGoogle("credential")
+  //
+  // loginWithGoogle({
+  //   credential: "credential"
+  // })
+  //
+  // -------------------------------------------------------
+
+  const credential =
+    typeof input ===
+      "object" &&
+    input !== null
+
+      ? (
+          input.credential ||
+          input.id_token ||
+          input.idToken ||
+          ""
+        )
+
+      : input;
+
+
+  const cleanCredential =
+    String(
+      credential ||
+      ""
+    ).trim();
+
+
+  if (!cleanCredential) {
+
+    const error =
+      new Error(
+        "Google sign-in credential is missing."
+      );
+
+
+    error.code =
+      "google_credential_missing";
+
+
+    throw error;
 
   }
 
 
-  return data;
+  const data =
+    await authRequest(
+      "/auth/google",
+      {
+        method:
+          "POST",
+
+        includeAuth:
+          false,
+
+        body:
+          JSON.stringify({
+            credential:
+              cleanCredential,
+          }),
+      }
+    );
+
+
+  return saveAuthenticationResponse(
+    data
+  );
+
+}
+
+
+// =========================================================
+// GOOGLE LOGIN ALIASES
+// =========================================================
+//
+// These aliases make future components easier to integrate
+// without breaking if a component uses another reasonable
+// function name.
+//
+// =========================================================
+
+export const googleLogin =
+  loginWithGoogle;
+
+
+export const loginUserWithGoogle =
+  loginWithGoogle;
+
+
+// =========================================================
+// GOOGLE CONFIGURATION CHECK
+// =========================================================
+
+export function isGoogleAuthConfigured() {
+
+  return Boolean(
+    GOOGLE_CLIENT_ID
+  );
+
+}
+
+
+// =========================================================
+// GET GOOGLE CLIENT ID
+// =========================================================
+
+export function getGoogleClientId() {
+
+  return (
+    GOOGLE_CLIENT_ID ||
+    null
+  );
+
 }
 
 
@@ -327,7 +830,8 @@ export async function getCurrentUser() {
       await authRequest(
         "/auth/me",
         {
-          method: "GET",
+          method:
+            "GET",
         }
       );
 
@@ -337,10 +841,28 @@ export async function getCurrentUser() {
       null
     );
 
-
   } catch (error) {
 
-    removeStoredToken();
+    // -----------------------------------------------------
+    // Remove token only when authentication is invalid.
+    //
+    // Do NOT automatically log the user out because of:
+    //
+    // - temporary network failure
+    // - backend outage
+    // - 500 response
+    //
+    // -----------------------------------------------------
+
+    if (
+      error?.status === 401 ||
+      error?.status === 403
+    ) {
+
+      removeStoredToken();
+
+    }
+
 
     return null;
 
@@ -359,9 +881,14 @@ export async function logoutUser() {
     getStoredToken();
 
 
+  // -------------------------------------------------------
+  // ALREADY LOGGED OUT
+  // -------------------------------------------------------
+
   if (!token) {
 
     removeStoredToken();
+
 
     return {
       message:
@@ -371,13 +898,18 @@ export async function logoutUser() {
   }
 
 
+  // -------------------------------------------------------
+  // SERVER LOGOUT
+  // -------------------------------------------------------
+
   try {
 
     const data =
       await authRequest(
         "/auth/logout",
         {
-          method: "POST",
+          method:
+            "POST",
         }
       );
 
@@ -387,8 +919,12 @@ export async function logoutUser() {
 
     return data;
 
+  } catch {
 
-  } catch (error) {
+    // JWT is client-managed currently.
+    //
+    // Even if backend logout cannot be reached, removing
+    // the local token logs the current browser session out.
 
     removeStoredToken();
 
@@ -407,13 +943,13 @@ export async function logoutUser() {
 // FORGOT PASSWORD
 // =========================================================
 //
-// Supports BOTH:
+// Supports:
 //
 // forgotPassword({
 //   email,
 // })
 //
-// and:
+// AND:
 //
 // forgotPassword(
 //   email
@@ -427,16 +963,18 @@ export async function forgotPassword(
 
   const email =
     typeof input ===
-    "object"
-    &&
+      "object" &&
     input !== null
+
       ? input.email
+
       : input;
 
 
   const cleanEmail =
     String(
-      email || ""
+      email ||
+      ""
     )
       .trim()
       .toLowerCase();
@@ -445,7 +983,11 @@ export async function forgotPassword(
   return authRequest(
     "/auth/forgot-password",
     {
-      method: "POST",
+      method:
+        "POST",
+
+      includeAuth:
+        false,
 
       body:
         JSON.stringify({
@@ -454,6 +996,7 @@ export async function forgotPassword(
         }),
     }
   );
+
 }
 
 
@@ -465,23 +1008,43 @@ export async function validateResetToken(
   token
 ) {
 
-  if (!token) {
+  const cleanToken =
+    String(
+      token ||
+      ""
+    ).trim();
 
-    throw new Error(
-      "Password reset token is missing."
-    );
+
+  if (!cleanToken) {
+
+    const error =
+      new Error(
+        "Password reset token is missing."
+      );
+
+
+    error.code =
+      "reset_token_missing";
+
+
+    throw error;
 
   }
 
 
   return authRequest(
     `/auth/reset-password/${encodeURIComponent(
-      token
+      cleanToken
     )}`,
     {
-      method: "GET",
+      method:
+        "GET",
+
+      includeAuth:
+        false,
     }
   );
+
 }
 
 
@@ -499,7 +1062,7 @@ export async function validateResetToken(
 //   }
 // )
 //
-// AND old style:
+// AND:
 //
 // resetPassword(
 //   token,
@@ -515,11 +1078,26 @@ export async function resetPassword(
   legacyConfirmPassword
 ) {
 
-  if (!token) {
+  const cleanToken =
+    String(
+      token ||
+      ""
+    ).trim();
 
-    throw new Error(
-      "Password reset token is missing."
-    );
+
+  if (!cleanToken) {
+
+    const error =
+      new Error(
+        "Password reset token is missing."
+      );
+
+
+    error.code =
+      "reset_token_missing";
+
+
+    throw error;
 
   }
 
@@ -528,25 +1106,37 @@ export async function resetPassword(
   let confirmPassword;
 
 
+  // -------------------------------------------------------
+  // OBJECT STYLE
+  // -------------------------------------------------------
+
   if (
     typeof input ===
-    "object"
-    &&
+      "object" &&
     input !== null
   ) {
 
     password =
       input.password;
 
+
     confirmPassword =
       input.confirmPassword ??
       input.confirm_password ??
       input.password;
 
-  } else {
+  }
+
+
+  // -------------------------------------------------------
+  // LEGACY STYLE
+  // -------------------------------------------------------
+
+  else {
 
     password =
       input;
+
 
     confirmPassword =
       legacyConfirmPassword ??
@@ -557,22 +1147,28 @@ export async function resetPassword(
 
   const cleanPassword =
     String(
-      password || ""
+      password ||
+      ""
     );
 
 
   const cleanConfirmPassword =
     String(
-      confirmPassword || ""
+      confirmPassword ||
+      ""
     );
 
 
   return authRequest(
     `/auth/reset-password/${encodeURIComponent(
-      token
+      cleanToken
     )}`,
     {
-      method: "POST",
+      method:
+        "POST",
+
+      includeAuth:
+        false,
 
       body:
         JSON.stringify({
@@ -584,11 +1180,12 @@ export async function resetPassword(
         }),
     }
   );
+
 }
 
 
 // =========================================================
-// AUTH UTILITIES
+// AUTHENTICATION STATUS
 // =========================================================
 
 export function isAuthenticated() {
@@ -596,16 +1193,76 @@ export function isAuthenticated() {
   return Boolean(
     getStoredToken()
   );
+
 }
 
+
+// =========================================================
+// GET AUTH TOKEN
+// =========================================================
 
 export function getAuthToken() {
 
   return getStoredToken();
+
 }
 
+
+// =========================================================
+// SET AUTH TOKEN
+// =========================================================
+//
+// Useful if another authentication flow receives a
+// SHOBDO JWT and needs to store it.
+//
+// =========================================================
+
+export function setAuthToken(
+  token
+) {
+
+  if (!token) {
+
+    removeStoredToken();
+
+    return;
+
+  }
+
+
+  storeToken(
+    token
+  );
+
+}
+
+
+// =========================================================
+// CLEAR AUTH TOKEN
+// =========================================================
 
 export function clearAuthToken() {
 
   removeStoredToken();
+
 }
+
+
+// =========================================================
+// AUTH TOKEN KEY
+// =========================================================
+
+export const AUTH_TOKEN_KEY =
+  TOKEN_KEY;
+
+
+// =========================================================
+// AUTH API URL
+// =========================================================
+//
+// Useful for debugging only.
+//
+// =========================================================
+
+export const AUTH_API_URL =
+  API_URL;
