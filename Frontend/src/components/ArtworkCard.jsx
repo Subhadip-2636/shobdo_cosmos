@@ -7,54 +7,18 @@ import {
   UserRound,
 } from "lucide-react";
 
+import {
+  useLanguage,
+} from "../Language/LanguageContext";
+
 import "./ArtworkCard.css";
 
 
 // =========================================================
-// FORMAT DATE
+// FORMAT FILE SIZE
 // =========================================================
 
-function formatDate(
-  value
-) {
-
-  if (!value) {
-    return "";
-  }
-
-
-  const date =
-    new Date(value);
-
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-
-    return "";
-  }
-
-
-  return date.toLocaleDateString(
-    undefined,
-    {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }
-  );
-}
-
-
-// =========================================================
-// FILE SIZE
-// =========================================================
-
-function formatFileSize(
-  bytes
-) {
+function formatFileSize(bytes) {
 
   const value =
     Number(bytes);
@@ -96,6 +60,206 @@ function formatFileSize(
 
 
 // =========================================================
+// UI LOCALE
+// =========================================================
+
+function getLocale(
+  uiLanguage
+) {
+
+  switch (
+    uiLanguage
+  ) {
+
+    case "bn":
+
+      return "bn-BD";
+
+
+    case "hi":
+
+      return "hi-IN";
+
+
+    default:
+
+      return "en-US";
+  }
+}
+
+
+// =========================================================
+// FORMAT DATE
+// =========================================================
+
+function formatDate(
+  value,
+  uiLanguage
+) {
+
+  if (!value) {
+
+    return "";
+  }
+
+
+  const date =
+    new Date(value);
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return "";
+  }
+
+
+  try {
+
+    return new Intl
+      .DateTimeFormat(
+        getLocale(
+          uiLanguage
+        ),
+        {
+          day:
+            "numeric",
+
+          month:
+            "short",
+
+          year:
+            "numeric",
+        }
+      )
+      .format(
+        date
+      );
+
+
+  } catch {
+
+    return date
+      .toLocaleDateString();
+  }
+}
+
+
+// =========================================================
+// CONTENT LANGUAGE LABELS
+// =========================================================
+
+const CONTENT_LANGUAGE_LABELS = {
+
+  // =======================================================
+  // BENGALI UI
+  // =======================================================
+
+  bn: {
+
+    bn:
+      "বাংলা",
+
+    en:
+      "ইংরেজি",
+
+    hi:
+      "হিন্দি",
+
+    as:
+      "অসমীয়া",
+
+    or:
+      "ওড়িয়া",
+
+    ta:
+      "তামিল",
+
+    te:
+      "তেলুগু",
+  },
+
+
+  // =======================================================
+  // ENGLISH UI
+  // =======================================================
+
+  en: {
+
+    bn:
+      "Bengali",
+
+    en:
+      "English",
+
+    hi:
+      "Hindi",
+
+    as:
+      "Assamese",
+
+    or:
+      "Odia",
+
+    ta:
+      "Tamil",
+
+    te:
+      "Telugu",
+  },
+
+
+  // =======================================================
+  // HINDI UI
+  // =======================================================
+
+  hi: {
+
+    bn:
+      "बंगाली",
+
+    en:
+      "अंग्रेज़ी",
+
+    hi:
+      "हिन्दी",
+
+    as:
+      "असमिया",
+
+    or:
+      "ओड़िया",
+
+    ta:
+      "तमिल",
+
+    te:
+      "तेलुगु",
+  },
+};
+
+
+// =========================================================
+// ART BADGE LABELS
+// =========================================================
+
+const ART_BADGE_LABELS = {
+
+  bn:
+    "শিল্প",
+
+  en:
+    "ART",
+
+  hi:
+    "कला",
+};
+
+
+// =========================================================
 // ARTWORK CARD
 // =========================================================
 
@@ -103,10 +267,22 @@ function ArtworkCard({
   artwork,
 }) {
 
+  const {
+    t,
+    language:
+      uiLanguage,
+  } = useLanguage();
+
+
   if (!artwork) {
+
     return null;
   }
 
+
+  // =======================================================
+  // IMAGE URL
+  // =======================================================
 
   const imageUrl =
     artwork.image_url ||
@@ -115,33 +291,192 @@ function ArtworkCard({
     "";
 
 
+  // =======================================================
+  // AUTHOR
+  // =======================================================
+
   const authorName =
     artwork.author?.name ||
     artwork.author?.username ||
     artwork.user?.name ||
+    artwork.user?.username ||
     artwork.artist?.name ||
-    "SHOBDO Artist";
-
-
-  const dateLabel =
-    formatDate(
-      artwork.published_at ||
-      artwork.created_at
+    artwork.artist?.username ||
+    t(
+      "explore.unknownArtist",
+      "SHOBDO Artist"
     );
 
 
+  // =======================================================
+  // DESCRIPTION
+  // =======================================================
+
   const description =
-    (
+    String(
       artwork.description ||
       ""
     ).trim();
 
 
-  const sizeLabel =
-    formatFileSize(
-      artwork.file_size
+  // =======================================================
+  // DATE
+  // =======================================================
+
+  const dateLabel =
+    formatDate(
+      artwork.published_at ||
+      artwork.created_at,
+      uiLanguage
     );
 
+
+  // =======================================================
+  // FILE SIZE
+  // =======================================================
+
+  const fileSizeLabel =
+    formatFileSize(
+      artwork.file_size ||
+      artwork.bytes
+    );
+
+
+  // =======================================================
+  // CATEGORY TRANSLATION
+  // =======================================================
+
+  function getCategoryLabel(
+    category
+  ) {
+
+    const value =
+      String(
+        category ||
+        ""
+      ).trim();
+
+
+    const categoryMap = {
+
+      "Digital Art":
+        t(
+          "explore.digitalArt",
+          "Digital Art"
+        ),
+
+      "Painting":
+        t(
+          "explore.painting",
+          "Painting"
+        ),
+
+      "Sketch":
+        t(
+          "explore.sketch",
+          "Sketch"
+        ),
+
+      "Illustration":
+        t(
+          "explore.illustration",
+          "Illustration"
+        ),
+
+      "Photography":
+        t(
+          "explore.photography",
+          "Photography"
+        ),
+
+      "Calligraphy":
+        t(
+          "explore.calligraphy",
+          "Calligraphy"
+        ),
+
+      "Other":
+        t(
+          "explore.otherArtwork",
+          "Other"
+        ),
+    };
+
+
+    return (
+      categoryMap[value] ||
+      value ||
+      t(
+        "explore.otherArtwork",
+        "Other"
+      )
+    );
+  }
+
+
+  // =======================================================
+  // CONTENT LANGUAGE TRANSLATION
+  // =======================================================
+
+  function getArtworkLanguageLabel(
+    languageCode
+  ) {
+
+    const code =
+      String(
+        languageCode ||
+        ""
+      )
+        .trim()
+        .toLowerCase();
+
+
+    if (!code) {
+
+      return "";
+    }
+
+
+    const uiMap =
+      CONTENT_LANGUAGE_LABELS[
+        uiLanguage
+      ] ||
+      CONTENT_LANGUAGE_LABELS.en;
+
+
+    return (
+      uiMap[code] ||
+      code.toUpperCase()
+    );
+  }
+
+
+  // =======================================================
+  // TRANSLATED VALUES
+  // =======================================================
+
+  const categoryLabel =
+    getCategoryLabel(
+      artwork.category
+    );
+
+
+  const languageLabel =
+    getArtworkLanguageLabel(
+      artwork.language
+    );
+
+
+  const artBadgeLabel =
+    ART_BADGE_LABELS[
+      uiLanguage
+    ] ||
+    ART_BADGE_LABELS.en;
+
+
+  // =======================================================
+  // UI
+  // =======================================================
 
   return (
 
@@ -149,9 +484,9 @@ function ArtworkCard({
       className="artwork-card"
     >
 
-      {/* =============================================== */}
-      {/* IMAGE                                           */}
-      {/* =============================================== */}
+      {/* =================================================
+          ARTWORK IMAGE
+      ================================================== */}
 
       <a
         className="artwork-card-image"
@@ -174,62 +509,89 @@ function ArtworkCard({
         ) => {
 
           if (!imageUrl) {
+
             event.preventDefault();
           }
 
         }}
+        aria-label={
+          artwork.title ||
+          t(
+            "explore.untitledArtwork",
+            "Untitled Artwork"
+          )
+        }
       >
 
         {imageUrl
           ? (
 
-              <img
-                src={
-                  imageUrl
-                }
-                alt={
-                  artwork.title ||
-                  "Artwork"
-                }
-                loading="lazy"
-              />
+            <img
+              src={
+                imageUrl
+              }
+              alt={
+                artwork.title ||
+                t(
+                  "explore.untitledArtwork",
+                  "Untitled Artwork"
+                )
+              }
+              loading="lazy"
+            />
 
-            )
+          )
           : (
 
-              <div
-                className="artwork-card-image-fallback"
-              >
+            <div
+              className="artwork-card-image-fallback"
+            >
 
-                <ImageIcon
-                  size={52}
-                />
+              <ImageIcon
+                size={52}
+              />
 
-                <span>
-                  ARTWORK
-                </span>
 
-              </div>
+              <span>
 
-            )}
+                {t(
+                  "explore.artworkLabel",
+                  "Artwork"
+                )}
 
+              </span>
+
+            </div>
+
+          )}
+
+
+        {/* ===============================================
+            ART BADGE
+        ================================================ */}
 
         <span
           className="artwork-card-badge"
         >
-          ART
+
+          {artBadgeLabel}
+
         </span>
 
       </a>
 
 
-      {/* =============================================== */}
-      {/* BODY                                            */}
-      {/* =============================================== */}
+      {/* =================================================
+          CARD BODY
+      ================================================== */}
 
       <div
         className="artwork-card-body"
       >
+
+        {/* ===============================================
+            CATEGORY + LANGUAGE
+        ================================================ */}
 
         <div
           className="artwork-card-meta"
@@ -239,15 +601,12 @@ function ArtworkCard({
             className="artwork-card-category"
           >
 
-            {
-              artwork.category ||
-              "Artwork"
-            }
+            {categoryLabel}
 
           </span>
 
 
-          {artwork.language && (
+          {languageLabel && (
 
             <span
               className="artwork-card-language"
@@ -257,10 +616,10 @@ function ArtworkCard({
                 size={13}
               />
 
-              {
-                artwork.language
-                  .toUpperCase()
-              }
+
+              <span>
+                {languageLabel}
+              </span>
 
             </span>
 
@@ -269,17 +628,28 @@ function ArtworkCard({
         </div>
 
 
+        {/* ===============================================
+            ARTWORK TITLE
+        ================================================ */}
+
         <h3
           className="artwork-card-title"
         >
 
           {
             artwork.title ||
-            "Untitled Artwork"
+            t(
+              "explore.untitledArtwork",
+              "Untitled Artwork"
+            )
           }
 
         </h3>
 
+
+        {/* ===============================================
+            DESCRIPTION
+        ================================================ */}
 
         {description && (
 
@@ -304,6 +674,10 @@ function ArtworkCard({
         )}
 
 
+        {/* ===============================================
+            AUTHOR
+        ================================================ */}
+
         <div
           className="artwork-card-author"
         >
@@ -312,6 +686,7 @@ function ArtworkCard({
             size={15}
           />
 
+
           <span>
             {authorName}
           </span>
@@ -319,14 +694,18 @@ function ArtworkCard({
         </div>
 
 
+        {/* ===============================================
+            ARTWORK INFORMATION
+        ================================================ */}
+
         <div
           className="artwork-card-info"
         >
 
-          {sizeLabel && (
+          {fileSizeLabel && (
 
             <span>
-              {sizeLabel}
+              {fileSizeLabel}
             </span>
 
           )}
@@ -340,7 +719,10 @@ function ArtworkCard({
                 size={13}
               />
 
-              {dateLabel}
+
+              <span>
+                {dateLabel}
+              </span>
 
             </span>
 
@@ -349,15 +731,17 @@ function ArtworkCard({
         </div>
 
 
-        {/* ============================================= */}
-        {/* ACTIONS                                       */}
-        {/* ============================================= */}
+        {/* ===============================================
+            ACTION BUTTONS
+        ================================================ */}
 
         {imageUrl && (
 
           <div
             className="artwork-card-actions"
           >
+
+            {/* VIEW ARTWORK */}
 
             <a
               className="artwork-card-view"
@@ -372,10 +756,20 @@ function ArtworkCard({
                 size={16}
               />
 
-              View Artwork
+
+              <span>
+
+                {t(
+                  "explore.viewArtwork",
+                  "View Artwork"
+                )}
+
+              </span>
 
             </a>
 
+
+            {/* DOWNLOAD */}
 
             {artwork.allow_download && (
 
@@ -396,7 +790,15 @@ function ArtworkCard({
                   size={16}
                 />
 
-                Download
+
+                <span>
+
+                  {t(
+                    "explore.download",
+                    "Download"
+                  )}
+
+                </span>
 
               </a>
 

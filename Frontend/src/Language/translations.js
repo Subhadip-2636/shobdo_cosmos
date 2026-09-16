@@ -198,7 +198,9 @@ export const translations = {
 
     explore: {
   eyebrow: "আবিষ্কার",
-  title: "SHOBDO অন্বেষণ করুন",
+
+  title:
+    "SHOBDO অন্বেষণ করুন",
 
   description:
     "লেখা, PDF ডকুমেন্ট এবং শিল্পকর্মের মাধ্যমে SHOBDO কমিউনিটিকে আবিষ্কার করুন।",
@@ -206,39 +208,74 @@ export const translations = {
   searchPlaceholder:
     "কবিতা, গল্প, বিষয় বা লেখক খুঁজুন...",
 
-  searchButton: "খুঁজুন",
+  searchButton:
+    "খুঁজুন",
 
-  category: "বিভাগ",
-  language: "লেখার ভাষা",
+  category:
+    "বিভাগ",
 
-  allCategories: "সব বিভাগ",
-  allLanguages: "সব ভাষা",
+  language:
+    "লেখার ভাষা",
 
-  latest: "সাম্প্রতিক",
-  popular: "জনপ্রিয়",
-  oldest: "পুরোনো আগে",
-  titleAZ: "শিরোনাম A–Z",
+  allCategories:
+    "সব বিভাগ",
 
-  results: "টি লেখা পাওয়া গেছে",
-  writingsFound: "টি লেখা পাওয়া গেছে",
-  documentsFound: "টি PDF ডকুমেন্ট পাওয়া গেছে",
-  artworksFound: "টি শিল্পকর্ম পাওয়া গেছে",
-  followingWritings: "টি অনুসরণ করা লেখা",
+  allLanguages:
+    "সব ভাষা",
 
-  loading: "লেখা লোড হচ্ছে...",
-  loadingDocuments: "PDF ডকুমেন্ট লোড হচ্ছে...",
-  loadingArtwork: "শিল্পকর্ম লোড হচ্ছে...",
+  latest:
+    "সাম্প্রতিক",
 
-  loadError: "কনটেন্ট লোড করা যায়নি।",
-  loadContentError: "কনটেন্ট লোড করা যায়নি",
+  popular:
+    "জনপ্রিয়",
+
+  oldest:
+    "পুরোনো আগে",
+
+  titleAZ:
+    "শিরোনাম A–Z",
+
+  results:
+    "টি লেখা পাওয়া গেছে",
+
+  writingsFound:
+    "টি লেখা পাওয়া গেছে",
+
+  documentsFound:
+    "টি PDF ডকুমেন্ট পাওয়া গেছে",
+
+  artworksFound:
+    "টি শিল্পকর্ম পাওয়া গেছে",
+
+  followingWritings:
+    "টি অনুসরণ করা লেখা",
+
+  loading:
+    "লেখা লোড হচ্ছে...",
+
+  loadingDocuments:
+    "PDF ডকুমেন্ট লোড হচ্ছে...",
+
+  loadingArtwork:
+    "শিল্পকর্ম লোড হচ্ছে...",
+
+  loadError:
+    "কনটেন্ট লোড করা যায়নি।",
+
+  loadContentError:
+    "কনটেন্ট লোড করা যায়নি",
 
   loadErrorDescription:
     "Backend server-এর সঙ্গে সংযোগ করা যাচ্ছে না। Backend চালু আছে কি না পরীক্ষা করুন।",
 
-  retry: "আবার চেষ্টা করুন",
+  retry:
+    "আবার চেষ্টা করুন",
 
-  noResultsTitle: "কোনো লেখা পাওয়া যায়নি",
-  noResults: "কোনো লেখা পাওয়া যায়নি",
+  noResultsTitle:
+    "কোনো লেখা পাওয়া যায়নি",
+
+  noResults:
+    "কোনো লেখা পাওয়া যায়নি",
 
   noResultsDescription:
     "অন্য শব্দ, বিভাগ বা ভাষা ব্যবহার করে আবার চেষ্টা করুন।",
@@ -255,15 +292,26 @@ export const translations = {
   noArtworkDescription:
     "প্রকাশিত পাবলিক শিল্পকর্ম এখানে দেখা যাবে।",
 
-  clearFilters: "ফিল্টার মুছুন",
-  loadMore: "আরও দেখুন",
+  clearFilters:
+    "ফিল্টার মুছুন",
 
-  writingsTab: "লেখা",
-  documentsTab: "PDF ডকুমেন্ট",
-  artworkTab: "শিল্পকর্ম",
+  loadMore:
+    "আরও দেখুন",
 
-  allWritings: "সব লেখা",
-  following: "অনুসরণ করা",
+  writingsTab:
+    "লেখা",
+
+  documentsTab:
+    "PDF ডকুমেন্ট",
+
+  artworkTab:
+    "শিল্পকর্ম",
+
+  allWritings:
+    "সব লেখা",
+
+  following:
+    "অনুসরণ করা",
 
   followingDescription:
     "আপনি যেসব লেখককে অনুসরণ করেন তাঁদের সাম্প্রতিক লেখা।",
@@ -292,35 +340,111 @@ export const translations = {
   artworksDescription:
     "SHOBDO স্রষ্টাদের আঁকা ছবি, ইলাস্ট্রেশন, ফটোগ্রাফি, স্কেচ ও ডিজিটাল শিল্পকর্ম আবিষ্কার করুন।",
 
-  previous: "পূর্ববর্তী",
-  next: "পরবর্তী",
-  page: "পৃষ্ঠা",
-  of: "এর মধ্যে",
+  previous:
+    "পূর্ববর্তী",
 
-  // Artwork categories
+  next:
+    "পরবর্তী",
 
-  digitalArt: "ডিজিটাল আর্ট",
-  painting: "চিত্রকর্ম",
-  sketch: "স্কেচ",
-  illustration: "ইলাস্ট্রেশন",
-  photography: "ফটোগ্রাফি",
-  calligraphy: "ক্যালিগ্রাফি",
-  otherArtwork: "অন্যান্য",
+  page:
+    "পৃষ্ঠা",
 
-  // Artwork card
+  of:
+    "এর মধ্যে",
 
-  artworkLabel: "শিল্পকর্ম",
-  unknownArtist: "SHOBDO শিল্পী",
-  untitledArtwork: "শিরোনামহীন শিল্পকর্ম",
-  viewArtwork: "শিল্পকর্ম দেখুন",
-  download: "ডাউনলোড",
-  pdfLabel: "PDF",
-unknownWriter: "SHOBDO লেখক",
-untitledPdf: "শিরোনামহীন PDF",
-viewPdf: "PDF দেখুন",
-pdfPage: "পৃষ্ঠা",
-pdfPages: "পৃষ্ঠা",
-download: "ডাউনলোড",
+  // =====================================================
+  // ARTWORK CATEGORIES
+  // =====================================================
+
+  digitalArt:
+    "ডিজিটাল আর্ট",
+
+  painting:
+    "চিত্রকর্ম",
+
+  sketch:
+    "স্কেচ",
+
+  illustration:
+    "ইলাস্ট্রেশন",
+
+  photography:
+    "ফটোগ্রাফি",
+
+  calligraphy:
+    "ক্যালিগ্রাফি",
+
+  otherArtwork:
+    "অন্যান্য",
+
+  // =====================================================
+  // ARTWORK CARD
+  // =====================================================
+
+  artBadge:
+    "শিল্প",
+
+  artworkLabel:
+    "শিল্পকর্ম",
+
+  unknownArtist:
+    "SHOBDO শিল্পী",
+
+  untitledArtwork:
+    "শিরোনামহীন শিল্পকর্ম",
+
+  viewArtwork:
+    "শিল্পকর্ম দেখুন",
+
+  download:
+    "ডাউনলোড",
+
+  // =====================================================
+  // CONTENT LANGUAGE NAMES
+  // =====================================================
+
+  languageBengali:
+    "বাংলা",
+
+  languageEnglish:
+    "ইংরেজি",
+
+  languageHindi:
+    "হিন্দি",
+
+  languageAssamese:
+    "অসমীয়া",
+
+  languageOdia:
+    "ওড়িয়া",
+
+  languageTamil:
+    "তামিল",
+
+  languageTelugu:
+    "তেলুগু",
+
+  // =====================================================
+  // PDF CARD
+  // =====================================================
+
+  pdfLabel:
+    "PDF",
+
+  unknownWriter:
+    "SHOBDO লেখক",
+
+  untitledPdf:
+    "শিরোনামহীন PDF",
+
+  viewPdf:
+    "PDF দেখুন",
+
+  pdfPage:
+    "পৃষ্ঠা",
+
+  pdfPages:
+    "পৃষ্ঠা",
 },
 
     writingCard: {
@@ -1347,8 +1471,11 @@ download: "ডাউনলোড",
     },
 
     explore: {
-  eyebrow: "DISCOVER",
-  title: "Explore SHOBDO",
+  eyebrow:
+    "DISCOVER",
+
+  title:
+    "Explore SHOBDO",
 
   description:
     "Discover writings, PDF documents and artwork from the SHOBDO community.",
@@ -1356,39 +1483,74 @@ download: "ডাউনলোড",
   searchPlaceholder:
     "Search poems, stories, topics or authors...",
 
-  searchButton: "Search",
+  searchButton:
+    "Search",
 
-  category: "Category",
-  language: "Writing language",
+  category:
+    "Category",
 
-  allCategories: "All Categories",
-  allLanguages: "All Languages",
+  language:
+    "Writing language",
 
-  latest: "Latest",
-  popular: "Popular",
-  oldest: "Oldest First",
-  titleAZ: "Title A–Z",
+  allCategories:
+    "All Categories",
 
-  results: "writings found",
-  writingsFound: "writings found",
-  documentsFound: "PDF documents found",
-  artworksFound: "artworks found",
-  followingWritings: "following writings",
+  allLanguages:
+    "All Languages",
 
-  loading: "Loading writings...",
-  loadingDocuments: "Loading PDF documents...",
-  loadingArtwork: "Loading artwork...",
+  latest:
+    "Latest",
 
-  loadError: "Unable to load content.",
-  loadContentError: "Unable to load content",
+  popular:
+    "Popular",
+
+  oldest:
+    "Oldest First",
+
+  titleAZ:
+    "Title A–Z",
+
+  results:
+    "writings found",
+
+  writingsFound:
+    "writings found",
+
+  documentsFound:
+    "PDF documents found",
+
+  artworksFound:
+    "artworks found",
+
+  followingWritings:
+    "following writings",
+
+  loading:
+    "Loading writings...",
+
+  loadingDocuments:
+    "Loading PDF documents...",
+
+  loadingArtwork:
+    "Loading artwork...",
+
+  loadError:
+    "Unable to load content.",
+
+  loadContentError:
+    "Unable to load content",
 
   loadErrorDescription:
     "Unable to connect to the backend server. Check that the backend is running and try again.",
 
-  retry: "Try Again",
+  retry:
+    "Try Again",
 
-  noResultsTitle: "No writings found",
-  noResults: "No writings found",
+  noResultsTitle:
+    "No writings found",
+
+  noResults:
+    "No writings found",
 
   noResultsDescription:
     "Try another search term, category or language.",
@@ -1405,15 +1567,26 @@ download: "ডাউনলোড",
   noArtworkDescription:
     "Published public artwork will appear here.",
 
-  clearFilters: "Clear Filters",
-  loadMore: "Load More",
+  clearFilters:
+    "Clear Filters",
 
-  writingsTab: "Writings",
-  documentsTab: "PDF Documents",
-  artworkTab: "Artwork",
+  loadMore:
+    "Load More",
 
-  allWritings: "All Writings",
-  following: "Following",
+  writingsTab:
+    "Writings",
+
+  documentsTab:
+    "PDF Documents",
+
+  artworkTab:
+    "Artwork",
+
+  allWritings:
+    "All Writings",
+
+  following:
+    "Following",
 
   followingDescription:
     "Recent writings from authors you follow.",
@@ -1442,35 +1615,111 @@ download: "ডাউনলোড",
   artworksDescription:
     "Discover paintings, illustrations, photography, sketches and digital artwork from SHOBDO creators.",
 
-  previous: "Previous",
-  next: "Next",
-  page: "Page",
-  of: "of",
+  previous:
+    "Previous",
 
-  // Artwork categories
+  next:
+    "Next",
 
-  digitalArt: "Digital Art",
-  painting: "Painting",
-  sketch: "Sketch",
-  illustration: "Illustration",
-  photography: "Photography",
-  calligraphy: "Calligraphy",
-  otherArtwork: "Other",
+  page:
+    "Page",
 
-  // Artwork card
+  of:
+    "of",
 
-  artworkLabel: "Artwork",
-  unknownArtist: "SHOBDO Artist",
-  untitledArtwork: "Untitled Artwork",
-  viewArtwork: "View Artwork",
-  download: "Download",
-  pdfLabel: "PDF",
-unknownWriter: "SHOBDO Writer",
-untitledPdf: "Untitled PDF",
-viewPdf: "View PDF",
-pdfPage: "page",
-pdfPages: "pages",
-download: "Download",
+  // =====================================================
+  // ARTWORK CATEGORIES
+  // =====================================================
+
+  digitalArt:
+    "Digital Art",
+
+  painting:
+    "Painting",
+
+  sketch:
+    "Sketch",
+
+  illustration:
+    "Illustration",
+
+  photography:
+    "Photography",
+
+  calligraphy:
+    "Calligraphy",
+
+  otherArtwork:
+    "Other",
+
+  // =====================================================
+  // ARTWORK CARD
+  // =====================================================
+
+  artBadge:
+    "ART",
+
+  artworkLabel:
+    "Artwork",
+
+  unknownArtist:
+    "SHOBDO Artist",
+
+  untitledArtwork:
+    "Untitled Artwork",
+
+  viewArtwork:
+    "View Artwork",
+
+  download:
+    "Download",
+
+  // =====================================================
+  // CONTENT LANGUAGE NAMES
+  // =====================================================
+
+  languageBengali:
+    "Bengali",
+
+  languageEnglish:
+    "English",
+
+  languageHindi:
+    "Hindi",
+
+  languageAssamese:
+    "Assamese",
+
+  languageOdia:
+    "Odia",
+
+  languageTamil:
+    "Tamil",
+
+  languageTelugu:
+    "Telugu",
+
+  // =====================================================
+  // PDF CARD
+  // =====================================================
+
+  pdfLabel:
+    "PDF",
+
+  unknownWriter:
+    "SHOBDO Writer",
+
+  untitledPdf:
+    "Untitled PDF",
+
+  viewPdf:
+    "View PDF",
+
+  pdfPage:
+    "page",
+
+  pdfPages:
+    "pages",
 },
 
     writingCard: {
@@ -2604,8 +2853,11 @@ download: "Download",
     },
 
     explore: {
-  eyebrow: "खोजें",
-  title: "SHOBDO खोजें",
+  eyebrow:
+    "खोजें",
+
+  title:
+    "SHOBDO खोजें",
 
   description:
     "SHOBDO समुदाय की रचनाएँ, PDF दस्तावेज़ और कलाकृतियाँ खोजें।",
@@ -2613,28 +2865,56 @@ download: "Download",
   searchPlaceholder:
     "कविता, कहानी, विषय या लेखक खोजें...",
 
-  searchButton: "खोजें",
+  searchButton:
+    "खोजें",
 
-  category: "श्रेणी",
-  language: "लेखन की भाषा",
+  category:
+    "श्रेणी",
 
-  allCategories: "सभी श्रेणियाँ",
-  allLanguages: "सभी भाषाएँ",
+  language:
+    "लेखन की भाषा",
 
-  latest: "नवीनतम",
-  popular: "लोकप्रिय",
-  oldest: "पुरानी पहले",
-  titleAZ: "शीर्षक A–Z",
+  allCategories:
+    "सभी श्रेणियाँ",
 
-  results: "रचनाएँ मिलीं",
-  writingsFound: "रचनाएँ मिलीं",
-  documentsFound: "PDF दस्तावेज़ मिले",
-  artworksFound: "कलाकृतियाँ मिलीं",
-  followingWritings: "फ़ॉलो की गई रचनाएँ",
+  allLanguages:
+    "सभी भाषाएँ",
 
-  loading: "रचनाएँ लोड हो रही हैं...",
-  loadingDocuments: "PDF दस्तावेज़ लोड हो रहे हैं...",
-  loadingArtwork: "कलाकृतियाँ लोड हो रही हैं...",
+  latest:
+    "नवीनतम",
+
+  popular:
+    "लोकप्रिय",
+
+  oldest:
+    "पुरानी पहले",
+
+  titleAZ:
+    "शीर्षक A–Z",
+
+  results:
+    "रचनाएँ मिलीं",
+
+  writingsFound:
+    "रचनाएँ मिलीं",
+
+  documentsFound:
+    "PDF दस्तावेज़ मिले",
+
+  artworksFound:
+    "कलाकृतियाँ मिलीं",
+
+  followingWritings:
+    "फ़ॉलो की गई रचनाएँ",
+
+  loading:
+    "रचनाएँ लोड हो रही हैं...",
+
+  loadingDocuments:
+    "PDF दस्तावेज़ लोड हो रहे हैं...",
+
+  loadingArtwork:
+    "कलाकृतियाँ लोड हो रही हैं...",
 
   loadError:
     "सामग्री लोड नहीं की जा सकी।",
@@ -2645,7 +2925,8 @@ download: "Download",
   loadErrorDescription:
     "Backend server से संपर्क नहीं हो सका। जाँचें कि Backend चल रहा है और फिर प्रयास करें।",
 
-  retry: "फिर प्रयास करें",
+  retry:
+    "फिर प्रयास करें",
 
   noResultsTitle:
     "कोई रचना नहीं मिली",
@@ -2716,35 +2997,111 @@ download: "Download",
   artworksDescription:
     "SHOBDO रचनाकारों की पेंटिंग, चित्रण, फ़ोटोग्राफ़ी, स्केच और डिजिटल कला खोजें।",
 
-  previous: "पिछला",
-  next: "अगला",
-  page: "पृष्ठ",
-  of: "में से",
+  previous:
+    "पिछला",
 
-  // Artwork categories
+  next:
+    "अगला",
 
-  digitalArt: "डिजिटल कला",
-  painting: "पेंटिंग",
-  sketch: "स्केच",
-  illustration: "चित्रण",
-  photography: "फ़ोटोग्राफ़ी",
-  calligraphy: "सुलेख",
-  otherArtwork: "अन्य",
+  page:
+    "पृष्ठ",
 
-  // Artwork card
+  of:
+    "में से",
 
-  artworkLabel: "कलाकृति",
-  unknownArtist: "SHOBDO कलाकार",
-  untitledArtwork: "बिना शीर्षक की कलाकृति",
-  viewArtwork: "कलाकृति देखें",
-  download: "डाउनलोड",
-  pdfLabel: "PDF",
-unknownWriter: "SHOBDO लेखक",
-untitledPdf: "बिना शीर्षक का PDF",
-viewPdf: "PDF देखें",
-pdfPage: "पृष्ठ",
-pdfPages: "पृष्ठ",
-download: "डाउनलोड",
+  // =====================================================
+  // ARTWORK CATEGORIES
+  // =====================================================
+
+  digitalArt:
+    "डिजिटल कला",
+
+  painting:
+    "पेंटिंग",
+
+  sketch:
+    "स्केच",
+
+  illustration:
+    "चित्रण",
+
+  photography:
+    "फ़ोटोग्राफ़ी",
+
+  calligraphy:
+    "सुलेख",
+
+  otherArtwork:
+    "अन्य",
+
+  // =====================================================
+  // ARTWORK CARD
+  // =====================================================
+
+  artBadge:
+    "कला",
+
+  artworkLabel:
+    "कलाकृति",
+
+  unknownArtist:
+    "SHOBDO कलाकार",
+
+  untitledArtwork:
+    "बिना शीर्षक की कलाकृति",
+
+  viewArtwork:
+    "कलाकृति देखें",
+
+  download:
+    "डाउनलोड",
+
+  // =====================================================
+  // CONTENT LANGUAGE NAMES
+  // =====================================================
+
+  languageBengali:
+    "बंगाली",
+
+  languageEnglish:
+    "अंग्रेज़ी",
+
+  languageHindi:
+    "हिन्दी",
+
+  languageAssamese:
+    "असमिया",
+
+  languageOdia:
+    "ओड़िया",
+
+  languageTamil:
+    "तमिल",
+
+  languageTelugu:
+    "तेलुगु",
+
+  // =====================================================
+  // PDF CARD
+  // =====================================================
+
+  pdfLabel:
+    "PDF",
+
+  unknownWriter:
+    "SHOBDO लेखक",
+
+  untitledPdf:
+    "बिना शीर्षक का PDF",
+
+  viewPdf:
+    "PDF देखें",
+
+  pdfPage:
+    "पृष्ठ",
+
+  pdfPages:
+    "पृष्ठ",
 },
 
     writingCard: {
