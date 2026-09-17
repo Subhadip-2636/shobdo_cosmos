@@ -1,10 +1,12 @@
 import {
+  useEffect,
   useMemo,
   useState,
 } from "react";
 
 import {
   BookOpen,
+  Bookmark,
   CalendarDays,
   Clock3,
   Globe2,
@@ -15,10 +17,15 @@ import {
 
 import {
   Link,
+  useNavigate,
 } from "react-router-dom";
 
 import {
+  getSavedWritingStatus,
+  getToken,
   likeWriting,
+  saveWriting,
+  unsaveWriting,
 } from "../api/api";
 
 import {
@@ -41,6 +48,10 @@ function WritingCard({
   const {
     t,
   } = useLanguage();
+
+
+  const navigate =
+    useNavigate();
 
 
   // =====================================================
@@ -77,6 +88,151 @@ function WritingCard({
     setLiking,
   ] = useState(
     false
+  );
+
+
+  // =====================================================
+  // SAVE / BOOKMARK STATE
+  // =====================================================
+
+  const [
+    saved,
+    setSaved,
+  ] = useState(
+    Boolean(
+      writing?.saved_by_current_user ??
+      writing?.is_saved ??
+      writing?.saved ??
+      false
+    )
+  );
+
+
+  const [
+    saving,
+    setSaving,
+  ] = useState(
+    false
+  );
+
+
+  const [
+    saveStatusLoaded,
+    setSaveStatusLoaded,
+  ] = useState(
+    false
+  );
+
+
+  // =====================================================
+  // LOAD SAVED STATUS
+  // =====================================================
+
+  useEffect(
+    () => {
+
+      let cancelled =
+        false;
+
+
+      async function loadSavedStatus() {
+
+        if (
+          !writing?.id
+        ) {
+
+          return;
+
+        }
+
+
+        const token =
+          getToken();
+
+
+        if (
+          !token
+        ) {
+
+          setSaveStatusLoaded(
+            true
+          );
+
+          return;
+
+        }
+
+
+        try {
+
+          const data =
+            await getSavedWritingStatus(
+              writing.id
+            );
+
+
+          if (
+            cancelled
+          ) {
+
+            return;
+
+          }
+
+
+          setSaved(
+            Boolean(
+              data?.saved
+            )
+          );
+
+
+        } catch (
+          error
+        ) {
+
+          /*
+           * Do not break the writing card if the
+           * bookmark status request temporarily fails.
+           */
+
+          console.error(
+            "GET SAVED WRITING STATUS ERROR:",
+            error
+          );
+
+
+        } finally {
+
+          if (
+            !cancelled
+          ) {
+
+            setSaveStatusLoaded(
+              true
+            );
+
+          }
+
+        }
+
+      }
+
+
+      loadSavedStatus();
+
+
+      return () => {
+
+        cancelled =
+          true;
+
+      };
+
+    },
+    [
+      writing?.id,
+    ]
   );
 
 
@@ -376,6 +532,19 @@ function WritingCard({
     }
 
 
+    if (
+      !getToken()
+    ) {
+
+      navigate(
+        "/login"
+      );
+
+      return;
+
+    }
+
+
     setLiking(
       true
     );
@@ -451,9 +620,122 @@ function WritingCard({
         error
       );
 
+
     } finally {
 
       setLiking(
+        false
+      );
+
+    }
+
+  }
+
+
+  // =====================================================
+  // SAVE / UNSAVE
+  // =====================================================
+
+  async function handleSave(
+    event
+  ) {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+
+    if (
+      saving ||
+      !writing?.id
+    ) {
+
+      return;
+
+    }
+
+
+    // ---------------------------------------------------
+    // REQUIRE LOGIN
+    // ---------------------------------------------------
+
+    if (
+      !getToken()
+    ) {
+
+      navigate(
+        "/login"
+      );
+
+      return;
+
+    }
+
+
+    const previousSaved =
+      saved;
+
+
+    /*
+     * Optimistic UI:
+     * update the bookmark immediately.
+     */
+
+    setSaved(
+      !previousSaved
+    );
+
+    setSaving(
+      true
+    );
+
+
+    try {
+
+      const data =
+        previousSaved
+          ? await unsaveWriting(
+              writing.id
+            )
+          : await saveWriting(
+              writing.id
+            );
+
+
+      if (
+        typeof data?.saved ===
+        "boolean"
+      ) {
+
+        setSaved(
+          data.saved
+        );
+
+      }
+
+
+    } catch (
+      error
+    ) {
+
+      /*
+       * Restore previous state if the request fails.
+       */
+
+      setSaved(
+        previousSaved
+      );
+
+
+      console.error(
+        "SAVE WRITING ERROR:",
+        error
+      );
+
+
+    } finally {
+
+      setSaving(
         false
       );
 
@@ -665,7 +947,6 @@ function WritingCard({
         className="writing-card-meta"
       >
 
-
         {
           publishedDate && (
 
@@ -738,16 +1019,14 @@ function WritingCard({
       >
 
 
-        {/* =============================================
-            SOCIAL STATS
-        ============================================== */}
-
         <div
           className="writing-card-social"
         >
 
 
-          {/* LIKE */}
+          {/* ===========================================
+              LIKE
+          ============================================ */}
 
           <button
 
@@ -767,17 +1046,9 @@ function WritingCard({
               liking
             }
 
-            aria-label={
-              t(
-                "writingCard.like"
-              )
-            }
+            aria-label="Like writing"
 
-            title={
-              t(
-                "writingCard.like"
-              )
-            }
+            title="Like"
 
           >
 
@@ -804,17 +1075,15 @@ function WritingCard({
           </button>
 
 
-          {/* COMMENTS */}
+          {/* ===========================================
+              COMMENTS
+          ============================================ */}
 
           <span
 
             className="writing-comment-count"
 
-            title={
-              t(
-                "writingCard.comments"
-              )
-            }
+            title="Comments"
 
           >
 
@@ -831,6 +1100,58 @@ function WritingCard({
             }
 
           </span>
+
+
+          {/* ===========================================
+              SAVE / BOOKMARK
+          ============================================ */}
+
+          <button
+
+            type="button"
+
+            className={
+              saved
+                ? "writing-save-button saved"
+                : "writing-save-button"
+            }
+
+            onClick={
+              handleSave
+            }
+
+            disabled={
+              saving ||
+              !saveStatusLoaded
+            }
+
+            aria-label={
+              saved
+                ? "Remove from saved writings"
+                : "Save writing"
+            }
+
+            title={
+              saved
+                ? "Saved"
+                : "Save"
+            }
+
+          >
+
+            <Bookmark
+
+              size={16}
+
+              fill={
+                saved
+                  ? "currentColor"
+                  : "none"
+              }
+
+            />
+
+          </button>
 
         </div>
 

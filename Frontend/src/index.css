@@ -87,6 +87,65 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* =========================================================
+   SAVE / BOOKMARK BUTTON
+========================================================= */
+
+.writing-save-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 34px;
+  height: 34px;
+
+  padding: 0;
+
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 999px;
+
+  background: transparent;
+
+  color: #64748b;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+
+.writing-save-button:hover {
+  background: rgba(99, 102, 241, 0.08);
+
+  color: #4f46e5;
+
+  border-color: rgba(79, 70, 229, 0.2);
+
+  transform: translateY(-1px);
+}
+
+
+.writing-save-button.saved {
+  background: rgba(79, 70, 229, 0.1);
+
+  color: #4f46e5;
+
+  border-color: rgba(79, 70, 229, 0.24);
+}
+
+
+.writing-save-button:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+
+  transform: none;
+}
+
 
 /* =====================================================
    APP

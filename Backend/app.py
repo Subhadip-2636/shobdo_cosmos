@@ -13,6 +13,8 @@ from flask_cors import CORS
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from routes.saved_routes import saved_bp
+
 from extensions import (
     db,
     jwt,
@@ -543,6 +545,8 @@ def create_app():
         Artwork,
     )
 
+    from models.saved_writing import SavedWriting
+
     _models = (
         User,
         Writing,
@@ -688,6 +692,10 @@ def create_app():
 
     app.register_blueprint(
         artwork_bp
+    )
+
+    app.register_blueprint(
+        saved_bp
     )
 
     # =====================================================

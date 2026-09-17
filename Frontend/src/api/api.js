@@ -1368,6 +1368,135 @@ export async function getUserFollowing(
 
 }
 
+// =========================================================
+// AUTH — SAVE WRITING
+// POST /api/saved/writing/<writing_id>
+// =========================================================
+
+export async function saveWriting(
+  writingId
+) {
+
+  if (!writingId) {
+
+    throw new Error(
+      "Writing ID is required."
+    );
+
+  }
+
+
+  return apiRequest(
+    `/api/saved/writing/${writingId}`,
+    {
+      method: "POST",
+    }
+  );
+
+}
+
+
+// =========================================================
+// AUTH — UNSAVE WRITING
+// DELETE /api/saved/writing/<writing_id>
+// =========================================================
+
+export async function unsaveWriting(
+  writingId
+) {
+
+  if (!writingId) {
+
+    throw new Error(
+      "Writing ID is required."
+    );
+
+  }
+
+
+  return apiRequest(
+    `/api/saved/writing/${writingId}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+}
+
+
+// =========================================================
+// AUTH — GET SAVED STATUS
+// GET /api/saved/writing/<writing_id>/status
+// =========================================================
+
+export async function getSavedWritingStatus(
+  writingId
+) {
+
+  if (!writingId) {
+
+    throw new Error(
+      "Writing ID is required."
+    );
+
+  }
+
+
+  return apiRequest(
+    `/api/saved/writing/${writingId}/status`
+  );
+
+}
+
+
+// =========================================================
+// AUTH — GET MY SAVED WRITINGS
+// GET /api/saved
+// =========================================================
+
+export async function getSavedWritings({
+  page = 1,
+  perPage = 20,
+} = {}) {
+
+  const queryString =
+    createQueryString({
+      page,
+      per_page:
+        perPage,
+    });
+
+
+  return apiRequest(
+    `/api/saved${queryString}`
+  );
+
+}
+
+
+// =========================================================
+// AUTH — TOGGLE SAVE
+// =========================================================
+
+export async function toggleSavedWriting(
+  writingId,
+  currentlySaved = false
+) {
+
+  if (currentlySaved) {
+
+    return unsaveWriting(
+      writingId
+    );
+
+  }
+
+
+  return saveWriting(
+    writingId
+  );
+
+}
 
 // =========================================================
 // DEFAULT EXPORT
@@ -1396,6 +1525,12 @@ const writingApi = {
   toggleLike,
   getWritingLikes,
   getMyLikeStatus,
+
+  saveWriting,
+  unsaveWriting,
+  getSavedWritingStatus,
+  getSavedWritings,
+  toggleSavedWriting,
 
   getComments,
   createComment,
