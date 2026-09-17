@@ -6,6 +6,7 @@ import {
 
 import {
   BookOpen,
+  Bookmark,
   FileText,
   Filter,
   Globe2,
@@ -18,11 +19,13 @@ import {
 } from "lucide-react";
 
 import {
+  useNavigate,
   useSearchParams,
 } from "react-router-dom";
 
 import {
   getFollowingFeed,
+  getSavedWritings,
   getToken,
   getWritings,
 } from "../api/api";
@@ -69,13 +72,6 @@ const WRITING_CATEGORY_VALUES = [
 
 // =========================================================
 // ARTWORK CATEGORY VALUES
-//
-// IMPORTANT:
-//
-// These values stay in English because they are the
-// canonical values stored in the database.
-//
-// Only their DISPLAY LABELS are translated.
 // =========================================================
 
 const ARTWORK_CATEGORY_VALUES = [
@@ -99,6 +95,10 @@ function Explore() {
   const {
     t,
   } = useLanguage();
+
+
+  const navigate =
+    useNavigate();
 
 
   const [
@@ -135,14 +135,26 @@ function Explore() {
     );
 
 
+  const urlFeed =
+    searchParams.get(
+      "feed"
+    );
+
+
   const initialContentMode =
-    urlType ===
-    "documents"
+    urlType === "documents"
       ? "documents"
-      : urlType ===
-        "artworks"
+      : urlType === "artworks"
         ? "artworks"
         : "writings";
+
+
+  const initialFeedMode =
+    urlFeed === "following"
+      ? "following"
+      : urlFeed === "saved"
+        ? "saved"
+        : "all";
 
 
   // =======================================================
@@ -166,13 +178,14 @@ function Explore() {
   //
   // all
   // following
+  // saved
   // =======================================================
 
   const [
     feedMode,
     setFeedMode,
   ] = useState(
-    "all"
+    initialFeedMode
   );
 
 
@@ -328,6 +341,7 @@ function Explore() {
       map[value] ||
       value
     );
+
   }
 
 
@@ -395,6 +409,7 @@ function Explore() {
       map[value] ||
       value
     );
+
   }
 
 
@@ -411,19 +426,17 @@ function Explore() {
       "artworks"
     ) {
 
-      return (
-        getArtworkCategoryLabel(
-          value
-        )
+      return getArtworkCategoryLabel(
+        value
       );
+
     }
 
 
-    return (
-      getWritingCategoryLabel(
-        value
-      )
+    return getWritingCategoryLabel(
+      value
     );
+
   }
 
 
@@ -438,8 +451,7 @@ function Explore() {
 
     const normalized =
       String(
-        code ||
-        ""
+        code || ""
       )
         .trim()
         .toLowerCase();
@@ -495,9 +507,10 @@ function Explore() {
       map[normalized]
     ) {
 
-      return (
-        map[normalized]
-      );
+      return map[
+        normalized
+      ];
+
     }
 
 
@@ -510,12 +523,12 @@ function Explore() {
         fallbackItem.name ||
         normalized.toUpperCase()
       );
+
     }
 
 
-    return (
-      normalized.toUpperCase()
-    );
+    return normalized.toUpperCase();
+
   }
 
 
@@ -524,14 +537,13 @@ function Explore() {
   // =======================================================
 
   const categoryOptions =
-    contentMode ===
-    "artworks"
+    contentMode === "artworks"
       ? ARTWORK_CATEGORY_VALUES
       : WRITING_CATEGORY_VALUES;
 
 
   // =======================================================
-  // CHANGE CONTENT MODE
+  // CHANGE CONTENT TYPE
   // =======================================================
 
   function changeContentMode(
@@ -539,11 +551,11 @@ function Explore() {
   ) {
 
     if (
-      mode ===
-      contentMode
+      mode === contentMode
     ) {
 
       return;
+
     }
 
 
@@ -595,6 +607,7 @@ function Explore() {
     setError(
       ""
     );
+
   }
 
 
@@ -609,9 +622,9 @@ function Explore() {
         new URLSearchParams();
 
 
-      // ===================================================
+      // ---------------------------------------------------
       // CONTENT TYPE
-      // ===================================================
+      // ---------------------------------------------------
 
       if (
         contentMode ===
@@ -622,6 +635,7 @@ function Explore() {
           "type",
           "documents"
         );
+
       }
 
 
@@ -634,40 +648,53 @@ function Explore() {
           "type",
           "artworks"
         );
+
       }
 
 
-      // ===================================================
-      // FOLLOWING
-      // ===================================================
+      // ---------------------------------------------------
+      // WRITING FEED
+      // ---------------------------------------------------
 
       if (
         contentMode ===
-          "writings" &&
+        "writings" &&
         feedMode ===
-          "following"
+        "following"
       ) {
 
-        setSearchParams(
-          params,
-          {
-            replace:
-              true,
-          }
+        params.set(
+          "feed",
+          "following"
         );
 
-
-        return;
       }
 
 
-      // ===================================================
-      // WRITING SEARCH
-      // ===================================================
+      if (
+        contentMode ===
+        "writings" &&
+        feedMode ===
+        "saved"
+      ) {
+
+        params.set(
+          "feed",
+          "saved"
+        );
+
+      }
+
+
+      // ---------------------------------------------------
+      // SEARCH/FILTERS ONLY FOR ALL WRITINGS
+      // ---------------------------------------------------
 
       if (
         contentMode ===
-          "writings" &&
+        "writings" &&
+        feedMode ===
+        "all" &&
         submittedSearch
       ) {
 
@@ -675,14 +702,15 @@ function Explore() {
           "search",
           submittedSearch
         );
+
       }
 
 
-      // ===================================================
-      // LANGUAGE
-      // ===================================================
-
       if (
+        (
+          contentMode !== "writings" ||
+          feedMode === "all"
+        ) &&
         language
       ) {
 
@@ -690,14 +718,15 @@ function Explore() {
           "language",
           language
         );
+
       }
 
 
-      // ===================================================
-      // CATEGORY
-      // ===================================================
-
       if (
+        (
+          contentMode !== "writings" ||
+          feedMode === "all"
+        ) &&
         category
       ) {
 
@@ -705,14 +734,14 @@ function Explore() {
           "category",
           category
         );
+
       }
 
 
       setSearchParams(
         params,
         {
-          replace:
-            true,
+          replace: true,
         }
       );
 
@@ -764,14 +793,9 @@ function Explore() {
 
             const data =
               await getDocuments({
-
                 page,
-
-                limit:
-                  12,
-
+                limit: 12,
                 language,
-
                 category,
               });
 
@@ -781,6 +805,7 @@ function Explore() {
             ) {
 
               return;
+
             }
 
 
@@ -814,6 +839,7 @@ function Explore() {
 
 
             return;
+
           }
 
 
@@ -828,14 +854,9 @@ function Explore() {
 
             const data =
               await getArtworks({
-
                 page,
-
-                limit:
-                  12,
-
+                limit: 12,
                 language,
-
                 category,
               });
 
@@ -845,6 +866,7 @@ function Explore() {
             ) {
 
               return;
+
             }
 
 
@@ -858,9 +880,11 @@ function Explore() {
                   )
                   ? data.items
                   : Array.isArray(
-                      data?.data?.artworks
+                      data?.data
+                        ?.artworks
                     )
-                    ? data.data.artworks
+                    ? data.data
+                        .artworks
                     : [];
 
 
@@ -887,6 +911,7 @@ function Explore() {
 
 
             return;
+
           }
 
 
@@ -911,34 +936,30 @@ function Explore() {
                   []
                 );
 
-
                 setDocuments(
                   []
                 );
-
 
                 setArtworks(
                   []
                 );
 
-
                 setPagination(
                   null
                 );
+
               }
 
 
               return;
+
             }
 
 
             const data =
               await getFollowingFeed({
-
                 page,
-
-                limit:
-                  12,
+                limit: 12,
               });
 
 
@@ -947,6 +968,7 @@ function Explore() {
             ) {
 
               return;
+
             }
 
 
@@ -970,7 +992,6 @@ function Explore() {
 
 
             setPagination({
-
               page:
                 Number(
                   data?.page
@@ -1002,6 +1023,136 @@ function Explore() {
 
 
             return;
+
+          }
+
+
+          // =================================================
+          // SAVED WRITINGS
+          // =================================================
+
+          if (
+            feedMode ===
+            "saved"
+          ) {
+
+            if (
+              !isLoggedIn
+            ) {
+
+              if (
+                mounted
+              ) {
+
+                setWritings(
+                  []
+                );
+
+                setDocuments(
+                  []
+                );
+
+                setArtworks(
+                  []
+                );
+
+                setPagination(
+                  null
+                );
+
+              }
+
+
+              return;
+
+            }
+
+
+            const data =
+              await getSavedWritings({
+                page,
+                perPage: 12,
+              });
+
+
+            if (
+              !mounted
+            ) {
+
+              return;
+
+            }
+
+
+            const savedItems =
+              Array.isArray(
+                data?.saved_writings
+              )
+                ? data.saved_writings
+                : [];
+
+
+            const savedWritings =
+              savedItems
+                .map(
+                  (
+                    item
+                  ) => {
+
+                    if (
+                      !item?.writing
+                    ) {
+
+                      return null;
+
+                    }
+
+
+                    return {
+                      ...item.writing,
+
+                      // WritingCard can immediately
+                      // render this as saved.
+                      is_saved:
+                        true,
+
+                      saved_by_current_user:
+                        true,
+
+                      saved_at:
+                        item.saved_at,
+                    };
+
+                  }
+                )
+                .filter(
+                  Boolean
+                );
+
+
+            setWritings(
+              savedWritings
+            );
+
+
+            setDocuments(
+              []
+            );
+
+
+            setArtworks(
+              []
+            );
+
+
+            setPagination(
+              data?.pagination ||
+              null
+            );
+
+
+            return;
+
           }
 
 
@@ -1011,17 +1162,11 @@ function Explore() {
 
           const data =
             await getWritings({
-
               page,
-
-              limit:
-                12,
-
+              limit: 12,
               search:
                 submittedSearch,
-
               language,
-
               category,
             });
 
@@ -1031,6 +1176,7 @@ function Explore() {
           ) {
 
             return;
+
           }
 
 
@@ -1074,6 +1220,7 @@ function Explore() {
           ) {
 
             return;
+
           }
 
 
@@ -1115,8 +1262,11 @@ function Explore() {
             setLoading(
               false
             );
+
           }
+
         }
+
       }
 
 
@@ -1127,6 +1277,7 @@ function Explore() {
 
         mounted =
           false;
+
       };
 
     },
@@ -1157,6 +1308,30 @@ function Explore() {
     ) {
 
       return;
+
+    }
+
+
+    // -----------------------------------------------------
+    // LOGIN REQUIRED
+    // -----------------------------------------------------
+
+    if (
+      (
+        mode ===
+          "following" ||
+        mode ===
+          "saved"
+      ) &&
+      !isLoggedIn
+    ) {
+
+      navigate(
+        "/login"
+      );
+
+      return;
+
     }
 
 
@@ -1170,9 +1345,15 @@ function Explore() {
     );
 
 
+    // -----------------------------------------------------
+    // PERSONAL FEEDS DON'T USE GLOBAL FILTERS
+    // -----------------------------------------------------
+
     if (
       mode ===
-      "following"
+        "following" ||
+      mode ===
+        "saved"
     ) {
 
       setSearch(
@@ -1198,12 +1379,14 @@ function Explore() {
       setSortBy(
         "latest"
       );
+
     }
 
 
     setFeedMode(
       mode
     );
+
   }
 
 
@@ -1226,6 +1409,7 @@ function Explore() {
     ) {
 
       return;
+
     }
 
 
@@ -1237,6 +1421,7 @@ function Explore() {
     setSubmittedSearch(
       search.trim()
     );
+
   }
 
 
@@ -1259,6 +1444,7 @@ function Explore() {
     setPage(
       1
     );
+
   }
 
 
@@ -1296,6 +1482,7 @@ function Explore() {
     setPage(
       1
     );
+
   }
 
 
@@ -1332,10 +1519,6 @@ function Explore() {
             b
           ) => {
 
-            // =============================================
-            // OLDEST
-            // =============================================
-
             if (
               sortBy ===
               "oldest"
@@ -1354,36 +1537,54 @@ function Explore() {
                   0
                 )
               );
+
             }
 
-
-            // =============================================
-            // TITLE
-            // =============================================
 
             if (
               sortBy ===
               "title"
             ) {
 
-              return (
+              return String(
+                a.title || ""
+              ).localeCompare(
                 String(
-                  a.title ||
-                  ""
+                  b.title || ""
                 )
-                  .localeCompare(
-                    String(
-                      b.title ||
-                      ""
-                    )
-                  )
               );
+
             }
 
 
-            // =============================================
-            // LATEST
-            // =============================================
+            // -------------------------------------------------
+            // SAVED MODE:
+            // newest saved item first if saved_at exists
+            // -------------------------------------------------
+
+            if (
+              feedMode ===
+              "saved"
+            ) {
+
+              return (
+                new Date(
+                  b.saved_at ||
+                  b.published_at ||
+                  b.created_at ||
+                  0
+                )
+                -
+                new Date(
+                  a.saved_at ||
+                  a.published_at ||
+                  a.created_at ||
+                  0
+                )
+              );
+
+            }
+
 
             return (
               new Date(
@@ -1398,6 +1599,7 @@ function Explore() {
                 0
               )
             );
+
           }
         );
 
@@ -1408,6 +1610,7 @@ function Explore() {
       [
         currentItems,
         sortBy,
+        feedMode,
       ]
     );
 
@@ -1421,6 +1624,8 @@ function Explore() {
       (
         contentMode ===
           "writings" &&
+        feedMode ===
+          "all" &&
         submittedSearch
       )
       ||
@@ -1468,6 +1673,7 @@ function Explore() {
         "explore.documentsFound",
         "PDF documents found"
       );
+
     }
 
 
@@ -1480,6 +1686,7 @@ function Explore() {
         "explore.artworksFound",
         "artworks found"
       );
+
     }
 
 
@@ -1492,6 +1699,20 @@ function Explore() {
         "explore.followingWritings",
         "following writings"
       );
+
+    }
+
+
+    if (
+      feedMode ===
+      "saved"
+    ) {
+
+      return t(
+        "explore.savedWritingsFound",
+        "saved writings"
+      );
+
     }
 
 
@@ -1499,6 +1720,7 @@ function Explore() {
       "explore.writingsFound",
       "writings found"
     );
+
   }
 
 
@@ -1517,6 +1739,7 @@ function Explore() {
         "explore.noArtwork",
         "No artwork found"
       );
+
     }
 
 
@@ -1529,6 +1752,7 @@ function Explore() {
         "explore.noDocuments",
         "No PDF documents found"
       );
+
     }
 
 
@@ -1545,6 +1769,7 @@ function Explore() {
           "explore.signInFollowingTitle",
           "Sign in required"
         );
+
       }
 
 
@@ -1552,6 +1777,32 @@ function Explore() {
         "explore.followingEmpty",
         "Following feed is empty"
       );
+
+    }
+
+
+    if (
+      feedMode ===
+      "saved"
+    ) {
+
+      if (
+        !isLoggedIn
+      ) {
+
+        return t(
+          "explore.signInSavedTitle",
+          "Sign in required"
+        );
+
+      }
+
+
+      return t(
+        "explore.savedEmpty",
+        "No saved writings yet"
+      );
+
     }
 
 
@@ -1559,6 +1810,7 @@ function Explore() {
       "explore.noResultsTitle",
       "No writings found"
     );
+
   }
 
 
@@ -1577,6 +1829,7 @@ function Explore() {
         "explore.noArtworkDescription",
         "Published public artwork will appear here."
       );
+
     }
 
 
@@ -1589,6 +1842,7 @@ function Explore() {
         "explore.noDocumentsDescription",
         "Published public PDF documents will appear here."
       );
+
     }
 
 
@@ -1605,6 +1859,7 @@ function Explore() {
           "explore.signInFollowing",
           "Sign in to see writings from authors you follow."
         );
+
       }
 
 
@@ -1612,6 +1867,32 @@ function Explore() {
         "explore.followingEmptyDescription",
         "New writings from authors you follow will appear here."
       );
+
+    }
+
+
+    if (
+      feedMode ===
+      "saved"
+    ) {
+
+      if (
+        !isLoggedIn
+      ) {
+
+        return t(
+          "explore.signInSaved",
+          "Sign in to view your saved writings."
+        );
+
+      }
+
+
+      return t(
+        "explore.savedEmptyDescription",
+        "Use the bookmark button on a writing to save it for later."
+      );
+
     }
 
 
@@ -1619,6 +1900,7 @@ function Explore() {
       "explore.noResultsDescription",
       "Try another search term, category or language."
     );
+
   }
 
 
@@ -1637,6 +1919,7 @@ function Explore() {
         "explore.loadingDocuments",
         "Loading PDF documents..."
       );
+
     }
 
 
@@ -1649,6 +1932,33 @@ function Explore() {
         "explore.loadingArtwork",
         "Loading artwork..."
       );
+
+    }
+
+
+    if (
+      feedMode ===
+      "following"
+    ) {
+
+      return t(
+        "explore.loadingFollowing",
+        "Loading writings from authors you follow..."
+      );
+
+    }
+
+
+    if (
+      feedMode ===
+      "saved"
+    ) {
+
+      return t(
+        "explore.loadingSaved",
+        "Loading your saved writings..."
+      );
+
     }
 
 
@@ -1656,6 +1966,7 @@ function Explore() {
       "explore.loading",
       "Loading writings..."
     );
+
   }
 
 
@@ -1673,6 +1984,7 @@ function Explore() {
         className="explore-shell"
       >
 
+
         {/* =================================================
             HERO
         ================================================== */}
@@ -1688,7 +2000,6 @@ function Explore() {
             <BookOpen
               size={16}
             />
-
 
             <span>
 
@@ -1749,17 +2060,17 @@ function Explore() {
                 ? "explore-content-tab active"
                 : "explore-content-tab"
             }
-            onClick={() =>
-              changeContentMode(
-                "writings"
-              )
+            onClick={
+              () =>
+                changeContentMode(
+                  "writings"
+                )
             }
           >
 
             <BookOpen
               size={18}
             />
-
 
             <span>
 
@@ -1788,17 +2099,17 @@ function Explore() {
                 ? "explore-content-tab active"
                 : "explore-content-tab"
             }
-            onClick={() =>
-              changeContentMode(
-                "documents"
-              )
+            onClick={
+              () =>
+                changeContentMode(
+                  "documents"
+                )
             }
           >
 
             <FileText
               size={18}
             />
-
 
             <span>
 
@@ -1827,17 +2138,17 @@ function Explore() {
                 ? "explore-content-tab active"
                 : "explore-content-tab"
             }
-            onClick={() =>
-              changeContentMode(
-                "artworks"
-              )
+            onClick={
+              () =>
+                changeContentMode(
+                  "artworks"
+                )
             }
           >
 
             <ImageIcon
               size={18}
             />
-
 
             <span>
 
@@ -1857,505 +2168,622 @@ function Explore() {
             WRITING FEED TABS
         ================================================== */}
 
-        {contentMode ===
-          "writings" && (
+        {
+          contentMode ===
+            "writings" && (
 
-          <div
-            className="explore-feed-tabs"
-            role="tablist"
-          >
+            <div
+              className="explore-feed-tabs"
+              role="tablist"
+              aria-label="Writing feed"
+            >
 
-            <button
-              type="button"
-              role="tab"
-              aria-selected={
-                feedMode ===
-                "all"
-              }
-              className={
-                feedMode ===
-                "all"
-                  ? "explore-feed-tab active"
-                  : "explore-feed-tab"
-              }
-              onClick={() =>
-                changeFeed(
+
+              {/* ALL WRITINGS */}
+
+              <button
+                type="button"
+                role="tab"
+                aria-selected={
+                  feedMode ===
                   "all"
-                )
-              }
-            >
+                }
+                className={
+                  feedMode ===
+                  "all"
+                    ? "explore-feed-tab active"
+                    : "explore-feed-tab"
+                }
+                onClick={
+                  () =>
+                    changeFeed(
+                      "all"
+                    )
+                }
+              >
 
-              <BookOpen
-                size={16}
-              />
+                <BookOpen
+                  size={16}
+                />
+
+                {t(
+                  "explore.allWritings",
+                  "All Writings"
+                )}
+
+              </button>
 
 
-              {t(
-                "explore.allWritings",
-                "All Writings"
-              )}
+              {/* FOLLOWING */}
 
-            </button>
-
-
-            <button
-              type="button"
-              role="tab"
-              aria-selected={
-                feedMode ===
-                "following"
-              }
-              className={
-                feedMode ===
-                "following"
-                  ? "explore-feed-tab active"
-                  : "explore-feed-tab"
-              }
-              onClick={() =>
-                changeFeed(
+              <button
+                type="button"
+                role="tab"
+                aria-selected={
+                  feedMode ===
                   "following"
-                )
-              }
-            >
+                }
+                className={
+                  feedMode ===
+                  "following"
+                    ? "explore-feed-tab active"
+                    : "explore-feed-tab"
+                }
+                onClick={
+                  () =>
+                    changeFeed(
+                      "following"
+                    )
+                }
+              >
 
-              <Users
-                size={16}
-              />
+                <Users
+                  size={16}
+                />
+
+                {t(
+                  "explore.following",
+                  "Following"
+                )}
+
+              </button>
 
 
-              {t(
-                "explore.following",
-                "Following"
-              )}
+              {/* SAVED */}
 
-            </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={
+                  feedMode ===
+                  "saved"
+                }
+                className={
+                  feedMode ===
+                  "saved"
+                    ? "explore-feed-tab active"
+                    : "explore-feed-tab"
+                }
+                onClick={
+                  () =>
+                    changeFeed(
+                      "saved"
+                    )
+                }
+              >
 
-          </div>
+                <Bookmark
+                  size={16}
+                  fill={
+                    feedMode ===
+                    "saved"
+                      ? "currentColor"
+                      : "none"
+                  }
+                />
 
-        )}
+                {t(
+                  "explore.saved",
+                  "Saved"
+                )}
+
+              </button>
+
+            </div>
+
+          )
+        }
 
 
         {/* =================================================
             FOLLOWING NOTICE
         ================================================== */}
 
-        {contentMode ===
-          "writings" &&
-        feedMode ===
-          "following" && (
+        {
+          contentMode ===
+            "writings" &&
+          feedMode ===
+            "following" && (
 
-          <div
-            className="explore-following-notice"
-          >
+            <div
+              className="explore-following-notice"
+            >
 
-            <Users
-              size={17}
-            />
+              <Users
+                size={17}
+              />
+
+              <span>
+
+                {
+                  isLoggedIn
+                    ? t(
+                        "explore.followingDescription",
+                        "Recent writings from authors you follow."
+                      )
+                    : t(
+                        "explore.signInFollowing",
+                        "Sign in to see writings from authors you follow."
+                      )
+                }
+
+              </span>
+
+            </div>
+
+          )
+        }
 
 
-            <span>
+        {/* =================================================
+            SAVED NOTICE
+        ================================================== */}
 
-              {
-                isLoggedIn
-                  ? t(
-                      "explore.followingDescription",
-                      "Recent writings from authors you follow."
-                    )
-                  : t(
-                      "explore.signInFollowing",
-                      "Sign in to see writings from authors you follow."
-                    )
-              }
+        {
+          contentMode ===
+            "writings" &&
+          feedMode ===
+            "saved" && (
 
-            </span>
+            <div
+              className="explore-following-notice explore-saved-notice"
+            >
 
-          </div>
+              <Bookmark
+                size={17}
+              />
 
-        )}
+              <span>
+
+                {
+                  isLoggedIn
+                    ? t(
+                        "explore.savedDescription",
+                        "Your private collection of bookmarked writings."
+                      )
+                    : t(
+                        "explore.signInSaved",
+                        "Sign in to view your saved writings."
+                      )
+                }
+
+              </span>
+
+            </div>
+
+          )
+        }
 
 
         {/* =================================================
             DOCUMENT NOTICE
         ================================================== */}
 
-        {contentMode ===
-          "documents" && (
+        {
+          contentMode ===
+            "documents" && (
 
-          <div
-            className="explore-document-notice"
-          >
+            <div
+              className="explore-document-notice"
+            >
 
-            <FileText
-              size={18}
-            />
+              <FileText
+                size={18}
+              />
 
+              <span>
 
-            <span>
+                {t(
+                  "explore.documentsDescription",
+                  "Browse PDF books, essays, poetry collections and manuscripts published by the SHOBDO community."
+                )}
 
-              {t(
-                "explore.documentsDescription",
-                "Browse PDF books, essays, poetry collections and manuscripts published by the SHOBDO community."
-              )}
+              </span>
 
-            </span>
+            </div>
 
-          </div>
-
-        )}
+          )
+        }
 
 
         {/* =================================================
             ARTWORK NOTICE
         ================================================== */}
 
-        {contentMode ===
-          "artworks" && (
+        {
+          contentMode ===
+            "artworks" && (
 
-          <div
-            className="explore-document-notice"
-          >
+            <div
+              className="explore-document-notice"
+            >
 
-            <ImageIcon
-              size={18}
-            />
+              <ImageIcon
+                size={18}
+              />
 
+              <span>
 
-            <span>
+                {t(
+                  "explore.artworksDescription",
+                  "Discover paintings, illustrations, photography, sketches and digital artwork from SHOBDO creators."
+                )}
 
-              {t(
-                "explore.artworksDescription",
-                "Discover paintings, illustrations, photography, sketches and digital artwork from SHOBDO creators."
-              )}
+              </span>
 
-            </span>
+            </div>
 
-          </div>
-
-        )}
+          )
+        }
 
 
         {/* =================================================
             WRITING SEARCH
         ================================================== */}
 
-        {contentMode ===
-          "writings" &&
-        feedMode ===
-          "all" && (
+        {
+          contentMode ===
+            "writings" &&
+          feedMode ===
+            "all" && (
 
-          <form
-            className="explore-search"
-            onSubmit={
-              handleSearch
-            }
-          >
-
-            <Search
-              size={18}
-            />
-
-
-            <input
-              type="search"
-              value={
-                search
+            <form
+              className="explore-search"
+              onSubmit={
+                handleSearch
               }
-              onChange={(
-                event
-              ) =>
-                setSearch(
-                  event.target.value
-                )
-              }
-              placeholder={
-                t(
-                  "explore.searchPlaceholder",
-                  "Search poems, stories, topics or authors..."
-                )
-              }
-            />
+            >
+
+              <Search
+                size={18}
+              />
 
 
-            {search && (
-
-              <button
-                type="button"
-                className="explore-search-clear"
-                onClick={
-                  clearSearch
+              <input
+                type="search"
+                value={
+                  search
                 }
-                aria-label={
+                onChange={
+                  (
+                    event
+                  ) =>
+                    setSearch(
+                      event.target.value
+                    )
+                }
+                placeholder={
                   t(
-                    "common.clear",
-                    "Clear"
+                    "explore.searchPlaceholder",
+                    "Search poems, stories, topics or authors..."
                   )
                 }
+              />
+
+
+              {
+                search && (
+
+                  <button
+                    type="button"
+                    className="explore-search-clear"
+                    onClick={
+                      clearSearch
+                    }
+                    aria-label={
+                      t(
+                        "common.clear",
+                        "Clear"
+                      )
+                    }
+                  >
+
+                    <X
+                      size={16}
+                    />
+
+                  </button>
+
+                )
+              }
+
+
+              <button
+                type="submit"
+                className="explore-search-submit"
               >
 
-                <X
-                  size={16}
-                />
+                {t(
+                  "explore.searchButton",
+                  "Search"
+                )}
 
               </button>
 
-            )}
+            </form>
 
-
-            <button
-              type="submit"
-              className="explore-search-submit"
-            >
-
-              {t(
-                "explore.searchButton",
-                "Search"
-              )}
-
-            </button>
-
-          </form>
-
-        )}
+          )
+        }
 
 
         {/* =================================================
             FILTERS
+
+            Filters are intentionally hidden from Following
+            and Saved feeds.
         ================================================== */}
 
-        {(
-          contentMode !==
-            "writings" ||
-          feedMode ===
-            "all"
-        ) && (
+        {
+          (
+            contentMode !==
+              "writings" ||
+            feedMode ===
+              "all"
+          ) && (
 
-          <section
-            className="explore-filters"
-          >
-
-            {/* LANGUAGE */}
-
-            <div
-              className="explore-filter-control"
+            <section
+              className="explore-filters"
             >
 
-              <Globe2
-                size={16}
-              />
 
+              {/* LANGUAGE */}
 
-              <select
-                value={
-                  language
-                }
-                onChange={(
-                  event
-                ) => {
-
-                  setLanguage(
-                    event.target.value
-                  );
-
-
-                  setPage(
-                    1
-                  );
-                }}
+              <div
+                className="explore-filter-control"
               >
 
-                <option
-                  value=""
-                >
-
-                  {t(
-                    "explore.allLanguages",
-                    "All Languages"
-                  )}
-
-                </option>
-
-
-                {LANGUAGES.map(
-                  (
-                    item
-                  ) => (
-
-                    <option
-                      key={
-                        item.code
-                      }
-                      value={
-                        item.code
-                      }
-                    >
-
-                      {getLanguageLabel(
-                        item.code,
-                        item
-                      )}
-
-                    </option>
-
-                  )
-                )}
-
-              </select>
-
-            </div>
-
-
-            {/* CATEGORY */}
-
-            <div
-              className="explore-filter-control"
-            >
-
-              <Filter
-                size={16}
-              />
-
-
-              <select
-                value={
-                  category
-                }
-                onChange={(
-                  event
-                ) => {
-
-                  setCategory(
-                    event.target.value
-                  );
-
-
-                  setPage(
-                    1
-                  );
-                }}
-              >
-
-                {categoryOptions.map(
-                  (
-                    item
-                  ) => (
-
-                    <option
-                      key={
-                        item ||
-                        "all"
-                      }
-                      value={
-                        item
-                      }
-                    >
-
-                      {getCategoryLabel(
-                        item
-                      )}
-
-                    </option>
-
-                  )
-                )}
-
-              </select>
-
-            </div>
-
-
-            {/* SORT */}
-
-            <div
-              className="explore-filter-control"
-            >
-
-              <SlidersHorizontal
-                size={16}
-              />
-
-
-              <select
-                value={
-                  sortBy
-                }
-                onChange={(
-                  event
-                ) =>
-                  setSortBy(
-                    event.target.value
-                  )
-                }
-              >
-
-                <option
-                  value="latest"
-                >
-
-                  {t(
-                    "explore.latest",
-                    "Latest"
-                  )}
-
-                </option>
-
-
-                <option
-                  value="oldest"
-                >
-
-                  {t(
-                    "explore.oldest",
-                    "Oldest First"
-                  )}
-
-                </option>
-
-
-                <option
-                  value="title"
-                >
-
-                  {t(
-                    "explore.titleAZ",
-                    "Title A-Z"
-                  )}
-
-                </option>
-
-              </select>
-
-            </div>
-
-
-            {/* RESET */}
-
-            {hasActiveFilters && (
-
-              <button
-                type="button"
-                className="explore-reset-button"
-                onClick={
-                  resetFilters
-                }
-              >
-
-                <X
-                  size={15}
+                <Globe2
+                  size={16}
                 />
 
 
-                {t(
-                  "explore.clearFilters",
-                  "Clear Filters"
-                )}
+                <select
+                  value={
+                    language
+                  }
+                  onChange={
+                    (
+                      event
+                    ) => {
 
-              </button>
+                      setLanguage(
+                        event.target.value
+                      );
 
-            )}
+                      setPage(
+                        1
+                      );
 
-          </section>
+                    }
+                  }
+                >
 
-        )}
+                  <option
+                    value=""
+                  >
+
+                    {t(
+                      "explore.allLanguages",
+                      "All Languages"
+                    )}
+
+                  </option>
+
+
+                  {
+                    LANGUAGES.map(
+                      (
+                        item
+                      ) => (
+
+                        <option
+                          key={
+                            item.code
+                          }
+                          value={
+                            item.code
+                          }
+                        >
+
+                          {
+                            getLanguageLabel(
+                              item.code,
+                              item
+                            )
+                          }
+
+                        </option>
+
+                      )
+                    )
+                  }
+
+                </select>
+
+              </div>
+
+
+              {/* CATEGORY */}
+
+              <div
+                className="explore-filter-control"
+              >
+
+                <Filter
+                  size={16}
+                />
+
+
+                <select
+                  value={
+                    category
+                  }
+                  onChange={
+                    (
+                      event
+                    ) => {
+
+                      setCategory(
+                        event.target.value
+                      );
+
+                      setPage(
+                        1
+                      );
+
+                    }
+                  }
+                >
+
+                  {
+                    categoryOptions.map(
+                      (
+                        item
+                      ) => (
+
+                        <option
+                          key={
+                            item ||
+                            "all"
+                          }
+                          value={
+                            item
+                          }
+                        >
+
+                          {
+                            getCategoryLabel(
+                              item
+                            )
+                          }
+
+                        </option>
+
+                      )
+                    )
+                  }
+
+                </select>
+
+              </div>
+
+
+              {/* SORT */}
+
+              <div
+                className="explore-filter-control"
+              >
+
+                <SlidersHorizontal
+                  size={16}
+                />
+
+
+                <select
+                  value={
+                    sortBy
+                  }
+                  onChange={
+                    (
+                      event
+                    ) =>
+                      setSortBy(
+                        event.target.value
+                      )
+                  }
+                >
+
+                  <option
+                    value="latest"
+                  >
+
+                    {t(
+                      "explore.latest",
+                      "Latest"
+                    )}
+
+                  </option>
+
+
+                  <option
+                    value="oldest"
+                  >
+
+                    {t(
+                      "explore.oldest",
+                      "Oldest First"
+                    )}
+
+                  </option>
+
+
+                  <option
+                    value="title"
+                  >
+
+                    {t(
+                      "explore.titleAZ",
+                      "Title A-Z"
+                    )}
+
+                  </option>
+
+                </select>
+
+              </div>
+
+
+              {/* RESET */}
+
+              {
+                hasActiveFilters && (
+
+                  <button
+                    type="button"
+                    className="explore-reset-button"
+                    onClick={
+                      resetFilters
+                    }
+                  >
+
+                    <X
+                      size={15}
+                    />
+
+                    {t(
+                      "explore.clearFilters",
+                      "Clear Filters"
+                    )}
+
+                  </button>
+
+                )
+              }
+
+            </section>
+
+          )
+        }
 
 
         {/* =================================================
@@ -2377,55 +2805,66 @@ function Explore() {
           </span>
 
 
-          {contentMode ===
-            "writings" &&
-          submittedSearch && (
+          {
+            contentMode ===
+              "writings" &&
+            feedMode ===
+              "all" &&
+            submittedSearch && (
 
-            <span
-              className="explore-active-filter"
-            >
+              <span
+                className="explore-active-filter"
+              >
 
-              “{submittedSearch}”
+                “{submittedSearch}”
 
-            </span>
+              </span>
 
-          )}
-
-
-          {selectedLanguage && (
-
-            <span
-              className="explore-active-filter"
-            >
-
-              <Globe2
-                size={11}
-              />
+            )
+          }
 
 
-              {getLanguageLabel(
-                selectedLanguage.code,
-                selectedLanguage
-              )}
+          {
+            selectedLanguage && (
 
-            </span>
+              <span
+                className="explore-active-filter"
+              >
 
-          )}
+                <Globe2
+                  size={11}
+                />
+
+                {
+                  getLanguageLabel(
+                    selectedLanguage.code,
+                    selectedLanguage
+                  )
+                }
+
+              </span>
+
+            )
+          }
 
 
-          {category && (
+          {
+            category && (
 
-            <span
-              className="explore-active-filter"
-            >
+              <span
+                className="explore-active-filter"
+              >
 
-              {getCategoryLabel(
-                category
-              )}
+                {
+                  getCategoryLabel(
+                    category
+                  )
+                }
 
-            </span>
+              </span>
 
-          )}
+            )
+          }
 
         </div>
 
@@ -2434,408 +2873,448 @@ function Explore() {
             LOADING
         ================================================== */}
 
-        {loading && (
+        {
+          loading && (
 
-          <div
-            className="explore-loading"
-          >
+            <div
+              className="explore-loading"
+            >
 
-            <Loader2
-              size={30}
-              className="spin"
-            />
+              <Loader2
+                size={30}
+                className="spin"
+              />
 
+              <p>
+                {getLoadingText()}
+              </p>
 
-            <p>
-              {getLoadingText()}
-            </p>
+            </div>
 
-          </div>
-
-        )}
+          )
+        }
 
 
         {/* =================================================
             ERROR
         ================================================== */}
 
-        {!loading &&
-        error && (
+        {
+          !loading &&
+          error && (
 
-          <section
-            className="explore-state"
-          >
-
-            {
-              contentMode ===
-              "artworks"
-                ? (
-                    <ImageIcon
-                      size={32}
-                    />
-                  )
-                : contentMode ===
-                  "documents"
-                  ? (
-                      <FileText
-                        size={32}
-                      />
-                    )
-                  : (
-                      <BookOpen
-                        size={32}
-                      />
-                    )
-            }
-
-
-            <h2>
-
-              {t(
-                "explore.loadContentError",
-                "Unable to load content"
-              )}
-
-            </h2>
-
-
-            <p>
-              {error}
-            </p>
-
-
-            <button
-              type="button"
-              onClick={() =>
-                window.location
-                  .reload()
-              }
+            <section
+              className="explore-state"
             >
 
-              {t(
-                "explore.retry",
-                "Try Again"
-              )}
+              {
+                contentMode ===
+                "artworks"
+                  ? (
+                      <ImageIcon
+                        size={32}
+                      />
+                    )
+                  : contentMode ===
+                    "documents"
+                    ? (
+                        <FileText
+                          size={32}
+                        />
+                      )
+                    : feedMode ===
+                      "saved"
+                      ? (
+                          <Bookmark
+                            size={32}
+                          />
+                        )
+                      : (
+                          <BookOpen
+                            size={32}
+                          />
+                        )
+              }
 
-            </button>
 
-          </section>
+              <h2>
 
-        )}
+                {t(
+                  "explore.loadContentError",
+                  "Unable to load content"
+                )}
+
+              </h2>
+
+
+              <p>
+                {error}
+              </p>
+
+
+              <button
+                type="button"
+                onClick={
+                  () =>
+                    window.location
+                      .reload()
+                }
+              >
+
+                {t(
+                  "explore.retry",
+                  "Try Again"
+                )}
+
+              </button>
+
+            </section>
+
+          )
+        }
 
 
         {/* =================================================
             EMPTY STATE
         ================================================== */}
 
-        {!loading &&
-        !error &&
-        sortedItems.length ===
-          0 && (
+        {
+          !loading &&
+          !error &&
+          sortedItems.length ===
+            0 && (
 
-          <section
-            className="explore-state"
-          >
+            <section
+              className="explore-state"
+            >
 
-            {
-              contentMode ===
-              "artworks"
-                ? (
-                    <ImageIcon
-                      size={32}
-                    />
-                  )
-                : contentMode ===
-                  "documents"
+              {
+                contentMode ===
+                "artworks"
                   ? (
-                      <FileText
+                      <ImageIcon
                         size={32}
                       />
                     )
-                  : feedMode ===
-                    "following"
+                  : contentMode ===
+                    "documents"
                     ? (
-                        <Users
+                        <FileText
                           size={32}
                         />
                       )
-                    : (
-                        <Search
-                          size={32}
-                        />
-                      )
-            }
+                    : feedMode ===
+                      "following"
+                      ? (
+                          <Users
+                            size={32}
+                          />
+                        )
+                      : feedMode ===
+                        "saved"
+                        ? (
+                            <Bookmark
+                              size={34}
+                            />
+                          )
+                        : (
+                            <Search
+                              size={32}
+                            />
+                          )
+              }
 
 
-            <h2>
-              {getEmptyTitle()}
-            </h2>
+              <h2>
+                {getEmptyTitle()}
+              </h2>
 
 
-            <p>
-              {getEmptyDescription()}
-            </p>
+              <p>
+                {getEmptyDescription()}
+              </p>
 
 
-            {hasActiveFilters && (
+              {
+                hasActiveFilters && (
 
-              <button
-                type="button"
-                onClick={
-                  resetFilters
-                }
-              >
+                  <button
+                    type="button"
+                    onClick={
+                      resetFilters
+                    }
+                  >
 
-                {t(
-                  "explore.clearFilters",
-                  "Clear Filters"
-                )}
+                    {t(
+                      "explore.clearFilters",
+                      "Clear Filters"
+                    )}
 
-              </button>
+                  </button>
 
-            )}
+                )
+              }
 
-          </section>
+            </section>
 
-        )}
+          )
+        }
 
 
         {/* =================================================
             WRITINGS GRID
         ================================================== */}
 
-        {contentMode ===
-          "writings" &&
-        !loading &&
-        !error &&
-        sortedItems.length >
-          0 && (
+        {
+          contentMode ===
+            "writings" &&
+          !loading &&
+          !error &&
+          sortedItems.length >
+            0 && (
 
-          <section
-            className="explore-writing-grid"
-          >
+            <section
+              className="explore-writing-grid"
+            >
 
-            {sortedItems.map(
-              (
-                writing
-              ) => (
-
-                <WritingCard
-                  key={
-                    writing.id
-                  }
-                  writing={
+              {
+                sortedItems.map(
+                  (
                     writing
-                  }
-                />
+                  ) => (
 
-              )
-            )}
+                    <WritingCard
+                      key={
+                        writing.id
+                      }
+                      writing={
+                        writing
+                      }
+                    />
 
-          </section>
+                  )
+                )
+              }
 
-        )}
+            </section>
+
+          )
+        }
 
 
         {/* =================================================
             DOCUMENT GRID
         ================================================== */}
 
-        {contentMode ===
-          "documents" &&
-        !loading &&
-        !error &&
-        sortedItems.length >
-          0 && (
+        {
+          contentMode ===
+            "documents" &&
+          !loading &&
+          !error &&
+          sortedItems.length >
+            0 && (
 
-          <section
-            className="explore-document-grid"
-          >
+            <section
+              className="explore-document-grid"
+            >
 
-            {sortedItems.map(
-              (
-                document
-              ) => (
-
-                <DocumentCard
-                  key={
-                    document.id
-                  }
-                  document={
+              {
+                sortedItems.map(
+                  (
                     document
-                  }
-                />
+                  ) => (
 
-              )
-            )}
+                    <DocumentCard
+                      key={
+                        document.id
+                      }
+                      document={
+                        document
+                      }
+                    />
 
-          </section>
+                  )
+                )
+              }
 
-        )}
+            </section>
+
+          )
+        }
 
 
         {/* =================================================
             ARTWORK GRID
         ================================================== */}
 
-        {contentMode ===
-          "artworks" &&
-        !loading &&
-        !error &&
-        sortedItems.length >
-          0 && (
+        {
+          contentMode ===
+            "artworks" &&
+          !loading &&
+          !error &&
+          sortedItems.length >
+            0 && (
 
-          <section
-            className="explore-artwork-grid"
-          >
+            <section
+              className="explore-artwork-grid"
+            >
 
-            {sortedItems.map(
-              (
-                artwork
-              ) => (
-
-                <ArtworkCard
-                  key={
-                    artwork.id
-                  }
-                  artwork={
+              {
+                sortedItems.map(
+                  (
                     artwork
-                  }
-                />
+                  ) => (
 
-              )
-            )}
+                    <ArtworkCard
+                      key={
+                        artwork.id
+                      }
+                      artwork={
+                        artwork
+                      }
+                    />
 
-          </section>
+                  )
+                )
+              }
 
-        )}
+            </section>
+
+          )
+        }
 
 
         {/* =================================================
             PAGINATION
         ================================================== */}
 
-        {!loading &&
-        !error &&
-        pagination &&
-        pagination.pages >
-          1 && (
+        {
+          !loading &&
+          !error &&
+          pagination &&
+          pagination.pages >
+            1 && (
 
-          <nav
-            className="explore-pagination"
-          >
-
-            <button
-              type="button"
-              disabled={
-                !pagination
-                  .has_prev
-              }
-              onClick={() => {
-
-                setPage(
-                  (
-                    current
-                  ) =>
-                    Math.max(
-                      1,
-                      current - 1
-                    )
-                );
-
-
-                window.scrollTo({
-                  top:
-                    0,
-
-                  behavior:
-                    "smooth",
-                });
-
-              }}
+            <nav
+              className="explore-pagination"
+              aria-label="Explore pagination"
             >
 
-              {t(
-                "explore.previous",
-                "Previous"
-              )}
-
-            </button>
-
-
-            <span>
-
-              {t(
-                "explore.page",
-                "Page"
-              )}
-
-              {" "}
-
-              <strong>
-                {
-                  pagination.page
+              <button
+                type="button"
+                disabled={
+                  !pagination
+                    .has_prev
                 }
-              </strong>
+                onClick={
+                  () => {
 
-              {" "}
-
-              {t(
-                "explore.of",
-                "of"
-              )}
-
-              {" "}
-
-              {
-                pagination.pages
-              }
-
-            </span>
+                    setPage(
+                      (
+                        current
+                      ) =>
+                        Math.max(
+                          1,
+                          current - 1
+                        )
+                    );
 
 
-            <button
-              type="button"
-              disabled={
-                !pagination
-                  .has_next
-              }
-              onClick={() => {
+                    window.scrollTo({
+                      top: 0,
+                      behavior:
+                        "smooth",
+                    });
 
-                setPage(
-                  (
-                    current
-                  ) =>
-                    current + 1
-                );
+                  }
+                }
+              >
+
+                {t(
+                  "explore.previous",
+                  "Previous"
+                )}
+
+              </button>
 
 
-                window.scrollTo({
-                  top:
-                    0,
+              <span>
 
-                  behavior:
-                    "smooth",
-                });
+                {t(
+                  "explore.page",
+                  "Page"
+                )}
 
-              }}
-            >
+                {" "}
 
-              {t(
-                "explore.next",
-                "Next"
-              )}
+                <strong>
+                  {
+                    pagination.page
+                  }
+                </strong>
 
-            </button>
+                {" "}
 
-          </nav>
+                {t(
+                  "explore.of",
+                  "of"
+                )}
 
-        )}
+                {" "}
+
+                {
+                  pagination.pages
+                }
+
+              </span>
+
+
+              <button
+                type="button"
+                disabled={
+                  !pagination
+                    .has_next
+                }
+                onClick={
+                  () => {
+
+                    setPage(
+                      (
+                        current
+                      ) =>
+                        current + 1
+                    );
+
+
+                    window.scrollTo({
+                      top: 0,
+                      behavior:
+                        "smooth",
+                    });
+
+                  }
+                }
+              >
+
+                {t(
+                  "explore.next",
+                  "Next"
+                )}
+
+              </button>
+
+            </nav>
+
+          )
+        }
+
 
       </div>
 
     </main>
+
   );
+
 }
 
 

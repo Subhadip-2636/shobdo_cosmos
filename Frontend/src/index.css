@@ -20258,3 +20258,38 @@ a.footer-contact-item:hover strong {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================
+   EXPLORE — WRITING FEED TABS
+   All Writings / Following / Saved
+========================================================= */
+
+.explore-feed-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+
+.explore-feed-tab {
+  width: 100%;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+
+.explore-saved-notice svg {
+  flex-shrink: 0;
+}
+
+
+@media (max-width: 700px) {
+
+  .explore-feed-tabs {
+    grid-template-columns: 1fr;
+  }
+
+}
