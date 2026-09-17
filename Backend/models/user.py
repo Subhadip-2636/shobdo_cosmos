@@ -64,11 +64,8 @@ class User(db.Model):
     #
     # nullable=True is intentional.
     #
-    # A user who registered only through Google or Facebook
-    # may initially have no SHOBDO password.
-    #
-    # Existing email/password accounts continue to work
-    # normally.
+    # Users created through social authentication may not
+    # initially have a SHOBDO password.
     #
     # =====================================================
 
@@ -82,10 +79,9 @@ class User(db.Model):
     # GOOGLE AUTHENTICATION
     # =====================================================
     #
-    # google_sub is Google's stable unique account ID.
+    # google_sub is Google's stable account identifier.
     #
-    # Never use the Google email address as the permanent
-    # Google identity key.
+    # Never use email as Google's permanent identity key.
     #
     # =====================================================
 
@@ -109,13 +105,10 @@ class User(db.Model):
     # FACEBOOK AUTHENTICATION
     # =====================================================
     #
-    # Facebook / Meta returns an app-scoped user ID.
+    # facebook_user_id is Meta's stable app-scoped user ID.
     #
-    # That ID is the stable identity we associate with the
-    # SHOBDO account.
-    #
-    # Do not use a Facebook email address as the permanent
-    # Facebook identity key.
+    # Email must not be used as the permanent Facebook
+    # identity identifier.
     #
     # =====================================================
 
@@ -136,19 +129,65 @@ class User(db.Model):
 
 
     # =====================================================
+    # INSTAGRAM AUTHENTICATION
+    # =====================================================
+    #
+    # instagram_user_id:
+    #
+    # Stable Instagram Professional account identifier
+    # returned by the Instagram API.
+    #
+    # This is the identity key used by SHOBDO.
+    #
+    # DO NOT use:
+    #
+    # - Instagram username
+    # - profile name
+    # - email
+    #
+    # as the permanent identity key.
+    #
+    # Instagram usernames may change.
+    #
+    # =====================================================
+
+    instagram_user_id = db.Column(
+        db.String(255),
+        unique=True,
+        nullable=True,
+        index=True,
+    )
+
+
+    # Instagram username is profile information only.
+    #
+    # It is intentionally NOT unique because usernames may
+    # change and should never be SHOBDO's identity key.
+
+    instagram_username = db.Column(
+        db.String(255),
+        nullable=True,
+        index=True,
+    )
+
+
+    instagram_linked_at = db.Column(
+        db.DateTime(
+            timezone=True
+        ),
+        nullable=True,
+    )
+
+
+    # =====================================================
     # EMAIL VERIFICATION
     # =====================================================
     #
-    # This refers to SHOBDO's knowledge that an email
-    # address has been verified.
-    #
     # Google can provide an explicit verified-email claim.
     #
-    # Facebook does not provide exactly the same verified
-    # email claim in the normal profile response, therefore
-    # Facebook linking must not automatically mark an email
-    # verified unless the backend has another trusted reason
-    # to do so.
+    # Facebook and Instagram authentication should NOT
+    # automatically mark SHOBDO email as verified unless
+    # SHOBDO has another trusted verification mechanism.
     #
     # =====================================================
 
@@ -283,10 +322,10 @@ class User(db.Model):
         password,
     ):
         """
-        Hash and store a SHOBDO password.
+        Hash and save a SHOBDO password.
 
         Social-login-only users may initially have no
-        SHOBDO password. They can later create one.
+        SHOBDO password.
         """
 
         if (
@@ -315,8 +354,7 @@ class User(db.Model):
         password,
     ):
         """
-        Check a plain-text password against the saved
-        password hash.
+        Check a plain-text password.
 
         Social-login-only accounts safely return False.
         """
@@ -342,7 +380,6 @@ class User(db.Model):
                 password,
             )
 
-
         except (
             TypeError,
             ValueError,
@@ -355,7 +392,7 @@ class User(db.Model):
         self,
     ):
         """
-        Whether this user has a SHOBDO password.
+        Whether the account has a SHOBDO password.
         """
 
         return bool(
@@ -371,7 +408,7 @@ class User(db.Model):
         self,
     ):
         """
-        Whether a Google account is linked.
+        Whether Google authentication is linked.
         """
 
         return bool(
@@ -389,9 +426,8 @@ class User(db.Model):
         """
         Link a verified Google identity.
 
-        IMPORTANT:
-        Only call this after the backend has successfully
-        verified Google's ID token.
+        Only call after Google's token has been verified
+        by the SHOBDO backend.
         """
 
         normalized_sub = str(
@@ -433,7 +469,7 @@ class User(db.Model):
         ).strip()
 
 
-        # Keep the user's manually selected SHOBDO avatar.
+        # Do not overwrite an existing/custom SHOBDO avatar.
 
         if (
             normalized_avatar
@@ -450,11 +486,7 @@ class User(db.Model):
         self,
     ):
         """
-        Remove Google authentication from the account.
-
-        A future API endpoint should prevent unlinking
-        when this would leave the user with no valid
-        authentication method.
+        Remove Google authentication.
         """
 
         self.google_sub = (
@@ -475,7 +507,7 @@ class User(db.Model):
         self,
     ):
         """
-        Whether a Facebook account is linked.
+        Whether Facebook authentication is linked.
         """
 
         return bool(
@@ -493,14 +525,8 @@ class User(db.Model):
         """
         Link a verified Facebook / Meta identity.
 
-        IMPORTANT:
-        Only call this after the backend has verified the
-        Facebook user access token with Meta.
-
-        mark_email_verified defaults to False because
-        Facebook's normal profile response should not be
-        treated the same as Google's explicit
-        `email_verified` claim.
+        Only call after Facebook's user access token has
+        been verified by the SHOBDO backend.
         """
 
         normalized_user_id = str(
@@ -542,8 +568,6 @@ class User(db.Model):
         ).strip()
 
 
-        # Do not overwrite a custom SHOBDO avatar.
-
         if (
             normalized_avatar
             and
@@ -559,11 +583,7 @@ class User(db.Model):
         self,
     ):
         """
-        Remove Facebook authentication from the account.
-
-        A future account-security endpoint should block
-        this operation if Facebook is the user's only
-        remaining authentication method.
+        Remove Facebook authentication.
         """
 
         self.facebook_user_id = (
@@ -577,14 +597,187 @@ class User(db.Model):
 
 
     # =====================================================
-    # EMAIL VERIFICATION HELPERS
+    # INSTAGRAM ACCOUNT HELPERS
+    # =====================================================
+
+    def has_instagram_account(
+        self,
+    ):
+        """
+        Whether an Instagram account is linked.
+        """
+
+        return bool(
+            self.instagram_user_id
+        )
+
+
+    def link_instagram_account(
+        self,
+        instagram_user_id,
+        *,
+        instagram_username=None,
+        avatar_url=None,
+    ):
+        """
+        Link a verified Instagram Professional identity.
+
+        IMPORTANT:
+
+        Only call this after the SHOBDO backend has
+        successfully completed Instagram OAuth and verified
+        the Instagram account.
+
+        The Instagram user ID is the permanent identity key.
+
+        The username is profile metadata only and may change.
+        """
+
+        normalized_user_id = str(
+            instagram_user_id or ""
+        ).strip()
+
+
+        if not normalized_user_id:
+
+            raise ValueError(
+                "Instagram account identifier is required."
+            )
+
+
+        self.instagram_user_id = (
+            normalized_user_id
+        )
+
+
+        # -------------------------------------------------
+        # USERNAME
+        # -------------------------------------------------
+
+        normalized_username = str(
+            instagram_username or ""
+        ).strip()
+
+
+        if normalized_username:
+
+            self.instagram_username = (
+                normalized_username
+            )
+
+
+        # -------------------------------------------------
+        # LINKED AT
+        # -------------------------------------------------
+
+        if (
+            self.instagram_linked_at
+            is None
+        ):
+
+            self.instagram_linked_at = (
+                utc_now()
+            )
+
+
+        # -------------------------------------------------
+        # PROFILE PICTURE
+        # -------------------------------------------------
+
+        normalized_avatar = str(
+            avatar_url or ""
+        ).strip()
+
+
+        # Never replace a user-selected SHOBDO avatar.
+
+        if (
+            normalized_avatar
+            and
+            not self.avatar_url
+        ):
+
+            self.avatar_url = (
+                normalized_avatar
+            )
+
+
+    def update_instagram_profile(
+        self,
+        *,
+        instagram_username=None,
+        avatar_url=None,
+    ):
+        """
+        Refresh Instagram profile metadata.
+
+        The Instagram user ID itself is intentionally not
+        changed here.
+        """
+
+        normalized_username = str(
+            instagram_username or ""
+        ).strip()
+
+
+        if normalized_username:
+
+            self.instagram_username = (
+                normalized_username
+            )
+
+
+        normalized_avatar = str(
+            avatar_url or ""
+        ).strip()
+
+
+        if (
+            normalized_avatar
+            and
+            not self.avatar_url
+        ):
+
+            self.avatar_url = (
+                normalized_avatar
+            )
+
+
+    def unlink_instagram_account(
+        self,
+    ):
+        """
+        Remove Instagram authentication.
+
+        A future security endpoint should prevent unlinking
+        Instagram when it is the user's only authentication
+        method.
+        """
+
+        self.instagram_user_id = (
+            None
+        )
+
+
+        self.instagram_username = (
+            None
+        )
+
+
+        self.instagram_linked_at = (
+            None
+        )
+
+
+    # =====================================================
+    # EMAIL VERIFICATION
     # =====================================================
 
     def mark_email_verified(
         self,
     ):
         """
-        Mark the SHOBDO account email as verified.
+        Mark the SHOBDO email as verified.
         """
 
         self.email_verified = (
@@ -609,14 +802,14 @@ class User(db.Model):
 
 
     # =====================================================
-    # PASSWORD RESET HELPERS
+    # PASSWORD RESET
     # =====================================================
 
     def clear_password_reset_token(
         self,
     ):
         """
-        Remove password reset token information.
+        Clear all password-reset information.
         """
 
         self.password_reset_token = (
@@ -637,8 +830,7 @@ class User(db.Model):
         self,
     ):
         """
-        Return all authentication methods currently
-        connected to the account.
+        Return all currently connected login methods.
 
         Examples:
 
@@ -648,11 +840,9 @@ class User(db.Model):
 
         ["facebook"]
 
-        ["password", "google"]
+        ["instagram"]
 
-        ["google", "facebook"]
-
-        ["password", "google", "facebook"]
+        ["password", "google", "facebook", "instagram"]
         """
 
         methods = []
@@ -679,6 +869,13 @@ class User(db.Model):
             )
 
 
+        if self.has_instagram_account():
+
+            methods.append(
+                "instagram"
+            )
+
+
         return methods
 
 
@@ -686,8 +883,8 @@ class User(db.Model):
         self,
     ):
         """
-        Whether the account has at least one usable
-        authentication method.
+        Whether at least one usable authentication method
+        remains on the account.
         """
 
         return bool(
@@ -703,14 +900,14 @@ class User(db.Model):
         self,
     ):
         """
-        Safe user data for authenticated API responses.
+        Safe user information for API responses.
 
-        Sensitive authentication values are intentionally
-        excluded:
+        Sensitive authentication values are NOT returned:
 
         - password_hash
         - google_sub
         - facebook_user_id
+        - instagram_user_id
         - password_reset_token
         - password_reset_expires
         """
@@ -789,6 +986,10 @@ class User(db.Model):
                 self.has_facebook_account(),
 
 
+            "instagram_connected":
+                self.has_instagram_account(),
+
+
             "auth_methods":
                 self.get_auth_methods(),
 
@@ -813,6 +1014,22 @@ class User(db.Model):
                 (
                     self.facebook_linked_at.isoformat()
                     if self.facebook_linked_at
+                    else None
+                ),
+
+
+            # =============================================
+            # INSTAGRAM
+            # =============================================
+
+            "instagram_username":
+                self.instagram_username,
+
+
+            "instagram_linked_at":
+                (
+                    self.instagram_linked_at.isoformat()
+                    if self.instagram_linked_at
                     else None
                 ),
 
@@ -847,6 +1064,7 @@ class User(db.Model):
                     if self.updated_at
                     else None
                 ),
+
         }
 
 
@@ -865,5 +1083,7 @@ class User(db.Model):
             f"google_connected="
             f"{self.has_google_account()} "
             f"facebook_connected="
-            f"{self.has_facebook_account()}>"
+            f"{self.has_facebook_account()} "
+            f"instagram_connected="
+            f"{self.has_instagram_account()}>"
         )

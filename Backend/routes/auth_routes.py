@@ -1,4 +1,7 @@
+import base64
 import hashlib
+import hmac
+import json
 import os
 import re
 import secrets
@@ -10,6 +13,7 @@ from datetime import (
 )
 
 from html import escape
+from urllib.parse import quote, urlencode, urlsplit
 
 import requests as http_requests
 
@@ -17,6 +21,8 @@ from flask import (
     Blueprint,
     current_app,
     jsonify,
+    make_response,
+    redirect,
     request,
 )
 
@@ -27,6 +33,12 @@ from flask_jwt_extended import (
 )
 
 from flask_mail import Message
+
+from itsdangerous import (
+    BadSignature,
+    SignatureExpired,
+    URLSafeTimedSerializer,
+)
 
 from google.auth.exceptions import (
     GoogleAuthError,
@@ -1060,6 +1072,1294 @@ def facebook_picture_url(
             "url"
         )
     )
+
+
+
+# =========================================================
+# INSTAGRAM CONFIGURATION
+# =========================================================
+
+INSTAGRAM_AUTHORIZATION_URL = (
+    "https://www.instagram.com/oauth/authorize"
+)
+
+INSTAGRAM_TOKEN_URL = (
+    "https://api.instagram.com/oauth/access_token"
+)
+
+INSTAGRAM_GRAPH_ROOT = (
+    "https://graph.instagram.com"
+)
+
+INSTAGRAM_BASIC_SCOPE = (
+    "instagram_business_basic"
+)
+
+INSTAGRAM_STATE_COOKIE = (
+    "shobdo_instagram_oauth_state"
+)
+
+INSTAGRAM_OAUTH_STATE_MAX_AGE_SECONDS = 600
+
+INSTAGRAM_LINK_TOKEN_MAX_AGE_SECONDS = 900
+
+INSTAGRAM_DELETION_STATUS_MAX_AGE_SECONDS = (
+    60 * 60 * 24 * 30
+)
+
+
+# =========================================================
+# FRONTEND URL
+# =========================================================
+
+def get_frontend_url():
+
+    value = (
+        current_app.config.get(
+            "FRONTEND_URL"
+        )
+        or
+        os.getenv(
+            "FRONTEND_URL"
+        )
+        or
+        current_app.config.get(
+            "PRODUCTION_FRONTEND_URL"
+        )
+        or
+        os.getenv(
+            "PRODUCTION_FRONTEND_URL"
+        )
+        or
+        "http://localhost:5173"
+    )
+
+
+    return str(
+        value
+    ).strip().rstrip(
+        "/"
+    )
+
+
+# =========================================================
+# INSTAGRAM APP ID
+# =========================================================
+
+def get_instagram_app_id():
+
+    value = (
+        current_app.config.get(
+            "INSTAGRAM_APP_ID"
+        )
+        or
+        os.getenv(
+            "INSTAGRAM_APP_ID"
+        )
+        or
+        ""
+    )
+
+
+    return str(
+        value
+    ).strip()
+
+
+# =========================================================
+# INSTAGRAM APP SECRET
+# =========================================================
+
+def get_instagram_app_secret():
+
+    value = (
+        current_app.config.get(
+            "INSTAGRAM_APP_SECRET"
+        )
+        or
+        os.getenv(
+            "INSTAGRAM_APP_SECRET"
+        )
+        or
+        ""
+    )
+
+
+    return str(
+        value
+    ).strip()
+
+
+# =========================================================
+# INSTAGRAM REDIRECT URI
+# =========================================================
+
+def get_instagram_redirect_uri():
+
+    value = (
+        current_app.config.get(
+            "INSTAGRAM_REDIRECT_URI"
+        )
+        or
+        os.getenv(
+            "INSTAGRAM_REDIRECT_URI"
+        )
+        or
+        ""
+    )
+
+
+    return str(
+        value
+    ).strip()
+
+
+# =========================================================
+# INSTAGRAM BACKEND BASE URL
+# =========================================================
+
+def get_instagram_backend_base_url():
+
+    redirect_uri = (
+        get_instagram_redirect_uri()
+    )
+
+
+    if not redirect_uri:
+
+        return ""
+
+
+    parsed = urlsplit(
+        redirect_uri
+    )
+
+
+    if (
+        not parsed.scheme
+        or
+        not parsed.netloc
+    ):
+
+        return ""
+
+
+    return (
+        f"{parsed.scheme}://"
+        f"{parsed.netloc}"
+    )
+
+
+# =========================================================
+# INSTAGRAM CONFIG VALIDATION
+# =========================================================
+
+def validate_instagram_configuration():
+
+    if (
+        not get_instagram_app_id()
+        or
+        not get_instagram_app_secret()
+        or
+        not get_instagram_redirect_uri()
+    ):
+
+        raise RuntimeError(
+            (
+                "Instagram authentication is "
+                "not configured."
+            )
+        )
+
+
+# =========================================================
+# OAUTH SIGNING SECRET
+# =========================================================
+
+def get_oauth_signing_secret():
+
+    value = (
+        current_app.config.get(
+            "JWT_SECRET_KEY"
+        )
+        or
+        os.getenv(
+            "JWT_SECRET_KEY"
+        )
+        or
+        current_app.secret_key
+        or
+        ""
+    )
+
+
+    value = str(
+        value
+    ).strip()
+
+
+    if not value:
+
+        raise RuntimeError(
+            (
+                "A server signing secret is "
+                "required for social authentication."
+            )
+        )
+
+
+    return value
+
+
+# =========================================================
+# INSTAGRAM SERIALIZER
+# =========================================================
+
+def instagram_serializer(
+    salt,
+):
+
+    return URLSafeTimedSerializer(
+        secret_key=
+            get_oauth_signing_secret(),
+        salt=
+            salt,
+    )
+
+
+# =========================================================
+# INSTAGRAM OAUTH STATE
+# =========================================================
+
+def create_instagram_oauth_state(
+    nonce,
+):
+
+    return (
+        instagram_serializer(
+            "shobdo-instagram-oauth-state"
+        )
+        .dumps({
+            "purpose":
+                "instagram_oauth",
+            "nonce":
+                nonce,
+        })
+    )
+
+
+def verify_instagram_oauth_state(
+    state,
+):
+
+    payload = (
+        instagram_serializer(
+            "shobdo-instagram-oauth-state"
+        )
+        .loads(
+            state,
+            max_age=
+                INSTAGRAM_OAUTH_STATE_MAX_AGE_SECONDS,
+        )
+    )
+
+
+    if (
+        not isinstance(
+            payload,
+            dict,
+        )
+        or
+        payload.get(
+            "purpose"
+        )
+        !=
+        "instagram_oauth"
+    ):
+
+        raise BadSignature(
+            "Invalid Instagram OAuth state."
+        )
+
+
+    return payload
+
+
+# =========================================================
+# INSTAGRAM LINK TOKEN
+# =========================================================
+
+def create_instagram_link_token(
+    *,
+    instagram_user_id,
+    instagram_username,
+):
+
+    return (
+        instagram_serializer(
+            "shobdo-instagram-link"
+        )
+        .dumps({
+            "purpose":
+                "instagram_link",
+            "instagram_user_id":
+                str(
+                    instagram_user_id
+                ),
+            "instagram_username":
+                str(
+                    instagram_username
+                    or
+                    ""
+                ),
+        })
+    )
+
+
+def verify_instagram_link_token(
+    token,
+):
+
+    payload = (
+        instagram_serializer(
+            "shobdo-instagram-link"
+        )
+        .loads(
+            token,
+            max_age=
+                INSTAGRAM_LINK_TOKEN_MAX_AGE_SECONDS,
+        )
+    )
+
+
+    if (
+        not isinstance(
+            payload,
+            dict,
+        )
+        or
+        payload.get(
+            "purpose"
+        )
+        !=
+        "instagram_link"
+    ):
+
+        raise BadSignature(
+            "Invalid Instagram link token."
+        )
+
+
+    instagram_user_id = str(
+        payload.get(
+            "instagram_user_id",
+            "",
+        )
+        or
+        ""
+    ).strip()
+
+
+    if not instagram_user_id:
+
+        raise BadSignature(
+            "Instagram user identifier is missing."
+        )
+
+
+    return payload
+
+
+# =========================================================
+# INSTAGRAM DATA-DELETION STATUS TOKEN
+# =========================================================
+
+def create_instagram_deletion_status_token(
+    instagram_user_id,
+):
+
+    return (
+        instagram_serializer(
+            "shobdo-instagram-data-deletion"
+        )
+        .dumps({
+            "purpose":
+                "instagram_data_deletion",
+            "instagram_user_id":
+                str(
+                    instagram_user_id
+                    or
+                    ""
+                ),
+        })
+    )
+
+
+def verify_instagram_deletion_status_token(
+    token,
+):
+
+    payload = (
+        instagram_serializer(
+            "shobdo-instagram-data-deletion"
+        )
+        .loads(
+            token,
+            max_age=
+                INSTAGRAM_DELETION_STATUS_MAX_AGE_SECONDS,
+        )
+    )
+
+
+    if (
+        not isinstance(
+            payload,
+            dict,
+        )
+        or
+        payload.get(
+            "purpose"
+        )
+        !=
+        "instagram_data_deletion"
+    ):
+
+        raise BadSignature(
+            (
+                "Invalid Instagram data-deletion "
+                "confirmation token."
+            )
+        )
+
+
+    return payload
+
+
+# =========================================================
+# INSTAGRAM RESPONSE JSON
+# =========================================================
+
+def instagram_response_json(
+    response,
+):
+
+    try:
+
+        payload = (
+            response.json()
+        )
+
+
+    except ValueError as error:
+
+        raise RuntimeError(
+            (
+                "Instagram returned "
+                "an invalid response."
+            )
+        ) from error
+
+
+    if not isinstance(
+        payload,
+        dict,
+    ):
+
+        raise RuntimeError(
+            (
+                "Instagram returned "
+                "an invalid response."
+            )
+        )
+
+
+    return payload
+
+
+# =========================================================
+# EXCHANGE INSTAGRAM AUTHORIZATION CODE
+# =========================================================
+
+def exchange_instagram_authorization_code(
+    authorization_code,
+):
+
+    validate_instagram_configuration()
+
+
+    code = str(
+        authorization_code
+        or
+        ""
+    ).strip()
+
+
+    # Some old Instagram OAuth clients appended "#_".
+    # It is harmless to remove it if present.
+
+    if code.endswith(
+        "#_"
+    ):
+
+        code = code[
+            :-2
+        ]
+
+
+    if not code:
+
+        raise ValueError(
+            "Instagram authorization code is missing."
+        )
+
+
+    response = (
+        http_requests.post(
+
+            INSTAGRAM_TOKEN_URL,
+
+            data={
+
+                "client_id":
+                    get_instagram_app_id(),
+
+                "client_secret":
+                    get_instagram_app_secret(),
+
+                "grant_type":
+                    "authorization_code",
+
+                "redirect_uri":
+                    get_instagram_redirect_uri(),
+
+                "code":
+                    code,
+
+            },
+
+            timeout=
+                HTTP_TIMEOUT_SECONDS,
+
+        )
+    )
+
+
+    payload = (
+        instagram_response_json(
+            response
+        )
+    )
+
+
+    if (
+        response.status_code >=
+        400
+        or
+        payload.get(
+            "error_type"
+        )
+        or
+        payload.get(
+            "error"
+        )
+    ):
+
+        current_app.logger.warning(
+            (
+                "Instagram authorization-code "
+                "exchange failed: %s"
+            ),
+            payload,
+        )
+
+
+        raise ValueError(
+            (
+                "Instagram authorization code "
+                "could not be exchanged."
+            )
+        )
+
+
+    access_token = str(
+        payload.get(
+            "access_token",
+            "",
+        )
+        or
+        ""
+    ).strip()
+
+
+    instagram_user_id = str(
+        payload.get(
+            "user_id",
+            "",
+        )
+        or
+        ""
+    ).strip()
+
+
+    if not access_token:
+
+        raise ValueError(
+            (
+                "Instagram did not return "
+                "an access token."
+            )
+        )
+
+
+    return {
+        "access_token":
+            access_token,
+        "instagram_user_id":
+            instagram_user_id,
+        "permissions":
+            payload.get(
+                "permissions"
+            ),
+    }
+
+
+# =========================================================
+# FETCH INSTAGRAM PROFILE
+# =========================================================
+
+def fetch_instagram_profile(
+    user_access_token,
+):
+
+    token = str(
+        user_access_token
+        or
+        ""
+    ).strip()
+
+
+    if not token:
+
+        raise ValueError(
+            "Instagram access token is missing."
+        )
+
+
+    response = (
+        http_requests.get(
+
+            f"{INSTAGRAM_GRAPH_ROOT}/me",
+
+            params={
+
+                # Keep login/profile access deliberately
+                # minimal. The stable ID and username are
+                # sufficient for SHOBDO authentication.
+
+                "fields":
+                    "id,username",
+
+                "access_token":
+                    token,
+
+            },
+
+            timeout=
+                HTTP_TIMEOUT_SECONDS,
+
+        )
+    )
+
+
+    payload = (
+        instagram_response_json(
+            response
+        )
+    )
+
+
+    if (
+        response.status_code >=
+        400
+        or
+        payload.get(
+            "error"
+        )
+    ):
+
+        current_app.logger.warning(
+            (
+                "Instagram profile request "
+                "failed: %s"
+            ),
+            payload,
+        )
+
+
+        raise ValueError(
+            (
+                "Instagram profile could "
+                "not be retrieved."
+            )
+        )
+
+
+    return payload
+
+
+# =========================================================
+# INSTAGRAM BUSINESS LOGIN URL
+# =========================================================
+
+def build_instagram_authorization_url(
+    state,
+):
+
+    validate_instagram_configuration()
+
+
+    query = urlencode({
+
+        "client_id":
+            get_instagram_app_id(),
+
+        "redirect_uri":
+            get_instagram_redirect_uri(),
+
+        "response_type":
+            "code",
+
+        "scope":
+            INSTAGRAM_BASIC_SCOPE,
+
+        "state":
+            state,
+
+        # Instagram Login rather than Facebook Login.
+        "enable_fb_login":
+            "0",
+
+        # Mirrors Meta's generated Business Login URL.
+        "force_reauth":
+            "true",
+
+    })
+
+
+    return (
+        f"{INSTAGRAM_AUTHORIZATION_URL}"
+        f"?{query}"
+    )
+
+
+# =========================================================
+# INSTAGRAM POPUP RESPONSE
+# =========================================================
+
+def instagram_popup_response(
+    payload,
+    *,
+    status_code=200,
+):
+
+    frontend_url = (
+        get_frontend_url()
+    )
+
+
+    # postMessage requires an origin, not a URL path.
+
+    parsed_frontend = urlsplit(
+        frontend_url
+    )
+
+
+    if (
+        parsed_frontend.scheme
+        and
+        parsed_frontend.netloc
+    ):
+
+        frontend_origin = (
+            f"{parsed_frontend.scheme}://"
+            f"{parsed_frontend.netloc}"
+        )
+
+    else:
+
+        frontend_origin = (
+            frontend_url
+        )
+
+
+    message_payload = {
+        "source":
+            "shobdo-instagram-auth",
+        **(
+            payload
+            if isinstance(
+                payload,
+                dict,
+            )
+            else {}
+        ),
+    }
+
+
+    payload_json = (
+        json.dumps(
+            message_payload,
+            ensure_ascii=False,
+            separators=(
+                ",",
+                ":",
+            ),
+        )
+        .replace(
+            "</",
+            "<\\/",
+        )
+    )
+
+
+    target_origin_json = (
+        json.dumps(
+            frontend_origin
+        )
+    )
+
+
+    display_message = escape(
+        str(
+            message_payload.get(
+                "message"
+            )
+            or
+            "Instagram authentication completed."
+        )
+    )
+
+
+    html = f"""<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width,initial-scale=1"
+    >
+    <title>SHOBDO Instagram</title>
+</head>
+<body>
+    <main id="status">
+        {display_message}
+    </main>
+
+    <script>
+    (function () {{
+        const payload = {payload_json};
+        const targetOrigin = {target_origin_json};
+
+        if (
+            window.opener &&
+            !window.opener.closed
+        ) {{
+            window.opener.postMessage(
+                payload,
+                targetOrigin
+            );
+
+            window.setTimeout(
+                function () {{
+                    window.close();
+                }},
+                250
+            );
+        }}
+    }})();
+    </script>
+</body>
+</html>"""
+
+
+    response = (
+        make_response(
+            html,
+            status_code,
+        )
+    )
+
+
+    response.headers[
+        "Content-Type"
+    ] = (
+        "text/html; charset=utf-8"
+    )
+
+
+    response.headers[
+        "Cache-Control"
+    ] = (
+        "no-store, no-cache, must-revalidate, "
+        "max-age=0"
+    )
+
+
+    response.headers[
+        "Pragma"
+    ] = (
+        "no-cache"
+    )
+
+
+    response.headers[
+        "Referrer-Policy"
+    ] = (
+        "no-referrer"
+    )
+
+
+    response.headers[
+        "X-Content-Type-Options"
+    ] = (
+        "nosniff"
+    )
+
+
+    response.headers[
+        "Content-Security-Policy"
+    ] = (
+        "default-src 'none'; "
+        "script-src 'unsafe-inline'; "
+        "style-src 'unsafe-inline'; "
+        "base-uri 'none'; "
+        "frame-ancestors 'none'; "
+        "form-action 'none'"
+    )
+
+
+    # Always remove the short-lived OAuth state cookie
+    # after Instagram returns to SHOBDO.
+
+    response.delete_cookie(
+        INSTAGRAM_STATE_COOKIE,
+        path=
+            "/api/auth/instagram",
+    )
+
+
+    return response
+
+
+# =========================================================
+# INSTAGRAM SIGNED REQUEST
+# =========================================================
+#
+# Meta uses signed_request callbacks for deauthorization
+# and data-deletion requests.
+#
+# =========================================================
+
+def decode_base64url(
+    value,
+):
+
+    value = str(
+        value
+        or
+        ""
+    )
+
+
+    padding = (
+        "=" *
+        (
+            (
+                4 -
+                len(
+                    value
+                )
+                %
+                4
+            )
+            %
+            4
+        )
+    )
+
+
+    return (
+        base64.urlsafe_b64decode(
+            (
+                value +
+                padding
+            ).encode(
+                "utf-8"
+            )
+        )
+    )
+
+
+def parse_instagram_signed_request(
+    signed_request,
+):
+
+    validate_instagram_configuration()
+
+
+    value = str(
+        signed_request
+        or
+        ""
+    ).strip()
+
+
+    if (
+        not value
+        or
+        "."
+        not in value
+    ):
+
+        raise ValueError(
+            (
+                "Instagram signed request "
+                "is missing or invalid."
+            )
+        )
+
+
+    encoded_signature, encoded_payload = (
+        value.split(
+            ".",
+            1,
+        )
+    )
+
+
+    try:
+
+        signature = (
+            decode_base64url(
+                encoded_signature
+            )
+        )
+
+
+        raw_payload = (
+            decode_base64url(
+                encoded_payload
+            )
+        )
+
+
+        payload = json.loads(
+            raw_payload.decode(
+                "utf-8"
+            )
+        )
+
+
+    except (
+        ValueError,
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+    ) as error:
+
+        raise ValueError(
+            (
+                "Instagram signed request "
+                "could not be decoded."
+            )
+        ) from error
+
+
+    if not isinstance(
+        payload,
+        dict,
+    ):
+
+        raise ValueError(
+            (
+                "Instagram signed request "
+                "payload is invalid."
+            )
+        )
+
+
+    algorithm = str(
+        payload.get(
+            "algorithm",
+            "HMAC-SHA256",
+        )
+        or
+        ""
+    ).upper()
+
+
+    if (
+        algorithm !=
+        "HMAC-SHA256"
+    ):
+
+        raise ValueError(
+            (
+                "Unsupported Instagram "
+                "signed-request algorithm."
+            )
+        )
+
+
+    expected_signature = (
+        hmac.new(
+            get_instagram_app_secret().encode(
+                "utf-8"
+            ),
+            msg=
+                encoded_payload.encode(
+                    "utf-8"
+                ),
+            digestmod=
+                hashlib.sha256,
+        )
+        .digest()
+    )
+
+
+    if not hmac.compare_digest(
+        signature,
+        expected_signature,
+    ):
+
+        raise ValueError(
+            (
+                "Instagram signed-request "
+                "signature is invalid."
+            )
+        )
+
+
+    return payload
+
+
+# =========================================================
+# SIGNED REQUEST FROM HTTP REQUEST
+# =========================================================
+
+def get_signed_request_from_request():
+
+    value = str(
+        request.form.get(
+            "signed_request",
+            "",
+        )
+        or
+        ""
+    ).strip()
+
+
+    if value:
+
+        return value
+
+
+    data = (
+        request.get_json(
+            silent=True
+        )
+        or {}
+    )
+
+
+    if isinstance(
+        data,
+        dict,
+    ):
+
+        return str(
+            data.get(
+                "signed_request",
+                "",
+            )
+            or
+            ""
+        ).strip()
+
+
+    return ""
+
+
+# =========================================================
+# INSTAGRAM USER ID FROM SIGNED REQUEST
+# =========================================================
+
+def instagram_user_id_from_signed_payload(
+    payload,
+):
+
+    if not isinstance(
+        payload,
+        dict,
+    ):
+
+        return ""
+
+
+    return str(
+        payload.get(
+            "user_id"
+        )
+        or
+        payload.get(
+            "instagram_user_id"
+        )
+        or
+        ""
+    ).strip()
+
+
+# =========================================================
+# REMOVE INSTAGRAM-SPECIFIC DATA
+# =========================================================
+
+def remove_instagram_connection_by_user_id(
+    instagram_user_id,
+):
+
+    instagram_user_id = str(
+        instagram_user_id
+        or
+        ""
+    ).strip()
+
+
+    if not instagram_user_id:
+
+        return None
+
+
+    user = (
+        User.query
+        .filter_by(
+            instagram_user_id=
+                instagram_user_id
+        )
+        .first()
+    )
+
+
+    if not user:
+
+        return None
+
+
+    user.unlink_instagram_account()
+
+
+    db.session.commit()
+
+
+    return user
 
 
 # =========================================================
@@ -3143,6 +4443,1624 @@ def link_facebook_account():
 
         "user":
             user.to_dict(),
+
+    }), 200
+
+
+
+# =========================================================
+# INSTAGRAM LOGIN START
+# =========================================================
+#
+# GET /api/auth/instagram/start
+#
+# This is a browser navigation endpoint.
+#
+# The frontend should open this URL in a popup.
+#
+# SHOBDO creates a CSRF state value, stores a short-lived
+# nonce in an HttpOnly cookie on the backend origin, then
+# redirects the popup to Instagram Business Login.
+#
+# =========================================================
+
+@auth_bp.route(
+    "/instagram/start",
+    methods=[
+        "GET",
+    ],
+)
+def instagram_login_start():
+
+    try:
+
+        validate_instagram_configuration()
+
+
+        nonce = (
+            secrets.token_urlsafe(
+                32
+            )
+        )
+
+
+        state = (
+            create_instagram_oauth_state(
+                nonce
+            )
+        )
+
+
+        authorization_url = (
+            build_instagram_authorization_url(
+                state
+            )
+        )
+
+
+        response = redirect(
+            authorization_url,
+            code=302,
+        )
+
+
+        response.headers[
+            "Cache-Control"
+        ] = (
+            "no-store"
+        )
+
+
+        response.set_cookie(
+
+            INSTAGRAM_STATE_COOKIE,
+
+            nonce,
+
+            max_age=
+                INSTAGRAM_OAUTH_STATE_MAX_AGE_SECONDS,
+
+            secure=
+                get_instagram_redirect_uri()
+                .lower()
+                .startswith(
+                    "https://"
+                ),
+
+            httponly=
+                True,
+
+            samesite=
+                "Lax",
+
+            path=
+                "/api/auth/instagram",
+
+        )
+
+
+        return response
+
+
+    except RuntimeError as error:
+
+        current_app.logger.error(
+            (
+                "Instagram login start "
+                "configuration error: %s"
+            ),
+            error,
+        )
+
+
+        return instagram_popup_response({
+
+            "status":
+                "error",
+
+            "code":
+                "instagram_not_configured",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "Instagram sign-in is temporarily "
+                    "unavailable."
+                ),
+
+        }, status_code=503)
+
+
+    except Exception as error:
+
+        current_app.logger.exception(
+            (
+                "Instagram login start "
+                "failed: %s"
+            ),
+            error,
+        )
+
+
+        return instagram_popup_response({
+
+            "status":
+                "error",
+
+            "code":
+                "instagram_start_failed",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "Unable to start Instagram "
+                    "sign-in right now."
+                ),
+
+        }, status_code=500)
+
+
+# =========================================================
+# INSTAGRAM LOGIN CALLBACK
+# =========================================================
+#
+# GET /api/auth/instagram/callback
+#
+# Meta redirects the Instagram popup here with:
+#
+# ?code=<AUTHORIZATION_CODE>&state=<STATE>
+#
+# Flow:
+#
+# 1. Validate OAuth state + HttpOnly state cookie.
+# 2. Exchange authorization code for an Instagram token.
+# 3. Fetch Instagram's stable user ID and username.
+# 4. If already linked -> issue SHOBDO JWT.
+# 5. If not linked -> return a short-lived signed link token
+#    to the frontend popup via postMessage.
+#
+# No Instagram access token is stored in SHOBDO.
+#
+# =========================================================
+
+@auth_bp.route(
+    "/instagram/callback",
+    methods=[
+        "GET",
+    ],
+)
+def instagram_login_callback():
+
+    # =====================================================
+    # INSTAGRAM-RETURNED ERROR
+    # =====================================================
+
+    instagram_error = str(
+        request.args.get(
+            "error",
+            "",
+        )
+        or
+        ""
+    ).strip()
+
+
+    if instagram_error:
+
+        error_description = str(
+            request.args.get(
+                "error_description",
+                "",
+            )
+            or
+            request.args.get(
+                "error_reason",
+                "",
+            )
+            or
+            ""
+        ).strip()
+
+
+        current_app.logger.info(
+            (
+                "Instagram OAuth was not completed: "
+                "%s - %s"
+            ),
+            instagram_error,
+            error_description,
+        )
+
+
+        return instagram_popup_response({
+
+            "status":
+                "error",
+
+            "code":
+                "instagram_cancelled",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "Instagram sign-in was cancelled "
+                    "or permission was not granted."
+                ),
+
+        }, status_code=400)
+
+
+    # =====================================================
+    # CALLBACK VALUES
+    # =====================================================
+
+    authorization_code = str(
+        request.args.get(
+            "code",
+            "",
+        )
+        or
+        ""
+    ).strip()
+
+
+    state = str(
+        request.args.get(
+            "state",
+            "",
+        )
+        or
+        ""
+    ).strip()
+
+
+    cookie_nonce = str(
+        request.cookies.get(
+            INSTAGRAM_STATE_COOKIE,
+            "",
+        )
+        or
+        ""
+    ).strip()
+
+
+    if (
+        not authorization_code
+        or
+        not state
+    ):
+
+        return instagram_popup_response({
+
+            "status":
+                "error",
+
+            "code":
+                "instagram_callback_invalid",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "Instagram did not return a valid "
+                    "authorization response."
+                ),
+
+        }, status_code=400)
+
+
+    # =====================================================
+    # VERIFY OAUTH STATE
+    # =====================================================
+
+    try:
+
+        state_payload = (
+            verify_instagram_oauth_state(
+                state
+            )
+        )
+
+
+    except SignatureExpired:
+
+        return instagram_popup_response({
+
+            "status":
+                "error",
+
+            "code":
+                "instagram_state_expired",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "The Instagram sign-in request "
+                    "expired. Please try again."
+                ),
+
+        }, status_code=400)
+
+
+    except BadSignature:
+
+        return instagram_popup_response({
+
+            "status":
+                "error",
+
+            "code":
+                "instagram_state_invalid",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "The Instagram sign-in request "
+                    "could not be verified."
+                ),
+
+        }, status_code=400)
+
+
+    expected_nonce = str(
+        state_payload.get(
+            "nonce",
+            "",
+        )
+        or
+        ""
+    ).strip()
+
+
+    if (
+        not cookie_nonce
+        or
+        not expected_nonce
+        or
+        not hmac.compare_digest(
+            cookie_nonce,
+            expected_nonce,
+        )
+    ):
+
+        current_app.logger.warning(
+            (
+                "Instagram OAuth state cookie "
+                "validation failed."
+            )
+        )
+
+
+        return instagram_popup_response({
+
+            "status":
+                "error",
+
+            "code":
+                "instagram_state_mismatch",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "The Instagram sign-in session "
+                    "could not be verified. "
+                    "Please try again."
+                ),
+
+        }, status_code=400)
+
+
+    # =====================================================
+    # TOKEN EXCHANGE + PROFILE
+    # =====================================================
+
+    try:
+
+        token_data = (
+            exchange_instagram_authorization_code(
+                authorization_code
+            )
+        )
+
+
+        instagram_profile = (
+            fetch_instagram_profile(
+                token_data[
+                    "access_token"
+                ]
+            )
+        )
+
+
+    except http_requests.exceptions.Timeout as error:
+
+        current_app.logger.exception(
+            (
+                "Instagram authentication "
+                "timed out: %s"
+            ),
+            error,
+        )
+
+
+        return instagram_popup_response({
+
+            "status":
+                "error",
+
+            "code":
+                "instagram_timeout",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "Instagram authentication timed "
+                    "out. Please try again."
+                ),
+
+        }, status_code=503)
+
+
+    except (
+        http_requests
+        .exceptions
+        .RequestException
+    ) as error:
+
+        current_app.logger.exception(
+            (
+                "Instagram authentication "
+                "network error: %s"
+            ),
+            error,
+        )
+
+
+        return instagram_popup_response({
+
+            "status":
+                "error",
+
+            "code":
+                "instagram_network_error",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "Unable to contact Instagram "
+                    "authentication services. "
+                    "Please try again."
+                ),
+
+        }, status_code=503)
+
+
+    except ValueError as error:
+
+        current_app.logger.warning(
+            (
+                "Instagram authentication "
+                "verification failed: %s"
+            ),
+            error,
+        )
+
+
+        return instagram_popup_response({
+
+            "status":
+                "error",
+
+            "code":
+                "instagram_verification_failed",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "Instagram sign-in could not "
+                    "be verified."
+                ),
+
+        }, status_code=401)
+
+
+    except RuntimeError as error:
+
+        current_app.logger.error(
+            (
+                "Instagram authentication "
+                "configuration error: %s"
+            ),
+            error,
+        )
+
+
+        return instagram_popup_response({
+
+            "status":
+                "error",
+
+            "code":
+                "instagram_not_configured",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "Instagram sign-in is temporarily "
+                    "unavailable."
+                ),
+
+        }, status_code=503)
+
+
+    except Exception as error:
+
+        current_app.logger.exception(
+            (
+                "Unexpected Instagram "
+                "authentication error: %s"
+            ),
+            error,
+        )
+
+
+        return instagram_popup_response({
+
+            "status":
+                "error",
+
+            "code":
+                "instagram_authentication_failed",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "Unable to complete Instagram "
+                    "sign-in right now."
+                ),
+
+        }, status_code=500)
+
+
+    # =====================================================
+    # PROFILE VALUES
+    # =====================================================
+
+    instagram_user_id = str(
+        instagram_profile.get(
+            "id",
+            "",
+        )
+        or
+        ""
+    ).strip()
+
+
+    token_user_id = str(
+        token_data.get(
+            "instagram_user_id",
+            "",
+        )
+        or
+        ""
+    ).strip()
+
+
+    instagram_username = str(
+        instagram_profile.get(
+            "username",
+            "",
+        )
+        or
+        ""
+    ).strip()
+
+
+    if not instagram_user_id:
+
+        return instagram_popup_response({
+
+            "status":
+                "error",
+
+            "code":
+                "instagram_user_id_missing",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "Instagram did not provide "
+                    "a valid account identifier."
+                ),
+
+        }, status_code=401)
+
+
+    # The short-lived token exchange normally includes
+    # user_id. If present, it must agree with /me.
+
+    if (
+        token_user_id
+        and
+        token_user_id !=
+        instagram_user_id
+    ):
+
+        current_app.logger.warning(
+            (
+                "Instagram user ID mismatch "
+                "during OAuth callback."
+            )
+        )
+
+
+        return instagram_popup_response({
+
+            "status":
+                "error",
+
+            "code":
+                "instagram_user_id_mismatch",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "Instagram sign-in could "
+                    "not be verified."
+                ),
+
+        }, status_code=401)
+
+
+    # =====================================================
+    # ALREADY LINKED INSTAGRAM USER
+    # =====================================================
+
+    user = (
+        User.query
+        .filter_by(
+            instagram_user_id=
+                instagram_user_id
+        )
+        .first()
+    )
+
+
+    if user:
+
+        if not user.is_active:
+
+            return instagram_popup_response({
+
+                "status":
+                    "error",
+
+                "code":
+                    "account_disabled",
+
+                "provider":
+                    "instagram",
+
+                "message":
+                    (
+                        "This SHOBDO account is "
+                        "currently disabled."
+                    ),
+
+            }, status_code=403)
+
+
+        try:
+
+            user.update_instagram_profile(
+                instagram_username=
+                    instagram_username,
+            )
+
+
+            user.mark_login()
+
+
+            db.session.commit()
+
+
+        except Exception as error:
+
+            db.session.rollback()
+
+
+            current_app.logger.exception(
+                (
+                    "Instagram-linked account "
+                    "update failed: %s"
+                ),
+                error,
+            )
+
+
+            return instagram_popup_response({
+
+                "status":
+                    "error",
+
+                "code":
+                    "instagram_login_update_failed",
+
+                "provider":
+                    "instagram",
+
+                "message":
+                    (
+                        "Unable to complete Instagram "
+                        "sign-in right now."
+                    ),
+
+            }, status_code=500)
+
+
+        access_token = (
+            create_access_token(
+                identity=str(
+                    user.id
+                )
+            )
+        )
+
+
+        return instagram_popup_response({
+
+            "status":
+                "authenticated",
+
+            "provider":
+                "instagram",
+
+            "auth_provider":
+                "instagram",
+
+            "message":
+                "Instagram sign-in successful.",
+
+            "access_token":
+                access_token,
+
+            # Backward compatibility with SHOBDO auth.js.
+            "token":
+                access_token,
+
+            "user":
+                user.to_dict(),
+
+        })
+
+
+    # =====================================================
+    # INSTAGRAM ACCOUNT NOT LINKED YET
+    # =====================================================
+    #
+    # Instagram Login does not provide a SHOBDO-safe email
+    # identity that we can use to silently merge/create the
+    # user's existing SHOBDO account.
+    #
+    # Therefore:
+    #
+    # - do NOT create a fake email;
+    # - do NOT merge by Instagram username;
+    # - do NOT create a second SHOBDO account blindly.
+    #
+    # Instead, return a short-lived signed assertion.
+    #
+    # The user authenticates to / creates their SHOBDO
+    # account using an existing SHOBDO method and then the
+    # frontend sends the assertion to /instagram/link.
+    #
+    # =====================================================
+
+    try:
+
+        link_token = (
+            create_instagram_link_token(
+
+                instagram_user_id=
+                    instagram_user_id,
+
+                instagram_username=
+                    instagram_username,
+
+            )
+        )
+
+
+    except Exception as error:
+
+        current_app.logger.exception(
+            (
+                "Could not create Instagram "
+                "link token: %s"
+            ),
+            error,
+        )
+
+
+        return instagram_popup_response({
+
+            "status":
+                "error",
+
+            "code":
+                "instagram_link_token_failed",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "Unable to prepare Instagram "
+                    "account linking right now."
+                ),
+
+        }, status_code=500)
+
+
+    return instagram_popup_response({
+
+        "status":
+            "link_required",
+
+        "code":
+            "instagram_link_required",
+
+        "provider":
+            "instagram",
+
+        "message":
+            (
+                "Instagram was verified. Sign in to "
+                "your existing SHOBDO account, or "
+                "create a SHOBDO account, to connect "
+                "this Instagram account."
+            ),
+
+        "instagram_username":
+            instagram_username,
+
+        "link_token":
+            link_token,
+
+    })
+
+
+# =========================================================
+# LINK INSTAGRAM TO LOGGED-IN SHOBDO USER
+# =========================================================
+#
+# POST /api/auth/instagram/link
+#
+# Authorization:
+#
+# Bearer <SHOBDO JWT>
+#
+# JSON:
+#
+# {
+#     "link_token": "<SIGNED_INSTAGRAM_LINK_TOKEN>"
+# }
+#
+# =========================================================
+
+@auth_bp.route(
+    "/instagram/link",
+    methods=[
+        "POST",
+    ],
+)
+@jwt_required()
+def link_instagram_account():
+
+    identity = (
+        get_jwt_identity()
+    )
+
+
+    user = (
+        get_user_by_identity(
+            identity
+        )
+    )
+
+
+    if not user:
+
+        return jsonify({
+            "message":
+                "User account was not found."
+        }), 404
+
+
+    if not user.is_active:
+
+        return jsonify({
+            "message":
+                (
+                    "This account is currently "
+                    "disabled."
+                )
+        }), 403
+
+
+    data = (
+        request.get_json(
+            silent=True
+        )
+        or {}
+    )
+
+
+    link_token = str(
+
+        data.get(
+            "link_token",
+            "",
+        )
+
+        or
+
+        data.get(
+            "instagram_link_token",
+            "",
+        )
+
+        or
+
+        ""
+
+    ).strip()
+
+
+    if not link_token:
+
+        return jsonify({
+
+            "code":
+                "instagram_link_token_missing",
+
+            "message":
+                (
+                    "Instagram link token "
+                    "is required."
+                ),
+
+        }), 400
+
+
+    try:
+
+        instagram_identity = (
+            verify_instagram_link_token(
+                link_token
+            )
+        )
+
+
+    except SignatureExpired:
+
+        return jsonify({
+
+            "code":
+                "instagram_link_token_expired",
+
+            "message":
+                (
+                    "The Instagram connection request "
+                    "expired. Please start Instagram "
+                    "sign-in again."
+                ),
+
+        }), 400
+
+
+    except BadSignature:
+
+        return jsonify({
+
+            "code":
+                "instagram_link_token_invalid",
+
+            "message":
+                (
+                    "The Instagram connection request "
+                    "could not be verified."
+                ),
+
+        }), 400
+
+
+    instagram_user_id = str(
+        instagram_identity.get(
+            "instagram_user_id",
+            "",
+        )
+        or
+        ""
+    ).strip()
+
+
+    instagram_username = str(
+        instagram_identity.get(
+            "instagram_username",
+            "",
+        )
+        or
+        ""
+    ).strip()
+
+
+    # =====================================================
+    # INSTAGRAM ALREADY BELONGS TO ANOTHER SHOBDO USER
+    # =====================================================
+
+    other_user = (
+        User.query
+        .filter(
+
+            User.instagram_user_id
+            ==
+            instagram_user_id,
+
+            User.id
+            !=
+            user.id,
+
+        )
+        .first()
+    )
+
+
+    if other_user:
+
+        return jsonify({
+
+            "code":
+                "instagram_account_conflict",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "This Instagram account is already "
+                    "connected to another SHOBDO account."
+                ),
+
+        }), 409
+
+
+    # =====================================================
+    # CURRENT SHOBDO ACCOUNT HAS ANOTHER INSTAGRAM
+    # =====================================================
+
+    if (
+        user.instagram_user_id
+        and
+        user.instagram_user_id !=
+        instagram_user_id
+    ):
+
+        return jsonify({
+
+            "code":
+                "instagram_account_conflict",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "Your SHOBDO account is already "
+                    "connected to another Instagram "
+                    "account."
+                ),
+
+        }), 409
+
+
+    # =====================================================
+    # LINK
+    # =====================================================
+
+    try:
+
+        user.link_instagram_account(
+
+            instagram_user_id,
+
+            instagram_username=
+                instagram_username,
+
+        )
+
+
+        db.session.commit()
+
+
+    except IntegrityError:
+
+        db.session.rollback()
+
+
+        return jsonify({
+
+            "code":
+                "instagram_account_conflict",
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "This Instagram account is already "
+                    "connected to another SHOBDO account."
+                ),
+
+        }), 409
+
+
+    except Exception as error:
+
+        db.session.rollback()
+
+
+        current_app.logger.exception(
+            (
+                "Instagram account linking "
+                "failed: %s"
+            ),
+            error,
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Unable to connect your Instagram "
+                    "account right now."
+                )
+        }), 500
+
+
+    return jsonify({
+
+        "message":
+            (
+                "Instagram account connected "
+                "successfully."
+            ),
+
+        "provider":
+            "instagram",
+
+        "user":
+            user.to_dict(),
+
+    }), 200
+
+
+# =========================================================
+# INSTAGRAM DEAUTHORIZE CALLBACK
+# =========================================================
+#
+# Meta Business Login setting:
+#
+# https://YOUR_BACKEND/api/auth/instagram/deauthorize
+#
+# This removes Instagram-specific authentication data.
+#
+# It intentionally does NOT delete the whole SHOBDO account.
+#
+# =========================================================
+
+@auth_bp.route(
+    "/instagram/deauthorize",
+    methods=[
+        "POST",
+    ],
+)
+def instagram_deauthorize():
+
+    signed_request = (
+        get_signed_request_from_request()
+    )
+
+
+    if not signed_request:
+
+        return jsonify({
+            "message":
+                (
+                    "Instagram signed request "
+                    "is required."
+                )
+        }), 400
+
+
+    try:
+
+        payload = (
+            parse_instagram_signed_request(
+                signed_request
+            )
+        )
+
+
+    except (
+        ValueError,
+        RuntimeError,
+    ) as error:
+
+        current_app.logger.warning(
+            (
+                "Invalid Instagram deauthorization "
+                "request: %s"
+            ),
+            error,
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Instagram deauthorization "
+                    "request could not be verified."
+                )
+        }), 400
+
+
+    instagram_user_id = (
+        instagram_user_id_from_signed_payload(
+            payload
+        )
+    )
+
+
+    try:
+
+        if instagram_user_id:
+
+            remove_instagram_connection_by_user_id(
+                instagram_user_id
+            )
+
+
+    except Exception as error:
+
+        db.session.rollback()
+
+
+        current_app.logger.exception(
+            (
+                "Instagram deauthorization "
+                "cleanup failed: %s"
+            ),
+            error,
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Instagram deauthorization "
+                    "could not be completed."
+                )
+        }), 500
+
+
+    return jsonify({
+
+        "success":
+            True,
+
+        "message":
+            (
+                "Instagram authorization data "
+                "was removed from SHOBDO."
+            ),
+
+    }), 200
+
+
+# =========================================================
+# INSTAGRAM DATA DELETION REQUEST
+# =========================================================
+#
+# Meta Business Login setting:
+#
+# https://YOUR_BACKEND/api/auth/instagram/data-deletion
+#
+# SHOBDO currently stores only:
+#
+# - stable Instagram user ID
+# - Instagram username
+# - linked-at timestamp
+#
+# for Instagram authentication.
+#
+# This endpoint removes those fields.
+#
+# =========================================================
+
+@auth_bp.route(
+    "/instagram/data-deletion",
+    methods=[
+        "POST",
+    ],
+)
+def instagram_data_deletion():
+
+    signed_request = (
+        get_signed_request_from_request()
+    )
+
+
+    if not signed_request:
+
+        return jsonify({
+            "message":
+                (
+                    "Instagram signed request "
+                    "is required."
+                )
+        }), 400
+
+
+    try:
+
+        payload = (
+            parse_instagram_signed_request(
+                signed_request
+            )
+        )
+
+
+    except (
+        ValueError,
+        RuntimeError,
+    ) as error:
+
+        current_app.logger.warning(
+            (
+                "Invalid Instagram data-deletion "
+                "request: %s"
+            ),
+            error,
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Instagram data-deletion request "
+                    "could not be verified."
+                )
+        }), 400
+
+
+    instagram_user_id = (
+        instagram_user_id_from_signed_payload(
+            payload
+        )
+    )
+
+
+    try:
+
+        if instagram_user_id:
+
+            remove_instagram_connection_by_user_id(
+                instagram_user_id
+            )
+
+
+        confirmation_code = (
+            create_instagram_deletion_status_token(
+                instagram_user_id
+            )
+        )
+
+
+    except Exception as error:
+
+        db.session.rollback()
+
+
+        current_app.logger.exception(
+            (
+                "Instagram data-deletion "
+                "processing failed: %s"
+            ),
+            error,
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Instagram data-deletion request "
+                    "could not be completed."
+                )
+        }), 500
+
+
+    backend_base_url = (
+        get_instagram_backend_base_url()
+    )
+
+
+    if not backend_base_url:
+
+        current_app.logger.error(
+            (
+                "Could not determine public backend "
+                "URL for Instagram data deletion."
+            )
+        )
+
+
+        return jsonify({
+            "message":
+                (
+                    "Instagram data-deletion status "
+                    "URL is not configured."
+                )
+        }), 503
+
+
+    status_url = (
+        f"{backend_base_url}"
+        f"/api/auth/instagram/"
+        f"data-deletion/status"
+        f"?code="
+        f"{quote(
+            confirmation_code,
+            safe='',
+        )}"
+    )
+
+
+    return jsonify({
+
+        "url":
+            status_url,
+
+        "confirmation_code":
+            confirmation_code,
+
+    }), 200
+
+
+# =========================================================
+# INSTAGRAM DATA-DELETION STATUS
+# =========================================================
+
+@auth_bp.route(
+    "/instagram/data-deletion/status",
+    methods=[
+        "GET",
+    ],
+)
+def instagram_data_deletion_status():
+
+    confirmation_code = str(
+        request.args.get(
+            "code",
+            "",
+        )
+        or
+        ""
+    ).strip()
+
+
+    if not confirmation_code:
+
+        return jsonify({
+
+            "status":
+                "invalid",
+
+            "message":
+                (
+                    "Data-deletion confirmation "
+                    "code is missing."
+                ),
+
+        }), 400
+
+
+    try:
+
+        payload = (
+            verify_instagram_deletion_status_token(
+                confirmation_code
+            )
+        )
+
+
+    except SignatureExpired:
+
+        return jsonify({
+
+            "status":
+                "expired",
+
+            "message":
+                (
+                    "This data-deletion confirmation "
+                    "has expired."
+                ),
+
+        }), 400
+
+
+    except BadSignature:
+
+        return jsonify({
+
+            "status":
+                "invalid",
+
+            "message":
+                (
+                    "This data-deletion confirmation "
+                    "could not be verified."
+                ),
+
+        }), 400
+
+
+    return jsonify({
+
+        "status":
+            "completed",
+
+        "provider":
+            "instagram",
+
+        "message":
+            (
+                "Instagram authentication data "
+                "has been removed from SHOBDO."
+            ),
+
+        "instagram_user_id":
+            payload.get(
+                "instagram_user_id"
+            ),
 
     }), 200
 
