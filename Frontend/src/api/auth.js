@@ -1416,10 +1416,6 @@ export function loginWithInstagram(
         null;
 
 
-      let closedTimer =
-        null;
-
-
       let timeoutTimer =
         null;
 
@@ -1439,15 +1435,6 @@ export function loginWithInstagram(
             "message",
             handleMessage
           );
-
-
-          if (closedTimer) {
-
-            window.clearInterval(
-              closedTimer
-            );
-
-          }
 
 
           if (timeoutTimer) {
@@ -1728,57 +1715,6 @@ export function loginWithInstagram(
         // Browser may block programmatic focus.
 
       }
-
-
-      // ===================================================
-      // WATCH FOR USER CLOSING POPUP
-      // ===================================================
-
-      closedTimer =
-        window.setInterval(
-          () => {
-
-            if (
-              settled ||
-              !popup
-            ) {
-
-              return;
-
-            }
-
-
-            try {
-
-              if (
-                popup.closed
-              ) {
-
-                const error =
-                  new Error(
-                    "Instagram sign-in was cancelled."
-                  );
-
-
-                error.code =
-                  "instagram_cancelled";
-
-
-                finishReject(
-                  error
-                );
-
-              }
-
-            } catch {
-
-              // Ignore polling problems.
-
-            }
-
-          },
-          500
-        );
 
 
       // ===================================================
