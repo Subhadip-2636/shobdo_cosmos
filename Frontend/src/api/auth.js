@@ -1,10 +1,9 @@
-const RAW_API_URL =
-  (
-    import.meta.env.VITE_API_URL ||
-    "http://127.0.0.1:5000"
-  )
-    .trim()
-    .replace(/\/+$/, "");
+const RAW_API_URL = (
+  import.meta.env.VITE_API_URL ||
+  "http://127.0.0.1:5000"
+)
+  .trim()
+  .replace(/\/+$/, "");
 
 const API_URL =
   RAW_API_URL.endsWith("/api")
@@ -43,17 +42,26 @@ export const FACEBOOK_GRAPH_API_VERSION =
 
 
 // =========================================================
-// INSTAGRAM
+// SHOBDO JWT
 // =========================================================
 
-const INSTAGRAM_POPUP_SOURCE =
-  "shobdo-instagram-auth";
+const TOKEN_KEY =
+  "shobdo_token";
 
-const INSTAGRAM_POPUP_NAME =
-  "shobdo-instagram-auth";
 
-const INSTAGRAM_POPUP_TIMEOUT_MS =
-  5 * 60 * 1000;
+// =========================================================
+// INSTAGRAM STORAGE
+// =========================================================
+//
+// link token:
+// Verified Instagram identity waiting to be connected to an
+// authenticated SHOBDO user.
+//
+// handoff token:
+// Very short-lived backend-signed token returned after the
+// full-page Instagram OAuth redirect.
+//
+// =========================================================
 
 const INSTAGRAM_LINK_TOKEN_KEY =
   "shobdo_instagram_link_token";
@@ -61,13 +69,8 @@ const INSTAGRAM_LINK_TOKEN_KEY =
 const INSTAGRAM_LINK_USERNAME_KEY =
   "shobdo_instagram_username";
 
-
-// =========================================================
-// SHOBDO JWT
-// =========================================================
-
-const TOKEN_KEY =
-  "shobdo_token";
+const INSTAGRAM_HANDOFF_TOKEN_KEY =
+  "shobdo_instagram_handoff_token";
 
 
 // =========================================================
@@ -78,8 +81,7 @@ function canUseLocalStorage() {
 
   return (
     typeof window !== "undefined" &&
-    typeof window.localStorage !==
-      "undefined"
+    typeof window.localStorage !== "undefined"
   );
 
 }
@@ -93,8 +95,7 @@ function canUseSessionStorage() {
 
   return (
     typeof window !== "undefined" &&
-    typeof window.sessionStorage !==
-      "undefined"
+    typeof window.sessionStorage !== "undefined"
   );
 
 }
@@ -115,7 +116,7 @@ function getStoredToken() {
 
   try {
 
-    return localStorage.getItem(
+    return window.localStorage.getItem(
       TOKEN_KEY
     );
 
@@ -148,7 +149,7 @@ function storeToken(
 
   try {
 
-    localStorage.setItem(
+    window.localStorage.setItem(
       TOKEN_KEY,
       String(
         token
@@ -179,7 +180,7 @@ function removeStoredToken() {
 
   try {
 
-    localStorage.removeItem(
+    window.localStorage.removeItem(
       TOKEN_KEY
     );
 
@@ -193,7 +194,7 @@ function removeStoredToken() {
 
 
 // =========================================================
-// EXTRACT JWT FROM BACKEND RESPONSE
+// EXTRACT JWT
 // =========================================================
 
 function extractAccessToken(
@@ -485,37 +486,6 @@ export async function registerUser({
   confirmPassword,
 }) {
 
-  const cleanName =
-    String(
-      name ||
-      ""
-    ).trim();
-
-
-  const cleanEmail =
-    String(
-      email ||
-      ""
-    )
-      .trim()
-      .toLowerCase();
-
-
-  const cleanPassword =
-    String(
-      password ||
-      ""
-    );
-
-
-  const cleanConfirmPassword =
-    String(
-      confirmPassword ??
-      password ??
-      ""
-    );
-
-
   const data =
     await authRequest(
       "/auth/register",
@@ -531,16 +501,31 @@ export async function registerUser({
           JSON.stringify({
 
             name:
-              cleanName,
+              String(
+                name ||
+                ""
+              ).trim(),
 
             email:
-              cleanEmail,
+              String(
+                email ||
+                ""
+              )
+                .trim()
+                .toLowerCase(),
 
             password:
-              cleanPassword,
+              String(
+                password ||
+                ""
+              ),
 
             confirm_password:
-              cleanConfirmPassword,
+              String(
+                confirmPassword ??
+                password ??
+                ""
+              ),
 
           }),
 
@@ -556,7 +541,7 @@ export async function registerUser({
 
 
 // =========================================================
-// EMAIL / PASSWORD LOGIN
+// PASSWORD LOGIN
 // =========================================================
 
 export async function loginUser(
@@ -569,13 +554,13 @@ export async function loginUser(
 
 
   if (
-    typeof credentials ===
-      "object" &&
+    typeof credentials === "object" &&
     credentials !== null
   ) {
 
     email =
       credentials.email;
+
 
     password =
       credentials.password;
@@ -585,26 +570,11 @@ export async function loginUser(
     email =
       credentials;
 
+
     password =
       legacyPassword;
 
   }
-
-
-  const cleanEmail =
-    String(
-      email ||
-      ""
-    )
-      .trim()
-      .toLowerCase();
-
-
-  const cleanPassword =
-    String(
-      password ||
-      ""
-    );
 
 
   const data =
@@ -622,10 +592,18 @@ export async function loginUser(
           JSON.stringify({
 
             email:
-              cleanEmail,
+              String(
+                email ||
+                ""
+              )
+                .trim()
+                .toLowerCase(),
 
             password:
-              cleanPassword,
+              String(
+                password ||
+                ""
+              ),
 
           }),
 
@@ -649,16 +627,16 @@ export async function loginWithGoogle(
 ) {
 
   const credential =
-    typeof input === "object" &&
-    input !== null
-
+    (
+      typeof input === "object" &&
+      input !== null
+    )
       ? (
           input.credential ||
           input.id_token ||
           input.idToken ||
           ""
         )
-
       : input;
 
 
@@ -673,8 +651,7 @@ export async function loginWithGoogle(
 
     const error =
       new Error(
-        "Google sign-in credential " +
-        "is missing."
+        "Google sign-in credential is missing."
       );
 
 
@@ -726,7 +703,7 @@ export const loginUserWithGoogle =
 
 
 // =========================================================
-// GOOGLE CONFIGURATION CHECK
+// GOOGLE CONFIGURATION
 // =========================================================
 
 export function isGoogleAuthConfigured() {
@@ -737,10 +714,6 @@ export function isGoogleAuthConfigured() {
 
 }
 
-
-// =========================================================
-// GOOGLE CLIENT ID
-// =========================================================
 
 export function getGoogleClientId() {
 
@@ -761,16 +734,16 @@ function getFacebookTokenFromInput(
 ) {
 
   const token =
-    typeof input === "object" &&
-    input !== null
-
+    (
+      typeof input === "object" &&
+      input !== null
+    )
       ? (
           input.access_token ||
           input.accessToken ||
           input.token ||
           ""
         )
-
       : input;
 
 
@@ -800,8 +773,7 @@ export async function loginWithFacebook(
 
     const error =
       new Error(
-        "Facebook access token " +
-        "is missing."
+        "Facebook access token is missing."
       );
 
 
@@ -853,7 +825,7 @@ export const loginUserWithFacebook =
 
 
 // =========================================================
-// LINK FACEBOOK TO EXISTING SHOBDO USER
+// LINK FACEBOOK
 // =========================================================
 
 export async function linkFacebookAccount(
@@ -870,8 +842,7 @@ export async function linkFacebookAccount(
 
     const error =
       new Error(
-        "Facebook access token " +
-        "is missing."
+        "Facebook access token is missing."
       );
 
 
@@ -884,11 +855,7 @@ export async function linkFacebookAccount(
   }
 
 
-  const shobdoToken =
-    getStoredToken();
-
-
-  if (!shobdoToken) {
+  if (!getStoredToken()) {
 
     const error =
       new Error(
@@ -936,7 +903,7 @@ export async function linkFacebookAccount(
 
 
 // =========================================================
-// FACEBOOK CONFIGURATION CHECK
+// FACEBOOK CONFIGURATION
 // =========================================================
 
 export function isFacebookAuthConfigured() {
@@ -948,55 +915,12 @@ export function isFacebookAuthConfigured() {
 }
 
 
-// =========================================================
-// FACEBOOK APP ID
-// =========================================================
-
 export function getFacebookAppId() {
 
   return (
     FACEBOOK_APP_ID ||
     null
   );
-
-}
-
-
-// =========================================================
-// API ORIGIN
-// =========================================================
-//
-// Used to make sure Instagram popup messages come from
-// SHOBDO's own backend and not another website.
-//
-// =========================================================
-
-function getApiOrigin() {
-
-  try {
-
-    if (
-      typeof window !==
-      "undefined"
-    ) {
-
-      return new URL(
-        RAW_API_URL,
-        window.location.origin
-      ).origin;
-
-    }
-
-
-    return new URL(
-      RAW_API_URL
-    ).origin;
-
-  } catch {
-
-    return "";
-
-  }
 
 }
 
@@ -1015,7 +939,7 @@ export function getInstagramStartUrl() {
 
 
 // =========================================================
-// INSTAGRAM CONFIGURATION CHECK
+// INSTAGRAM CONFIGURATION
 // =========================================================
 
 export function isInstagramAuthConfigured() {
@@ -1028,18 +952,98 @@ export function isInstagramAuthConfigured() {
 
 
 // =========================================================
-// SAVE PENDING INSTAGRAM LINK
+// INSTAGRAM HANDOFF STORAGE
 // =========================================================
-//
-// Instagram does not provide the same email identity flow
-// used by Google/Facebook.
-//
-// If the Instagram identity is not already linked to SHOBDO,
-// the backend returns a temporary signed link token.
-//
-// That token stays in sessionStorage until the user logs in
-// to an existing SHOBDO account.
-//
+
+function setPendingInstagramHandoff(
+  token
+) {
+
+  if (
+    !token ||
+    !canUseSessionStorage()
+  ) {
+
+    return false;
+
+  }
+
+
+  try {
+
+    window.sessionStorage.setItem(
+      INSTAGRAM_HANDOFF_TOKEN_KEY,
+      String(
+        token
+      )
+    );
+
+
+    return true;
+
+  } catch {
+
+    return false;
+
+  }
+
+}
+
+
+function getPendingInstagramHandoff() {
+
+  if (!canUseSessionStorage()) {
+
+    return "";
+
+  }
+
+
+  try {
+
+    return String(
+      window.sessionStorage.getItem(
+        INSTAGRAM_HANDOFF_TOKEN_KEY
+      )
+      ||
+      ""
+    ).trim();
+
+  } catch {
+
+    return "";
+
+  }
+
+}
+
+
+function clearPendingInstagramHandoff() {
+
+  if (!canUseSessionStorage()) {
+
+    return;
+
+  }
+
+
+  try {
+
+    window.sessionStorage.removeItem(
+      INSTAGRAM_HANDOFF_TOKEN_KEY
+    );
+
+  } catch {
+
+    // Ignore browser storage restrictions.
+
+  }
+
+}
+
+
+// =========================================================
+// SAVE PENDING INSTAGRAM LINK
 // =========================================================
 
 export function setPendingInstagramLink(
@@ -1048,12 +1052,10 @@ export function setPendingInstagramLink(
 
   const payload =
     (
-      typeof input ===
-        "object" &&
+      typeof input === "object" &&
       input !== null
     )
       ? input
-
       : {
 
           link_token:
@@ -1089,7 +1091,7 @@ export function setPendingInstagramLink(
 
   try {
 
-    sessionStorage.setItem(
+    window.sessionStorage.setItem(
       INSTAGRAM_LINK_TOKEN_KEY,
       linkToken
     );
@@ -1097,14 +1099,14 @@ export function setPendingInstagramLink(
 
     if (username) {
 
-      sessionStorage.setItem(
+      window.sessionStorage.setItem(
         INSTAGRAM_LINK_USERNAME_KEY,
         username
       );
 
     } else {
 
-      sessionStorage.removeItem(
+      window.sessionStorage.removeItem(
         INSTAGRAM_LINK_USERNAME_KEY
       );
 
@@ -1138,7 +1140,7 @@ export function getPendingInstagramLink() {
   try {
 
     const linkToken =
-      sessionStorage.getItem(
+      window.sessionStorage.getItem(
         INSTAGRAM_LINK_TOKEN_KEY
       );
 
@@ -1156,9 +1158,10 @@ export function getPendingInstagramLink() {
         linkToken,
 
       instagram_username:
-        sessionStorage.getItem(
+        window.sessionStorage.getItem(
           INSTAGRAM_LINK_USERNAME_KEY
-        ) ||
+        )
+        ||
         "",
 
     };
@@ -1201,12 +1204,12 @@ export function clearPendingInstagramLink() {
 
   try {
 
-    sessionStorage.removeItem(
+    window.sessionStorage.removeItem(
       INSTAGRAM_LINK_TOKEN_KEY
     );
 
 
-    sessionStorage.removeItem(
+    window.sessionStorage.removeItem(
       INSTAGRAM_LINK_USERNAME_KEY
     );
 
@@ -1220,79 +1223,197 @@ export function clearPendingInstagramLink() {
 
 
 // =========================================================
-// INSTAGRAM POPUP ERROR
+// REMOVE INSTAGRAM CALLBACK FROM ADDRESS BAR
+// =========================================================
+//
+// Backend returns:
+//
+// /login#instagram=callback&handoff=...
+//
+// Once read, remove it immediately from the visible URL.
+//
 // =========================================================
 
-function createInstagramPopupError(
-  payload = {}
-) {
+function clearInstagramHash() {
 
-  const error =
-    new Error(
-      payload.message ||
-      "Unable to complete Instagram sign-in."
+  if (
+    typeof window === "undefined"
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    const cleanUrl =
+      (
+        window.location.pathname +
+        window.location.search
+      );
+
+
+    window.history.replaceState(
+
+      window.history.state,
+
+      document.title,
+
+      cleanUrl
+
     );
 
+  } catch {
 
-  error.code =
-    payload.code ||
-    "instagram_authentication_failed";
+    // Authentication can still continue if this fails.
 
-
-  error.provider =
-    "instagram";
-
-
-  error.data =
-    payload;
-
-
-  return error;
+  }
 
 }
 
 
 // =========================================================
-// INSTAGRAM BUSINESS LOGIN
-// =========================================================
-//
-// Flow:
-//
-// Login.jsx
-//     ↓
-// window.open()
-//     ↓
-// GET /api/auth/instagram/start
-//     ↓
-// Instagram OAuth
-//     ↓
-// GET /api/auth/instagram/callback
-//     ↓
-// backend validates OAuth
-//     ↓
-// backend sends window.opener.postMessage()
-//     ↓
-// this function receives the result
-//
-// Possible result:
-//
-// authenticated
-//      → backend returned SHOBDO JWT
-//
-// link_required
-//      → Instagram identity verified
-//      → user must authenticate SHOBDO
-//      → temporary Instagram link token saved
-//
+// PARSE INSTAGRAM CALLBACK HASH
 // =========================================================
 
-export function loginWithInstagram(
-  options = {}
-) {
+function parseInstagramHash() {
 
   if (
-    typeof window ===
-    "undefined"
+    typeof window === "undefined"
+  ) {
+
+    return null;
+
+  }
+
+
+  const rawHash =
+    String(
+      window.location.hash ||
+      ""
+    );
+
+
+  if (
+    !rawHash.startsWith(
+      "#"
+    )
+  ) {
+
+    return null;
+
+  }
+
+
+  const params =
+    new URLSearchParams(
+      rawHash.slice(
+        1
+      )
+    );
+
+
+  const mode =
+    String(
+      params.get(
+        "instagram"
+      )
+      ||
+      ""
+    ).trim();
+
+
+  if (
+    mode !== "callback" &&
+    mode !== "error"
+  ) {
+
+    return null;
+
+  }
+
+
+  return {
+
+    mode,
+
+    handoff:
+      String(
+        params.get(
+          "handoff"
+        )
+        ||
+        ""
+      ).trim(),
+
+    code:
+      String(
+        params.get(
+          "code"
+        )
+        ||
+        ""
+      ).trim(),
+
+    message:
+      String(
+        params.get(
+          "message"
+        )
+        ||
+        ""
+      ).trim(),
+
+  };
+
+}
+
+
+// =========================================================
+// HAS INSTAGRAM REDIRECT CALLBACK
+// =========================================================
+
+export function hasInstagramRedirectCallback() {
+
+  const parsed =
+    parseInstagramHash();
+
+
+  return Boolean(
+    parsed ||
+    getPendingInstagramHandoff()
+  );
+
+}
+
+
+// =========================================================
+// START INSTAGRAM LOGIN
+// =========================================================
+//
+// IMPORTANT:
+//
+// This is no longer a popup.
+//
+// The browser navigates:
+//
+// SHOBDO
+//   ↓
+// Render /instagram/start
+//   ↓
+// Instagram
+//   ↓
+// Render /instagram/callback
+//   ↓
+// SHOBDO /login#instagram=callback&handoff=...
+//
+// =========================================================
+
+export function startInstagramLogin() {
+
+  if (
+    typeof window === "undefined"
   ) {
 
     const error =
@@ -1305,106 +1426,38 @@ export function loginWithInstagram(
       "instagram_browser_required";
 
 
-    return Promise.reject(
-      error
-    );
+    throw error;
 
   }
 
 
-  const expectedOrigin =
-    getApiOrigin();
+  // A new OAuth attempt must not accidentally consume
+  // an older Instagram identity.
+
+  clearPendingInstagramHandoff();
+
+  clearPendingInstagramLink();
 
 
-  if (!expectedOrigin) {
+  window.location.assign(
+    getInstagramStartUrl()
+  );
 
-    const error =
-      new Error(
-        "Instagram sign-in is not configured correctly."
-      );
-
-
-    error.code =
-      "instagram_api_origin_invalid";
+}
 
 
-    return Promise.reject(
-      error
-    );
+// =========================================================
+// BACKWARD-COMPATIBLE INSTAGRAM LOGIN EXPORT
+// =========================================================
+//
+// Current Login.jsx imports loginWithInstagram().
+//
+// The browser navigates away, so this promise intentionally
+// does not resolve after successful navigation.
+//
+// =========================================================
 
-  }
-
-
-  const popupWidth =
-    Number(
-      options.width
-    ) ||
-    600;
-
-
-  const popupHeight =
-    Number(
-      options.height
-    ) ||
-    760;
-
-
-  const left =
-    Math.max(
-      0,
-      Math.round(
-
-        window.screenX +
-
-        (
-          window.outerWidth -
-          popupWidth
-        ) / 2
-
-      )
-    );
-
-
-  const top =
-    Math.max(
-      0,
-      Math.round(
-
-        window.screenY +
-
-        (
-          window.outerHeight -
-          popupHeight
-        ) / 2
-
-      )
-    );
-
-
-  const popupFeatures = [
-
-    `width=${popupWidth}`,
-
-    `height=${popupHeight}`,
-
-    `left=${left}`,
-
-    `top=${top}`,
-
-    "resizable=yes",
-
-    "scrollbars=yes",
-
-    "toolbar=no",
-
-    "menubar=no",
-
-    "location=yes",
-
-    "status=no",
-
-  ].join(",");
-
+export function loginWithInstagram() {
 
   return new Promise(
     (
@@ -1412,337 +1465,17 @@ export function loginWithInstagram(
       reject
     ) => {
 
-      let popup =
-        null;
-
-
-      let timeoutTimer =
-        null;
-
-
-      let settled =
-        false;
-
-
-      // ===================================================
-      // CLEANUP
-      // ===================================================
-
-      const cleanup =
-        () => {
-
-          window.removeEventListener(
-            "message",
-            handleMessage
-          );
-
-
-          if (timeoutTimer) {
-
-            window.clearTimeout(
-              timeoutTimer
-            );
-
-          }
-
-        };
-
-
-      // ===================================================
-      // RESOLVE
-      // ===================================================
-
-      const finishResolve =
-        (
-          value
-        ) => {
-
-          if (settled) {
-
-            return;
-
-          }
-
-
-          settled =
-            true;
-
-
-          cleanup();
-
-
-          resolve(
-            value
-          );
-
-        };
-
-
-      // ===================================================
-      // REJECT
-      // ===================================================
-
-      const finishReject =
-        (
-          error
-        ) => {
-
-          if (settled) {
-
-            return;
-
-          }
-
-
-          settled =
-            true;
-
-
-          cleanup();
-
-
-          try {
-
-            if (
-              popup &&
-              !popup.closed
-            ) {
-
-              popup.close();
-
-            }
-
-          } catch {
-
-            // Ignore popup cleanup problems.
-
-          }
-
-
-          reject(
-            error
-          );
-
-        };
-
-
-      // ===================================================
-      // RECEIVE RESULT FROM BACKEND CALLBACK
-      // ===================================================
-
-      function handleMessage(
-        event
-      ) {
-
-        // -------------------------------------------------
-        // SECURITY:
-        // only trust messages coming from SHOBDO backend.
-        // -------------------------------------------------
-
-        if (
-          event.origin !==
-          expectedOrigin
-        ) {
-
-          return;
-
-        }
-
-
-        // -------------------------------------------------
-        // Make sure the message belongs to this popup.
-        // -------------------------------------------------
-
-        if (
-          popup &&
-          event.source !== popup
-        ) {
-
-          return;
-
-        }
-
-
-        const payload =
-          event.data;
-
-
-        if (
-          !payload ||
-          typeof payload !== "object" ||
-          payload.source !==
-            INSTAGRAM_POPUP_SOURCE
-        ) {
-
-          return;
-
-        }
-
-
-        // -------------------------------------------------
-        // INSTAGRAM ALREADY CONNECTED
-        // -------------------------------------------------
-
-        if (
-          payload.status ===
-          "authenticated"
-        ) {
-
-          clearPendingInstagramLink();
-
-
-          finishResolve(
-
-            saveAuthenticationResponse(
-              payload
-            )
-
-          );
-
-
-          return;
-
-        }
-
-
-        // -------------------------------------------------
-        // FIRST-TIME LINK REQUIRED
-        // -------------------------------------------------
-
-        if (
-          payload.status ===
-          "link_required"
-        ) {
-
-          setPendingInstagramLink(
-            payload
-          );
-
-
-          finishResolve(
-            payload
-          );
-
-
-          return;
-
-        }
-
-
-        // -------------------------------------------------
-        // ERROR
-        // -------------------------------------------------
-
-        finishReject(
-
-          createInstagramPopupError(
-            payload
-          )
-
-        );
-
-      }
-
-
-      // ===================================================
-      // LISTEN FOR CALLBACK MESSAGE
-      // ===================================================
-
-      window.addEventListener(
-        "message",
-        handleMessage
-      );
-
-
-      // ===================================================
-      // OPEN POPUP
-      // ===================================================
-
       try {
 
-        popup =
-          window.open(
-            getInstagramStartUrl(),
-            INSTAGRAM_POPUP_NAME,
-            popupFeatures
-          );
+        startInstagramLogin();
 
       } catch (error) {
 
-        finishReject(
+        reject(
           error
         );
 
-
-        return;
-
       }
-
-
-      // ===================================================
-      // POPUP BLOCKED
-      // ===================================================
-
-      if (!popup) {
-
-        const error =
-          new Error(
-            "The Instagram sign-in popup was blocked. " +
-            "Allow popups for SHOBDO and try again."
-          );
-
-
-        error.code =
-          "instagram_popup_blocked";
-
-
-        finishReject(
-          error
-        );
-
-
-        return;
-
-      }
-
-
-      try {
-
-        popup.focus();
-
-      } catch {
-
-        // Browser may block programmatic focus.
-
-      }
-
-
-      // ===================================================
-      // TIMEOUT
-      // ===================================================
-
-      timeoutTimer =
-        window.setTimeout(
-          () => {
-
-            const error =
-              new Error(
-                "Instagram sign-in timed out. " +
-                "Please try again."
-              );
-
-
-            error.code =
-              "instagram_popup_timeout";
-
-
-            finishReject(
-              error
-            );
-
-          },
-          INSTAGRAM_POPUP_TIMEOUT_MS
-        );
 
     }
   );
@@ -1750,16 +1483,320 @@ export function loginWithInstagram(
 }
 
 
-// =========================================================
-// INSTAGRAM ALIASES
-// =========================================================
-
 export const instagramLogin =
   loginWithInstagram;
 
 
 export const loginUserWithInstagram =
   loginWithInstagram;
+
+
+// =========================================================
+// EXCHANGE INSTAGRAM HANDOFF
+// =========================================================
+
+async function exchangeInstagramHandoff(
+  handoffToken
+) {
+
+  const cleanToken =
+    String(
+      handoffToken ||
+      ""
+    ).trim();
+
+
+  if (!cleanToken) {
+
+    const error =
+      new Error(
+        "Instagram sign-in information is missing."
+      );
+
+
+    error.code =
+      "instagram_handoff_missing";
+
+
+    throw error;
+
+  }
+
+
+  const data =
+    await authRequest(
+      "/auth/instagram/exchange",
+      {
+
+        method:
+          "POST",
+
+        includeAuth:
+          false,
+
+        body:
+          JSON.stringify({
+
+            handoff_token:
+              cleanToken,
+
+          }),
+
+      }
+    );
+
+
+  // -------------------------------------------------------
+  // INSTAGRAM VERIFIED BUT NOT LINKED TO SHOBDO
+  // -------------------------------------------------------
+
+  if (
+    data?.status ===
+    "link_required"
+  ) {
+
+    setPendingInstagramLink(
+      data
+    );
+
+
+    return data;
+
+  }
+
+
+  // -------------------------------------------------------
+  // EXISTING INSTAGRAM-LINKED SHOBDO USER
+  // -------------------------------------------------------
+
+  if (
+    data?.status ===
+      "authenticated"
+    ||
+    extractAccessToken(
+      data
+    )
+  ) {
+
+    clearPendingInstagramLink();
+
+
+    return saveAuthenticationResponse(
+      data
+    );
+
+  }
+
+
+  const error =
+    new Error(
+      data?.message ||
+      (
+        "Instagram authentication returned " +
+        "an unexpected response."
+      )
+    );
+
+
+  error.code =
+    data?.code ||
+    "instagram_authentication_failed";
+
+
+  error.provider =
+    "instagram";
+
+
+  error.data =
+    data ||
+    {};
+
+
+  throw error;
+
+}
+
+
+// =========================================================
+// CONSUME INSTAGRAM REDIRECT CALLBACK
+// =========================================================
+//
+// Login.jsx calls this when it loads.
+//
+// SUCCESS, EXISTING LINK:
+// backend exchange returns SHOBDO JWT.
+//
+// SUCCESS, FIRST LINK:
+// backend exchange returns link_required.
+// Signed link token is stored in sessionStorage.
+//
+// ERROR:
+// throws a normal API-style Error.
+//
+// =========================================================
+
+export async function consumeInstagramRedirectCallback() {
+
+  if (
+    typeof window === "undefined"
+  ) {
+
+    return null;
+
+  }
+
+
+  const callback =
+    parseInstagramHash();
+
+
+  // =======================================================
+  // BACKEND RETURNED AN OAUTH ERROR
+  // =======================================================
+
+  if (
+    callback?.mode ===
+    "error"
+  ) {
+
+    clearPendingInstagramHandoff();
+
+
+    clearInstagramHash();
+
+
+    const error =
+      new Error(
+        callback.message ||
+        (
+          "Unable to complete " +
+          "Instagram sign-in."
+        )
+      );
+
+
+    error.code =
+      callback.code ||
+      "instagram_authentication_failed";
+
+
+    error.provider =
+      "instagram";
+
+
+    throw error;
+
+  }
+
+
+  // =======================================================
+  // OBTAIN HANDOFF
+  // =======================================================
+
+  let handoffToken =
+    "";
+
+
+  if (
+    callback?.mode ===
+    "callback"
+  ) {
+
+    handoffToken =
+      callback.handoff;
+
+
+    if (!handoffToken) {
+
+      clearInstagramHash();
+
+
+      const error =
+        new Error(
+          "Instagram sign-in information is missing."
+        );
+
+
+      error.code =
+        "instagram_handoff_missing";
+
+
+      error.provider =
+        "instagram";
+
+
+      throw error;
+
+    }
+
+
+    // Save temporarily so an accidental reload during the
+    // exchange can retry while the handoff remains valid.
+
+    setPendingInstagramHandoff(
+      handoffToken
+    );
+
+
+    // Remove token from visible browser URL immediately.
+
+    clearInstagramHash();
+
+  } else {
+
+    handoffToken =
+      getPendingInstagramHandoff();
+
+  }
+
+
+  // No Instagram callback on this page.
+
+  if (!handoffToken) {
+
+    return null;
+
+  }
+
+
+  // =======================================================
+  // EXCHANGE WITH BACKEND
+  // =======================================================
+
+  try {
+
+    const result =
+      await exchangeInstagramHandoff(
+        handoffToken
+      );
+
+
+    clearPendingInstagramHandoff();
+
+
+    return result;
+
+  } catch (error) {
+
+    // For a temporary network failure, retain the very
+    // short-lived handoff in sessionStorage so a refresh can
+    // retry. Invalid/expired tokens are removed immediately.
+
+    if (
+      error?.code !==
+      "network_error"
+    ) {
+
+      clearPendingInstagramHandoff();
+
+    }
+
+
+    throw error;
+
+  }
+
+}
 
 
 // =========================================================
@@ -1771,8 +1808,7 @@ function getInstagramLinkTokenFromInput(
 ) {
 
   if (
-    typeof input ===
-      "object" &&
+    typeof input === "object" &&
     input !== null
   ) {
 
@@ -1814,9 +1850,11 @@ export async function linkInstagramAccount(
 
 
   const linkToken =
-    providedToken ||
-    pendingLink?.link_token ||
-    "";
+    (
+      providedToken ||
+      pendingLink?.link_token ||
+      ""
+    );
 
 
   if (!linkToken) {
@@ -1837,11 +1875,7 @@ export async function linkInstagramAccount(
   }
 
 
-  const shobdoToken =
-    getStoredToken();
-
-
-  if (!shobdoToken) {
+  if (!getStoredToken()) {
 
     const error =
       new Error(
@@ -1897,9 +1931,11 @@ export async function linkInstagramAccount(
 
     if (
       error?.code ===
-        "instagram_link_token_expired" ||
+        "instagram_link_token_expired"
+      ||
       error?.code ===
-        "instagram_link_token_invalid" ||
+        "instagram_link_token_invalid"
+      ||
       error?.code ===
         "instagram_account_conflict"
     ) {
@@ -2011,6 +2047,10 @@ export async function logoutUser() {
 
     removeStoredToken();
 
+    clearPendingInstagramHandoff();
+
+    clearPendingInstagramLink();
+
 
     return {
 
@@ -2038,12 +2078,20 @@ export async function logoutUser() {
 
     removeStoredToken();
 
+    clearPendingInstagramHandoff();
+
+    clearPendingInstagramLink();
+
 
     return data;
 
   } catch {
 
     removeStoredToken();
+
+    clearPendingInstagramHandoff();
+
+    clearPendingInstagramLink();
 
 
     return {
@@ -2067,21 +2115,12 @@ export async function forgotPassword(
 ) {
 
   const email =
-    typeof input === "object" &&
-    input !== null
-
-      ? input.email
-
-      : input;
-
-
-  const cleanEmail =
-    String(
-      email ||
-      ""
+    (
+      typeof input === "object" &&
+      input !== null
     )
-      .trim()
-      .toLowerCase();
+      ? input.email
+      : input;
 
 
   return authRequest(
@@ -2098,7 +2137,12 @@ export async function forgotPassword(
         JSON.stringify({
 
           email:
-            cleanEmail,
+            String(
+              email ||
+              ""
+            )
+              .trim()
+              .toLowerCase(),
 
         }),
 
@@ -2127,8 +2171,7 @@ export async function validateResetToken(
 
     const error =
       new Error(
-        "Password reset token " +
-        "is missing."
+        "Password reset token is missing."
       );
 
 
@@ -2180,8 +2223,7 @@ export async function resetPassword(
 
     const error =
       new Error(
-        "Password reset token " +
-        "is missing."
+        "Password reset token is missing."
       );
 
 
@@ -2225,20 +2267,6 @@ export async function resetPassword(
   }
 
 
-  const cleanPassword =
-    String(
-      password ||
-      ""
-    );
-
-
-  const cleanConfirmPassword =
-    String(
-      confirmPassword ||
-      ""
-    );
-
-
   return authRequest(
     `/auth/reset-password/${encodeURIComponent(
       cleanToken
@@ -2255,10 +2283,16 @@ export async function resetPassword(
         JSON.stringify({
 
           password:
-            cleanPassword,
+            String(
+              password ||
+              ""
+            ),
 
           confirm_password:
-            cleanConfirmPassword,
+            String(
+              confirmPassword ||
+              ""
+            ),
 
         }),
 
@@ -2338,6 +2372,10 @@ export const AUTH_TOKEN_KEY =
 
 export const INSTAGRAM_PENDING_LINK_TOKEN_KEY =
   INSTAGRAM_LINK_TOKEN_KEY;
+
+
+export const INSTAGRAM_PENDING_HANDOFF_TOKEN_KEY =
+  INSTAGRAM_HANDOFF_TOKEN_KEY;
 
 
 export const AUTH_API_URL =

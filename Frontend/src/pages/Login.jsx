@@ -1,8 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   ArrowRight,
@@ -25,6 +21,8 @@ import {
   GOOGLE_CLIENT_ID,
 
   clearPendingInstagramLink,
+  consumeInstagramRedirectCallback,
+  hasInstagramRedirectCallback,
   hasPendingInstagramLink,
 
   isFacebookAuthConfigured,
@@ -37,7 +35,8 @@ import {
   loginUser,
   loginWithFacebook,
   loginWithGoogle,
-  loginWithInstagram,
+
+  startInstagramLogin,
 } from "../api/auth";
 
 import {
@@ -46,7 +45,7 @@ import {
 
 
 // =========================================================
-// GOOGLE IDENTITY SERVICES
+// GOOGLE
 // =========================================================
 
 const GOOGLE_SCRIPT_ID =
@@ -57,7 +56,7 @@ const GOOGLE_SCRIPT_URL =
 
 
 // =========================================================
-// FACEBOOK JAVASCRIPT SDK
+// FACEBOOK
 // =========================================================
 
 const FACEBOOK_SCRIPT_ID =
@@ -65,6 +64,411 @@ const FACEBOOK_SCRIPT_ID =
 
 const FACEBOOK_SCRIPT_URL =
   "https://connect.facebook.net/en_US/sdk.js";
+
+
+// =========================================================
+// FALLBACK SOCIAL TEXT
+// =========================================================
+
+const SOCIAL_TEXT = {
+
+  en: {
+
+    or:
+      "or",
+
+    quote:
+      "Your words deserve a place where they can be heard.",
+
+    googleLoading:
+      "Signing in with Google...",
+
+    googleUnavailable:
+      "Google Sign-In is currently unavailable.",
+
+    googleConfigurationMissing:
+      "Google Sign-In has not been configured yet.",
+
+    googleGenericError:
+      "Unable to sign in with Google. Please try again.",
+
+    googleAccountConflict:
+      "This SHOBDO account is already connected to another Google account.",
+
+    googleSectionLabel:
+      "Sign in with Google",
+
+    facebookButton:
+      "Continue with Facebook",
+
+    facebookLoading:
+      "Signing in with Facebook...",
+
+    facebookLinking:
+      "Connecting Facebook account...",
+
+    facebookUnavailable:
+      "Facebook Login is currently unavailable.",
+
+    facebookConfigurationMissing:
+      "Facebook Login has not been configured yet.",
+
+    facebookGenericError:
+      "Unable to sign in with Facebook. Please try again.",
+
+    facebookCancelled:
+      "Facebook sign-in was cancelled.",
+
+    facebookEmailRequired:
+      "Facebook did not provide your email address. Allow the email permission and try again.",
+
+    facebookAccountConflict:
+      "This Facebook account is already connected to another SHOBDO account.",
+
+    facebookLinkRequired:
+      "A SHOBDO account already exists with this email. Sign in below using your existing SHOBDO password or Google account. Facebook will then be connected automatically to that SHOBDO account.",
+
+    facebookLinkFailed:
+      "Your SHOBDO sign-in succeeded, but Facebook could not be connected. Please try again.",
+
+    instagramButton:
+      "Continue with Instagram",
+
+    instagramLoading:
+      "Signing in with Instagram...",
+
+    instagramLinking:
+      "Connecting Instagram account...",
+
+    instagramUnavailable:
+      "Instagram Login is currently unavailable.",
+
+    instagramGenericError:
+      "Unable to sign in with Instagram. Please try again.",
+
+    instagramCancelled:
+      "Instagram sign-in was cancelled.",
+
+    instagramAccountConflict:
+      "This Instagram account is already connected to another SHOBDO account.",
+
+    instagramLinkRequired:
+      "Your Instagram account has been verified. Now sign in to your existing SHOBDO account using password, Google, or Facebook. Instagram will then be connected to the same SHOBDO account.",
+
+    instagramLinkFailed:
+      "Your SHOBDO sign-in succeeded, but Instagram could not be connected. Please try again.",
+
+    instagramProfessionalOnly:
+      "Instagram login currently requires a Creator or Business account.",
+
+    networkError:
+      "Unable to connect to SHOBDO. Please try again.",
+
+  },
+
+
+  bn: {
+
+    or:
+      "অথবা",
+
+    quote:
+      "তোমার শব্দ এমন একটি স্থান পাওয়ার যোগ্য, যেখানে তা শোনা যায়।",
+
+    googleLoading:
+      "Google দিয়ে লগইন হচ্ছে...",
+
+    googleUnavailable:
+      "Google লগইন এই মুহূর্তে উপলব্ধ নয়।",
+
+    googleConfigurationMissing:
+      "Google লগইন এখনও কনফিগার করা হয়নি।",
+
+    googleGenericError:
+      "Google দিয়ে লগইন করা যায়নি। আবার চেষ্টা করুন।",
+
+    googleAccountConflict:
+      "এই SHOBDO অ্যাকাউন্টটি অন্য একটি Google অ্যাকাউন্টের সঙ্গে যুক্ত রয়েছে।",
+
+    googleSectionLabel:
+      "Google দিয়ে লগইন",
+
+    facebookButton:
+      "Facebook দিয়ে চালিয়ে যান",
+
+    facebookLoading:
+      "Facebook দিয়ে লগইন হচ্ছে...",
+
+    facebookLinking:
+      "Facebook অ্যাকাউন্ট যুক্ত হচ্ছে...",
+
+    facebookUnavailable:
+      "Facebook লগইন এই মুহূর্তে উপলব্ধ নয়।",
+
+    facebookConfigurationMissing:
+      "Facebook লগইন এখনও কনফিগার করা হয়নি।",
+
+    facebookGenericError:
+      "Facebook দিয়ে লগইন করা যায়নি। আবার চেষ্টা করুন।",
+
+    facebookCancelled:
+      "Facebook লগইন বাতিল করা হয়েছে।",
+
+    facebookEmailRequired:
+      "Facebook আপনার ইমেইল দেয়নি। Facebook-এ email permission অনুমোদন করুন।",
+
+    facebookAccountConflict:
+      "এই Facebook অ্যাকাউন্টটি অন্য একটি SHOBDO অ্যাকাউন্টের সঙ্গে যুক্ত রয়েছে।",
+
+    facebookLinkRequired:
+      "এই ইমেইলে ইতিমধ্যে একটি SHOBDO অ্যাকাউন্ট রয়েছে। আপনার বর্তমান SHOBDO অ্যাকাউন্টে Google অথবা পাসওয়ার্ড দিয়ে লগইন করুন। সফল লগইনের পরে Facebook একই অ্যাকাউন্টের সঙ্গে যুক্ত হবে।",
+
+    facebookLinkFailed:
+      "SHOBDO লগইন সফল হয়েছে, কিন্তু Facebook অ্যাকাউন্টটি যুক্ত করা যায়নি। আবার চেষ্টা করুন।",
+
+    instagramButton:
+      "Instagram দিয়ে চালিয়ে যান",
+
+    instagramLoading:
+      "Instagram দিয়ে লগইন হচ্ছে...",
+
+    instagramLinking:
+      "Instagram অ্যাকাউন্ট যুক্ত হচ্ছে...",
+
+    instagramUnavailable:
+      "Instagram লগইন এই মুহূর্তে উপলব্ধ নয়।",
+
+    instagramGenericError:
+      "Instagram দিয়ে লগইন করা যায়নি। আবার চেষ্টা করুন।",
+
+    instagramCancelled:
+      "Instagram লগইন বাতিল করা হয়েছে।",
+
+    instagramAccountConflict:
+      "এই Instagram অ্যাকাউন্টটি অন্য একটি SHOBDO অ্যাকাউন্টের সঙ্গে যুক্ত রয়েছে।",
+
+    instagramLinkRequired:
+      "Instagram অ্যাকাউন্টটি যাচাই হয়েছে। এখন আপনার বর্তমান SHOBDO অ্যাকাউন্টে Google, Facebook অথবা পাসওয়ার্ড দিয়ে লগইন করুন। এরপর Instagram একই SHOBDO অ্যাকাউন্টের সঙ্গে যুক্ত হবে।",
+
+    instagramLinkFailed:
+      "SHOBDO লগইন সফল হয়েছে, কিন্তু Instagram অ্যাকাউন্টটি যুক্ত করা যায়নি। আবার চেষ্টা করুন।",
+
+    instagramProfessionalOnly:
+      "Instagram Creator অথবা Business account প্রয়োজন।",
+
+    networkError:
+      "SHOBDO সার্ভারের সঙ্গে সংযোগ করা যাচ্ছে না। আবার চেষ্টা করুন।",
+
+  },
+
+
+  hi: {
+
+    or:
+      "या",
+
+    quote:
+      "आपके शब्दों को ऐसी जगह मिलनी चाहिए जहाँ उन्हें सुना जा सके।",
+
+    googleLoading:
+      "Google से लॉग इन हो रहा है...",
+
+    googleUnavailable:
+      "Google लॉगिन अभी उपलब्ध नहीं है।",
+
+    googleConfigurationMissing:
+      "Google लॉगिन अभी कॉन्फ़िगर नहीं किया गया है।",
+
+    googleGenericError:
+      "Google से लॉग इन नहीं हो सका। कृपया फिर से प्रयास करें।",
+
+    googleAccountConflict:
+      "यह SHOBDO खाता पहले से किसी अन्य Google खाते से जुड़ा है।",
+
+    googleSectionLabel:
+      "Google से लॉग इन करें",
+
+    facebookButton:
+      "Facebook से जारी रखें",
+
+    facebookLoading:
+      "Facebook से लॉग इन हो रहा है...",
+
+    facebookLinking:
+      "Facebook खाता जोड़ा जा रहा है...",
+
+    facebookUnavailable:
+      "Facebook लॉगिन अभी उपलब्ध नहीं है।",
+
+    facebookConfigurationMissing:
+      "Facebook लॉगिन अभी कॉन्फ़िगर नहीं किया गया है।",
+
+    facebookGenericError:
+      "Facebook से लॉग इन नहीं हो सका। कृपया फिर प्रयास करें।",
+
+    facebookCancelled:
+      "Facebook लॉगिन रद्द कर दिया गया।",
+
+    facebookEmailRequired:
+      "Facebook ने आपका ईमेल पता नहीं दिया। Email permission की अनुमति देकर फिर प्रयास करें।",
+
+    facebookAccountConflict:
+      "यह Facebook खाता किसी अन्य SHOBDO खाते से जुड़ा हुआ है।",
+
+    facebookLinkRequired:
+      "इस ईमेल से पहले से SHOBDO खाता मौजूद है। नीचे अपने मौजूदा SHOBDO पासवर्ड या Google से लॉग इन करें। सफल लॉगिन के बाद Facebook उसी खाते से जुड़ जाएगा।",
+
+    facebookLinkFailed:
+      "SHOBDO लॉगिन सफल हुआ, लेकिन Facebook खाता जोड़ा नहीं जा सका। कृपया फिर प्रयास करें।",
+
+    instagramButton:
+      "Instagram से जारी रखें",
+
+    instagramLoading:
+      "Instagram से लॉग इन हो रहा है...",
+
+    instagramLinking:
+      "Instagram खाता जोड़ा जा रहा है...",
+
+    instagramUnavailable:
+      "Instagram लॉगिन अभी उपलब्ध नहीं है।",
+
+    instagramGenericError:
+      "Instagram से लॉग इन नहीं हो सका। कृपया फिर प्रयास करें।",
+
+    instagramCancelled:
+      "Instagram लॉगिन रद्द कर दिया गया।",
+
+    instagramAccountConflict:
+      "यह Instagram खाता किसी अन्य SHOBDO खाते से जुड़ा हुआ है।",
+
+    instagramLinkRequired:
+      "Instagram खाता सत्यापित हो गया है। अब अपने मौजूदा SHOBDO खाते में password, Google या Facebook से लॉग इन करें। इसके बाद Instagram उसी SHOBDO खाते से जुड़ जाएगा।",
+
+    instagramLinkFailed:
+      "SHOBDO लॉगिन सफल हुआ, लेकिन Instagram खाता जोड़ा नहीं जा सका। कृपया फिर प्रयास करें।",
+
+    instagramProfessionalOnly:
+      "Instagram लॉगिन के लिए Creator या Business account आवश्यक है।",
+
+    networkError:
+      "SHOBDO सर्वर से कनेक्ट नहीं हो सका। कृपया फिर प्रयास करें।",
+
+  },
+
+};
+
+
+// =========================================================
+// SOCIAL BUTTON STYLES
+// =========================================================
+
+const facebookButtonStyle = {
+
+  width:
+    "100%",
+
+  minHeight:
+    "48px",
+
+  border:
+    0,
+
+  borderRadius:
+    "7px",
+
+  display:
+    "flex",
+
+  alignItems:
+    "center",
+
+  justifyContent:
+    "center",
+
+  gap:
+    "11px",
+
+  padding:
+    "0 18px",
+
+  background:
+    "#1877F2",
+
+  color:
+    "#FFFFFF",
+
+  fontFamily:
+    "inherit",
+
+  fontSize:
+    "1rem",
+
+  fontWeight:
+    600,
+
+  transition:
+    "opacity 0.2s ease",
+
+};
+
+
+const instagramButtonStyle = {
+
+  width:
+    "100%",
+
+  minHeight:
+    "48px",
+
+  border:
+    0,
+
+  borderRadius:
+    "7px",
+
+  display:
+    "flex",
+
+  alignItems:
+    "center",
+
+  justifyContent:
+    "center",
+
+  gap:
+    "11px",
+
+  padding:
+    "0 18px",
+
+  background:
+    (
+      "linear-gradient(" +
+      "90deg," +
+      "#833AB4 0%," +
+      "#C13584 35%," +
+      "#E1306C 65%," +
+      "#F77737 100%" +
+      ")"
+    ),
+
+  color:
+    "#FFFFFF",
+
+  fontFamily:
+    "inherit",
+
+  fontSize:
+    "1rem",
+
+  fontWeight:
+    600,
+
+  transition:
+    "opacity 0.2s ease",
+
+};
 
 
 // =========================================================
@@ -132,7 +536,8 @@ function loadGoogleIdentityServices() {
           "load",
           handleLoad,
           {
-            once: true,
+            once:
+              true,
           }
         );
 
@@ -149,7 +554,8 @@ function loadGoogleIdentityServices() {
 
           },
           {
-            once: true,
+            once:
+              true,
           }
         );
 
@@ -250,7 +656,7 @@ function loadGoogleIdentityServices() {
 
 
 // =========================================================
-// INITIALIZE FACEBOOK
+// FACEBOOK SDK INITIALIZATION
 // =========================================================
 
 function initializeFacebook(
@@ -304,7 +710,7 @@ function initializeFacebook(
 
 
 // =========================================================
-// FACEBOOK SCRIPT LOADER
+// FACEBOOK SDK LOADER
 // =========================================================
 
 function loadFacebookSdk() {
@@ -359,14 +765,10 @@ function loadFacebookSdk() {
       const finish =
         () => {
 
-          if (completed) {
-
-            return;
-
-          }
-
-
-          if (!window.FB) {
+          if (
+            completed ||
+            !window.FB
+          ) {
 
             return;
 
@@ -461,7 +863,8 @@ function loadFacebookSdk() {
           "load",
           finish,
           {
-            once: true,
+            once:
+              true,
           }
         );
 
@@ -470,7 +873,8 @@ function loadFacebookSdk() {
           "error",
           fail,
           {
-            once: true,
+            once:
+              true,
           }
         );
 
@@ -531,7 +935,7 @@ function loadFacebookSdk() {
 
 
 // =========================================================
-// FACEBOOK LOGIN POPUP
+// FACEBOOK LOGIN
 // =========================================================
 
 function openFacebookLogin() {
@@ -622,6 +1026,56 @@ function openFacebookLogin() {
 
 
 // =========================================================
+// INSTAGRAM ICON
+// =========================================================
+
+function InstagramIcon() {
+
+  return (
+
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+
+      <rect
+        width="18"
+        height="18"
+        x="3"
+        y="3"
+        rx="5"
+        ry="5"
+      />
+
+
+      <path
+        d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"
+      />
+
+
+      <line
+        x1="17.5"
+        x2="17.51"
+        y1="6.5"
+        y2="6.5"
+      />
+
+    </svg>
+
+  );
+
+}
+
+
+// =========================================================
 // LOGIN COMPONENT
 // =========================================================
 
@@ -641,7 +1095,7 @@ function Login({
 
 
   // =======================================================
-  // REFERENCES
+  // REFS
   // =======================================================
 
   const googleButtonRef =
@@ -662,12 +1116,15 @@ function Login({
     );
 
 
-  // Facebook token stays only in memory while the user
-  // authenticates the existing SHOBDO account.
-
   const pendingFacebookTokenRef =
     useRef(
       ""
+    );
+
+
+  const instagramCallbackPromiseRef =
+    useRef(
+      null
     );
 
 
@@ -700,7 +1157,7 @@ function Login({
 
 
   // =======================================================
-  // PASSWORD LOGIN STATE
+  // LOGIN STATES
   // =======================================================
 
   const [
@@ -710,10 +1167,6 @@ function Login({
     false
   );
 
-
-  // =======================================================
-  // GOOGLE STATE
-  // =======================================================
 
   const [
     googleLoading,
@@ -738,10 +1191,6 @@ function Login({
     ""
   );
 
-
-  // =======================================================
-  // FACEBOOK STATE
-  // =======================================================
 
   const [
     facebookLoading,
@@ -783,10 +1232,6 @@ function Login({
   );
 
 
-  // =======================================================
-  // INSTAGRAM STATE
-  // =======================================================
-
   const [
     instagramLoading,
     setInstagramLoading,
@@ -811,10 +1256,6 @@ function Login({
   );
 
 
-  // =======================================================
-  // COMMON ERROR
-  // =======================================================
-
   const [
     error,
     setError,
@@ -824,372 +1265,29 @@ function Login({
 
 
   // =======================================================
-  // BUSY
+  // CURRENT LANGUAGE
+  // =======================================================
+
+  const localText =
+    SOCIAL_TEXT[
+      uiLanguage
+    ] ||
+    SOCIAL_TEXT.en;
+
+
+  // =======================================================
+  // BUSY STATE
   // =======================================================
 
   const busy =
-    loading ||
-    googleLoading ||
-    facebookLoading ||
-    facebookLinking ||
-    instagramLoading ||
-    instagramLinking;
-
-
-  // =======================================================
-  // LOCAL FALLBACK TEXT
-  // =======================================================
-
-  const AUTH_TEXT = {
-
-    bn: {
-
-      or:
-        "অথবা",
-
-      loadingGoogle:
-        "Google দিয়ে লগইন হচ্ছে...",
-
-      googleUnavailable:
-        "Google লগইন এই মুহূর্তে উপলব্ধ নয়।",
-
-      googleConfigurationMissing:
-        "Google লগইন এখনও কনফিগার করা হয়নি।",
-
-      googleGenericError:
-        "Google দিয়ে লগইন করা যায়নি। আবার চেষ্টা করুন।",
-
-      googleAccountConflict:
-        "এই SHOBDO অ্যাকাউন্টটি অন্য একটি Google অ্যাকাউন্টের সঙ্গে যুক্ত রয়েছে।",
-
-      googleSectionLabel:
-        "Google দিয়ে লগইন",
-
-      facebookButton:
-        "Facebook দিয়ে চালিয়ে যান",
-
-      facebookLoading:
-        "Facebook দিয়ে লগইন হচ্ছে...",
-
-      facebookLinking:
-        "Facebook অ্যাকাউন্ট যুক্ত হচ্ছে...",
-
-      facebookUnavailable:
-        "Facebook লগইন এই মুহূর্তে উপলব্ধ নয়।",
-
-      facebookConfigurationMissing:
-        "Facebook লগইন এখনও কনফিগার করা হয়নি।",
-
-      facebookGenericError:
-        "Facebook দিয়ে লগইন করা যায়নি। আবার চেষ্টা করুন।",
-
-      facebookCancelled:
-        "Facebook লগইন বাতিল করা হয়েছে।",
-
-      facebookEmailRequired:
-        "Facebook আপনার ইমেইল দেয়নি। Facebook-এ email permission অনুমোদন করুন।",
-
-      facebookAccountConflict:
-        "এই Facebook অ্যাকাউন্টটি অন্য একটি SHOBDO অ্যাকাউন্টের সঙ্গে যুক্ত রয়েছে।",
-
-      facebookLinkRequired:
-        "এই ইমেইলে ইতিমধ্যে একটি SHOBDO অ্যাকাউন্ট রয়েছে। আপনার বর্তমান SHOBDO অ্যাকাউন্টে Google অথবা পাসওয়ার্ড দিয়ে লগইন করুন। সফল লগইনের পরে Facebook একই অ্যাকাউন্টের সঙ্গে যুক্ত হবে।",
-
-      facebookLinkFailed:
-        "SHOBDO লগইন সফল হয়েছে, কিন্তু Facebook অ্যাকাউন্টটি যুক্ত করা যায়নি। আবার চেষ্টা করুন।",
-
-      instagramButton:
-        "Instagram দিয়ে চালিয়ে যান",
-
-      instagramLoading:
-        "Instagram দিয়ে লগইন হচ্ছে...",
-
-      instagramLinking:
-        "Instagram অ্যাকাউন্ট যুক্ত হচ্ছে...",
-
-      instagramUnavailable:
-        "Instagram লগইন এই মুহূর্তে উপলব্ধ নয়।",
-
-      instagramGenericError:
-        "Instagram দিয়ে লগইন করা যায়নি। আবার চেষ্টা করুন।",
-
-      instagramCancelled:
-        "Instagram লগইন বাতিল করা হয়েছে।",
-
-      instagramPopupBlocked:
-        "Instagram লগইন উইন্ডোটি ব্রাউজার ব্লক করেছে। SHOBDO-এর জন্য pop-up অনুমতি দিন।",
-
-      instagramTimeout:
-        "Instagram লগইনের সময়সীমা শেষ হয়েছে। আবার চেষ্টা করুন।",
-
-      instagramAccountConflict:
-        "এই Instagram অ্যাকাউন্টটি অন্য একটি SHOBDO অ্যাকাউন্টের সঙ্গে যুক্ত রয়েছে।",
-
-      instagramLinkRequired:
-        "Instagram অ্যাকাউন্টটি যাচাই হয়েছে। এখন আপনার বর্তমান SHOBDO অ্যাকাউন্টে Google, Facebook অথবা পাসওয়ার্ড দিয়ে লগইন করুন। এরপর Instagram একই SHOBDO অ্যাকাউন্টের সঙ্গে যুক্ত হবে।",
-
-      instagramLinkFailed:
-        "SHOBDO লগইন সফল হয়েছে, কিন্তু Instagram অ্যাকাউন্টটি যুক্ত করা যায়নি। আবার চেষ্টা করুন।",
-
-      instagramProfessionalOnly:
-        "Instagram Creator অথবা Business account প্রয়োজন।",
-
-      networkError:
-        "SHOBDO সার্ভারের সঙ্গে সংযোগ করা যাচ্ছে না। আবার চেষ্টা করুন।",
-
-      quote:
-        "তোমার শব্দ এমন একটি স্থান পাওয়ার যোগ্য, যেখানে তা শোনা যায়।",
-
-    },
-
-
-    en: {
-
-      or:
-        "or",
-
-      loadingGoogle:
-        "Signing in with Google...",
-
-      googleUnavailable:
-        "Google Sign-In is currently unavailable.",
-
-      googleConfigurationMissing:
-        "Google Sign-In has not been configured yet.",
-
-      googleGenericError:
-        "Unable to sign in with Google. Please try again.",
-
-      googleAccountConflict:
-        "This SHOBDO account is already connected to another Google account.",
-
-      googleSectionLabel:
-        "Sign in with Google",
-
-      facebookButton:
-        "Continue with Facebook",
-
-      facebookLoading:
-        "Signing in with Facebook...",
-
-      facebookLinking:
-        "Connecting Facebook account...",
-
-      facebookUnavailable:
-        "Facebook Login is currently unavailable.",
-
-      facebookConfigurationMissing:
-        "Facebook Login has not been configured yet.",
-
-      facebookGenericError:
-        "Unable to sign in with Facebook. Please try again.",
-
-      facebookCancelled:
-        "Facebook sign-in was cancelled.",
-
-      facebookEmailRequired:
-        "Facebook did not provide your email address. Allow the email permission and try again.",
-
-      facebookAccountConflict:
-        "This Facebook account is already connected to another SHOBDO account.",
-
-      facebookLinkRequired:
-        "A SHOBDO account already exists with this email. Sign in below using your existing SHOBDO password or Google account. Facebook will then be connected automatically to that SHOBDO account.",
-
-      facebookLinkFailed:
-        "Your SHOBDO sign-in succeeded, but Facebook could not be connected. Please try again.",
-
-      instagramButton:
-        "Continue with Instagram",
-
-      instagramLoading:
-        "Signing in with Instagram...",
-
-      instagramLinking:
-        "Connecting Instagram account...",
-
-      instagramUnavailable:
-        "Instagram Login is currently unavailable.",
-
-      instagramGenericError:
-        "Unable to sign in with Instagram. Please try again.",
-
-      instagramCancelled:
-        "Instagram sign-in was cancelled.",
-
-      instagramPopupBlocked:
-        "Your browser blocked the Instagram sign-in window. Allow popups for SHOBDO and try again.",
-
-      instagramTimeout:
-        "Instagram sign-in timed out. Please try again.",
-
-      instagramAccountConflict:
-        "This Instagram account is already connected to another SHOBDO account.",
-
-      instagramLinkRequired:
-        "Your Instagram account has been verified. Now sign in to your existing SHOBDO account using password, Google, or Facebook. Instagram will then be connected to the same SHOBDO account.",
-
-      instagramLinkFailed:
-        "Your SHOBDO sign-in succeeded, but Instagram could not be connected. Please try again.",
-
-      instagramProfessionalOnly:
-        "Instagram login currently requires a Creator or Business account.",
-
-      networkError:
-        "Unable to connect to SHOBDO. Please try again.",
-
-      quote:
-        "Your words deserve a place where they can be heard.",
-
-    },
-
-
-    hi: {
-
-      or:
-        "या",
-
-      loadingGoogle:
-        "Google से लॉग इन हो रहा है...",
-
-      googleUnavailable:
-        "Google लॉगिन अभी उपलब्ध नहीं है।",
-
-      googleConfigurationMissing:
-        "Google लॉगिन अभी कॉन्फ़िगर नहीं किया गया है।",
-
-      googleGenericError:
-        "Google से लॉग इन नहीं हो सका। कृपया फिर से प्रयास करें।",
-
-      googleAccountConflict:
-        "यह SHOBDO खाता पहले से किसी अन्य Google खाते से जुड़ा है।",
-
-      googleSectionLabel:
-        "Google से लॉग इन करें",
-
-      facebookButton:
-        "Facebook से जारी रखें",
-
-      facebookLoading:
-        "Facebook से लॉग इन हो रहा है...",
-
-      facebookLinking:
-        "Facebook खाता जोड़ा जा रहा है...",
-
-      facebookUnavailable:
-        "Facebook लॉगिन अभी उपलब्ध नहीं है।",
-
-      facebookConfigurationMissing:
-        "Facebook लॉगिन अभी कॉन्फ़िगर नहीं किया गया है।",
-
-      facebookGenericError:
-        "Facebook से लॉग इन नहीं हो सका। कृपया फिर प्रयास करें।",
-
-      facebookCancelled:
-        "Facebook लॉगिन रद्द कर दिया गया।",
-
-      facebookEmailRequired:
-        "Facebook ने आपका ईमेल पता नहीं दिया। Email permission की अनुमति देकर फिर प्रयास करें।",
-
-      facebookAccountConflict:
-        "यह Facebook खाता किसी अन्य SHOBDO खाते से जुड़ा हुआ है।",
-
-      facebookLinkRequired:
-        "इस ईमेल से पहले से SHOBDO खाता मौजूद है। नीचे अपने मौजूदा SHOBDO पासवर्ड या Google से लॉग इन करें। सफल लॉगिन के बाद Facebook उसी खाते से जुड़ जाएगा।",
-
-      facebookLinkFailed:
-        "SHOBDO लॉगिन सफल हुआ, लेकिन Facebook खाता जोड़ा नहीं जा सका। कृपया फिर प्रयास करें।",
-
-      instagramButton:
-        "Instagram से जारी रखें",
-
-      instagramLoading:
-        "Instagram से लॉग इन हो रहा है...",
-
-      instagramLinking:
-        "Instagram खाता जोड़ा जा रहा है...",
-
-      instagramUnavailable:
-        "Instagram लॉगिन अभी उपलब्ध नहीं है।",
-
-      instagramGenericError:
-        "Instagram से लॉग इन नहीं हो सका। कृपया फिर प्रयास करें।",
-
-      instagramCancelled:
-        "Instagram लॉगिन रद्द कर दिया गया।",
-
-      instagramPopupBlocked:
-        "ब्राउज़र ने Instagram लॉगिन विंडो को ब्लॉक कर दिया। SHOBDO के लिए pop-up की अनुमति दें।",
-
-      instagramTimeout:
-        "Instagram लॉगिन का समय समाप्त हो गया। कृपया फिर प्रयास करें।",
-
-      instagramAccountConflict:
-        "यह Instagram खाता किसी अन्य SHOBDO खाते से जुड़ा हुआ है।",
-
-      instagramLinkRequired:
-        "Instagram खाता सत्यापित हो गया है। अब अपने मौजूदा SHOBDO खाते में password, Google या Facebook से लॉग इन करें। इसके बाद Instagram उसी SHOBDO खाते से जुड़ जाएगा।",
-
-      instagramLinkFailed:
-        "SHOBDO लॉगिन सफल हुआ, लेकिन Instagram खाता जोड़ा नहीं जा सका। कृपया फिर प्रयास करें।",
-
-      instagramProfessionalOnly:
-        "Instagram लॉगिन के लिए Creator या Business account आवश्यक है।",
-
-      networkError:
-        "SHOBDO सर्वर से कनेक्ट नहीं हो सका। कृपया फिर प्रयास करें।",
-
-      quote:
-        "आपके शब्दों को ऐसी जगह मिलनी चाहिए जहाँ उन्हें सुना जा सके।",
-
-    },
-
-  };
-
-
-  const localText =
-    AUTH_TEXT[
-      uiLanguage
-    ] ||
-    AUTH_TEXT.en;
-
-
-  // =======================================================
-  // SAFE TRANSLATION
-  // =======================================================
-
-  function translate(
-    key,
-    fallback
-  ) {
-
-    try {
-
-      const translated =
-        t(
-          key
-        );
-
-
-      if (
-        translated &&
-        translated !== key
-      ) {
-
-        return translated;
-
-      }
-
-    } catch {
-
-      // Use local fallback.
-
-    }
-
-
-    return fallback;
-
-  }
+    (
+      loading ||
+      googleLoading ||
+      facebookLoading ||
+      facebookLinking ||
+      instagramLoading ||
+      instagramLinking
+    );
 
 
   // =======================================================
@@ -1205,19 +1303,41 @@ function Login({
 
 
   // =======================================================
-  // RESTORE PENDING INSTAGRAM LINK
+  // SAFE TRANSLATION
   // =======================================================
 
-  useEffect(
-    () => {
+  function translate(
+    key,
+    fallback
+  ) {
 
-      setInstagramLinkPending(
-        hasPendingInstagramLink()
-      );
+    try {
 
-    },
-    []
-  );
+      const value =
+        t(
+          key
+        );
+
+
+      if (
+        value &&
+        value !== key
+      ) {
+
+        return value;
+
+      }
+
+    } catch {
+
+      // Use fallback.
+
+    }
+
+
+    return fallback;
+
+  }
 
 
   // =======================================================
@@ -1278,16 +1398,16 @@ function Login({
 
 
   // =======================================================
-  // LINK PENDING FACEBOOK
+  // LINK FACEBOOK AFTER SHOBDO LOGIN
   // =======================================================
 
-  async function linkPendingFacebookAccount() {
+  async function linkPendingFacebookIdentity() {
 
-    const facebookToken =
+    const token =
       pendingFacebookTokenRef.current;
 
 
-    if (!facebookToken) {
+    if (!token) {
 
       return null;
 
@@ -1305,7 +1425,7 @@ function Login({
         await linkFacebookAccount({
 
           accessToken:
-            facebookToken,
+            token,
 
         });
 
@@ -1341,7 +1461,7 @@ function Login({
 
 
   // =======================================================
-  // LINK PENDING INSTAGRAM
+  // LINK INSTAGRAM AFTER SHOBDO LOGIN
   // =======================================================
 
   async function linkPendingInstagramIdentity() {
@@ -1382,9 +1502,11 @@ function Login({
 
       if (
         err?.code ===
-          "instagram_account_conflict" ||
+          "instagram_account_conflict"
+        ||
         err?.code ===
-          "instagram_link_token_invalid" ||
+          "instagram_link_token_invalid"
+        ||
         err?.code ===
           "instagram_link_token_expired"
       ) {
@@ -1408,7 +1530,7 @@ function Login({
 
 
   // =======================================================
-  // SOCIAL LINK ERROR MESSAGE
+  // SOCIAL LINK ERROR
   // =======================================================
 
   function getSocialLinkErrorMessage(
@@ -1489,8 +1611,9 @@ function Login({
 
     return (
       err?.message ||
-      t(
-        "errors.generic"
+      translate(
+        "errors.generic",
+        "Something went wrong."
       )
     );
 
@@ -1498,14 +1621,7 @@ function Login({
 
 
   // =======================================================
-  // FINISH AUTHENTICATION
-  // =======================================================
-  //
-  // The user has now authenticated to SHOBDO.
-  //
-  // If Facebook or Instagram linking was pending, connect
-  // those identities before navigating away.
-  //
+  // FINISH AUTHENTICATED LOGIN
   // =======================================================
 
   async function finishAuthenticatedLogin() {
@@ -1514,7 +1630,7 @@ function Login({
       pendingFacebookTokenRef.current
     ) {
 
-      await linkPendingFacebookAccount();
+      await linkPendingFacebookIdentity();
 
     }
 
@@ -1531,6 +1647,200 @@ function Login({
     await completeLogin();
 
   }
+
+
+  // =======================================================
+  // INSTAGRAM REDIRECT CALLBACK
+  // =======================================================
+  //
+  // SHOBDO
+  //   ↓
+  // Render /instagram/start
+  //   ↓
+  // Instagram
+  //   ↓
+  // Render /instagram/callback
+  //   ↓
+  // SHOBDO /login#instagram=callback&handoff=...
+  //   ↓
+  // /instagram/exchange
+  //
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      setInstagramLinkPending(
+        hasPendingInstagramLink()
+      );
+
+
+      if (
+        !hasInstagramRedirectCallback()
+      ) {
+
+        return;
+
+      }
+
+
+      setError(
+        ""
+      );
+
+
+      setInstagramLoading(
+        true
+      );
+
+
+      if (
+        !instagramCallbackPromiseRef.current
+      ) {
+
+        instagramCallbackPromiseRef.current =
+          consumeInstagramRedirectCallback();
+
+      }
+
+
+      instagramCallbackPromiseRef.current
+        .then(
+          async (
+            result
+          ) => {
+
+            if (!result) {
+
+              setInstagramLinkPending(
+                hasPendingInstagramLink()
+              );
+
+
+              return;
+
+            }
+
+
+            // =============================================
+            // FIRST INSTAGRAM CONNECTION
+            // =============================================
+
+            if (
+              result?.status ===
+              "link_required"
+            ) {
+
+              setInstagramLinkPending(
+                true
+              );
+
+
+              setError(
+                ""
+              );
+
+
+              return;
+
+            }
+
+
+            // =============================================
+            // EXISTING INSTAGRAM-LINKED SHOBDO ACCOUNT
+            // =============================================
+
+            setInstagramLinkPending(
+              false
+            );
+
+
+            await completeLogin();
+
+          }
+        )
+        .catch(
+          (
+            err
+          ) => {
+
+            console.error(
+              "INSTAGRAM REDIRECT ERROR:",
+              err
+            );
+
+
+            if (
+              err?.code ===
+              "instagram_cancelled"
+            ) {
+
+              setError(
+                localText
+                  .instagramCancelled
+              );
+
+
+              return;
+
+            }
+
+
+            if (
+              err?.code ===
+              "instagram_account_conflict"
+            ) {
+
+              clearPendingInstagramConnection();
+
+
+              setError(
+                localText
+                  .instagramAccountConflict
+              );
+
+
+              return;
+
+            }
+
+
+            if (
+              err?.code ===
+              "network_error"
+            ) {
+
+              setError(
+                localText.networkError
+              );
+
+
+              return;
+
+            }
+
+
+            setError(
+              err?.message ||
+              localText
+                .instagramGenericError
+            );
+
+          }
+        )
+        .finally(
+          () => {
+
+            setInstagramLoading(
+              false
+            );
+
+          }
+        );
+
+    },
+    []
+  );
 
 
   // =======================================================
@@ -1568,8 +1878,9 @@ function Login({
     ) {
 
       setError(
-        t(
-          "errors.generic"
+        translate(
+          "errors.generic",
+          "Email and password are required."
         )
       );
 
@@ -1624,18 +1935,17 @@ function Login({
           )
         );
 
+      } else {
 
-        return;
+        setError(
+          err?.message ||
+          translate(
+            "errors.generic",
+            "Unable to log in."
+          )
+        );
 
       }
-
-
-      setError(
-        err?.message ||
-        t(
-          "errors.generic"
-        )
-      );
 
     } finally {
 
@@ -1663,7 +1973,8 @@ function Login({
       ) {
 
         setError(
-          localText.googleGenericError
+          localText
+            .googleGenericError
         );
 
 
@@ -1784,7 +2095,8 @@ function Login({
 
         setError(
           err?.message ||
-          localText.googleGenericError
+          localText
+            .googleGenericError
         );
 
       } finally {
@@ -2149,7 +2461,8 @@ function Login({
 
       setError(
         facebookLoadError ||
-        localText.facebookUnavailable
+        localText
+          .facebookUnavailable
       );
 
 
@@ -2191,9 +2504,6 @@ function Login({
 
 
         await finishAuthenticatedLogin();
-
-
-        return;
 
       } catch (err) {
 
@@ -2256,7 +2566,8 @@ function Login({
       ) {
 
         setError(
-          localText.facebookCancelled
+          localText
+            .facebookCancelled
         );
 
 
@@ -2271,7 +2582,8 @@ function Login({
       ) {
 
         setError(
-          localText.facebookEmailRequired
+          localText
+            .facebookEmailRequired
         );
 
 
@@ -2316,7 +2628,8 @@ function Login({
 
       setError(
         err?.message ||
-        localText.facebookGenericError
+        localText
+          .facebookGenericError
       );
 
     } finally {
@@ -2331,10 +2644,14 @@ function Login({
 
 
   // =======================================================
-  // INSTAGRAM LOGIN
+  // INSTAGRAM LOGIN START
+  // =======================================================
+  //
+  // Full-page redirect. No popup and no postMessage.
+  //
   // =======================================================
 
-  async function handleInstagramLogin() {
+  function handleInstagramLogin() {
 
     if (busy) {
 
@@ -2370,133 +2687,19 @@ function Login({
 
     try {
 
-      const result =
-        await loginWithInstagram();
-
-
-      // ---------------------------------------------------
-      // EXISTING INSTAGRAM-LINKED SHOBDO USER
-      // ---------------------------------------------------
-
-      if (
-        result?.status ===
-        "authenticated"
-      ) {
-
-        setInstagramLinkPending(
-          false
-        );
-
-
-        await finishAuthenticatedLogin();
-
-
-        return;
-
-      }
-
-
-      // ---------------------------------------------------
-      // INSTAGRAM VERIFIED, SHOBDO LINK REQUIRED
-      // ---------------------------------------------------
-
-      if (
-        result?.status ===
-        "link_required"
-      ) {
-
-        setInstagramLinkPending(
-          true
-        );
-
-
-        setError(
-          ""
-        );
-
-
-        return;
-
-      }
-
-
-      throw new Error(
-        "Instagram authentication returned an unexpected response."
-      );
+      startInstagramLogin();
 
     } catch (err) {
 
       console.error(
-        "INSTAGRAM LOGIN ERROR:",
+        "INSTAGRAM LOGIN START ERROR:",
         err
       );
 
 
-      if (
-        err?.code ===
-        "instagram_cancelled"
-      ) {
-
-        setError(
-          localText
-            .instagramCancelled
-        );
-
-
-        return;
-
-      }
-
-
-      if (
-        err?.code ===
-        "instagram_popup_blocked"
-      ) {
-
-        setError(
-          localText
-            .instagramPopupBlocked
-        );
-
-
-        return;
-
-      }
-
-
-      if (
-        err?.code ===
-        "instagram_popup_timeout"
-      ) {
-
-        setError(
-          localText
-            .instagramTimeout
-        );
-
-
-        return;
-
-      }
-
-
-      if (
-        err?.code ===
-        "instagram_account_conflict"
-      ) {
-
-        clearPendingInstagramConnection();
-
-
-        setError(
-          localText
-            .instagramAccountConflict
-        );
-
-
-        return;
-
-      }
+      setInstagramLoading(
+        false
+      );
 
 
       if (
@@ -2520,26 +2723,18 @@ function Login({
           .instagramGenericError
       );
 
-    } finally {
-
-      setInstagramLoading(
-        false
-      );
-
     }
 
   }
 
 
   // =======================================================
-  // LOGIN BUTTON LABEL
+  // LOGIN BUTTON TEXT
   // =======================================================
 
   function getPasswordButtonLabel() {
 
-    if (
-      facebookLinking
-    ) {
+    if (facebookLinking) {
 
       return localText
         .facebookLinking;
@@ -2547,9 +2742,7 @@ function Login({
     }
 
 
-    if (
-      instagramLinking
-    ) {
+    if (instagramLinking) {
 
       return localText
         .instagramLinking;
@@ -2578,9 +2771,7 @@ function Login({
     }
 
 
-    if (
-      facebookLinkPending
-    ) {
+    if (facebookLinkPending) {
 
       return (
         "Login & connect Facebook"
@@ -2589,9 +2780,7 @@ function Login({
     }
 
 
-    if (
-      instagramLinkPending
-    ) {
+    if (instagramLinkPending) {
 
       return (
         "Login & connect Instagram"
@@ -2605,6 +2794,20 @@ function Login({
     );
 
   }
+
+
+  const facebookDisabled =
+    (
+      busy ||
+      !facebookReady
+    );
+
+
+  const instagramDisabled =
+    (
+      busy ||
+      !isInstagramAuthConfigured()
+    );
 
 
   // =======================================================
@@ -2623,7 +2826,7 @@ function Login({
 
 
         {/* =============================================
-            LEFT SIDE
+            INTRO
         ============================================== */}
 
         <section
@@ -2637,6 +2840,7 @@ function Login({
             <ShieldCheck
               size={15}
             />
+
 
             <span>
 
@@ -2674,6 +2878,7 @@ function Login({
             <span>
               SHOBDO
             </span>
+
 
             <blockquote>
 
@@ -2716,6 +2921,7 @@ function Login({
               SHOBDO
             </span>
 
+
             <h2>
 
               {t(
@@ -2727,9 +2933,7 @@ function Login({
           </div>
 
 
-          {/* ===========================================
-              ERROR
-          ============================================ */}
+          {/* ERROR */}
 
           {error && (
 
@@ -2745,9 +2949,7 @@ function Login({
           )}
 
 
-          {/* ===========================================
-              FACEBOOK ACCOUNT LINK NOTICE
-          ============================================ */}
+          {/* FACEBOOK LINK NOTICE */}
 
           {facebookLinkPending && (
 
@@ -2865,9 +3067,7 @@ function Login({
           )}
 
 
-          {/* ===========================================
-              INSTAGRAM ACCOUNT LINK NOTICE
-          ============================================ */}
+          {/* INSTAGRAM LINK NOTICE */}
 
           {instagramLinkPending && (
 
@@ -2985,9 +3185,7 @@ function Login({
           )}
 
 
-          {/* ===========================================
-              GOOGLE
-          ============================================ */}
+          {/* GOOGLE */}
 
           <div
             className="shobdo-google-login-section"
@@ -3030,9 +3228,10 @@ function Login({
                   className="spin"
                 />
 
+
                 {
                   localText
-                    .loadingGoogle
+                    .googleLoading
                 }
 
               </button>
@@ -3116,9 +3315,7 @@ function Login({
           </div>
 
 
-          {/* ===========================================
-              FACEBOOK
-          ============================================ */}
+          {/* FACEBOOK */}
 
           <div
             style={{
@@ -3140,72 +3337,22 @@ function Login({
               }
 
               disabled={
-                busy ||
-                !facebookReady
+                facebookDisabled
               }
 
               style={{
 
-                width:
-                  "100%",
-
-                minHeight:
-                  "48px",
-
-                border:
-                  0,
-
-                borderRadius:
-                  "7px",
-
-                display:
-                  "flex",
-
-                alignItems:
-                  "center",
-
-                justifyContent:
-                  "center",
-
-                gap:
-                  "11px",
-
-                padding:
-                  "0 18px",
-
-                background:
-                  "#1877F2",
-
-                color:
-                  "#FFFFFF",
-
-                fontFamily:
-                  "inherit",
-
-                fontSize:
-                  "1rem",
-
-                fontWeight:
-                  600,
+                ...facebookButtonStyle,
 
                 cursor:
-                  (
-                    busy ||
-                    !facebookReady
-                  )
+                  facebookDisabled
                     ? "not-allowed"
                     : "pointer",
 
                 opacity:
-                  (
-                    busy ||
-                    !facebookReady
-                  )
+                  facebookDisabled
                     ? 0.65
                     : 1,
-
-                transition:
-                  "opacity 0.2s ease",
 
               }}
             >
@@ -3332,9 +3479,7 @@ function Login({
           </div>
 
 
-          {/* ===========================================
-              INSTAGRAM
-          ============================================ */}
+          {/* INSTAGRAM */}
 
           <div
             style={{
@@ -3356,80 +3501,22 @@ function Login({
               }
 
               disabled={
-                busy ||
-                !isInstagramAuthConfigured()
+                instagramDisabled
               }
 
               style={{
 
-                width:
-                  "100%",
-
-                minHeight:
-                  "48px",
-
-                border:
-                  0,
-
-                borderRadius:
-                  "7px",
-
-                display:
-                  "flex",
-
-                alignItems:
-                  "center",
-
-                justifyContent:
-                  "center",
-
-                gap:
-                  "11px",
-
-                padding:
-                  "0 18px",
-
-                background:
-                  (
-                    "linear-gradient(" +
-                    "90deg," +
-                    "#833AB4 0%," +
-                    "#C13584 35%," +
-                    "#E1306C 65%," +
-                    "#F77737 100%" +
-                    ")"
-                  ),
-
-                color:
-                  "#FFFFFF",
-
-                fontFamily:
-                  "inherit",
-
-                fontSize:
-                  "1rem",
-
-                fontWeight:
-                  600,
+                ...instagramButtonStyle,
 
                 cursor:
-                  (
-                    busy ||
-                    !isInstagramAuthConfigured()
-                  )
+                  instagramDisabled
                     ? "not-allowed"
                     : "pointer",
 
                 opacity:
-                  (
-                    busy ||
-                    !isInstagramAuthConfigured()
-                  )
+                  instagramDisabled
                     ? 0.65
                     : 1,
-
-                transition:
-                  "opacity 0.2s ease",
 
               }}
             >
@@ -3449,36 +3536,7 @@ function Login({
                     )
                   : (
 
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <rect
-                          width="18"
-                          height="18"
-                          x="3"
-                          y="3"
-                          rx="5"
-                          ry="5"
-                        />
-                        <path
-                          d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"
-                        />
-                        <line
-                          x1="17.5"
-                          x2="17.51"
-                          y1="6.5"
-                          y2="6.5"
-                        />
-                      </svg>
+                      <InstagramIcon />
 
                     )
               }
@@ -3531,15 +3589,14 @@ function Login({
           </div>
 
 
-          {/* ===========================================
-              DIVIDER
-          ============================================ */}
+          {/* DIVIDER */}
 
           <div
             className="shobdo-auth-divider"
           >
 
             <span />
+
 
             <small>
 
@@ -3550,14 +3607,13 @@ function Login({
 
             </small>
 
+
             <span />
 
           </div>
 
 
-          {/* ===========================================
-              PASSWORD LOGIN
-          ============================================ */}
+          {/* PASSWORD LOGIN */}
 
           <form
             className="shobdo-auth-form"
@@ -3566,9 +3622,6 @@ function Login({
               handleSubmit
             }
           >
-
-
-            {/* EMAIL */}
 
             <div
               className="shobdo-auth-field"
@@ -3641,8 +3694,6 @@ function Login({
 
             </div>
 
-
-            {/* PASSWORD */}
 
             <div
               className="shobdo-auth-field"
@@ -3794,8 +3845,6 @@ function Login({
             </div>
 
 
-            {/* LOGIN BUTTON */}
-
             <button
               type="submit"
 
@@ -3839,9 +3888,7 @@ function Login({
           </form>
 
 
-          {/* ===========================================
-              REGISTER
-          ============================================ */}
+          {/* REGISTER */}
 
           <div
             className="shobdo-auth-divider"
@@ -3849,9 +3896,11 @@ function Login({
 
             <span />
 
+
             <small>
               SHOBDO
             </small>
+
 
             <span />
 
