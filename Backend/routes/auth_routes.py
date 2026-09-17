@@ -990,29 +990,73 @@ INSTAGRAM_DELETION_STATUS_MAX_AGE_SECONDS = (
 
 def get_frontend_url():
 
-    value = (
-        current_app.config.get(
-            "FRONTEND_URL"
-        )
-        or
+    # =====================================================
+    # PRODUCTION FIRST
+    # =====================================================
+    #
+    # On Render always prefer the production frontend URL.
+    #
+    # Local FRONTEND_URL is used only when no production
+    # frontend has been configured.
+    #
+    # =====================================================
+
+    production_url = (
+
         os.getenv(
-            "FRONTEND_URL"
+            "PRODUCTION_FRONTEND_URL"
         )
+
         or
+
         current_app.config.get(
             "PRODUCTION_FRONTEND_URL"
         )
+
         or
+
+        ""
+
+    )
+
+
+    production_url = str(
+        production_url
+    ).strip().rstrip(
+        "/"
+    )
+
+
+    if production_url:
+
+        return production_url
+
+
+    # =====================================================
+    # DEVELOPMENT FALLBACK
+    # =====================================================
+
+    development_url = (
+
         os.getenv(
-            "PRODUCTION_FRONTEND_URL"
+            "FRONTEND_URL"
         )
+
         or
+
+        current_app.config.get(
+            "FRONTEND_URL"
+        )
+
+        or
+
         "http://localhost:5173"
+
     )
 
 
     return str(
-        value
+        development_url
     ).strip().rstrip(
         "/"
     )
@@ -6249,27 +6293,7 @@ def forgot_password():
 
 
     frontend_url = (
-
-        current_app.config.get(
-            "FRONTEND_URL"
-        )
-
-        or
-
-        os.getenv(
-            "FRONTEND_URL"
-        )
-
-        or
-
-        os.getenv(
-            "PRODUCTION_FRONTEND_URL"
-        )
-
-        or
-
-        "http://localhost:5173"
-
+        get_frontend_url()
     )
 
 
