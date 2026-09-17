@@ -8,13 +8,12 @@
 // - Email/password login
 // - Google Sign-In
 // - Facebook Sign-In
-// - Facebook account linking
+// - Secure Facebook account linking
 // - Current authenticated user
 // - Logout
 // - Forgot password
-// - Password-reset token validation
 // - Password reset
-// - JWT token storage
+// - JWT storage
 //
 // =========================================================
 
@@ -33,21 +32,7 @@ const RAW_API_URL =
 
 
 // =========================================================
-// API URL NORMALIZATION
-// =========================================================
-//
-// Supports:
-//
-// VITE_API_URL=http://127.0.0.1:5000
-//
-// OR:
-//
-// VITE_API_URL=http://127.0.0.1:5000/api
-//
-// without producing:
-//
-// /api/api
-//
+// API URL
 // =========================================================
 
 const API_URL =
@@ -57,16 +42,7 @@ const API_URL =
 
 
 // =========================================================
-// GOOGLE CLIENT ID
-// =========================================================
-//
-// Frontend/.env:
-//
-// VITE_GOOGLE_CLIENT_ID=xxxxx.apps.googleusercontent.com
-//
-// This value is public frontend configuration.
-// It is NOT the Google Client Secret.
-//
+// GOOGLE CONFIGURATION
 // =========================================================
 
 export const GOOGLE_CLIENT_ID =
@@ -77,23 +53,26 @@ export const GOOGLE_CLIENT_ID =
 
 
 // =========================================================
-// FACEBOOK APP ID
+// FACEBOOK CONFIGURATION
 // =========================================================
 //
-// Frontend/.env:
+// Facebook App ID is PUBLIC configuration.
 //
-// VITE_FACEBOOK_APP_ID=1234567890
-//
-// The Facebook App ID is public frontend configuration.
-//
-// NEVER put FACEBOOK_APP_SECRET in Vite.
-// The App Secret belongs only on the Flask backend.
+// NEVER put FACEBOOK_APP_SECRET in the React frontend.
 //
 // =========================================================
 
 export const FACEBOOK_APP_ID =
   String(
     import.meta.env.VITE_FACEBOOK_APP_ID ||
+    ""
+  ).trim();
+
+
+export const FACEBOOK_GRAPH_API_VERSION =
+  String(
+    import.meta.env
+      .VITE_FACEBOOK_GRAPH_API_VERSION ||
     ""
   ).trim();
 
@@ -107,14 +86,15 @@ const TOKEN_KEY =
 
 
 // =========================================================
-// STORAGE AVAILABILITY
+// STORAGE CHECK
 // =========================================================
 
 function canUseLocalStorage() {
 
   return (
     typeof window !== "undefined" &&
-    typeof window.localStorage !== "undefined"
+    typeof window.localStorage !==
+      "undefined"
   );
 
 }
@@ -170,13 +150,14 @@ function storeToken(
 
     localStorage.setItem(
       TOKEN_KEY,
-      String(token)
+      String(
+        token
+      )
     );
 
   } catch {
 
-    // Storage may be blocked in privacy mode.
-    // Authentication result is still returned.
+    // Storage may be unavailable in privacy mode.
 
   }
 
@@ -239,7 +220,7 @@ function extractAccessToken(
 
 
 // =========================================================
-// CREATE API ERROR
+// API ERROR
 // =========================================================
 
 function createApiError({
@@ -252,8 +233,14 @@ function createApiError({
     data?.error ||
     (
       response.status >= 500
-        ? "The server could not complete the request."
-        : "Something went wrong. Please try again."
+        ? (
+            "The server could not " +
+            "complete the request."
+          )
+        : (
+            "Something went wrong. " +
+            "Please try again."
+          )
     );
 
 
@@ -263,10 +250,6 @@ function createApiError({
     );
 
 
-  // -------------------------------------------------------
-  // HTTP INFORMATION
-  // -------------------------------------------------------
-
   error.status =
     response.status;
 
@@ -275,36 +258,15 @@ function createApiError({
     response.statusText;
 
 
-  // -------------------------------------------------------
-  // BACKEND APPLICATION ERROR CODE
-  // -------------------------------------------------------
-  //
-  // Examples:
-  //
-  // account_link_required
-  // google_account_conflict
-  // facebook_account_conflict
-  // facebook_email_required
-  //
-  // -------------------------------------------------------
-
   error.code =
     data?.code ||
     null;
 
 
-  // -------------------------------------------------------
-  // PROVIDER
-  // -------------------------------------------------------
-
   error.provider =
     data?.provider ||
     null;
 
-
-  // -------------------------------------------------------
-  // FULL BACKEND RESPONSE
-  // -------------------------------------------------------
 
   error.data =
     data ||
@@ -317,7 +279,7 @@ function createApiError({
 
 
 // =========================================================
-// RESPONSE HANDLER
+// RESPONSE PARSER
 // =========================================================
 
 async function parseResponse(
@@ -343,8 +305,10 @@ async function parseResponse(
     } catch {
 
       data = {
+
         message:
           responseText,
+
       };
 
     }
@@ -377,7 +341,9 @@ function createNetworkError(
 
   const error =
     new Error(
-      "Unable to connect to SHOBDO. Please check your internet connection and try again."
+      "Unable to connect to SHOBDO. " +
+      "Please check your internet " +
+      "connection and try again."
     );
 
 
@@ -399,7 +365,7 @@ function createNetworkError(
 
 
 // =========================================================
-// AUTH REQUEST
+// COMMON AUTH REQUEST
 // =========================================================
 
 async function authRequest(
@@ -408,12 +374,14 @@ async function authRequest(
 ) {
 
   const {
+
     includeAuth = true,
 
     headers:
       customHeaders = {},
 
     ...fetchOptions
+
   } = options;
 
 
@@ -422,16 +390,14 @@ async function authRequest(
 
 
   const headers = {
+
     "Content-Type":
       "application/json",
 
     ...customHeaders,
+
   };
 
-
-  // -------------------------------------------------------
-  // SHOBDO JWT
-  // -------------------------------------------------------
 
   if (
     includeAuth &&
@@ -462,11 +428,8 @@ async function authRequest(
 
   } catch (error) {
 
-    // API-generated errors already have status information.
-
     if (
-      error?.status !==
-      undefined
+      error?.status !== undefined
     ) {
 
       throw error;
@@ -557,6 +520,7 @@ export async function registerUser({
     await authRequest(
       "/auth/register",
       {
+
         method:
           "POST",
 
@@ -565,6 +529,7 @@ export async function registerUser({
 
         body:
           JSON.stringify({
+
             name:
               cleanName,
 
@@ -576,7 +541,9 @@ export async function registerUser({
 
             confirm_password:
               cleanConfirmPassword,
+
           }),
+
       }
     );
 
@@ -589,23 +556,7 @@ export async function registerUser({
 
 
 // =========================================================
-// PASSWORD LOGIN
-// =========================================================
-//
-// Supports:
-//
-// loginUser({
-//   email,
-//   password,
-// })
-//
-// AND:
-//
-// loginUser(
-//   email,
-//   password
-// )
-//
+// EMAIL / PASSWORD LOGIN
 // =========================================================
 
 export async function loginUser(
@@ -614,7 +565,6 @@ export async function loginUser(
 ) {
 
   let email;
-
   let password;
 
 
@@ -627,7 +577,6 @@ export async function loginUser(
     email =
       credentials.email;
 
-
     password =
       credentials.password;
 
@@ -635,7 +584,6 @@ export async function loginUser(
 
     email =
       credentials;
-
 
     password =
       legacyPassword;
@@ -663,6 +611,7 @@ export async function loginUser(
     await authRequest(
       "/auth/login",
       {
+
         method:
           "POST",
 
@@ -671,12 +620,15 @@ export async function loginUser(
 
         body:
           JSON.stringify({
+
             email:
               cleanEmail,
 
             password:
               cleanPassword,
+
           }),
+
       }
     );
 
@@ -691,26 +643,13 @@ export async function loginUser(
 // =========================================================
 // GOOGLE SIGN-IN
 // =========================================================
-//
-// Google Identity Services provides:
-//
-// response.credential
-//
-// The credential is sent to:
-//
-// POST /api/auth/google
-//
-// Flask verifies it and returns the normal SHOBDO JWT.
-//
-// =========================================================
 
 export async function loginWithGoogle(
   input
 ) {
 
   const credential =
-    typeof input ===
-      "object" &&
+    typeof input === "object" &&
     input !== null
 
       ? (
@@ -734,16 +673,13 @@ export async function loginWithGoogle(
 
     const error =
       new Error(
-        "Google sign-in credential is missing."
+        "Google sign-in credential " +
+        "is missing."
       );
 
 
     error.code =
       "google_credential_missing";
-
-
-    error.provider =
-      "google";
 
 
     throw error;
@@ -755,6 +691,7 @@ export async function loginWithGoogle(
     await authRequest(
       "/auth/google",
       {
+
         method:
           "POST",
 
@@ -763,9 +700,12 @@ export async function loginWithGoogle(
 
         body:
           JSON.stringify({
+
             credential:
               cleanCredential,
+
           }),
+
       }
     );
 
@@ -778,7 +718,7 @@ export async function loginWithGoogle(
 
 
 // =========================================================
-// GOOGLE LOGIN ALIASES
+// GOOGLE ALIASES
 // =========================================================
 
 export const googleLogin =
@@ -803,7 +743,7 @@ export function isGoogleAuthConfigured() {
 
 
 // =========================================================
-// GET GOOGLE CLIENT ID
+// GOOGLE CLIENT ID
 // =========================================================
 
 export function getGoogleClientId() {
@@ -817,21 +757,20 @@ export function getGoogleClientId() {
 
 
 // =========================================================
-// FACEBOOK ACCESS TOKEN NORMALIZER
+// FACEBOOK TOKEN NORMALIZER
 // =========================================================
 
-function normalizeFacebookAccessToken(
+function getFacebookTokenFromInput(
   input
 ) {
 
-  const accessToken =
-    typeof input ===
-      "object" &&
+  const token =
+    typeof input === "object" &&
     input !== null
 
       ? (
-          input.accessToken ||
           input.access_token ||
+          input.accessToken ||
           input.token ||
           ""
         )
@@ -840,7 +779,7 @@ function normalizeFacebookAccessToken(
 
 
   return String(
-    accessToken ||
+    token ||
     ""
   ).trim();
 
@@ -851,16 +790,17 @@ function normalizeFacebookAccessToken(
 // FACEBOOK SIGN-IN
 // =========================================================
 //
-// Facebook JavaScript SDK returns:
+// Browser flow:
 //
-// authResponse.accessToken
-//
-// We send it to:
-//
+// FB.login()
+//      ↓
+// Facebook user access token
+//      ↓
 // POST /api/auth/facebook
-//
-// The Flask backend verifies the token with Meta before
-// issuing the normal SHOBDO JWT.
+//      ↓
+// Flask validates token with Meta
+//      ↓
+// SHOBDO JWT
 //
 // =========================================================
 
@@ -868,26 +808,23 @@ export async function loginWithFacebook(
   input
 ) {
 
-  const cleanAccessToken =
-    normalizeFacebookAccessToken(
+  const accessToken =
+    getFacebookTokenFromInput(
       input
     );
 
 
-  if (!cleanAccessToken) {
+  if (!accessToken) {
 
     const error =
       new Error(
-        "Facebook access token is missing."
+        "Facebook access token " +
+        "is missing."
       );
 
 
     error.code =
-      "facebook_access_token_missing";
-
-
-    error.provider =
-      "facebook";
+      "facebook_token_missing";
 
 
     throw error;
@@ -899,6 +836,7 @@ export async function loginWithFacebook(
     await authRequest(
       "/auth/facebook",
       {
+
         method:
           "POST",
 
@@ -907,9 +845,12 @@ export async function loginWithFacebook(
 
         body:
           JSON.stringify({
+
             access_token:
-              cleanAccessToken,
+              accessToken,
+
           }),
+
       }
     );
 
@@ -934,16 +875,21 @@ export const loginUserWithFacebook =
 
 
 // =========================================================
-// FACEBOOK ACCOUNT LINKING
+// LINK FACEBOOK TO EXISTING SHOBDO USER
 // =========================================================
 //
-// Requires an existing authenticated SHOBDO user.
+// IMPORTANT:
 //
-// POST /api/auth/facebook/link
+// This request requires an existing SHOBDO JWT.
 //
-// Authorization:
+// Flow:
 //
-// Bearer <shobdo_token>
+// 1. User clicks Facebook.
+// 2. Backend detects existing SHOBDO email.
+// 3. Frontend keeps Facebook token temporarily.
+// 4. User signs into existing SHOBDO account.
+// 5. SHOBDO JWT is stored.
+// 6. This endpoint links Facebook securely.
 //
 // =========================================================
 
@@ -951,26 +897,50 @@ export async function linkFacebookAccount(
   input
 ) {
 
-  const cleanAccessToken =
-    normalizeFacebookAccessToken(
+  const accessToken =
+    getFacebookTokenFromInput(
       input
     );
 
 
-  if (!cleanAccessToken) {
+  if (!accessToken) {
 
     const error =
       new Error(
-        "Facebook access token is missing."
+        "Facebook access token " +
+        "is missing."
       );
 
 
     error.code =
-      "facebook_access_token_missing";
+      "facebook_token_missing";
 
 
-    error.provider =
-      "facebook";
+    throw error;
+
+  }
+
+
+  const shobdoToken =
+    getStoredToken();
+
+
+  if (!shobdoToken) {
+
+    const error =
+      new Error(
+        "Sign in to your existing " +
+        "SHOBDO account before " +
+        "connecting Facebook."
+      );
+
+
+    error.code =
+      "shobdo_auth_required";
+
+
+    error.status =
+      401;
 
 
     throw error;
@@ -981,6 +951,7 @@ export async function linkFacebookAccount(
   return authRequest(
     "/auth/facebook/link",
     {
+
       method:
         "POST",
 
@@ -989,9 +960,12 @@ export async function linkFacebookAccount(
 
       body:
         JSON.stringify({
+
           access_token:
-            cleanAccessToken,
+            accessToken,
+
         }),
+
     }
   );
 
@@ -1012,7 +986,7 @@ export function isFacebookAuthConfigured() {
 
 
 // =========================================================
-// GET FACEBOOK APP ID
+// FACEBOOK APP ID
 // =========================================================
 
 export function getFacebookAppId() {
@@ -1021,40 +995,6 @@ export function getFacebookAppId() {
     FACEBOOK_APP_ID ||
     null
   );
-
-}
-
-
-// =========================================================
-// AUTH PROVIDER CONFIGURATION
-// =========================================================
-//
-// Useful for account/security UI later.
-//
-// =========================================================
-
-export function getAuthProviderConfig() {
-
-  return {
-
-    google: {
-      configured:
-        isGoogleAuthConfigured(),
-
-      clientId:
-        getGoogleClientId(),
-    },
-
-
-    facebook: {
-      configured:
-        isFacebookAuthConfigured(),
-
-      appId:
-        getFacebookAppId(),
-    },
-
-  };
 
 }
 
@@ -1082,8 +1022,10 @@ export async function getCurrentUser() {
       await authRequest(
         "/auth/me",
         {
+
           method:
             "GET",
+
         }
       );
 
@@ -1093,20 +1035,7 @@ export async function getCurrentUser() {
       null
     );
 
-
   } catch (error) {
-
-    // -----------------------------------------------------
-    // REMOVE TOKEN ONLY WHEN AUTHENTICATION IS INVALID
-    // -----------------------------------------------------
-    //
-    // Do not log the user out for:
-    //
-    // - network failure
-    // - temporary backend outage
-    // - HTTP 500
-    //
-    // -----------------------------------------------------
 
     if (
       error?.status === 401 ||
@@ -1141,8 +1070,10 @@ export async function logoutUser() {
 
 
     return {
+
       message:
         "Logged out successfully.",
+
     };
 
   }
@@ -1154,8 +1085,10 @@ export async function logoutUser() {
       await authRequest(
         "/auth/logout",
         {
+
           method:
             "POST",
+
         }
       );
 
@@ -1165,20 +1098,16 @@ export async function logoutUser() {
 
     return data;
 
-
   } catch {
-
-    // JWT is currently client-managed.
-    //
-    // Removing the local JWT logs this browser session out
-    // even if the backend cannot currently be reached.
 
     removeStoredToken();
 
 
     return {
+
       message:
         "Logged out locally.",
+
     };
 
   }
@@ -1189,28 +1118,13 @@ export async function logoutUser() {
 // =========================================================
 // FORGOT PASSWORD
 // =========================================================
-//
-// Supports:
-//
-// forgotPassword({
-//   email,
-// })
-//
-// AND:
-//
-// forgotPassword(
-//   email
-// )
-//
-// =========================================================
 
 export async function forgotPassword(
   input
 ) {
 
   const email =
-    typeof input ===
-      "object" &&
+    typeof input === "object" &&
     input !== null
 
       ? input.email
@@ -1230,6 +1144,7 @@ export async function forgotPassword(
   return authRequest(
     "/auth/forgot-password",
     {
+
       method:
         "POST",
 
@@ -1238,9 +1153,12 @@ export async function forgotPassword(
 
       body:
         JSON.stringify({
+
           email:
             cleanEmail,
+
         }),
+
     }
   );
 
@@ -1248,7 +1166,7 @@ export async function forgotPassword(
 
 
 // =========================================================
-// VALIDATE RESET TOKEN
+// VALIDATE PASSWORD RESET TOKEN
 // =========================================================
 
 export async function validateResetToken(
@@ -1266,7 +1184,8 @@ export async function validateResetToken(
 
     const error =
       new Error(
-        "Password reset token is missing."
+        "Password reset token " +
+        "is missing."
       );
 
 
@@ -1284,11 +1203,13 @@ export async function validateResetToken(
       cleanToken
     )}`,
     {
+
       method:
         "GET",
 
       includeAuth:
         false,
+
     }
   );
 
@@ -1297,26 +1218,6 @@ export async function validateResetToken(
 
 // =========================================================
 // RESET PASSWORD
-// =========================================================
-//
-// Supports:
-//
-// resetPassword(
-//   token,
-//   {
-//     password,
-//     confirmPassword,
-//   }
-// )
-//
-// AND:
-//
-// resetPassword(
-//   token,
-//   password,
-//   confirmPassword
-// )
-//
 // =========================================================
 
 export async function resetPassword(
@@ -1336,7 +1237,8 @@ export async function resetPassword(
 
     const error =
       new Error(
-        "Password reset token is missing."
+        "Password reset token " +
+        "is missing."
       );
 
 
@@ -1350,13 +1252,11 @@ export async function resetPassword(
 
 
   let password;
-
   let confirmPassword;
 
 
   if (
-    typeof input ===
-      "object" &&
+    typeof input === "object" &&
     input !== null
   ) {
 
@@ -1401,6 +1301,7 @@ export async function resetPassword(
       cleanToken
     )}`,
     {
+
       method:
         "POST",
 
@@ -1409,12 +1310,15 @@ export async function resetPassword(
 
       body:
         JSON.stringify({
+
           password:
             cleanPassword,
 
           confirm_password:
             cleanConfirmPassword,
+
         }),
+
     }
   );
 
@@ -1422,7 +1326,7 @@ export async function resetPassword(
 
 
 // =========================================================
-// AUTHENTICATION STATUS
+// AUTH STATUS
 // =========================================================
 
 export function isAuthenticated() {
@@ -1481,16 +1385,12 @@ export function clearAuthToken() {
 
 
 // =========================================================
-// AUTH TOKEN KEY
+// PUBLIC CONSTANTS
 // =========================================================
 
 export const AUTH_TOKEN_KEY =
   TOKEN_KEY;
 
-
-// =========================================================
-// AUTH API URL
-// =========================================================
 
 export const AUTH_API_URL =
   API_URL;

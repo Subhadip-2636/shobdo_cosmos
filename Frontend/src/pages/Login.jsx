@@ -21,9 +21,11 @@ import {
 
 import {
   FACEBOOK_APP_ID,
+  FACEBOOK_GRAPH_API_VERSION,
   GOOGLE_CLIENT_ID,
   isFacebookAuthConfigured,
   isGoogleAuthConfigured,
+  linkFacebookAccount,
   loginUser,
   loginWithFacebook,
   loginWithGoogle,
@@ -50,35 +52,10 @@ const GOOGLE_SCRIPT_URL =
 // =========================================================
 
 const FACEBOOK_SCRIPT_ID =
-  "shobdo-facebook-javascript-sdk";
+  "shobdo-facebook-jssdk";
 
 const FACEBOOK_SCRIPT_URL =
   "https://connect.facebook.net/en_US/sdk.js";
-
-
-// ---------------------------------------------------------
-// Keep the Graph API version configurable.
-//
-// Frontend/.env:
-//
-// VITE_FACEBOOK_GRAPH_API_VERSION=v26.0
-//
-// ---------------------------------------------------------
-
-const FACEBOOK_GRAPH_API_VERSION =
-  String(
-    import.meta.env
-      .VITE_FACEBOOK_GRAPH_API_VERSION ||
-    "v26.0"
-  ).trim();
-
-
-// =========================================================
-// FACEBOOK SDK SHARED PROMISE
-// =========================================================
-
-let facebookSdkPromise =
-  null;
 
 
 // =========================================================
@@ -93,10 +70,6 @@ function loadGoogleIdentityServices() {
       reject
     ) => {
 
-      // ---------------------------------------------------
-      // ALREADY AVAILABLE
-      // ---------------------------------------------------
-
       if (
         window.google?.accounts?.id
       ) {
@@ -110,10 +83,6 @@ function loadGoogleIdentityServices() {
       }
 
 
-      // ---------------------------------------------------
-      // SCRIPT ALREADY EXISTS
-      // ---------------------------------------------------
-
       const existingScript =
         document.getElementById(
           GOOGLE_SCRIPT_ID
@@ -122,11 +91,8 @@ function loadGoogleIdentityServices() {
 
       if (existingScript) {
 
-        const handleLoad =
+        const checkGoogle =
           () => {
-
-            cleanup();
-
 
             if (
               window.google?.accounts?.id
@@ -140,7 +106,8 @@ function loadGoogleIdentityServices() {
 
               reject(
                 new Error(
-                  "Google Identity Services failed to initialize."
+                  "Google Identity Services " +
+                  "failed to initialize."
                 )
               );
 
@@ -149,47 +116,32 @@ function loadGoogleIdentityServices() {
           };
 
 
-        const handleError =
-          () => {
-
-            cleanup();
-
-
-            reject(
-              new Error(
-                "Unable to load Google Identity Services."
-              )
-            );
-
-          };
-
-
-        const cleanup =
-          () => {
-
-            existingScript
-              .removeEventListener(
-                "load",
-                handleLoad
-              );
-
-            existingScript
-              .removeEventListener(
-                "error",
-                handleError
-              );
-
-          };
-
-
         existingScript.addEventListener(
           "load",
-          handleLoad
+          checkGoogle,
+          {
+            once:
+              true,
+          }
         );
+
 
         existingScript.addEventListener(
           "error",
-          handleError
+          () => {
+
+            reject(
+              new Error(
+                "Unable to load Google " +
+                "Identity Services."
+              )
+            );
+
+          },
+          {
+            once:
+              true,
+          }
         );
 
 
@@ -197,10 +149,6 @@ function loadGoogleIdentityServices() {
 
       }
 
-
-      // ---------------------------------------------------
-      // CREATE SCRIPT
-      // ---------------------------------------------------
 
       const script =
         document.createElement(
@@ -239,7 +187,8 @@ function loadGoogleIdentityServices() {
 
             reject(
               new Error(
-                "Google Identity Services failed to initialize."
+                "Google Identity Services " +
+                "failed to initialize."
               )
             );
 
@@ -253,7 +202,8 @@ function loadGoogleIdentityServices() {
 
           reject(
             new Error(
-              "Unable to load Google Identity Services."
+              "Unable to load Google " +
+              "Identity Services."
             )
           );
 
@@ -271,122 +221,132 @@ function loadGoogleIdentityServices() {
 
 
 // =========================================================
+// INITIALIZE FACEBOOK
+// =========================================================
+
+function initializeFacebook(
+  facebook
+) {
+
+  if (!facebook) {
+
+    throw new Error(
+      "Facebook SDK is unavailable."
+    );
+
+  }
+
+
+  const config = {
+
+    appId:
+      FACEBOOK_APP_ID,
+
+    cookie:
+      true,
+
+    xfbml:
+      false,
+
+    status:
+      false,
+
+  };
+
+
+  // Graph version stays environment configurable.
+  //
+  // This prevents the frontend source from becoming tied
+  // permanently to one Meta Graph API version.
+
+  if (
+    FACEBOOK_GRAPH_API_VERSION
+  ) {
+
+    config.version =
+      FACEBOOK_GRAPH_API_VERSION;
+
+  }
+
+
+  facebook.init(
+    config
+  );
+
+
+  return facebook;
+
+}
+
+
+// =========================================================
 // FACEBOOK SCRIPT LOADER
 // =========================================================
 
 function loadFacebookSdk() {
 
-  if (
-    typeof window ===
-    "undefined"
-  ) {
+  return new Promise(
+    (
+      resolve,
+      reject
+    ) => {
 
-    return Promise.reject(
-      new Error(
-        "Facebook SDK requires a browser."
-      )
-    );
+      if (!FACEBOOK_APP_ID) {
 
-  }
+        reject(
+          new Error(
+            "Facebook App ID is missing."
+          )
+        );
 
+        return;
 
-  // -------------------------------------------------------
-  // ALREADY AVAILABLE
-  // -------------------------------------------------------
-
-  if (
-    window.FB?.init &&
-    window.FB?.login
-  ) {
-
-    return Promise.resolve(
-      window.FB
-    );
-
-  }
+      }
 
 
-  // -------------------------------------------------------
-  // A LOAD IS ALREADY RUNNING
-  // -------------------------------------------------------
+      // -----------------------------------------------------
+      // SDK ALREADY LOADED
+      // -----------------------------------------------------
 
-  if (facebookSdkPromise) {
+      if (window.FB) {
 
-    return facebookSdkPromise;
-
-  }
-
-
-  facebookSdkPromise =
-    new Promise(
-      (
-        resolve,
-        reject
-      ) => {
-
-        let completed =
-          false;
-
-
-        let timeoutId =
-          null;
-
-
-        const previousAsyncInit =
-          window.fbAsyncInit;
-
-
-        function cleanup() {
-
-          if (timeoutId) {
-
-            window.clearTimeout(
-              timeoutId
-            );
-
-          }
-
-        }
-
-
-        function finish() {
-
-          if (completed) {
-
-            return;
-
-          }
-
-
-          if (
-            !window.FB?.init ||
-            !window.FB?.login
-          ) {
-
-            return;
-
-          }
-
-
-          completed =
-            true;
-
-
-          cleanup();
-
+        try {
 
           resolve(
-            window.FB
+            initializeFacebook(
+              window.FB
+            )
+          );
+
+        } catch (error) {
+
+          reject(
+            error
           );
 
         }
 
 
-        function fail(
-          error
-        ) {
+        return;
+
+      }
+
+
+      let completed =
+        false;
+
+
+      const finish =
+        () => {
 
           if (completed) {
+
+            return;
+
+          }
+
+
+          if (!window.FB) {
 
             return;
 
@@ -397,229 +357,263 @@ function loadFacebookSdk() {
             true;
 
 
-          cleanup();
+          try {
 
-
-          reject(
-            error instanceof Error
-              ? error
-              : new Error(
-                  "Unable to load Facebook SDK."
-                )
-          );
-
-        }
-
-
-        // -------------------------------------------------
-        // META SDK READY CALLBACK
-        // -------------------------------------------------
-
-        window.fbAsyncInit =
-          () => {
-
-            try {
-
-              if (
-                typeof previousAsyncInit ===
-                "function"
-              ) {
-
-                previousAsyncInit();
-
-              }
-
-            } catch {
-
-              // Ignore errors from another listener.
-
-            }
-
-
-            finish();
-
-          };
-
-
-        // -------------------------------------------------
-        // EXISTING SCRIPT
-        // -------------------------------------------------
-
-        const existingScript =
-          document.getElementById(
-            FACEBOOK_SCRIPT_ID
-          );
-
-
-        if (existingScript) {
-
-          existingScript
-            .addEventListener(
-              "load",
-              finish,
-              {
-                once: true,
-              }
-            );
-
-
-          existingScript
-            .addEventListener(
-              "error",
-              () => {
-
-                fail(
-                  new Error(
-                    "Unable to load Facebook SDK."
-                  )
-                );
-
-              },
-              {
-                once: true,
-              }
-            );
-
-
-          timeoutId =
-            window.setTimeout(
-              () => {
-
-                if (
-                  window.FB?.init &&
-                  window.FB?.login
-                ) {
-
-                  finish();
-
-                } else {
-
-                  fail(
-                    new Error(
-                      "Facebook SDK initialization timed out."
-                    )
-                  );
-
-                }
-
-              },
-              10000
-            );
-
-
-          return;
-
-        }
-
-
-        // -------------------------------------------------
-        // CREATE SCRIPT
-        // -------------------------------------------------
-
-        const script =
-          document.createElement(
-            "script"
-          );
-
-
-        script.id =
-          FACEBOOK_SCRIPT_ID;
-
-
-        script.src =
-          FACEBOOK_SCRIPT_URL;
-
-
-        script.async =
-          true;
-
-
-        script.defer =
-          true;
-
-
-        script.crossOrigin =
-          "anonymous";
-
-
-        script.onload =
-          () => {
-
-            // fbAsyncInit normally handles completion.
-            //
-            // This is a backup for browsers where FB is
-            // already available when the load event fires.
-
-            window.setTimeout(
-              finish,
-              0
-            );
-
-          };
-
-
-        script.onerror =
-          () => {
-
-            fail(
-              new Error(
-                "Unable to load Facebook SDK."
+            resolve(
+              initializeFacebook(
+                window.FB
               )
             );
 
-          };
+          } catch (error) {
+
+            reject(
+              error
+            );
+
+          }
+
+        };
 
 
-        document.body.appendChild(
-          script
+      const fail =
+        () => {
+
+          if (completed) {
+
+            return;
+
+          }
+
+
+          completed =
+            true;
+
+
+          reject(
+            new Error(
+              "Unable to load the Facebook SDK."
+            )
+          );
+
+        };
+
+
+      // -----------------------------------------------------
+      // META ASYNC CALLBACK
+      // -----------------------------------------------------
+
+      const previousCallback =
+        window.fbAsyncInit;
+
+
+      window.fbAsyncInit =
+        () => {
+
+          if (
+            typeof previousCallback ===
+            "function"
+          ) {
+
+            try {
+
+              previousCallback();
+
+            } catch {
+
+              // Do not let another callback block SHOBDO.
+
+            }
+
+          }
+
+
+          finish();
+
+        };
+
+
+      // -----------------------------------------------------
+      // EXISTING SCRIPT
+      // -----------------------------------------------------
+
+      const existingScript =
+        document.getElementById(
+          FACEBOOK_SCRIPT_ID
         );
 
 
-        timeoutId =
-          window.setTimeout(
-            () => {
+      if (existingScript) {
 
-              if (
-                window.FB?.init &&
-                window.FB?.login
-              ) {
+        existingScript.addEventListener(
+          "load",
+          finish,
+          {
+            once:
+              true,
+          }
+        );
 
-                finish();
 
-              } else {
+        existingScript.addEventListener(
+          "error",
+          fail,
+          {
+            once:
+              true,
+          }
+        );
 
-                fail(
-                  new Error(
-                    "Facebook SDK initialization timed out."
-                  )
-                );
 
-              }
+        // SDK may have completed before this listener
+        // was attached.
 
-            },
-            10000
-          );
+        setTimeout(
+          finish,
+          0
+        );
+
+
+        return;
 
       }
-    )
-      .catch(
-        (
+
+
+      // -----------------------------------------------------
+      // CREATE SCRIPT
+      // -----------------------------------------------------
+
+      const script =
+        document.createElement(
+          "script"
+        );
+
+
+      script.id =
+        FACEBOOK_SCRIPT_ID;
+
+
+      script.src =
+        FACEBOOK_SCRIPT_URL;
+
+
+      script.async =
+        true;
+
+
+      script.defer =
+        true;
+
+
+      script.crossOrigin =
+        "anonymous";
+
+
+      script.onload =
+        finish;
+
+
+      script.onerror =
+        fail;
+
+
+      document.body.appendChild(
+        script
+      );
+
+    }
+  );
+
+}
+
+
+// =========================================================
+// FACEBOOK POPUP
+// =========================================================
+
+function openFacebookLogin() {
+
+  return new Promise(
+    (
+      resolve,
+      reject
+    ) => {
+
+      if (
+        !window.FB?.login
+      ) {
+
+        const error =
+          new Error(
+            "Facebook Login is not ready."
+          );
+
+
+        error.code =
+          "facebook_sdk_unavailable";
+
+
+        reject(
           error
+        );
+
+
+        return;
+
+      }
+
+
+      window.FB.login(
+        (
+          response
         ) => {
 
-          // Allow another attempt after a failed load.
+          const accessToken =
+            response
+              ?.authResponse
+              ?.accessToken;
 
-          facebookSdkPromise =
-            null;
+
+          if (!accessToken) {
+
+            const error =
+              new Error(
+                "Facebook sign-in was cancelled."
+              );
 
 
-          throw error;
+            error.code =
+              "facebook_cancelled";
+
+
+            reject(
+              error
+            );
+
+
+            return;
+
+          }
+
+
+          resolve(
+            accessToken
+          );
+
+        },
+        {
+
+          scope:
+            "public_profile,email",
+
+          return_scopes:
+            true,
 
         }
       );
 
-
-  return facebookSdkPromise;
+    }
+  );
 
 }
 
@@ -638,7 +632,6 @@ function Login({
 
   const {
     t,
-
     language:
       uiLanguage,
   } = useLanguage();
@@ -660,12 +653,17 @@ function Login({
     useRef(null);
 
 
-  const facebookInitializedRef =
-    useRef(false);
+  // Facebook access token is intentionally stored only
+  // in memory while account linking is pending.
+  //
+  // We do NOT put it in localStorage.
+
+  const pendingFacebookTokenRef =
+    useRef("");
 
 
   // =======================================================
-  // FORM STATE
+  // FORM
   // =======================================================
 
   const [
@@ -687,7 +685,7 @@ function Login({
 
 
   // =======================================================
-  // PASSWORD LOGIN STATE
+  // PASSWORD STATE
   // =======================================================
 
   const [
@@ -729,6 +727,12 @@ function Login({
 
 
   const [
+    facebookLinking,
+    setFacebookLinking,
+  ] = useState(false);
+
+
+  const [
     facebookReady,
     setFacebookReady,
   ] = useState(false);
@@ -738,6 +742,12 @@ function Login({
     facebookLoadError,
     setFacebookLoadError,
   ] = useState("");
+
+
+  const [
+    facebookLinkPending,
+    setFacebookLinkPending,
+  ] = useState(false);
 
 
   // =======================================================
@@ -757,25 +767,20 @@ function Login({
   const busy =
     loading ||
     googleLoading ||
-    facebookLoading;
+    facebookLoading ||
+    facebookLinking;
 
 
   // =======================================================
-  // LOCAL MULTILINGUAL FALLBACKS
+  // FALLBACK TEXT
   // =======================================================
 
-  const SOCIAL_TEXT = {
+  const AUTH_TEXT = {
 
     bn: {
 
       or:
         "অথবা",
-
-      quote:
-        "তোমার শব্দ এমন একটি স্থান পাওয়ার যোগ্য, যেখানে তা শোনা যায়।",
-
-
-      // GOOGLE
 
       loadingGoogle:
         "Google দিয়ে লগইন হচ্ছে...",
@@ -789,23 +794,20 @@ function Login({
       googleGenericError:
         "Google দিয়ে লগইন করা যায়নি। আবার চেষ্টা করুন।",
 
-      googleAccountLinkRequired:
-        "এই ইমেইলে ইতিমধ্যে একটি SHOBDO অ্যাকাউন্ট রয়েছে। প্রথমে আপনার বিদ্যমান SHOBDO অ্যাকাউন্টে লগইন করুন।",
-
       googleAccountConflict:
         "এই SHOBDO অ্যাকাউন্টটি অন্য একটি Google অ্যাকাউন্টের সঙ্গে যুক্ত রয়েছে।",
 
       googleSectionLabel:
         "Google দিয়ে লগইন",
 
-
-      // FACEBOOK
-
-      continueWithFacebook:
+      facebookButton:
         "Facebook দিয়ে চালিয়ে যান",
 
-      loadingFacebook:
+      facebookLoading:
         "Facebook দিয়ে লগইন হচ্ছে...",
+
+      facebookLinking:
+        "Facebook অ্যাকাউন্ট যুক্ত হচ্ছে...",
 
       facebookUnavailable:
         "Facebook লগইন এই মুহূর্তে উপলব্ধ নয়।",
@@ -819,23 +821,23 @@ function Login({
       facebookCancelled:
         "Facebook লগইন বাতিল করা হয়েছে।",
 
-      facebookAccountLinkRequired:
-        "এই ইমেইলে ইতিমধ্যে একটি SHOBDO অ্যাকাউন্ট রয়েছে। প্রথমে আপনার বিদ্যমান SHOBDO অ্যাকাউন্টে লগইন করুন, তারপর Facebook সংযুক্ত করুন।",
+      facebookEmailRequired:
+        "Facebook আপনার ইমেইল দেয়নি। Facebook-এ email permission অনুমোদন করুন।",
 
       facebookAccountConflict:
-        "এই Facebook অ্যাকাউন্টটি ইতিমধ্যে অন্য একটি SHOBDO অ্যাকাউন্টের সঙ্গে যুক্ত।",
+        "এই Facebook অ্যাকাউন্টটি অন্য একটি SHOBDO অ্যাকাউন্টের সঙ্গে যুক্ত রয়েছে।",
 
-      facebookEmailRequired:
-        "Facebook আপনার ইমেইল ঠিকানা দেয়নি। ইমেইল অনুমতি দিন অথবা অন্য লগইন পদ্ধতি ব্যবহার করুন।",
+      facebookLinkRequired:
+        "এই ইমেইলে ইতিমধ্যে একটি SHOBDO অ্যাকাউন্ট রয়েছে। এখন আপনার বর্তমান SHOBDO অ্যাকাউন্টে Google অথবা পাসওয়ার্ড দিয়ে লগইন করুন। লগইন সফল হলেই Facebook একই অ্যাকাউন্টের সঙ্গে স্বয়ংক্রিয়ভাবে যুক্ত হবে।",
 
-      facebookSectionLabel:
-        "Facebook দিয়ে লগইন",
-
-
-      // NETWORK
+      facebookLinkFailed:
+        "SHOBDO-তে লগইন সফল হয়েছে, কিন্তু Facebook অ্যাকাউন্টটি যুক্ত করা যায়নি। আবার চেষ্টা করুন।",
 
       networkError:
         "SHOBDO সার্ভারের সঙ্গে সংযোগ করা যাচ্ছে না। আবার চেষ্টা করুন।",
+
+      quote:
+        "তোমার শব্দ এমন একটি স্থান পাওয়ার যোগ্য, যেখানে তা শোনা যায়।",
 
     },
 
@@ -844,12 +846,6 @@ function Login({
 
       or:
         "or",
-
-      quote:
-        "Your words deserve a place where they can be heard.",
-
-
-      // GOOGLE
 
       loadingGoogle:
         "Signing in with Google...",
@@ -863,23 +859,20 @@ function Login({
       googleGenericError:
         "Unable to sign in with Google. Please try again.",
 
-      googleAccountLinkRequired:
-        "A SHOBDO account already exists with this email. Sign in to your existing SHOBDO account first.",
-
       googleAccountConflict:
         "This SHOBDO account is already connected to another Google account.",
 
       googleSectionLabel:
         "Sign in with Google",
 
-
-      // FACEBOOK
-
-      continueWithFacebook:
+      facebookButton:
         "Continue with Facebook",
 
-      loadingFacebook:
+      facebookLoading:
         "Signing in with Facebook...",
+
+      facebookLinking:
+        "Connecting Facebook account...",
 
       facebookUnavailable:
         "Facebook Login is currently unavailable.",
@@ -893,23 +886,23 @@ function Login({
       facebookCancelled:
         "Facebook sign-in was cancelled.",
 
-      facebookAccountLinkRequired:
-        "A SHOBDO account already exists with this email. Sign in to your existing SHOBDO account first, then connect Facebook.",
+      facebookEmailRequired:
+        "Facebook did not provide your email address. Allow the email permission and try again.",
 
       facebookAccountConflict:
         "This Facebook account is already connected to another SHOBDO account.",
 
-      facebookEmailRequired:
-        "Facebook did not provide your email address. Allow email access or use another sign-in method.",
+      facebookLinkRequired:
+        "A SHOBDO account already exists with this email. Sign in below using your existing SHOBDO password or Google account. After you sign in, Facebook will be connected automatically to the same SHOBDO account.",
 
-      facebookSectionLabel:
-        "Sign in with Facebook",
-
-
-      // NETWORK
+      facebookLinkFailed:
+        "Your SHOBDO sign-in succeeded, but Facebook could not be connected. Please try again.",
 
       networkError:
         "Unable to connect to SHOBDO. Please try again.",
+
+      quote:
+        "Your words deserve a place where they can be heard.",
 
     },
 
@@ -918,12 +911,6 @@ function Login({
 
       or:
         "या",
-
-      quote:
-        "आपके शब्दों को ऐसी जगह मिलनी चाहिए जहाँ उन्हें सुना जा सके।",
-
-
-      // GOOGLE
 
       loadingGoogle:
         "Google से लॉग इन हो रहा है...",
@@ -937,23 +924,20 @@ function Login({
       googleGenericError:
         "Google से लॉग इन नहीं हो सका। कृपया फिर से प्रयास करें।",
 
-      googleAccountLinkRequired:
-        "इस ईमेल से पहले से एक SHOBDO खाता मौजूद है। पहले अपने मौजूदा SHOBDO खाते में लॉग इन करें।",
-
       googleAccountConflict:
         "यह SHOBDO खाता पहले से किसी अन्य Google खाते से जुड़ा है।",
 
       googleSectionLabel:
         "Google से लॉग इन करें",
 
-
-      // FACEBOOK
-
-      continueWithFacebook:
+      facebookButton:
         "Facebook से जारी रखें",
 
-      loadingFacebook:
+      facebookLoading:
         "Facebook से लॉग इन हो रहा है...",
+
+      facebookLinking:
+        "Facebook खाता जोड़ा जा रहा है...",
 
       facebookUnavailable:
         "Facebook लॉगिन अभी उपलब्ध नहीं है।",
@@ -962,39 +946,39 @@ function Login({
         "Facebook लॉगिन अभी कॉन्फ़िगर नहीं किया गया है।",
 
       facebookGenericError:
-        "Facebook से लॉग इन नहीं हो सका। कृपया फिर से प्रयास करें।",
+        "Facebook से लॉग इन नहीं हो सका। कृपया फिर प्रयास करें।",
 
       facebookCancelled:
         "Facebook लॉगिन रद्द कर दिया गया।",
 
-      facebookAccountLinkRequired:
-        "इस ईमेल से पहले से एक SHOBDO खाता मौजूद है। पहले अपने मौजूदा SHOBDO खाते में लॉग इन करें और फिर Facebook कनेक्ट करें।",
+      facebookEmailRequired:
+        "Facebook ने आपका ईमेल पता नहीं दिया। Email permission की अनुमति देकर फिर प्रयास करें।",
 
       facebookAccountConflict:
-        "यह Facebook खाता पहले से किसी अन्य SHOBDO खाते से जुड़ा है।",
+        "यह Facebook खाता किसी अन्य SHOBDO खाते से जुड़ा हुआ है।",
 
-      facebookEmailRequired:
-        "Facebook ने आपका ईमेल पता उपलब्ध नहीं कराया। ईमेल अनुमति दें या कोई अन्य लॉगिन तरीका उपयोग करें।",
+      facebookLinkRequired:
+        "इस ईमेल से पहले से SHOBDO खाता मौजूद है। नीचे अपने मौजूदा SHOBDO पासवर्ड या Google से लॉग इन करें। सफल लॉगिन के बाद Facebook उसी खाते से अपने आप जुड़ जाएगा।",
 
-      facebookSectionLabel:
-        "Facebook से लॉग इन करें",
-
-
-      // NETWORK
+      facebookLinkFailed:
+        "SHOBDO लॉगिन सफल हुआ, लेकिन Facebook खाता जोड़ा नहीं जा सका। कृपया फिर प्रयास करें।",
 
       networkError:
-        "SHOBDO सर्वर से कनेक्ट नहीं हो सका। कृपया फिर से प्रयास करें।",
+        "SHOBDO सर्वर से कनेक्ट नहीं हो सका। कृपया फिर प्रयास करें।",
+
+      quote:
+        "आपके शब्दों को ऐसी जगह मिलनी चाहिए जहाँ उन्हें सुना जा सके।",
 
     },
 
   };
 
 
-  const localSocialText =
-    SOCIAL_TEXT[
+  const localText =
+    AUTH_TEXT[
       uiLanguage
     ] ||
-    SOCIAL_TEXT.en;
+    AUTH_TEXT.en;
 
 
   // =======================================================
@@ -1025,7 +1009,7 @@ function Login({
 
     } catch {
 
-      // Use fallback.
+      // Use local fallback.
 
     }
 
@@ -1072,6 +1056,109 @@ function Login({
 
 
   // =======================================================
+  // CLEAR FACEBOOK LINK
+  // =======================================================
+
+  function clearPendingFacebookLink() {
+
+    pendingFacebookTokenRef.current =
+      "";
+
+
+    setFacebookLinkPending(
+      false
+    );
+
+  }
+
+
+  // =======================================================
+  // LINK PENDING FACEBOOK ACCOUNT
+  // =======================================================
+
+  async function linkPendingFacebookAccount() {
+
+    const facebookToken =
+      pendingFacebookTokenRef.current;
+
+
+    if (!facebookToken) {
+
+      return null;
+
+    }
+
+
+    setFacebookLinking(
+      true
+    );
+
+
+    try {
+
+      const result =
+        await linkFacebookAccount({
+
+          accessToken:
+            facebookToken,
+
+        });
+
+
+      clearPendingFacebookLink();
+
+
+      return result;
+
+    } catch (err) {
+
+      // A permanent identity conflict should not retain
+      // the pending Facebook credential.
+
+      if (
+        err?.code ===
+        "facebook_account_conflict"
+      ) {
+
+        clearPendingFacebookLink();
+
+      }
+
+
+      throw err;
+
+    } finally {
+
+      setFacebookLinking(
+        false
+      );
+
+    }
+
+  }
+
+
+  // =======================================================
+  // FINISH AUTH + OPTIONAL FACEBOOK LINK
+  // =======================================================
+
+  async function finishAuthenticatedLogin() {
+
+    if (
+      pendingFacebookTokenRef.current
+    ) {
+
+      await linkPendingFacebookAccount();
+
+    }
+
+
+    await completeLogin();
+
+  }
+
+
+  // =======================================================
   // PASSWORD LOGIN
   // =======================================================
 
@@ -1090,10 +1177,6 @@ function Login({
 
 
     setError("");
-
-    setGoogleLoadError("");
-
-    setFacebookLoadError("");
 
 
     const normalizedEmail =
@@ -1123,6 +1206,10 @@ function Login({
     );
 
 
+    let shobdoLoginSucceeded =
+      false;
+
+
     try {
 
       await loginUser({
@@ -1135,10 +1222,34 @@ function Login({
       });
 
 
-      await completeLogin();
+      shobdoLoginSucceeded =
+        true;
 
+
+      await finishAuthenticatedLogin();
 
     } catch (err) {
+
+      console.error(
+        "PASSWORD LOGIN ERROR:",
+        err
+      );
+
+
+      if (
+        shobdoLoginSucceeded &&
+        facebookLinkPending
+      ) {
+
+        setError(
+          err?.message ||
+          localText.facebookLinkFailed
+        );
+
+        return;
+
+      }
+
 
       setError(
         err?.message ||
@@ -1146,7 +1257,6 @@ function Login({
           "errors.generic"
         )
       );
-
 
     } finally {
 
@@ -1169,14 +1279,12 @@ function Login({
     ) => {
 
       if (
-        !credentialResponse?.credential
+        !credentialResponse
+          ?.credential
       ) {
 
         setError(
-          translate(
-            "login.googleGenericError",
-            localSocialText.googleGenericError
-          )
+          localText.googleGenericError
         );
 
         return;
@@ -1186,11 +1294,17 @@ function Login({
 
       setError("");
 
+
       setGoogleLoadError("");
+
 
       setGoogleLoading(
         true
       );
+
+
+      let shobdoLoginSucceeded =
+        false;
 
 
       try {
@@ -1198,13 +1312,17 @@ function Login({
         await loginWithGoogle({
 
           credential:
-            credentialResponse.credential,
+            credentialResponse
+              .credential,
 
         });
 
 
-        await completeLogin();
+        shobdoLoginSucceeded =
+          true;
 
+
+        await finishAuthenticatedLogin();
 
       } catch (err) {
 
@@ -1215,14 +1333,30 @@ function Login({
 
 
         if (
+          shobdoLoginSucceeded &&
+          facebookLinkPending
+        ) {
+
+          setError(
+            err?.message ||
+            localText.facebookLinkFailed
+          );
+
+          return;
+
+        }
+
+
+        if (
           err?.code ===
           "account_link_required"
         ) {
 
           setError(
-            translate(
-              "login.googleAccountLinkRequired",
-              localSocialText.googleAccountLinkRequired
+            err?.message ||
+            (
+              "Sign in using another " +
+              "existing SHOBDO method first."
             )
           );
 
@@ -1237,10 +1371,8 @@ function Login({
         ) {
 
           setError(
-            translate(
-              "login.googleAccountConflict",
-              localSocialText.googleAccountConflict
-            )
+            localText
+              .googleAccountConflict
           );
 
           return;
@@ -1254,10 +1386,7 @@ function Login({
         ) {
 
           setError(
-            translate(
-              "login.networkError",
-              localSocialText.networkError
-            )
+            localText.networkError
           );
 
           return;
@@ -1267,12 +1396,8 @@ function Login({
 
         setError(
           err?.message ||
-          translate(
-            "login.googleGenericError",
-            localSocialText.googleGenericError
-          )
+          localText.googleGenericError
         );
-
 
       } finally {
 
@@ -1286,267 +1411,7 @@ function Login({
 
 
   // =======================================================
-  // FACEBOOK BACKEND LOGIN
-  // =======================================================
-
-  async function completeFacebookLogin(
-    accessToken
-  ) {
-
-    try {
-
-      await loginWithFacebook({
-
-        accessToken,
-
-      });
-
-
-      await completeLogin();
-
-
-    } catch (err) {
-
-      console.error(
-        "FACEBOOK LOGIN ERROR:",
-        err
-      );
-
-
-      // ---------------------------------------------------
-      // EXISTING SHOBDO EMAIL ACCOUNT
-      // ---------------------------------------------------
-
-      if (
-        err?.code ===
-        "account_link_required"
-      ) {
-
-        setError(
-          translate(
-            "login.facebookAccountLinkRequired",
-            localSocialText.facebookAccountLinkRequired
-          )
-        );
-
-        return;
-
-      }
-
-
-      // ---------------------------------------------------
-      // FACEBOOK ACCOUNT CONFLICT
-      // ---------------------------------------------------
-
-      if (
-        err?.code ===
-        "facebook_account_conflict"
-      ) {
-
-        setError(
-          translate(
-            "login.facebookAccountConflict",
-            localSocialText.facebookAccountConflict
-          )
-        );
-
-        return;
-
-      }
-
-
-      // ---------------------------------------------------
-      // FACEBOOK DID NOT PROVIDE EMAIL
-      // ---------------------------------------------------
-
-      if (
-        err?.code ===
-        "facebook_email_required"
-      ) {
-
-        setError(
-          translate(
-            "login.facebookEmailRequired",
-            localSocialText.facebookEmailRequired
-          )
-        );
-
-        return;
-
-      }
-
-
-      // ---------------------------------------------------
-      // NETWORK
-      // ---------------------------------------------------
-
-      if (
-        err?.code ===
-        "network_error"
-      ) {
-
-        setError(
-          translate(
-            "login.networkError",
-            localSocialText.networkError
-          )
-        );
-
-        return;
-
-      }
-
-
-      // ---------------------------------------------------
-      // BACKEND MESSAGE
-      // ---------------------------------------------------
-
-      setError(
-        err?.message ||
-        translate(
-          "login.facebookGenericError",
-          localSocialText.facebookGenericError
-        )
-      );
-
-    }
-
-  }
-
-
-  // =======================================================
-  // FACEBOOK LOGIN BUTTON
-  // =======================================================
-
-  function handleFacebookLogin() {
-
-    if (
-      busy ||
-      !facebookReady
-    ) {
-
-      return;
-
-    }
-
-
-    setError("");
-
-    setFacebookLoadError("");
-
-
-    if (
-      !window.FB?.login
-    ) {
-
-      setError(
-        translate(
-          "login.facebookUnavailable",
-          localSocialText.facebookUnavailable
-        )
-      );
-
-      return;
-
-    }
-
-
-    // IMPORTANT:
-    //
-    // FB.login() is called directly from this click handler.
-    // This avoids browsers blocking the authentication popup.
-
-    setFacebookLoading(
-      true
-    );
-
-
-    try {
-
-      window.FB.login(
-        (
-          response
-        ) => {
-
-          const accessToken =
-            response
-              ?.authResponse
-              ?.accessToken;
-
-
-          if (!accessToken) {
-
-            setFacebookLoading(
-              false
-            );
-
-
-            setError(
-              translate(
-                "login.facebookCancelled",
-                localSocialText.facebookCancelled
-              )
-            );
-
-
-            return;
-
-          }
-
-
-          Promise.resolve(
-            completeFacebookLogin(
-              accessToken
-            )
-          )
-            .finally(
-              () => {
-
-                setFacebookLoading(
-                  false
-                );
-
-              }
-            );
-
-        },
-        {
-          scope:
-            "public_profile,email",
-
-          return_scopes:
-            true,
-        }
-      );
-
-
-    } catch (err) {
-
-      console.error(
-        "FACEBOOK SDK LOGIN ERROR:",
-        err
-      );
-
-
-      setFacebookLoading(
-        false
-      );
-
-
-      setError(
-        translate(
-          "login.facebookGenericError",
-          localSocialText.facebookGenericError
-        )
-      );
-
-    }
-
-  }
-
-
-  // =======================================================
-  // GOOGLE SDK INITIALIZATION
+  // GOOGLE INITIALIZATION
   // =======================================================
 
   useEffect(
@@ -1569,10 +1434,8 @@ function Login({
 
 
           setGoogleLoadError(
-            translate(
-              "login.googleConfigurationMissing",
-              localSocialText.googleConfigurationMissing
-            )
+            localText
+              .googleConfigurationMissing
           );
 
 
@@ -1583,7 +1446,9 @@ function Login({
 
         try {
 
-          setGoogleLoadError("");
+          setGoogleLoadError(
+            ""
+          );
 
 
           await loadGoogleIdentityServices();
@@ -1597,50 +1462,51 @@ function Login({
 
 
           if (
-            !window.google?.accounts?.id
+            !window.google
+              ?.accounts
+              ?.id
           ) {
 
             throw new Error(
-              "Google Identity Services API is unavailable."
+              "Google Identity Services " +
+              "API is unavailable."
             );
 
           }
 
 
-          // -------------------------------------------------
-          // INITIALIZE
-          // -------------------------------------------------
-
           if (
             !googleInitializedRef.current
           ) {
 
-            window.google.accounts.id.initialize({
+            window.google
+              .accounts
+              .id
+              .initialize({
 
-              client_id:
-                GOOGLE_CLIENT_ID,
+                client_id:
+                  GOOGLE_CLIENT_ID,
 
-
-              callback:
-                (
-                  response
-                ) => {
-
-                  googleCallbackRef.current?.(
+                callback:
+                  (
                     response
-                  );
+                  ) => {
 
-                },
+                    googleCallbackRef
+                      .current
+                      ?.(
+                        response
+                      );
 
+                  },
 
-              auto_select:
-                false,
+                auto_select:
+                  false,
 
+                ux_mode:
+                  "popup",
 
-              ux_mode:
-                "popup",
-
-            });
+              });
 
 
             googleInitializedRef.current =
@@ -1648,10 +1514,6 @@ function Login({
 
           }
 
-
-          // -------------------------------------------------
-          // BUTTON
-          // -------------------------------------------------
 
           const container =
             googleButtonRef.current;
@@ -1683,47 +1545,48 @@ function Login({
             );
 
 
-          window.google.accounts.id.renderButton(
-            container,
-            {
+          window.google
+            .accounts
+            .id
+            .renderButton(
+              container,
+              {
 
-              type:
-                "standard",
+                type:
+                  "standard",
 
-              theme:
-                "outline",
+                theme:
+                  "outline",
 
-              size:
-                "large",
+                size:
+                  "large",
 
-              text:
-                "continue_with",
+                text:
+                  "continue_with",
 
-              shape:
-                "rectangular",
+                shape:
+                  "rectangular",
 
-              logo_alignment:
-                "left",
+                logo_alignment:
+                  "left",
 
-              width:
-                String(
-                  buttonWidth
-                ),
+                width:
+                  String(
+                    buttonWidth
+                  ),
 
-              locale:
-                googleLocale,
+                locale:
+                  googleLocale,
 
-              click_listener:
-                () => {
+                click_listener:
+                  () => {
 
-                  setError("");
+                    setError("");
 
-                  setGoogleLoadError("");
+                  },
 
-                },
-
-            }
-          );
+              }
+            );
 
 
           if (!cancelled) {
@@ -1734,11 +1597,10 @@ function Login({
 
           }
 
-
         } catch (err) {
 
           console.error(
-            "GOOGLE GIS LOAD ERROR:",
+            "GOOGLE SDK ERROR:",
             err
           );
 
@@ -1751,10 +1613,8 @@ function Login({
 
 
             setGoogleLoadError(
-              translate(
-                "login.googleUnavailable",
-                localSocialText.googleUnavailable
-              )
+              localText
+                .googleUnavailable
             );
 
           }
@@ -1782,7 +1642,7 @@ function Login({
 
 
   // =======================================================
-  // FACEBOOK SDK INITIALIZATION
+  // FACEBOOK INITIALIZATION
   // =======================================================
 
   useEffect(
@@ -1792,11 +1652,7 @@ function Login({
         false;
 
 
-      async function setupFacebookLogin() {
-
-        // -------------------------------------------------
-        // APP ID
-        // -------------------------------------------------
+      async function setupFacebook() {
 
         if (
           !isFacebookAuthConfigured() ||
@@ -1809,10 +1665,8 @@ function Login({
 
 
           setFacebookLoadError(
-            translate(
-              "login.facebookConfigurationMissing",
-              localSocialText.facebookConfigurationMissing
-            )
+            localText
+              .facebookConfigurationMissing
           );
 
 
@@ -1823,67 +1677,12 @@ function Login({
 
         try {
 
-          setFacebookLoadError("");
+          setFacebookLoadError(
+            ""
+          );
 
-
-          // -------------------------------------------------
-          // LOAD SDK
-          // -------------------------------------------------
 
           await loadFacebookSdk();
-
-
-          if (cancelled) {
-
-            return;
-
-          }
-
-
-          if (
-            !window.FB?.init ||
-            !window.FB?.login
-          ) {
-
-            throw new Error(
-              "Facebook SDK API is unavailable."
-            );
-
-          }
-
-
-          // -------------------------------------------------
-          // INITIALIZE SDK
-          // -------------------------------------------------
-
-          if (
-            !facebookInitializedRef.current
-          ) {
-
-            window.FB.init({
-
-              appId:
-                FACEBOOK_APP_ID,
-
-
-              cookie:
-                true,
-
-
-              xfbml:
-                false,
-
-
-              version:
-                FACEBOOK_GRAPH_API_VERSION,
-
-            });
-
-
-            facebookInitializedRef.current =
-              true;
-
-          }
 
 
           if (!cancelled) {
@@ -1894,11 +1693,10 @@ function Login({
 
           }
 
-
         } catch (err) {
 
           console.error(
-            "FACEBOOK SDK LOAD ERROR:",
+            "FACEBOOK SDK ERROR:",
             err
           );
 
@@ -1911,10 +1709,8 @@ function Login({
 
 
             setFacebookLoadError(
-              translate(
-                "login.facebookUnavailable",
-                localSocialText.facebookUnavailable
-              )
+              localText
+                .facebookUnavailable
             );
 
           }
@@ -1924,7 +1720,7 @@ function Login({
       }
 
 
-      setupFacebookLogin();
+      setupFacebook();
 
 
       return () => {
@@ -1940,7 +1736,199 @@ function Login({
 
 
   // =======================================================
-  // RENDER
+  // FACEBOOK LOGIN
+  // =======================================================
+
+  async function handleFacebookLogin() {
+
+    if (busy) {
+
+      return;
+
+    }
+
+
+    setError("");
+
+
+    if (
+      !facebookReady ||
+      !window.FB
+    ) {
+
+      setError(
+        facebookLoadError ||
+        localText.facebookUnavailable
+      );
+
+      return;
+
+    }
+
+
+    setFacebookLoading(
+      true
+    );
+
+
+    try {
+
+      // ---------------------------------------------------
+      // 1. FACEBOOK POPUP
+      // ---------------------------------------------------
+
+      const facebookAccessToken =
+        await openFacebookLogin();
+
+
+      // ---------------------------------------------------
+      // 2. TRY DIRECT SHOBDO FACEBOOK LOGIN
+      // ---------------------------------------------------
+
+      try {
+
+        await loginWithFacebook({
+
+          accessToken:
+            facebookAccessToken,
+
+        });
+
+
+        clearPendingFacebookLink();
+
+
+        await completeLogin();
+
+
+        return;
+
+      } catch (err) {
+
+        // -------------------------------------------------
+        // EXISTING SHOBDO ACCOUNT
+        // -------------------------------------------------
+        //
+        // Keep Facebook token only in this page's memory.
+        //
+        // The user now authenticates using the existing
+        // SHOBDO account. After successful authentication
+        // finishAuthenticatedLogin() calls /facebook/link.
+        //
+        // -------------------------------------------------
+
+        if (
+          err?.code ===
+          "account_link_required"
+        ) {
+
+          pendingFacebookTokenRef.current =
+            facebookAccessToken;
+
+
+          setFacebookLinkPending(
+            true
+          );
+
+
+          setError("");
+
+
+          return;
+
+        }
+
+
+        throw err;
+
+      }
+
+    } catch (err) {
+
+      console.error(
+        "FACEBOOK LOGIN ERROR:",
+        err
+      );
+
+
+      if (
+        err?.code ===
+        "facebook_cancelled"
+      ) {
+
+        setError(
+          localText.facebookCancelled
+        );
+
+        return;
+
+      }
+
+
+      if (
+        err?.code ===
+        "facebook_email_required"
+      ) {
+
+        setError(
+          localText.facebookEmailRequired
+        );
+
+        return;
+
+      }
+
+
+      if (
+        err?.code ===
+        "facebook_account_conflict"
+      ) {
+
+        clearPendingFacebookLink();
+
+
+        setError(
+          localText
+            .facebookAccountConflict
+        );
+
+        return;
+
+      }
+
+
+      if (
+        err?.code ===
+        "network_error"
+      ) {
+
+        setError(
+          localText.networkError
+        );
+
+        return;
+
+      }
+
+
+      setError(
+        err?.message ||
+        localText.facebookGenericError
+      );
+
+    } finally {
+
+      setFacebookLoading(
+        false
+      );
+
+    }
+
+  }
+
+
+  // =======================================================
+  // UI
   // =======================================================
 
   return (
@@ -1955,7 +1943,7 @@ function Login({
 
 
         {/* =============================================
-            LEFT INTRO
+            LEFT SIDE
         ============================================== */}
 
         <section
@@ -2009,12 +1997,10 @@ function Login({
 
             <blockquote>
 
-              “{
-                translate(
-                  "login.quote",
-                  localSocialText.quote
-                )
-              }”
+              “{translate(
+                "login.quote",
+                localText.quote
+              )}”
 
             </blockquote>
 
@@ -2062,7 +2048,7 @@ function Login({
 
 
           {/* ===========================================
-              ERROR
+              NORMAL ERROR
           ============================================ */}
 
           {error && (
@@ -2080,13 +2066,126 @@ function Login({
 
 
           {/* ===========================================
-              GOOGLE SIGN-IN
+              FACEBOOK ACCOUNT LINK NOTICE
+          ============================================ */}
+
+          {facebookLinkPending && (
+
+            <div
+              role="status"
+              style={{
+
+                width:
+                  "100%",
+
+                boxSizing:
+                  "border-box",
+
+                padding:
+                  "14px 16px",
+
+                marginBottom:
+                  "18px",
+
+                border:
+                  "1px solid #D8B36A",
+
+                borderRadius:
+                  "8px",
+
+                background:
+                  "#FFF9ED",
+
+                color:
+                  "#77571D",
+
+                fontSize:
+                  "0.88rem",
+
+                lineHeight:
+                  1.55,
+
+              }}
+            >
+
+              <strong
+                style={{
+                  display:
+                    "block",
+
+                  marginBottom:
+                    "5px",
+                }}
+              >
+
+                Connect Facebook to your existing SHOBDO account
+
+              </strong>
+
+
+              {
+                localText
+                  .facebookLinkRequired
+              }
+
+
+              <button
+                type="button"
+                onClick={
+                  clearPendingFacebookLink
+                }
+                disabled={
+                  busy
+                }
+                style={{
+
+                  display:
+                    "block",
+
+                  marginTop:
+                    "9px",
+
+                  padding:
+                    0,
+
+                  border:
+                    0,
+
+                  background:
+                    "transparent",
+
+                  color:
+                    "inherit",
+
+                  textDecoration:
+                    "underline",
+
+                  cursor:
+                    "pointer",
+
+                  font:
+                    "inherit",
+
+                }}
+              >
+
+                Cancel Facebook connection
+
+              </button>
+
+            </div>
+
+          )}
+
+
+          {/* ===========================================
+              GOOGLE
           ============================================ */}
 
           <div
             className="shobdo-google-login-section"
             aria-label={
-              localSocialText.googleSectionLabel
+              localText.googleSectionLabel
             }
             style={{
               width:
@@ -2097,7 +2196,7 @@ function Login({
             }}
           >
 
-            {googleLoading && (
+            {googleLoading ? (
 
               <button
                 type="button"
@@ -2114,23 +2213,21 @@ function Login({
                   className="spin"
                 />
 
-                {translate(
-                  "login.googleLoading",
-                  localSocialText.loadingGoogle
-                )}
+                {
+                  localText
+                    .loadingGoogle
+                }
 
               </button>
 
-            )}
-
-
-            {!googleLoading && (
+            ) : (
 
               <div
                 ref={
                   googleButtonRef
                 }
                 style={{
+
                   width:
                     "100%",
 
@@ -2148,13 +2245,14 @@ function Login({
 
                   opacity:
                     busy
-                      ? 0.65
+                      ? 0.6
                       : 1,
 
                   pointerEvents:
                     busy
                       ? "none"
                       : "auto",
+
                 }}
               />
 
@@ -2166,29 +2264,33 @@ function Login({
               !googleReady &&
               !googleLoading &&
               (
+
                 <div
                   role="status"
                   style={{
+
                     marginTop:
-                      "9px",
+                      "8px",
 
                     textAlign:
                       "center",
 
                     fontSize:
-                      "0.78rem",
+                      "0.8rem",
 
                     lineHeight:
-                      1.5,
+                      1.4,
 
                     opacity:
-                      0.72,
+                      0.75,
+
                   }}
                 >
 
                   {googleLoadError}
 
                 </div>
+
               )
             }
 
@@ -2196,14 +2298,10 @@ function Login({
 
 
           {/* ===========================================
-              FACEBOOK SIGN-IN
+              FACEBOOK
           ============================================ */}
 
           <div
-            className="shobdo-facebook-login-section"
-            aria-label={
-              localSocialText.facebookSectionLabel
-            }
             style={{
               width:
                 "100%",
@@ -2215,40 +2313,26 @@ function Login({
 
             <button
               type="button"
-
               onClick={
                 handleFacebookLogin
               }
-
               disabled={
                 busy ||
                 !facebookReady
               }
-
-              aria-label={
-                localSocialText.continueWithFacebook
-              }
-
               style={{
+
                 width:
                   "100%",
 
                 minHeight:
-                  "44px",
+                  "48px",
 
                 border:
-                  "1px solid #1877f2",
+                  0,
 
                 borderRadius:
-                  "6px",
-
-                background:
-                  facebookReady
-                    ? "#1877f2"
-                    : "#9cbde8",
-
-                color:
-                  "#ffffff",
+                  "7px",
 
                 display:
                   "flex",
@@ -2263,107 +2347,123 @@ function Login({
                   "11px",
 
                 padding:
-                  "0 16px",
+                  "0 18px",
+
+                background:
+                  "#1877F2",
+
+                color:
+                  "#FFFFFF",
+
+                fontFamily:
+                  "inherit",
 
                 fontSize:
-                  "14px",
+                  "1rem",
 
                 fontWeight:
                   600,
 
                 cursor:
-                  busy ||
-                  !facebookReady
+                  (
+                    busy ||
+                    !facebookReady
+                  )
                     ? "not-allowed"
                     : "pointer",
 
                 opacity:
-                  busy &&
-                  !facebookLoading
+                  (
+                    busy ||
+                    !facebookReady
+                  )
                     ? 0.65
                     : 1,
 
                 transition:
-                  "opacity 0.2s ease, transform 0.2s ease",
+                  "opacity 0.2s ease",
+
               }}
             >
 
               {
-                facebookLoading
+                (
+                  facebookLoading ||
+                  facebookLinking
+                )
                   ? (
+
                       <Loader2
                         size={19}
                         className="spin"
                       />
+
                     )
                   : (
+
                       <span
                         aria-hidden="true"
                         style={{
+
                           width:
-                            "22px",
+                            "26px",
 
                           height:
-                            "22px",
+                            "26px",
 
                           borderRadius:
                             "50%",
-
-                          background:
-                            "#ffffff",
-
-                          color:
-                            "#1877f2",
 
                           display:
                             "inline-flex",
 
                           alignItems:
-                            "flex-end",
+                            "center",
 
                           justifyContent:
                             "center",
 
+                          background:
+                            "#FFFFFF",
+
+                          color:
+                            "#1877F2",
+
                           fontFamily:
-                            "Arial, Helvetica, sans-serif",
+                            "Arial, sans-serif",
+
+                          fontWeight:
+                            800,
 
                           fontSize:
-                            "20px",
+                            "19px",
 
                           lineHeight:
                             1,
 
-                          fontWeight:
-                            700,
-
-                          overflow:
-                            "hidden",
-
-                          paddingTop:
-                            "4px",
                         }}
                       >
+
                         f
+
                       </span>
+
                     )
               }
 
 
-              <span>
+              {
+                facebookLinking
+                  ? localText
+                      .facebookLinking
 
-                {
-                  facebookLoading
-                    ? translate(
-                        "login.facebookLoading",
-                        localSocialText.loadingFacebook
-                      )
-                    : translate(
-                        "login.continueWithFacebook",
-                        localSocialText.continueWithFacebook
-                      )
-                }
+                  : facebookLoading
+                    ? localText
+                        .facebookLoading
 
-              </span>
+                    : localText
+                        .facebookButton
+              }
 
             </button>
 
@@ -2373,29 +2473,33 @@ function Login({
               !facebookReady &&
               !facebookLoading &&
               (
+
                 <div
                   role="status"
                   style={{
+
                     marginTop:
-                      "9px",
+                      "8px",
 
                     textAlign:
                       "center",
 
                     fontSize:
-                      "0.78rem",
+                      "0.8rem",
 
                     lineHeight:
-                      1.5,
+                      1.4,
 
                     opacity:
-                      0.72,
+                      0.75,
+
                   }}
                 >
 
                   {facebookLoadError}
 
                 </div>
+
               )
             }
 
@@ -2403,7 +2507,7 @@ function Login({
 
 
           {/* ===========================================
-              OR
+              DIVIDER
           ============================================ */}
 
           <div
@@ -2416,7 +2520,7 @@ function Login({
 
               {translate(
                 "login.or",
-                localSocialText.or
+                localText.or
               )}
 
             </small>
@@ -2427,7 +2531,7 @@ function Login({
 
 
           {/* ===========================================
-              EMAIL/PASSWORD
+              PASSWORD LOGIN
           ============================================ */}
 
           <form
@@ -2436,6 +2540,7 @@ function Login({
               handleSubmit
             }
           >
+
 
             {/* EMAIL */}
 
@@ -2475,10 +2580,18 @@ function Login({
                   onChange={
                     (
                       event
-                    ) =>
+                    ) => {
+
                       setEmail(
-                        event.target.value
-                      )
+                        event
+                          .target
+                          .value
+                      );
+
+
+                      setError("");
+
+                    }
                   }
 
                   placeholder={
@@ -2565,10 +2678,18 @@ function Login({
                   onChange={
                     (
                       event
-                    ) =>
+                    ) => {
+
                       setPassword(
-                        event.target.value
-                      )
+                        event
+                          .target
+                          .value
+                      );
+
+
+                      setError("");
+
+                    }
                   }
 
                   placeholder={
@@ -2651,29 +2772,47 @@ function Login({
             >
 
               {
-                loading
+                (
+                  loading ||
+                  facebookLinking
+                )
                   ? (
+
                       <Loader2
                         size={18}
                         className="spin"
                       />
+
                     )
                   : (
+
                       <ArrowRight
                         size={18}
                       />
+
                     )
               }
 
 
               {
-                loading
-                  ? t(
-                      "login.loggingIn"
-                    )
-                  : t(
-                      "login.loginButton"
-                    )
+                facebookLinking
+
+                  ? localText
+                      .facebookLinking
+
+                  : loading
+                    ? t(
+                        "login.loggingIn"
+                      )
+
+                    : facebookLinkPending
+                      ? (
+                          "Login & connect Facebook"
+                        )
+
+                      : t(
+                          "login.loginButton"
+                        )
               }
 
             </button>
@@ -2682,7 +2821,7 @@ function Login({
 
 
           {/* ===========================================
-              BOTTOM
+              REGISTER
           ============================================ */}
 
           <div
