@@ -6,6 +6,9 @@ from flask_jwt_extended import (
 
 from database import db
 from models.notification import Notification
+from models.user import User
+from models.writing import Writing
+from models.comment import Comment
 
 from services.notification_service import (
     get_unread_notification_count,
@@ -80,6 +83,16 @@ def notification_response(
                 "name": getattr(
                     actor_user,
                     "name",
+                    None,
+                ),
+                "username": getattr(
+                    actor_user,
+                    "username",
+                    None,
+                ),
+                "avatar_url": getattr(
+                    actor_user,
+                    "avatar_url",
                     None,
                 ),
             }

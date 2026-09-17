@@ -8,19 +8,6 @@ class Notification(db.Model):
     __tablename__ = "notifications"
 
     # =====================================================
-    # TABLE INDEXES
-    # =====================================================
-
-    __table_args__ = (
-        db.Index(
-            "ix_notifications_recipient_read_created",
-            "recipient_id",
-            "is_read",
-            "created_at",
-        ),
-    )
-
-    # =====================================================
     # PRIMARY KEY
     # =====================================================
 
@@ -30,16 +17,18 @@ class Notification(db.Model):
     )
 
     # =====================================================
-    # RECIPIENT
+    # USERS
     # =====================================================
     #
-    # The user who receives the notification.
+    # recipient_id = user receiving the notification
+    # actor_id     = user who caused the notification
     #
     # Example:
     #
-    # Rahul likes Subhadip's writing.
+    # Rahul liked Subhadip's writing
     #
     # recipient_id = Subhadip
+    # actor_id     = Rahul
     #
     # =====================================================
 
@@ -53,27 +42,11 @@ class Notification(db.Model):
         index=True,
     )
 
-    # =====================================================
-    # ACTOR
-    # =====================================================
-    #
-    # The user who performed the action.
-    #
-    # Example:
-    #
-    # Rahul likes Subhadip's writing.
-    #
-    # actor_id = Rahul
-    #
-    # System notifications can have actor_id = NULL.
-    #
-    # =====================================================
-
     actor_id = db.Column(
         db.Integer,
         db.ForeignKey(
             "users.id",
-            ondelete="SET NULL",
+            ondelete="CASCADE",
         ),
         nullable=True,
         index=True,
@@ -85,23 +58,24 @@ class Notification(db.Model):
     #
     # Supported values:
     #
-    # like
-    # comment
-    # follow
-    # reply
-    # mention
-    # system
+    # LIKE
+    # COMMENT
+    # COMMENT_REPLY
+    # FOLLOW
+    # MENTION
+    # REPOST
+    # SYSTEM
     #
     # =====================================================
 
     type = db.Column(
-        db.String(30),
+        db.String(50),
         nullable=False,
         index=True,
     )
 
     # =====================================================
-    # WRITING REFERENCE
+    # RELATED WRITING
     # =====================================================
 
     writing_id = db.Column(
@@ -115,7 +89,7 @@ class Notification(db.Model):
     )
 
     # =====================================================
-    # COMMENT REFERENCE
+    # RELATED COMMENT
     # =====================================================
 
     comment_id = db.Column(
@@ -129,6 +103,15 @@ class Notification(db.Model):
     )
 
     # =====================================================
+    # OPTIONAL MESSAGE
+    # =====================================================
+
+    message = db.Column(
+        db.String(500),
+        nullable=True,
+    )
+
+    # =====================================================
     # READ STATUS
     # =====================================================
 
@@ -136,53 +119,110 @@ class Notification(db.Model):
         db.Boolean,
         nullable=False,
         default=False,
-        server_default=db.text("false"),
         index=True,
     )
 
     # =====================================================
-    # CREATED TIME
+    # CREATED DATE
     # =====================================================
 
     created_at = db.Column(
         db.DateTime(timezone=True),
         nullable=False,
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(
+            timezone.utc
+        ),
         index=True,
     )
 
     # =====================================================
-    # SERIALIZATION
+    # RELATIONSHIPS
+    # =====================================================
+
+    recipient = db.relationship(
+        "User",
+        foreign_keys=[recipient_id],
+        lazy="joined",
+    )
+
+    actor = db.relationship(
+        "User",
+        foreign_keys=[actor_id],
+        lazy="joined",
+    )
+
+    writing = db.relationship(
+        "Writing",
+        foreign_keys=[writing_id],
+        lazy="joined",
+    )
+
+    # =====================================================
+    # JSON RESPONSE
     # =====================================================
 
     def to_dict(self):
 
+        actor_data = None
+
+        if self.actor:
+
+            actor_data = {
+                "id": self.actor.id,
+                "name": getattr(
+                    self.actor,
+                    "name",
+                    None,
+                ),
+                "username": getattr(
+                    self.actor,
+                    "username",
+                    None,
+                ),
+                "avatar_url": getattr(
+                    self.actor,
+                    "avatar_url",
+                    None,
+                ),
+            }
+
+        writing_data = None
+
+        if self.writing:
+
+            writing_data = {
+                "id": self.writing.id,
+                "title": self.writing.title,
+            }
+
         return {
+
             "id": self.id,
-            "recipient_id": self.recipient_id,
-            "actor_id": self.actor_id,
+
             "type": self.type,
-            "writing_id": self.writing_id,
-            "comment_id": self.comment_id,
-            "is_read": self.is_read,
-            "created_at": (
-                self.created_at.isoformat()
-                if self.created_at
-                else None
-            ),
+
+            "recipient_id":
+                self.recipient_id,
+
+            "actor":
+                actor_data,
+
+            "writing":
+                writing_data,
+
+            "comment_id":
+                self.comment_id,
+
+            "message":
+                self.message,
+
+            "is_read":
+                self.is_read,
+
+            "created_at":
+                (
+                    self.created_at.isoformat()
+                    if self.created_at
+                    else None
+                ),
         }
-
-    # =====================================================
-    # DEBUG REPRESENTATION
-    # =====================================================
-
-    def __repr__(self):
-
-        return (
-            f"<Notification "
-            f"id={self.id} "
-            f"type={self.type} "
-            f"recipient_id={self.recipient_id} "
-            f"actor_id={self.actor_id} "
-            f"is_read={self.is_read}>"
-        )
