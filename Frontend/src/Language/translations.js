@@ -445,6 +445,22 @@ export const translations = {
 
   pdfPages:
     "পৃষ্ঠা",
+  
+    saved: "সংরক্ষিত",
+savedDescription:
+  "পরে পড়ার জন্য সংরক্ষণ করা আপনার ব্যক্তিগত লেখার সংগ্রহ।",
+savedWritingsFound:
+  "টি সংরক্ষিত লেখা",
+savedEmpty:
+  "এখনও কোনো লেখা সংরক্ষণ করা হয়নি",
+savedEmptyDescription:
+  "পছন্দের লেখা বুকমার্ক করুন—সেগুলো এখানে দেখা যাবে।",
+loadingSaved:
+  "সংরক্ষিত লেখাগুলো লোড হচ্ছে...",
+signInSavedTitle:
+  "লগইন প্রয়োজন",
+signInSaved:
+  "সংরক্ষিত লেখা দেখতে লগইন করুন।",
 },
 
     writingCard: {
@@ -1720,6 +1736,21 @@ export const translations = {
 
   pdfPages:
     "pages",
+    saved: "Saved",
+savedDescription:
+  "Your private collection of writings saved for later.",
+savedWritingsFound:
+  "saved writings",
+savedEmpty:
+  "No saved writings yet",
+savedEmptyDescription:
+  "Bookmark writings you love and they will appear here.",
+loadingSaved:
+  "Loading your saved writings...",
+signInSavedTitle:
+  "Sign in required",
+signInSaved:
+  "Sign in to view your saved writings.",
 },
 
     writingCard: {
@@ -3102,6 +3133,22 @@ export const translations = {
 
   pdfPages:
     "पृष्ठ",
+
+    saved: "सहेजे गए",
+savedDescription:
+  "बाद में पढ़ने के लिए सहेजी गई आपकी निजी रचनाओं का संग्रह।",
+savedWritingsFound:
+  "सहेजी गई रचनाएँ",
+savedEmpty:
+  "अभी तक कोई रचना सहेजी नहीं गई",
+savedEmptyDescription:
+  "अपनी पसंदीदा रचनाओं को बुकमार्क करें—वे यहाँ दिखाई देंगी।",
+loadingSaved:
+  "सहेजी गई रचनाएँ लोड हो रही हैं...",
+signInSavedTitle:
+  "लॉगिन आवश्यक है",
+signInSaved:
+  "सहेजी गई रचनाएँ देखने के लिए लॉगिन करें।",
 },
 
     writingCard: {
