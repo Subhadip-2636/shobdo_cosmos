@@ -16,9 +16,10 @@ from models.user import User
 from models.writing import Writing
 
 from services.notification_service import (
-    create_notification,
     delete_notification,
     emit_notification,
+    notify_comment,
+    notify_comment_reply,
 )
 
 
@@ -41,7 +42,7 @@ MAX_COMMENT_LENGTH = 2000
 
 
 # =========================================================
-# CURRENT USER HELPER
+# CURRENT USER
 # =========================================================
 
 def get_current_user():
@@ -61,14 +62,83 @@ def get_current_user():
 
         return None
 
-    return db.session.get(
+
+    user = db.session.get(
         User,
         user_id,
     )
 
 
+    if not user:
+        return None
+
+
+    if not getattr(
+        user,
+        "is_active",
+        True,
+    ):
+
+        return None
+
+
+    return user
+
+
 # =========================================================
-# GET COMMENTS FOR A WRITING
+# COMMENT CONTENT VALIDATION
+# =========================================================
+
+def validate_comment_content(
+    value,
+):
+
+    content = str(
+        value or ""
+    ).strip()
+
+
+    if not content:
+
+        return (
+            None,
+            "Comment cannot be empty.",
+        )
+
+
+    if (
+        len(content) >
+        MAX_COMMENT_LENGTH
+    ):
+
+        return (
+            None,
+            (
+                "Comment cannot exceed "
+                f"{MAX_COMMENT_LENGTH} characters."
+            ),
+        )
+
+
+    return (
+        content,
+        None,
+    )
+
+
+# =========================================================
+# GET COMMENTS FOR WRITING
+# =========================================================
+#
+# GET
+# /api/comments/writing/<writing_id>
+#
+# Returns only top-level comments in the main array.
+#
+# Replies are nested inside:
+#
+# comment.replies
+#
 # =========================================================
 
 @comment_bp.get(
@@ -79,7 +149,7 @@ def get_comments(
 ):
 
     # -----------------------------------------------------
-    # GET WRITING
+    # WRITING
     # -----------------------------------------------------
 
     writing = db.session.get(
@@ -87,11 +157,13 @@ def get_comments(
         writing_id,
     )
 
+
     if not writing:
 
         return jsonify({
+            "success": False,
             "message":
-                "Writing not found."
+                "Writing not found.",
         }), 404
 
 
@@ -106,40 +178,90 @@ def get_comments(
     ) != "published":
 
         return jsonify({
+            "success": False,
             "message":
-                "Writing not found."
+                "Writing not found.",
         }), 404
 
 
     # -----------------------------------------------------
-    # GET COMMENTS
+    # TOP-LEVEL COMMENTS
     # -----------------------------------------------------
 
     comments = (
         Comment.query
-        .filter_by(
-            writing_id=writing_id
+
+        .filter(
+            Comment.writing_id
+            == writing_id,
+
+            Comment.parent_id
+            .is_(None),
         )
+
         .order_by(
             Comment.created_at.desc()
         )
+
         .all()
     )
 
 
+    # -----------------------------------------------------
+    # RESPONSE
+    # -----------------------------------------------------
+
     return jsonify({
+
+        "success":
+            True,
+
         "comments": [
-            comment.to_dict()
+
+            comment.to_dict(
+                include_replies=True,
+                reply_depth=5,
+            )
+
             for comment
             in comments
+
         ],
+
         "count":
             len(comments),
+
+        "total_comments":
+            Comment.query
+            .filter(
+                Comment.writing_id
+                == writing_id
+            )
+            .count(),
+
     }), 200
 
 
 # =========================================================
-# CREATE COMMENT
+# CREATE COMMENT OR REPLY
+# =========================================================
+#
+# POST
+# /api/comments/writing/<writing_id>
+#
+# Normal comment:
+#
+# {
+#     "content": "Beautiful writing"
+# }
+#
+# Reply:
+#
+# {
+#     "content": "Thank you",
+#     "parent_id": 12
+# }
+#
 # =========================================================
 
 @comment_bp.post(
@@ -160,13 +282,14 @@ def create_comment(
     if not user:
 
         return jsonify({
+            "success": False,
             "message":
-                "User not found."
+                "User not found.",
         }), 404
 
 
     # -----------------------------------------------------
-    # GET WRITING
+    # WRITING
     # -----------------------------------------------------
 
     writing = db.session.get(
@@ -178,8 +301,9 @@ def create_comment(
     if not writing:
 
         return jsonify({
+            "success": False,
             "message":
-                "Writing not found."
+                "Writing not found.",
         }), 404
 
 
@@ -194,16 +318,17 @@ def create_comment(
     ) != "published":
 
         return jsonify({
+            "success": False,
             "message":
                 (
                     "Only published writings "
                     "can receive comments."
-                )
+                ),
         }), 400
 
 
     # -----------------------------------------------------
-    # GET REQUEST DATA
+    # REQUEST BODY
     # -----------------------------------------------------
 
     data = request.get_json(
@@ -211,36 +336,97 @@ def create_comment(
     ) or {}
 
 
-    content = (
-        data.get(
-            "content",
-            ""
+    # -----------------------------------------------------
+    # CONTENT
+    # -----------------------------------------------------
+
+    content, validation_error = (
+        validate_comment_content(
+            data.get(
+                "content"
+            )
         )
-        .strip()
     )
 
 
-    # -----------------------------------------------------
-    # VALIDATE COMMENT
-    # -----------------------------------------------------
-
-    if not content:
+    if validation_error:
 
         return jsonify({
+            "success": False,
             "message":
-                "Comment cannot be empty."
+                validation_error,
         }), 400
 
 
-    if len(content) > MAX_COMMENT_LENGTH:
+    # -----------------------------------------------------
+    # OPTIONAL PARENT COMMENT
+    # -----------------------------------------------------
 
-        return jsonify({
-            "message":
-                (
-                    f"Comment cannot exceed "
-                    f"{MAX_COMMENT_LENGTH} characters."
-                )
-        }), 400
+    parent_id = data.get(
+        "parent_id"
+    )
+
+
+    parent_comment = None
+
+
+    if parent_id not in (
+        None,
+        "",
+    ):
+
+        try:
+
+            parent_id = int(
+                parent_id
+            )
+
+        except (
+            TypeError,
+            ValueError,
+        ):
+
+            return jsonify({
+                "success": False,
+                "message":
+                    "Invalid parent comment.",
+            }), 400
+
+
+        parent_comment = db.session.get(
+            Comment,
+            parent_id,
+        )
+
+
+        if not parent_comment:
+
+            return jsonify({
+                "success": False,
+                "message":
+                    "Parent comment not found.",
+            }), 404
+
+
+        # -------------------------------------------------
+        # SECURITY / DATA INTEGRITY
+        #
+        # Cannot reply to a comment from another writing.
+        # -------------------------------------------------
+
+        if (
+            parent_comment.writing_id
+            != writing.id
+        ):
+
+            return jsonify({
+                "success": False,
+                "message":
+                    (
+                        "Parent comment does not "
+                        "belong to this writing."
+                    ),
+            }), 400
 
 
     # -----------------------------------------------------
@@ -250,7 +436,12 @@ def create_comment(
     comment = Comment(
         content=content,
         user_id=user.id,
-        writing_id=writing_id,
+        writing_id=writing.id,
+        parent_id=(
+            parent_comment.id
+            if parent_comment
+            else None
+        ),
     )
 
 
@@ -269,47 +460,66 @@ def create_comment(
 
 
         # -------------------------------------------------
-        # FLUSH COMMENT
-        # -------------------------------------------------
+        # FLUSH
         #
-        # This gives us comment.id without committing.
-        #
+        # Gives comment.id before commit.
         # -------------------------------------------------
 
         db.session.flush()
 
 
+        # =================================================
+        # REPLY NOTIFICATION
+        # =================================================
+
+        if parent_comment:
+
+            notification = (
+                notify_comment_reply(
+                    recipient_id=
+                        parent_comment.user_id,
+
+                    actor_id=
+                        user.id,
+
+                    writing_id=
+                        writing.id,
+
+                    comment_id=
+                        comment.id,
+
+                    commit=False,
+                )
+            )
+
+
+        # =================================================
+        # NORMAL COMMENT NOTIFICATION
+        # =================================================
+
+        else:
+
+            notification = (
+                notify_comment(
+                    recipient_id=
+                        writing.user_id,
+
+                    actor_id=
+                        user.id,
+
+                    writing_id=
+                        writing.id,
+
+                    comment_id=
+                        comment.id,
+
+                    commit=False,
+                )
+            )
+
+
         # -------------------------------------------------
-        # CREATE COMMENT NOTIFICATION
-        # -------------------------------------------------
-        #
-        # Recipient = writing author
-        # Actor     = commenting user
-        #
-        # Self-comments automatically return None.
-        #
-        # -------------------------------------------------
-
-        notification = create_notification(
-            recipient_id=
-                writing.user_id,
-
-            actor_id=
-                user.id,
-
-            notification_type=
-                "comment",
-
-            writing_id=
-                writing.id,
-
-            comment_id=
-                comment.id,
-        )
-
-
-        # -------------------------------------------------
-        # COMMIT COMMENT + NOTIFICATION
+        # COMMIT COMMENT + NOTIFICATION TOGETHER
         # -------------------------------------------------
 
         db.session.commit()
@@ -327,19 +537,14 @@ def create_comment(
 
 
         return jsonify({
+            "success": False,
             "message":
-                "Unable to add comment."
+                "Unable to add comment.",
         }), 500
 
 
     # -----------------------------------------------------
     # REAL-TIME NOTIFICATION
-    # -----------------------------------------------------
-    #
-    # Emit only AFTER the database transaction succeeds.
-    #
-    # If Socket.IO fails, the comment remains saved.
-    #
     # -----------------------------------------------------
 
     if notification:
@@ -350,7 +555,11 @@ def create_comment(
                 notification
             )
 
+
         except Exception as error:
+
+            # Comment is already safely committed.
+            # Socket failure must not undo it.
 
             print(
                 "COMMENT REAL-TIME "
@@ -360,20 +569,200 @@ def create_comment(
 
 
     # -----------------------------------------------------
-    # SUCCESS RESPONSE
+    # RESPONSE
     # -----------------------------------------------------
 
     return jsonify({
+
+        "success":
+            True,
+
         "message":
-            "Comment added successfully.",
+            (
+                "Reply added successfully."
+                if parent_comment
+                else
+                "Comment added successfully."
+            ),
+
+        "is_reply":
+            parent_comment
+            is not None,
 
         "comment":
-            comment.to_dict(),
+            comment.to_dict(
+                include_replies=True,
+                reply_depth=1,
+            ),
+
     }), 201
 
 
 # =========================================================
+# EDIT COMMENT
+# =========================================================
+#
+# PATCH
+# /api/comments/<comment_id>
+#
+# {
+#     "content": "Updated comment"
+# }
+#
+# =========================================================
+
+@comment_bp.patch(
+    "/<int:comment_id>"
+)
+@jwt_required()
+def update_comment(
+    comment_id,
+):
+
+    # -----------------------------------------------------
+    # CURRENT USER
+    # -----------------------------------------------------
+
+    user = get_current_user()
+
+
+    if not user:
+
+        return jsonify({
+            "success": False,
+            "message":
+                "User not found.",
+        }), 404
+
+
+    # -----------------------------------------------------
+    # COMMENT
+    # -----------------------------------------------------
+
+    comment = db.session.get(
+        Comment,
+        comment_id,
+    )
+
+
+    if not comment:
+
+        return jsonify({
+            "success": False,
+            "message":
+                "Comment not found.",
+        }), 404
+
+
+    # -----------------------------------------------------
+    # OWNERSHIP
+    # -----------------------------------------------------
+
+    if (
+        comment.user_id
+        != user.id
+    ):
+
+        return jsonify({
+            "success": False,
+            "message":
+                (
+                    "You can only edit "
+                    "your own comments."
+                ),
+        }), 403
+
+
+    # -----------------------------------------------------
+    # REQUEST BODY
+    # -----------------------------------------------------
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+
+    content, validation_error = (
+        validate_comment_content(
+            data.get(
+                "content"
+            )
+        )
+    )
+
+
+    if validation_error:
+
+        return jsonify({
+            "success": False,
+            "message":
+                validation_error,
+        }), 400
+
+
+    # -----------------------------------------------------
+    # UPDATE
+    # -----------------------------------------------------
+
+    try:
+
+        comment.update_content(
+            content
+        )
+
+
+        db.session.commit()
+
+
+    except Exception as error:
+
+        db.session.rollback()
+
+
+        print(
+            "UPDATE COMMENT ERROR:",
+            error,
+        )
+
+
+        return jsonify({
+            "success": False,
+            "message":
+                "Unable to update comment.",
+        }), 500
+
+
+    # -----------------------------------------------------
+    # RESPONSE
+    # -----------------------------------------------------
+
+    return jsonify({
+
+        "success":
+            True,
+
+        "message":
+            "Comment updated successfully.",
+
+        "comment":
+            comment.to_dict(
+                include_replies=True,
+                reply_depth=1,
+            ),
+
+    }), 200
+
+
+# =========================================================
 # DELETE COMMENT
+# =========================================================
+#
+# DELETE
+# /api/comments/<comment_id>
+#
+# Deleting a parent comment also deletes its replies
+# through ON DELETE CASCADE / SQLAlchemy relationship.
+#
 # =========================================================
 
 @comment_bp.delete(
@@ -394,13 +783,14 @@ def delete_comment(
     if not user:
 
         return jsonify({
+            "success": False,
             "message":
-                "User not found."
+                "User not found.",
         }), 404
 
 
     # -----------------------------------------------------
-    # GET COMMENT
+    # COMMENT
     # -----------------------------------------------------
 
     comment = db.session.get(
@@ -412,28 +802,33 @@ def delete_comment(
     if not comment:
 
         return jsonify({
+            "success": False,
             "message":
-                "Comment not found."
+                "Comment not found.",
         }), 404
 
 
     # -----------------------------------------------------
-    # OWNERSHIP CHECK
+    # OWNERSHIP
     # -----------------------------------------------------
 
-    if comment.user_id != user.id:
+    if (
+        comment.user_id
+        != user.id
+    ):
 
         return jsonify({
+            "success": False,
             "message":
                 (
                     "You can only delete "
                     "your own comments."
-                )
+                ),
         }), 403
 
 
     # -----------------------------------------------------
-    # GET RELATED WRITING
+    # RELATED WRITING
     # -----------------------------------------------------
 
     writing = db.session.get(
@@ -446,20 +841,62 @@ def delete_comment(
     # SAVE VALUES BEFORE DELETE
     # -----------------------------------------------------
 
-    writing_id = comment.writing_id
+    writing_id = (
+        comment.writing_id
+    )
 
-    comment_user_id = comment.user_id
+    comment_user_id = (
+        comment.user_id
+    )
 
-    deleted_comment_id = comment.id
+    deleted_comment_id = (
+        comment.id
+    )
+
+    was_reply = (
+        comment.parent_id
+        is not None
+    )
+
+
+    parent_comment = (
+        comment.parent
+        if was_reply
+        else None
+    )
 
 
     try:
 
-        # -------------------------------------------------
-        # DELETE ASSOCIATED NOTIFICATION
-        # -------------------------------------------------
+        # =================================================
+        # REMOVE MATCHING NOTIFICATION
+        # =================================================
 
-        if writing:
+        if was_reply:
+
+            if parent_comment:
+
+                delete_notification(
+                    recipient_id=
+                        parent_comment.user_id,
+
+                    actor_id=
+                        comment_user_id,
+
+                    notification_type=
+                        "comment_reply",
+
+                    writing_id=
+                        writing_id,
+
+                    comment_id=
+                        deleted_comment_id,
+
+                    commit=False,
+                )
+
+
+        elif writing:
 
             delete_notification(
                 recipient_id=
@@ -476,6 +913,8 @@ def delete_comment(
 
                 comment_id=
                     deleted_comment_id,
+
+                commit=False,
             )
 
 
@@ -489,7 +928,7 @@ def delete_comment(
 
 
         # -------------------------------------------------
-        # COMMIT BOTH TOGETHER
+        # COMMIT
         # -------------------------------------------------
 
         db.session.commit()
@@ -507,16 +946,33 @@ def delete_comment(
 
 
         return jsonify({
+            "success": False,
             "message":
-                "Unable to delete comment."
+                "Unable to delete comment.",
         }), 500
 
 
     # -----------------------------------------------------
-    # SUCCESS RESPONSE
+    # RESPONSE
     # -----------------------------------------------------
 
     return jsonify({
+
+        "success":
+            True,
+
         "message":
-            "Comment deleted successfully."
+            (
+                "Reply deleted successfully."
+                if was_reply
+                else
+                "Comment deleted successfully."
+            ),
+
+        "comment_id":
+            deleted_comment_id,
+
+        "is_reply":
+            was_reply,
+
     }), 200

@@ -30,9 +30,7 @@ export function saveToken(
 ) {
 
   if (!token) {
-
     return;
-
   }
 
 
@@ -71,10 +69,8 @@ function buildHeaders({
   };
 
 
-  /*
-   * Never manually set Content-Type for FormData.
-   * The browser adds the multipart boundary.
-   */
+  // Never manually set Content-Type for FormData.
+  // The browser automatically adds the multipart boundary.
 
   if (!isFormData) {
 
@@ -140,12 +136,13 @@ async function parseResponse(
         await response.text();
 
 
-      data = responseText
-        ? {
-            message:
-              responseText,
-          }
-        : {};
+      data =
+        responseText
+          ? {
+              message:
+                responseText,
+            }
+          : {};
 
     }
 
@@ -173,6 +170,7 @@ async function parseResponse(
 
     error.status =
       response.status;
+
 
     error.data =
       data;
@@ -262,11 +260,10 @@ async function apiRequest(
     }
 
 
-    /*
-     * A fetch TypeError normally means that the
-     * backend cannot be reached or CORS blocked
-     * the request.
-     */
+    // A fetch TypeError normally means:
+    // - backend unavailable
+    // - network problem
+    // - CORS problem
 
     if (
       error instanceof TypeError
@@ -316,7 +313,9 @@ function createQueryString(
 
       searchParams.set(
         key,
-        String(value)
+        String(
+          value
+        )
       );
 
     }
@@ -379,7 +378,10 @@ export async function getWriting(
 }
 
 
-// Compatibility export
+// =========================================================
+// COMPATIBILITY EXPORT
+// =========================================================
+
 export const getWritingById =
   getWriting;
 
@@ -406,8 +408,7 @@ export async function getMyWritings(
 
 
 // =========================================================
-// AUTH — CREATE DRAFT
-//
+// CREATE DRAFT
 // POST /api/writings/drafts
 // =========================================================
 
@@ -423,12 +424,12 @@ export async function createDraft({
     {
       method: "POST",
 
-      body: JSON.stringify({
+      body: {
         title,
         content,
         category,
         language,
-      }),
+      },
     }
   );
 
@@ -458,23 +459,28 @@ export async function createWriting(
       method: "POST",
 
       body: {
+
         title:
-          writingData.title?.trim(),
+          writingData.title
+            ?.trim(),
 
         content:
-          writingData.content?.trim(),
+          writingData.content
+            ?.trim(),
 
         category:
           writingData.category,
 
         language:
-          writingData.language || "bn",
+          writingData.language ||
+          "bn",
 
         status:
           writingData.status,
 
         is_published:
           writingData.is_published,
+
       },
     }
   );
@@ -602,6 +608,7 @@ export async function permanentlyDeleteWriting(
 
 }
 
+
 // =========================================================
 // PUBLISH WRITING
 // =========================================================
@@ -657,7 +664,7 @@ export async function unpublishWriting(
 
 
 // =========================================================
-// LIKE OR UNLIKE WRITING
+// LIKE / UNLIKE WRITING
 // =========================================================
 
 export async function likeWriting(
@@ -700,10 +707,8 @@ export async function unlikeWriting(
   }
 
 
-  /*
-   * The backend uses the same POST endpoint
-   * to toggle between like and unlike.
-   */
+  // Backend currently uses the same endpoint
+  // to toggle like/unlike.
 
   return likeWriting(
     writingId
@@ -712,7 +717,10 @@ export async function unlikeWriting(
 }
 
 
-// Compatibility export
+// =========================================================
+// COMPATIBILITY LIKE EXPORT
+// =========================================================
+
 export const toggleLike =
   likeWriting;
 
@@ -734,12 +742,6 @@ export async function getWritingLikes(
   }
 
 
-  /*
-   * The writing details endpoint already returns
-   * likes and likes_count, so no extra backend
-   * endpoint is required.
-   */
-
   const writing =
     await getWriting(
       writingId
@@ -755,6 +757,7 @@ export async function getWritingLikes(
 
 
   return {
+
     likes:
       likesCount,
 
@@ -766,6 +769,7 @@ export async function getWritingLikes(
 
     total:
       likesCount,
+
   };
 
 }
@@ -803,17 +807,35 @@ export async function getMyLikeStatus(
 
 
   return {
+
     liked,
 
     is_liked:
       liked,
+
   };
 
 }
 
 
 // =========================================================
-// GET COMMENTS
+// COMMENTS
+// =========================================================
+
+
+// =========================================================
+// GET COMMENTS FOR WRITING
+//
+// GET
+// /api/comments/writing/<writing_id>
+//
+// Returns:
+// {
+//   success: true,
+//   comments: [...],
+//   count: ...,
+//   total_comments: ...
+// }
 // =========================================================
 
 export async function getComments(
@@ -830,19 +852,36 @@ export async function getComments(
 
 
   return apiRequest(
-    `/api/writings/${writingId}/comments`
+    `/api/comments/writing/${writingId}`
   );
 
 }
 
 
 // =========================================================
-// CREATE COMMENT
+// CREATE COMMENT OR REPLY
+//
+// POST
+// /api/comments/writing/<writing_id>
+//
+// NORMAL COMMENT:
+// createComment(
+//   writingId,
+//   "Beautiful writing"
+// )
+//
+// REPLY:
+// createComment(
+//   writingId,
+//   "Thank you",
+//   parentCommentId
+// )
 // =========================================================
 
 export async function createComment(
   writingId,
-  content
+  content,
+  parentId = null
 ) {
 
   if (!writingId) {
@@ -855,9 +894,11 @@ export async function createComment(
 
 
   const commentContent =
-    typeof content === "string"
+    typeof content ===
+      "string"
       ? content.trim()
-      : content?.content?.trim();
+      : content?.content
+          ?.trim();
 
 
   if (!commentContent) {
@@ -869,14 +910,166 @@ export async function createComment(
   }
 
 
+  const body = {
+
+    content:
+      commentContent,
+
+  };
+
+
+  // -------------------------------------------------------
+  // REPLY
+  // -------------------------------------------------------
+
+  if (
+    parentId !== null &&
+    parentId !== undefined &&
+    parentId !== ""
+  ) {
+
+    const normalizedParentId =
+      Number(
+        parentId
+      );
+
+
+    if (
+      !Number.isInteger(
+        normalizedParentId
+      ) ||
+      normalizedParentId <= 0
+    ) {
+
+      throw new Error(
+        "Valid parent comment ID is required."
+      );
+
+    }
+
+
+    body.parent_id =
+      normalizedParentId;
+
+  }
+
+
   return apiRequest(
-    `/api/writings/${writingId}/comments`,
+    `/api/comments/writing/${writingId}`,
     {
       method: "POST",
+      body,
+    }
+  );
+
+}
+
+
+// =========================================================
+// ADD NORMAL COMMENT
+//
+// Compatibility helper for existing components.
+// =========================================================
+
+export async function addComment(
+  writingId,
+  content
+) {
+
+  return createComment(
+    writingId,
+    content,
+    null
+  );
+
+}
+
+
+// =========================================================
+// REPLY TO COMMENT
+// =========================================================
+
+export async function replyToComment(
+  writingId,
+  parentCommentId,
+  content
+) {
+
+  if (!writingId) {
+
+    throw new Error(
+      "Writing ID is required."
+    );
+
+  }
+
+
+  if (!parentCommentId) {
+
+    throw new Error(
+      "Parent comment ID is required."
+    );
+
+  }
+
+
+  return createComment(
+    writingId,
+    content,
+    parentCommentId
+  );
+
+}
+
+
+// =========================================================
+// UPDATE COMMENT
+//
+// PATCH
+// /api/comments/<comment_id>
+//
+// {
+//   content: "..."
+// }
+// =========================================================
+
+export async function updateComment(
+  commentId,
+  content
+) {
+
+  if (!commentId) {
+
+    throw new Error(
+      "Comment ID is required."
+    );
+
+  }
+
+
+  const normalizedContent =
+    String(
+      content || ""
+    ).trim();
+
+
+  if (!normalizedContent) {
+
+    throw new Error(
+      "Comment cannot be empty."
+    );
+
+  }
+
+
+  return apiRequest(
+    `/api/comments/${commentId}`,
+    {
+      method: "PATCH",
 
       body: {
         content:
-          commentContent,
+          normalizedContent,
       },
     }
   );
@@ -884,13 +1077,11 @@ export async function createComment(
 }
 
 
-// Compatibility export
-export const addComment =
-  createComment;
-
-
 // =========================================================
 // DELETE COMMENT
+//
+// DELETE
+// /api/comments/<comment_id>
 // =========================================================
 
 export async function deleteComment(
@@ -963,18 +1154,28 @@ function validateOcrFile(
 
 
   const allowedTypes = [
+
     "application/pdf",
+
     "image/jpeg",
+
     "image/jpg",
+
     "image/png",
+
   ];
 
 
   const allowedExtensions = [
+
     "pdf",
+
     "jpg",
+
     "jpeg",
+
     "png",
+
   ];
 
 
@@ -1026,9 +1227,13 @@ export async function extractScannedText(
 
 
   const supportedLanguages = [
+
     "bn",
+
     "en",
+
     "hi",
+
   ];
 
 
@@ -1043,13 +1248,6 @@ export async function extractScannedText(
   const formData =
     new FormData();
 
-
-  /*
-   * These names match writing_routes.py:
-   *
-   * request.files.get("document")
-   * request.form.get("language")
-   */
 
   formData.append(
     "document",
@@ -1079,7 +1277,10 @@ export async function extractScannedText(
 }
 
 
-// Compatibility exports for alternative component names
+// =========================================================
+// OCR COMPATIBILITY EXPORTS
+// =========================================================
+
 export const scanWriting =
   extractScannedText;
 
@@ -1110,11 +1311,15 @@ function validateUserId(
 ) {
 
   const id =
-    Number(userId);
+    Number(
+      userId
+    );
 
 
   if (
-    !Number.isFinite(id) ||
+    !Number.isFinite(
+      id
+    ) ||
     id <= 0
   ) {
 
@@ -1131,8 +1336,10 @@ function validateUserId(
 
 
 // =========================================================
-// AUTH — UPDATE MY PROFILE
-// PATCH /api/users/me/profile
+// UPDATE CURRENT USER PROFILE
+//
+// PATCH
+// /api/users/me/profile
 // =========================================================
 
 export async function updateMyProfile(
@@ -1141,8 +1348,11 @@ export async function updateMyProfile(
 
   if (
     !profileData ||
-    typeof profileData !== "object" ||
-    Array.isArray(profileData)
+    typeof profileData !==
+      "object" ||
+    Array.isArray(
+      profileData
+    )
   ) {
 
     throw new Error(
@@ -1156,7 +1366,9 @@ export async function updateMyProfile(
     "/api/users/me/profile",
     {
       method: "PATCH",
-      body: profileData,
+
+      body:
+        profileData,
     }
   );
 
@@ -1164,8 +1376,10 @@ export async function updateMyProfile(
 
 
 // =========================================================
-// PUBLIC — GET WRITER PROFILE
-// GET /api/users/<user_id>
+// GET PUBLIC WRITER PROFILE
+//
+// GET
+// /api/users/<user_id>
 // =========================================================
 
 export async function getWriterProfile(
@@ -1186,8 +1400,10 @@ export async function getWriterProfile(
 
 
 // =========================================================
-// PUBLIC — GET WRITER WRITINGS
-// GET /api/users/<user_id>/writings
+// GET WRITER WRITINGS
+//
+// GET
+// /api/users/<user_id>/writings
 // =========================================================
 
 export async function getWriterWritings(
@@ -1208,8 +1424,10 @@ export async function getWriterWritings(
 
 
 // =========================================================
-// AUTH — GET FOLLOW STATUS
-// GET /api/users/<user_id>/follow-status
+// GET FOLLOW STATUS
+//
+// GET
+// /api/users/<user_id>/follow-status
 // =========================================================
 
 export async function getFollowStatus(
@@ -1230,8 +1448,10 @@ export async function getFollowStatus(
 
 
 // =========================================================
-// AUTH — FOLLOW USER
-// POST /api/users/<user_id>/follow
+// FOLLOW USER
+//
+// POST
+// /api/users/<user_id>/follow
 // =========================================================
 
 export async function followUser(
@@ -1255,8 +1475,10 @@ export async function followUser(
 
 
 // =========================================================
-// AUTH — UNFOLLOW USER
-// DELETE /api/users/<user_id>/follow
+// UNFOLLOW USER
+//
+// DELETE
+// /api/users/<user_id>/follow
 // =========================================================
 
 export async function unfollowUser(
@@ -1280,8 +1502,10 @@ export async function unfollowUser(
 
 
 // =========================================================
-// AUTH — FOLLOWING FEED
-// GET /api/users/me/following-feed
+// GET FOLLOWING FEED
+//
+// GET
+// /api/users/me/following-feed
 // =========================================================
 
 export async function getFollowingFeed({
@@ -1291,8 +1515,11 @@ export async function getFollowingFeed({
 
   const queryString =
     createQueryString({
+
       page,
+
       limit,
+
     });
 
 
@@ -1304,8 +1531,10 @@ export async function getFollowingFeed({
 
 
 // =========================================================
-// PUBLIC — GET FOLLOWERS
-// GET /api/users/<user_id>/followers
+// GET USER FOLLOWERS
+//
+// GET
+// /api/users/<user_id>/followers
 // =========================================================
 
 export async function getUserFollowers(
@@ -1324,8 +1553,11 @@ export async function getUserFollowers(
 
   const queryString =
     createQueryString({
+
       page,
+
       limit,
+
     });
 
 
@@ -1337,8 +1569,10 @@ export async function getUserFollowers(
 
 
 // =========================================================
-// PUBLIC — GET FOLLOWING USERS
-// GET /api/users/<user_id>/following
+// GET USERS BEING FOLLOWED
+//
+// GET
+// /api/users/<user_id>/following
 // =========================================================
 
 export async function getUserFollowing(
@@ -1357,8 +1591,11 @@ export async function getUserFollowing(
 
   const queryString =
     createQueryString({
+
       page,
+
       limit,
+
     });
 
 
@@ -1368,9 +1605,12 @@ export async function getUserFollowing(
 
 }
 
+
 // =========================================================
-// AUTH — SAVE WRITING
-// POST /api/saved/writing/<writing_id>
+// SAVE / BOOKMARK WRITING
+//
+// POST
+// /api/saved/writing/<writing_id>
 // =========================================================
 
 export async function saveWriting(
@@ -1397,8 +1637,10 @@ export async function saveWriting(
 
 
 // =========================================================
-// AUTH — UNSAVE WRITING
-// DELETE /api/saved/writing/<writing_id>
+// UNSAVE WRITING
+//
+// DELETE
+// /api/saved/writing/<writing_id>
 // =========================================================
 
 export async function unsaveWriting(
@@ -1425,8 +1667,10 @@ export async function unsaveWriting(
 
 
 // =========================================================
-// AUTH — GET SAVED STATUS
-// GET /api/saved/writing/<writing_id>/status
+// GET SAVED STATUS
+//
+// GET
+// /api/saved/writing/<writing_id>/status
 // =========================================================
 
 export async function getSavedWritingStatus(
@@ -1450,8 +1694,10 @@ export async function getSavedWritingStatus(
 
 
 // =========================================================
-// AUTH — GET MY SAVED WRITINGS
-// GET /api/saved
+// GET CURRENT USER SAVED WRITINGS
+//
+// GET
+// /api/saved
 // =========================================================
 
 export async function getSavedWritings({
@@ -1461,9 +1707,12 @@ export async function getSavedWritings({
 
   const queryString =
     createQueryString({
+
       page,
+
       per_page:
         perPage,
+
     });
 
 
@@ -1475,7 +1724,7 @@ export async function getSavedWritings({
 
 
 // =========================================================
-// AUTH — TOGGLE SAVE
+// TOGGLE SAVED WRITING
 // =========================================================
 
 export async function toggleSavedWriting(
@@ -1483,7 +1732,18 @@ export async function toggleSavedWriting(
   currentlySaved = false
 ) {
 
-  if (currentlySaved) {
+  if (!writingId) {
+
+    throw new Error(
+      "Writing ID is required."
+    );
+
+  }
+
+
+  if (
+    currentlySaved
+  ) {
 
     return unsaveWriting(
       writingId
@@ -1498,63 +1758,147 @@ export async function toggleSavedWriting(
 
 }
 
+
 // =========================================================
 // DEFAULT EXPORT
 // =========================================================
 
 const writingApi = {
+
+  // -------------------------------------------------------
+  // CONFIG / TOKEN
+  // -------------------------------------------------------
+
   API_URL,
 
   getToken,
+
   saveToken,
+
   removeToken,
 
+
+  // -------------------------------------------------------
+  // WRITINGS
+  // -------------------------------------------------------
+
   getWritings,
+
   getWriting,
+
   getWritingById,
+
   getMyWritings,
 
+  createDraft,
+
   createWriting,
+
   updateWriting,
+
   deleteWriting,
+
+  restoreWriting,
+
+  permanentlyDeleteWriting,
+
   publishWriting,
+
   unpublishWriting,
 
+
+  // -------------------------------------------------------
+  // LIKES
+  // -------------------------------------------------------
+
   likeWriting,
+
   unlikeWriting,
+
   toggleLike,
+
   getWritingLikes,
+
   getMyLikeStatus,
 
+
+  // -------------------------------------------------------
+  // SAVED / BOOKMARKS
+  // -------------------------------------------------------
+
   saveWriting,
+
   unsaveWriting,
+
   getSavedWritingStatus,
+
   getSavedWritings,
+
   toggleSavedWriting,
 
+
+  // -------------------------------------------------------
+  // COMMENTS / THREADED REPLIES
+  // -------------------------------------------------------
+
   getComments,
+
   createComment,
+
   addComment,
+
+  replyToComment,
+
+  updateComment,
+
   deleteComment,
 
+
+  // -------------------------------------------------------
+  // OCR
+  // -------------------------------------------------------
+
   extractScannedText,
+
   scanWriting,
+
   extractTextFromFile,
+
+
+  // -------------------------------------------------------
+  // PROFILE
+  // -------------------------------------------------------
 
   updateMyProfile,
 
   getWriterProfile,
+
   getWriterWritings,
 
+
+  // -------------------------------------------------------
+  // FOLLOW SYSTEM
+  // -------------------------------------------------------
+
   getFollowStatus,
+
   followUser,
+
   unfollowUser,
 
   getFollowingFeed,
+
   getUserFollowers,
+
   getUserFollowing,
 
+
+  // -------------------------------------------------------
+  // HEALTH
+  // -------------------------------------------------------
+
   checkApiHealth,
+
 };
 
 

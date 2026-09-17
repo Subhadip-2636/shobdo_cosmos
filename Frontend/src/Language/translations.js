@@ -943,6 +943,31 @@ signInSaved:
           "আপনি কি সত্যিই এই মন্তব্যটি মুছে ফেলতে চান?",
         deleteError:
           "মন্তব্য মুছে ফেলা যায়নি। আবার চেষ্টা করুন।",
+        reply: "উত্তর দিন",
+edit: "সম্পাদনা",
+delete: "মুছুন",
+cancel: "বাতিল",
+saveEdit: "সংরক্ষণ",
+saving: "সংরক্ষণ হচ্ছে...",
+edited: "সম্পাদিত",
+
+replyingTo: "উত্তর দিচ্ছেন",
+replyPlaceholder: "আপনার উত্তর লিখুন...",
+sendReply: "উত্তর দিন",
+replying: "উত্তর পাঠানো হচ্ছে...",
+replyError: "উত্তর পোস্ট করা যায়নি।",
+
+editPlaceholder: "আপনার মন্তব্য সম্পাদনা করুন...",
+editError: "মন্তব্য আপডেট করা যায়নি।",
+
+justNow: "এইমাত্র",
+minutesAgo: "{count} মিনিট আগে",
+hoursAgo: "{count} ঘণ্টা আগে",
+
+signInTitle: "আলোচনায় যোগ দিন",
+signInDescription:
+  "মন্তব্য করতে এবং অন্য পাঠকদের উত্তর দিতে লগইন করুন।",
+signIn: "লগইন করুন",
       },
     },
 
@@ -2338,6 +2363,31 @@ signInSaved:
           "Are you sure you want to delete this comment?",
         deleteError:
           "Unable to delete the comment. Please try again.",
+        reply: "Reply",
+edit: "Edit",
+delete: "Delete",
+cancel: "Cancel",
+saveEdit: "Save",
+saving: "Saving...",
+edited: "edited",
+
+replyingTo: "Replying to",
+replyPlaceholder: "Write a reply...",
+sendReply: "Reply",
+replying: "Replying...",
+replyError: "Unable to post reply.",
+
+editPlaceholder: "Edit your comment...",
+editError: "Unable to update comment.",
+
+justNow: "Just now",
+minutesAgo: "{count}m ago",
+hoursAgo: "{count}h ago",
+
+signInTitle: "Join the discussion",
+signInDescription:
+  "Sign in to comment and reply to other readers.",
+signIn: "Sign in",
       },
     },
 
@@ -3771,6 +3821,31 @@ signInSaved:
           "क्या आप वाकई यह टिप्पणी हटाना चाहते हैं?",
         deleteError:
           "टिप्पणी हटाई नहीं जा सकी। फिर प्रयास करें।",
+        reply: "जवाब दें",
+edit: "संपादित करें",
+delete: "हटाएँ",
+cancel: "रद्द करें",
+saveEdit: "सहेजें",
+saving: "सहेजा जा रहा है...",
+edited: "संपादित",
+
+replyingTo: "जवाब दे रहे हैं",
+replyPlaceholder: "अपना जवाब लिखें...",
+sendReply: "जवाब दें",
+replying: "जवाब भेजा जा रहा है...",
+replyError: "जवाब पोस्ट नहीं किया जा सका।",
+
+editPlaceholder: "अपनी टिप्पणी संपादित करें...",
+editError: "टिप्पणी अपडेट नहीं की जा सकी।",
+
+justNow: "अभी",
+minutesAgo: "{count} मिनट पहले",
+hoursAgo: "{count} घंटे पहले",
+
+signInTitle: "चर्चा में शामिल हों",
+signInDescription:
+  "टिप्पणी और जवाब देने के लिए लॉगिन करें।",
+signIn: "लॉगिन करें",
       },
     },
 
