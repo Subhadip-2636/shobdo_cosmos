@@ -20097,3 +20097,164 @@ a.footer-contact-item:hover strong {
   }
 
 }
+
+/* =========================================================
+   SAVED WRITINGS PAGE
+========================================================= */
+
+.saved-page {
+  min-height: calc(100vh - 80px);
+  padding: 48px 24px 80px;
+}
+
+.saved-page-container {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.saved-page-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 36px;
+}
+
+.saved-page-heading-icon {
+  width: 58px;
+  height: 58px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 18px;
+
+  background: rgba(99, 102, 241, 0.1);
+  color: #4f46e5;
+}
+
+.saved-page-header h1 {
+  margin: 0;
+
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.1;
+}
+
+.saved-page-header p {
+  margin: 8px 0 0;
+
+  color: #64748b;
+  font-size: 1rem;
+}
+
+.saved-page-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+
+  margin-bottom: 22px;
+
+  color: #64748b;
+}
+
+.saved-page-summary strong {
+  color: #111827;
+  font-size: 1.15rem;
+}
+
+.saved-writings-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(300px, 1fr)
+    );
+
+  gap: 24px;
+}
+
+.saved-page-empty,
+.saved-page-status {
+  min-height: 320px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  padding: 42px 24px;
+
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 24px;
+
+  background: #ffffff;
+}
+
+.saved-page-empty svg,
+.saved-page-status svg {
+  color: #64748b;
+}
+
+.saved-page-empty h2,
+.saved-page-status h2 {
+  margin: 18px 0 8px;
+}
+
+.saved-page-empty p,
+.saved-page-status p {
+  max-width: 480px;
+
+  margin: 0;
+
+  color: #64748b;
+}
+
+.saved-page-refresh {
+  margin-top: 22px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 11px 18px;
+
+  border: 0;
+  border-radius: 12px;
+
+  background: #111827;
+  color: #ffffff;
+
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.saved-page-spinner {
+  animation: saved-page-spin 0.8s linear infinite;
+}
+
+@keyframes saved-page-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+
+  .saved-page {
+    padding:
+      30px 16px
+      60px;
+  }
+
+  .saved-page-header {
+    align-items: flex-start;
+  }
+
+  .saved-writings-grid {
+    grid-template-columns: 1fr;
+  }
+}

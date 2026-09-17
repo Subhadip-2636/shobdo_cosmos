@@ -34,6 +34,13 @@ import MyWritings from "./pages/MyWritings";
 
 
 // =========================================================
+// SAVED WRITINGS
+// =========================================================
+
+import Saved from "./pages/Saved";
+
+
+// =========================================================
 // NOTIFICATIONS
 // =========================================================
 
@@ -96,28 +103,46 @@ function PrivateRoute({
   children,
 }) {
 
+  // -------------------------------------------------------
+  // WAIT FOR AUTH CHECK
+  // -------------------------------------------------------
+
   if (authLoading) {
 
     return (
+
       <div className="app-route-loading">
+
         Loading...
+
       </div>
+
     );
 
   }
 
+
+  // -------------------------------------------------------
+  // NOT LOGGED IN
+  // -------------------------------------------------------
 
   if (!user) {
 
     return (
+
       <Navigate
         to="/login"
         replace
       />
+
     );
 
   }
 
+
+  // -------------------------------------------------------
+  // AUTHENTICATED
+  // -------------------------------------------------------
 
   return children;
 
@@ -137,13 +162,17 @@ function App() {
   const [
     user,
     setUser,
-  ] = useState(null);
+  ] = useState(
+    null
+  );
 
 
   const [
     authLoading,
     setAuthLoading,
-  ] = useState(true);
+  ] = useState(
+    true
+  );
 
 
   // =======================================================
@@ -153,13 +182,17 @@ function App() {
   const [
     writings,
     setWritings,
-  ] = useState([]);
+  ] = useState(
+    []
+  );
 
 
   const [
     writingsLoading,
     setWritingsLoading,
-  ] = useState(true);
+  ] = useState(
+    true
+  );
 
 
   // =======================================================
@@ -169,7 +202,9 @@ function App() {
   const [
     realtimeNotification,
     setRealtimeNotification,
-  ] = useState(null);
+  ] = useState(
+    null
+  );
 
 
   // =======================================================
@@ -194,7 +229,9 @@ function App() {
           return currentUser;
 
 
-        } catch (error) {
+        } catch (
+          error
+        ) {
 
           console.error(
             "CURRENT USER ERROR:",
@@ -254,7 +291,9 @@ function App() {
           );
 
 
-        } catch (error) {
+        } catch (
+          error
+        ) {
 
           console.error(
             "LOAD WRITINGS ERROR:",
@@ -306,40 +345,65 @@ function App() {
   useEffect(
     () => {
 
-      if (authLoading) {
+      // ---------------------------------------------------
+      // WAIT FOR AUTH
+      // ---------------------------------------------------
+
+      if (
+        authLoading
+      ) {
 
         return undefined;
 
       }
 
 
-      if (!user) {
+      // ---------------------------------------------------
+      // USER LOGGED OUT
+      // ---------------------------------------------------
+
+      if (
+        !user
+      ) {
 
         disconnectSocket();
+
 
         setRealtimeNotification(
           null
         );
 
+
         return undefined;
 
       }
 
+
+      // ---------------------------------------------------
+      // CONNECT SOCKET
+      // ---------------------------------------------------
 
       const socket =
         connectSocket();
 
 
-      if (!socket) {
+      if (
+        !socket
+      ) {
 
         console.warn(
           "SHOBDO SOCKET: No socket created."
         );
 
+
         return undefined;
 
       }
 
+
+      // ===================================================
+      // SOCKET CONNECTED
+      // ===================================================
 
       function handleConnect() {
 
@@ -350,6 +414,10 @@ function App() {
 
       }
 
+
+      // ===================================================
+      // SOCKET READY
+      // ===================================================
 
       function handleSocketReady(
         data
@@ -362,6 +430,10 @@ function App() {
 
       }
 
+
+      // ===================================================
+      // CONNECTION ERROR
+      // ===================================================
 
       function handleConnectError(
         error
@@ -376,6 +448,10 @@ function App() {
       }
 
 
+      // ===================================================
+      // DISCONNECTED
+      // ===================================================
+
       function handleDisconnect(
         reason
       ) {
@@ -388,6 +464,10 @@ function App() {
       }
 
 
+      // ===================================================
+      // NEW REAL-TIME NOTIFICATION
+      // ===================================================
+
       function handleNewNotification(
         notification
       ) {
@@ -398,10 +478,18 @@ function App() {
         );
 
 
+        // -------------------------------------------------
+        // SHOW TOAST
+        // -------------------------------------------------
+
         setRealtimeNotification(
           notification
         );
 
+
+        // -------------------------------------------------
+        // INFORM NAVBAR / NOTIFICATION PAGE
+        // -------------------------------------------------
 
         window.dispatchEvent(
           new CustomEvent(
@@ -416,6 +504,10 @@ function App() {
       }
 
 
+      // ===================================================
+      // SOCKET TEST RESPONSE
+      // ===================================================
+
       function handleSocketPong(
         data
       ) {
@@ -427,6 +519,10 @@ function App() {
 
       }
 
+
+      // ===================================================
+      // REGISTER EVENTS
+      // ===================================================
 
       socket.on(
         "connect",
@@ -464,7 +560,13 @@ function App() {
       );
 
 
-      if (socket.connected) {
+      // ---------------------------------------------------
+      // SOCKET MAY ALREADY BE CONNECTED
+      // ---------------------------------------------------
+
+      if (
+        socket.connected
+      ) {
 
         console.log(
           "SHOBDO SOCKET ALREADY CONNECTED:",
@@ -473,6 +575,10 @@ function App() {
 
       }
 
+
+      // ===================================================
+      // CLEANUP LISTENERS
+      // ===================================================
 
       return () => {
 
@@ -522,13 +628,15 @@ function App() {
 
 
   // =======================================================
-  // AUTO-HIDE NOTIFICATION
+  // AUTO-HIDE REAL-TIME NOTIFICATION
   // =======================================================
 
   useEffect(
     () => {
 
-      if (!realtimeNotification) {
+      if (
+        !realtimeNotification
+      ) {
 
         return undefined;
 
@@ -593,13 +701,24 @@ function App() {
 
     <BrowserRouter>
 
+
+      {/* =================================================
+          SCROLL TO TOP
+      ================================================== */}
+
       <ScrollToTop />
 
 
+      {/* =================================================
+          REAL-TIME NOTIFICATION TOAST
+      ================================================== */}
+
       <NotificationToast
+
         notification={
           realtimeNotification
         }
+
         onClose={
           () => {
 
@@ -609,20 +728,37 @@ function App() {
 
           }
         }
+
       />
 
 
+      {/* =================================================
+          APPLICATION SHELL
+      ================================================== */}
+
       <div className="app-shell">
 
+
+        {/* ===============================================
+            NAVBAR
+        ================================================ */}
+
         <Navbar
+
           user={
             user
           }
+
           setUser={
             setUser
           }
+
         />
 
+
+        {/* ===============================================
+            MAIN CONTENT
+        ================================================ */}
 
         <div className="app-content">
 
@@ -630,107 +766,176 @@ function App() {
 
 
             {/* =========================================
-                PUBLIC
+                PUBLIC — HOME
             ========================================== */}
 
             <Route
+
               path="/"
+
               element={
+
                 <Home
+
                   writings={
                     writings
                   }
+
                   loading={
                     writingsLoading
                   }
+
                 />
+
               }
-            />
 
-
-            <Route
-              path="/explore"
-              element={
-                <Explore />
-              }
-            />
-
-
-            <Route
-              path="/writings/:id"
-              element={
-                <WritingDetails />
-              }
-            />
-
-
-            <Route
-              path="/users/:id"
-              element={
-                <WriterProfile />
-              }
             />
 
 
             {/* =========================================
-                AUTH
+                PUBLIC — EXPLORE
             ========================================== */}
 
             <Route
+
+              path="/explore"
+
+              element={
+                <Explore />
+              }
+
+            />
+
+
+            {/* =========================================
+                PUBLIC — WRITING DETAILS
+            ========================================== */}
+
+            <Route
+
+              path="/writings/:id"
+
+              element={
+                <WritingDetails />
+              }
+
+            />
+
+
+            {/* =========================================
+                PUBLIC — WRITER PROFILE
+            ========================================== */}
+
+            <Route
+
+              path="/users/:id"
+
+              element={
+                <WriterProfile />
+              }
+
+            />
+
+
+            {/* =========================================
+                AUTH — LOGIN
+            ========================================== */}
+
+            <Route
+
               path="/login"
+
               element={
+
                 user
                   ? (
-                    <Navigate
-                      to="/"
-                      replace
-                    />
-                  )
+
+                      <Navigate
+                        to="/"
+                        replace
+                      />
+
+                    )
                   : (
-                    <Login
-                      onLogin={
-                        handleAuthSuccess
-                      }
-                    />
-                  )
+
+                      <Login
+
+                        onLogin={
+                          handleAuthSuccess
+                        }
+
+                      />
+
+                    )
+
               }
+
             />
 
 
+            {/* =========================================
+                AUTH — REGISTER
+            ========================================== */}
+
             <Route
+
               path="/register"
+
               element={
+
                 user
                   ? (
-                    <Navigate
-                      to="/"
-                      replace
-                    />
-                  )
+
+                      <Navigate
+                        to="/"
+                        replace
+                      />
+
+                    )
                   : (
-                    <Register
-                      onRegister={
-                        handleAuthSuccess
-                      }
-                    />
-                  )
+
+                      <Register
+
+                        onRegister={
+                          handleAuthSuccess
+                        }
+
+                      />
+
+                    )
+
               }
+
             />
 
 
+            {/* =========================================
+                AUTH — FORGOT PASSWORD
+            ========================================== */}
+
             <Route
+
               path="/forgot-password"
+
               element={
                 <ForgotPassword />
               }
+
             />
 
 
+            {/* =========================================
+                AUTH — RESET PASSWORD
+            ========================================== */}
+
             <Route
+
               path="/reset-password/:token"
+
               element={
                 <ResetPassword />
               }
+
             />
 
 
@@ -739,28 +944,39 @@ function App() {
             ========================================== */}
 
             <Route
+
               path="/write"
+
               element={
+
                 <PrivateRoute
+
                   user={
                     user
                   }
+
                   authLoading={
                     authLoading
                   }
+
                 >
 
                   <Write
+
                     user={
                       user
                     }
+
                     onWritingCreated={
                       handleWritingChanged
                     }
+
                   />
 
                 </PrivateRoute>
+
               }
+
             />
 
 
@@ -769,28 +985,39 @@ function App() {
             ========================================== */}
 
             <Route
+
               path="/write/:id"
+
               element={
+
                 <PrivateRoute
+
                   user={
                     user
                   }
+
                   authLoading={
                     authLoading
                   }
+
                 >
 
                   <Write
+
                     user={
                       user
                     }
+
                     onWritingCreated={
                       handleWritingChanged
                     }
+
                   />
 
                 </PrivateRoute>
+
               }
+
             />
 
 
@@ -799,21 +1026,60 @@ function App() {
             ========================================== */}
 
             <Route
+
               path="/my-writings"
+
               element={
+
                 <PrivateRoute
+
                   user={
                     user
                   }
+
                   authLoading={
                     authLoading
                   }
+
                 >
 
                   <MyWritings />
 
                 </PrivateRoute>
+
               }
+
+            />
+
+
+            {/* =========================================
+                PROTECTED — SAVED WRITINGS
+            ========================================== */}
+
+            <Route
+
+              path="/saved"
+
+              element={
+
+                <PrivateRoute
+
+                  user={
+                    user
+                  }
+
+                  authLoading={
+                    authLoading
+                  }
+
+                >
+
+                  <Saved />
+
+                </PrivateRoute>
+
+              }
+
             />
 
 
@@ -822,21 +1088,29 @@ function App() {
             ========================================== */}
 
             <Route
+
               path="/notifications"
+
               element={
+
                 <PrivateRoute
+
                   user={
                     user
                   }
+
                   authLoading={
                     authLoading
                   }
+
                 >
 
                   <Notifications />
 
                 </PrivateRoute>
+
               }
+
             />
 
 
@@ -845,64 +1119,99 @@ function App() {
             ========================================== */}
 
             <Route
+
               path="/profile/edit"
+
               element={
+
                 <PrivateRoute
+
                   user={
                     user
                   }
+
                   authLoading={
                     authLoading
                   }
+
                 >
 
                   <EditProfile
+
                     user={
                       user
                     }
+
                     onProfileUpdated={
                       loadCurrentUser
                     }
+
                   />
 
                 </PrivateRoute>
+
               }
+
             />
 
 
             {/* =========================================
-                INFORMATION / LEGAL
+                INFORMATION — ABOUT
             ========================================== */}
 
             <Route
+
               path="/about"
+
               element={
                 <About />
               }
+
             />
 
 
+            {/* =========================================
+                LEGAL — PRIVACY
+            ========================================== */}
+
             <Route
+
               path="/privacy"
+
               element={
                 <Privacy />
               }
+
             />
 
 
+            {/* =========================================
+                LEGAL — TERMS
+            ========================================== */}
+
             <Route
+
               path="/terms"
+
               element={
                 <Terms />
               }
+
             />
 
 
+            {/* =========================================
+                LEGAL — DATA DELETION
+            ========================================== */}
+
             <Route
+
               path="/data-deletion"
+
               element={
                 <DataDeletion />
               }
+
             />
 
 
@@ -911,21 +1220,32 @@ function App() {
             ========================================== */}
 
             <Route
+
               path="*"
+
               element={
+
                 <Navigate
                   to="/"
                   replace
                 />
+
               }
+
             />
+
 
           </Routes>
 
         </div>
 
 
+        {/* ===============================================
+            FOOTER
+        ================================================ */}
+
         <Footer />
+
 
       </div>
 
