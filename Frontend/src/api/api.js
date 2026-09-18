@@ -17,37 +17,30 @@ const TOKEN_KEY =
 // =========================================================
 
 export function getToken() {
-
   return localStorage.getItem(
     TOKEN_KEY
   );
-
 }
 
 
 export function saveToken(
   token
 ) {
-
   if (!token) {
     return;
   }
-
 
   localStorage.setItem(
     TOKEN_KEY,
     token
   );
-
 }
 
 
 export function removeToken() {
-
   localStorage.removeItem(
     TOKEN_KEY
   );
-
 }
 
 
@@ -69,27 +62,23 @@ function buildHeaders({
   };
 
 
+  // IMPORTANT:
   // Never manually set Content-Type for FormData.
   // The browser automatically adds the multipart boundary.
 
   if (!isFormData) {
-
     headers["Content-Type"] =
       "application/json";
-
   }
 
 
   if (token) {
-
     headers.Authorization =
       `Bearer ${token}`;
-
   }
 
 
   return headers;
-
 }
 
 
@@ -104,9 +93,7 @@ async function parseResponse(
   if (
     response.status === 204
   ) {
-
     return null;
-
   }
 
 
@@ -143,7 +130,6 @@ async function parseResponse(
                 responseText,
             }
           : {};
-
     }
 
   } catch {
@@ -177,12 +163,10 @@ async function parseResponse(
 
 
     throw error;
-
   }
 
 
   return data;
-
 }
 
 
@@ -218,7 +202,6 @@ async function apiRequest(
       JSON.stringify(
         body
       );
-
   }
 
 
@@ -254,16 +237,12 @@ async function apiRequest(
       error.name ===
       "AbortError"
     ) {
-
       throw error;
-
     }
 
 
-    // A fetch TypeError normally means:
-    // - backend unavailable
-    // - network problem
-    // - CORS problem
+    // Usually backend unavailable,
+    // network error, or CORS problem.
 
     if (
       error instanceof TypeError
@@ -272,14 +251,11 @@ async function apiRequest(
       throw new Error(
         "Backend server-এর সঙ্গে সংযোগ করা যাচ্ছে না। Backend চালু আছে কি না পরীক্ষা করুন।"
       );
-
     }
 
 
     throw error;
-
   }
-
 }
 
 
@@ -305,9 +281,7 @@ function createQueryString(
         value === null ||
         value === ""
       ) {
-
         return;
-
       }
 
 
@@ -317,7 +291,6 @@ function createQueryString(
           value
         )
       );
-
     }
   );
 
@@ -329,7 +302,6 @@ function createQueryString(
   return queryString
     ? `?${queryString}`
     : "";
-
 }
 
 
@@ -350,7 +322,6 @@ export async function getWritings(
   return apiRequest(
     `/api/writings${queryString}`
   );
-
 }
 
 
@@ -363,18 +334,15 @@ export async function getWriting(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
   return apiRequest(
     `/api/writings/${writingId}`
   );
-
 }
 
 
@@ -403,13 +371,11 @@ export async function getMyWritings(
   return apiRequest(
     `/api/writings/mine${queryString}`
   );
-
 }
 
 
 // =========================================================
 // CREATE DRAFT
-// POST /api/writings/drafts
 // =========================================================
 
 export async function createDraft({
@@ -432,7 +398,6 @@ export async function createDraft({
       },
     }
   );
-
 }
 
 
@@ -445,11 +410,9 @@ export async function createWriting(
 ) {
 
   if (!writingData) {
-
     throw new Error(
       "Writing data is required."
     );
-
   }
 
 
@@ -480,11 +443,9 @@ export async function createWriting(
 
         is_published:
           writingData.is_published,
-
       },
     }
   );
-
 }
 
 
@@ -498,20 +459,16 @@ export async function updateWriting(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
   if (!writingData) {
-
     throw new Error(
       "Writing data is required."
     );
-
   }
 
 
@@ -519,12 +476,10 @@ export async function updateWriting(
     `/api/writings/${writingId}`,
     {
       method: "PATCH",
-
       body:
         writingData,
     }
   );
-
 }
 
 
@@ -537,11 +492,9 @@ export async function deleteWriting(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
@@ -551,12 +504,11 @@ export async function deleteWriting(
       method: "DELETE",
     }
   );
-
 }
 
 
 // =========================================================
-// RESTORE WRITING FROM TRASH
+// RESTORE WRITING
 // =========================================================
 
 export async function restoreWriting(
@@ -564,11 +516,9 @@ export async function restoreWriting(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
@@ -578,7 +528,6 @@ export async function restoreWriting(
       method: "POST",
     }
   );
-
 }
 
 
@@ -591,11 +540,9 @@ export async function permanentlyDeleteWriting(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
@@ -605,7 +552,6 @@ export async function permanentlyDeleteWriting(
       method: "DELETE",
     }
   );
-
 }
 
 
@@ -618,11 +564,9 @@ export async function publishWriting(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
@@ -632,7 +576,6 @@ export async function publishWriting(
       method: "POST",
     }
   );
-
 }
 
 
@@ -645,11 +588,9 @@ export async function unpublishWriting(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
@@ -659,12 +600,11 @@ export async function unpublishWriting(
       method: "POST",
     }
   );
-
 }
 
 
 // =========================================================
-// LIKE / UNLIKE WRITING
+// LIKE WRITING
 // =========================================================
 
 export async function likeWriting(
@@ -672,11 +612,9 @@ export async function likeWriting(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
@@ -686,7 +624,6 @@ export async function likeWriting(
       method: "POST",
     }
   );
-
 }
 
 
@@ -699,21 +636,18 @@ export async function unlikeWriting(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
-  // Backend currently uses the same endpoint
-  // to toggle like/unlike.
+  // Backend currently uses
+  // the same endpoint as a toggle.
 
   return likeWriting(
     writingId
   );
-
 }
 
 
@@ -734,11 +668,9 @@ export async function getWritingLikes(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
@@ -757,7 +689,6 @@ export async function getWritingLikes(
 
 
   return {
-
     likes:
       likesCount,
 
@@ -769,9 +700,7 @@ export async function getWritingLikes(
 
     total:
       likesCount,
-
   };
-
 }
 
 
@@ -784,11 +713,9 @@ export async function getMyLikeStatus(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
@@ -807,14 +734,11 @@ export async function getMyLikeStatus(
 
 
   return {
-
     liked,
 
     is_liked:
       liked,
-
   };
-
 }
 
 
@@ -825,17 +749,6 @@ export async function getMyLikeStatus(
 
 // =========================================================
 // GET COMMENTS FOR WRITING
-//
-// GET
-// /api/comments/writing/<writing_id>
-//
-// Returns:
-// {
-//   success: true,
-//   comments: [...],
-//   count: ...,
-//   total_comments: ...
-// }
 // =========================================================
 
 export async function getComments(
@@ -843,39 +756,20 @@ export async function getComments(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
   return apiRequest(
     `/api/comments/writing/${writingId}`
   );
-
 }
 
 
 // =========================================================
 // CREATE COMMENT OR REPLY
-//
-// POST
-// /api/comments/writing/<writing_id>
-//
-// NORMAL COMMENT:
-// createComment(
-//   writingId,
-//   "Beautiful writing"
-// )
-//
-// REPLY:
-// createComment(
-//   writingId,
-//   "Thank you",
-//   parentCommentId
-// )
 // =========================================================
 
 export async function createComment(
@@ -885,11 +779,9 @@ export async function createComment(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
@@ -902,25 +794,17 @@ export async function createComment(
 
 
   if (!commentContent) {
-
     throw new Error(
       "Comment cannot be empty."
     );
-
   }
 
 
   const body = {
-
     content:
       commentContent,
-
   };
 
-
-  // -------------------------------------------------------
-  // REPLY
-  // -------------------------------------------------------
 
   if (
     parentId !== null &&
@@ -944,13 +828,11 @@ export async function createComment(
       throw new Error(
         "Valid parent comment ID is required."
       );
-
     }
 
 
     body.parent_id =
       normalizedParentId;
-
   }
 
 
@@ -961,14 +843,11 @@ export async function createComment(
       body,
     }
   );
-
 }
 
 
 // =========================================================
 // ADD NORMAL COMMENT
-//
-// Compatibility helper for existing components.
 // =========================================================
 
 export async function addComment(
@@ -981,7 +860,6 @@ export async function addComment(
     content,
     null
   );
-
 }
 
 
@@ -996,20 +874,16 @@ export async function replyToComment(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
   if (!parentCommentId) {
-
     throw new Error(
       "Parent comment ID is required."
     );
-
   }
 
 
@@ -1018,19 +892,11 @@ export async function replyToComment(
     content,
     parentCommentId
   );
-
 }
 
 
 // =========================================================
 // UPDATE COMMENT
-//
-// PATCH
-// /api/comments/<comment_id>
-//
-// {
-//   content: "..."
-// }
 // =========================================================
 
 export async function updateComment(
@@ -1039,11 +905,9 @@ export async function updateComment(
 ) {
 
   if (!commentId) {
-
     throw new Error(
       "Comment ID is required."
     );
-
   }
 
 
@@ -1054,11 +918,9 @@ export async function updateComment(
 
 
   if (!normalizedContent) {
-
     throw new Error(
       "Comment cannot be empty."
     );
-
   }
 
 
@@ -1073,15 +935,11 @@ export async function updateComment(
       },
     }
   );
-
 }
 
 
 // =========================================================
 // DELETE COMMENT
-//
-// DELETE
-// /api/comments/<comment_id>
 // =========================================================
 
 export async function deleteComment(
@@ -1089,11 +947,9 @@ export async function deleteComment(
 ) {
 
   if (!commentId) {
-
     throw new Error(
       "Comment ID is required."
     );
-
   }
 
 
@@ -1103,7 +959,6 @@ export async function deleteComment(
       method: "DELETE",
     }
   );
-
 }
 
 
@@ -1122,7 +977,6 @@ function validateOcrFile(
     throw new Error(
       "Please select a valid PDF, JPG or PNG file."
     );
-
   }
 
 
@@ -1138,7 +992,6 @@ function validateOcrFile(
     throw new Error(
       "File size cannot exceed 10 MB."
     );
-
   }
 
 
@@ -1149,33 +1002,22 @@ function validateOcrFile(
     throw new Error(
       "The selected file is empty."
     );
-
   }
 
 
   const allowedTypes = [
-
     "application/pdf",
-
     "image/jpeg",
-
     "image/jpg",
-
     "image/png",
-
   ];
 
 
   const allowedExtensions = [
-
     "pdf",
-
     "jpg",
-
     "jpeg",
-
     "png",
-
   ];
 
 
@@ -1206,9 +1048,7 @@ function validateOcrFile(
     throw new Error(
       "Only PDF, JPG, JPEG and PNG files are supported."
     );
-
   }
-
 }
 
 
@@ -1227,13 +1067,9 @@ export async function extractScannedText(
 
 
   const supportedLanguages = [
-
     "bn",
-
     "en",
-
     "hi",
-
   ];
 
 
@@ -1273,7 +1109,6 @@ export async function extractScannedText(
         true,
     }
   );
-
 }
 
 
@@ -1294,11 +1129,9 @@ export const extractTextFromFile =
 // =========================================================
 
 export async function checkApiHealth() {
-
   return apiRequest(
     "/api/health"
   );
-
 }
 
 
@@ -1326,20 +1159,17 @@ function validateUserId(
     throw new Error(
       "Valid user ID is required."
     );
-
   }
 
 
   return id;
-
 }
 
 
 // =========================================================
 // UPDATE CURRENT USER PROFILE
 //
-// PATCH
-// /api/users/me/profile
+// PATCH /api/users/me/profile
 // =========================================================
 
 export async function updateMyProfile(
@@ -1358,7 +1188,6 @@ export async function updateMyProfile(
     throw new Error(
       "Invalid profile data."
     );
-
   }
 
 
@@ -1371,15 +1200,178 @@ export async function updateMyProfile(
         profileData,
     }
   );
-
 }
+
+
+// =========================================================
+// PROFILE AVATAR VALIDATION
+// =========================================================
+
+export function validateProfileAvatar(
+  file
+) {
+
+  if (
+    !(file instanceof File)
+  ) {
+
+    throw new Error(
+      "Please select a valid profile image."
+    );
+  }
+
+
+  const maximumFileSize =
+    5 * 1024 * 1024;
+
+
+  if (
+    file.size === 0
+  ) {
+
+    throw new Error(
+      "The selected image is empty."
+    );
+  }
+
+
+  if (
+    file.size >
+    maximumFileSize
+  ) {
+
+    throw new Error(
+      "Profile image cannot exceed 5 MB."
+    );
+  }
+
+
+  const allowedTypes = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/webp",
+  ];
+
+
+  const allowedExtensions = [
+    "jpg",
+    "jpeg",
+    "png",
+    "webp",
+  ];
+
+
+  const fileExtension =
+    file.name
+      ?.split(".")
+      .pop()
+      ?.toLowerCase();
+
+
+  const validMimeType =
+    allowedTypes.includes(
+      file.type
+    );
+
+
+  const validExtension =
+    allowedExtensions.includes(
+      fileExtension
+    );
+
+
+  if (
+    !validMimeType &&
+    !validExtension
+  ) {
+
+    throw new Error(
+      "Only JPG, JPEG, PNG and WEBP profile images are supported."
+    );
+  }
+
+
+  return true;
+}
+
+
+// =========================================================
+// UPLOAD CURRENT USER PROFILE AVATAR
+//
+// POST /api/users/me/avatar
+//
+// multipart/form-data
+// field: avatar
+// =========================================================
+
+export async function uploadMyProfileAvatar(
+  file
+) {
+
+  validateProfileAvatar(
+    file
+  );
+
+
+  const formData =
+    new FormData();
+
+
+  formData.append(
+    "avatar",
+    file
+  );
+
+
+  return apiRequest(
+    "/api/users/me/avatar",
+    {
+      method: "POST",
+
+      body:
+        formData,
+
+      isFormData:
+        true,
+    }
+  );
+}
+
+
+// =========================================================
+// REMOVE CURRENT USER PROFILE AVATAR
+//
+// DELETE /api/users/me/avatar
+// =========================================================
+
+export async function removeMyProfileAvatar() {
+
+  return apiRequest(
+    "/api/users/me/avatar",
+    {
+      method: "DELETE",
+    }
+  );
+}
+
+
+// =========================================================
+// PROFILE AVATAR COMPATIBILITY EXPORTS
+// =========================================================
+
+export const uploadProfileAvatar =
+  uploadMyProfileAvatar;
+
+
+export const removeProfileAvatar =
+  removeMyProfileAvatar;
 
 
 // =========================================================
 // GET PUBLIC WRITER PROFILE
 //
-// GET
-// /api/users/<user_id>
+// GET /api/users/<user_id>
 // =========================================================
 
 export async function getWriterProfile(
@@ -1395,15 +1387,13 @@ export async function getWriterProfile(
   return apiRequest(
     `/api/users/${id}`
   );
-
 }
 
 
 // =========================================================
 // GET WRITER WRITINGS
 //
-// GET
-// /api/users/<user_id>/writings
+// GET /api/users/<user_id>/writings
 // =========================================================
 
 export async function getWriterWritings(
@@ -1419,15 +1409,13 @@ export async function getWriterWritings(
   return apiRequest(
     `/api/users/${id}/writings`
   );
-
 }
 
 
 // =========================================================
 // GET FOLLOW STATUS
 //
-// GET
-// /api/users/<user_id>/follow-status
+// GET /api/users/<user_id>/follow-status
 // =========================================================
 
 export async function getFollowStatus(
@@ -1443,15 +1431,13 @@ export async function getFollowStatus(
   return apiRequest(
     `/api/users/${id}/follow-status`
   );
-
 }
 
 
 // =========================================================
 // FOLLOW USER
 //
-// POST
-// /api/users/<user_id>/follow
+// POST /api/users/<user_id>/follow
 // =========================================================
 
 export async function followUser(
@@ -1470,15 +1456,13 @@ export async function followUser(
       method: "POST",
     }
   );
-
 }
 
 
 // =========================================================
 // UNFOLLOW USER
 //
-// DELETE
-// /api/users/<user_id>/follow
+// DELETE /api/users/<user_id>/follow
 // =========================================================
 
 export async function unfollowUser(
@@ -1497,15 +1481,13 @@ export async function unfollowUser(
       method: "DELETE",
     }
   );
-
 }
 
 
 // =========================================================
 // GET FOLLOWING FEED
 //
-// GET
-// /api/users/me/following-feed
+// GET /api/users/me/following-feed
 // =========================================================
 
 export async function getFollowingFeed({
@@ -1515,26 +1497,21 @@ export async function getFollowingFeed({
 
   const queryString =
     createQueryString({
-
       page,
-
       limit,
-
     });
 
 
   return apiRequest(
     `/api/users/me/following-feed${queryString}`
   );
-
 }
 
 
 // =========================================================
 // GET USER FOLLOWERS
 //
-// GET
-// /api/users/<user_id>/followers
+// GET /api/users/<user_id>/followers
 // =========================================================
 
 export async function getUserFollowers(
@@ -1553,26 +1530,21 @@ export async function getUserFollowers(
 
   const queryString =
     createQueryString({
-
       page,
-
       limit,
-
     });
 
 
   return apiRequest(
     `/api/users/${id}/followers${queryString}`
   );
-
 }
 
 
 // =========================================================
-// GET USERS BEING FOLLOWED
+// GET USER FOLLOWING
 //
-// GET
-// /api/users/<user_id>/following
+// GET /api/users/<user_id>/following
 // =========================================================
 
 export async function getUserFollowing(
@@ -1591,26 +1563,21 @@ export async function getUserFollowing(
 
   const queryString =
     createQueryString({
-
       page,
-
       limit,
-
     });
 
 
   return apiRequest(
     `/api/users/${id}/following${queryString}`
   );
-
 }
 
 
 // =========================================================
 // SAVE / BOOKMARK WRITING
 //
-// POST
-// /api/saved/writing/<writing_id>
+// POST /api/saved/writing/<writing_id>
 // =========================================================
 
 export async function saveWriting(
@@ -1618,11 +1585,9 @@ export async function saveWriting(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
@@ -1632,15 +1597,13 @@ export async function saveWriting(
       method: "POST",
     }
   );
-
 }
 
 
 // =========================================================
 // UNSAVE WRITING
 //
-// DELETE
-// /api/saved/writing/<writing_id>
+// DELETE /api/saved/writing/<writing_id>
 // =========================================================
 
 export async function unsaveWriting(
@@ -1648,11 +1611,9 @@ export async function unsaveWriting(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
@@ -1662,15 +1623,13 @@ export async function unsaveWriting(
       method: "DELETE",
     }
   );
-
 }
 
 
 // =========================================================
 // GET SAVED STATUS
 //
-// GET
-// /api/saved/writing/<writing_id>/status
+// GET /api/saved/writing/<writing_id>/status
 // =========================================================
 
 export async function getSavedWritingStatus(
@@ -1678,26 +1637,22 @@ export async function getSavedWritingStatus(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
   return apiRequest(
     `/api/saved/writing/${writingId}/status`
   );
-
 }
 
 
 // =========================================================
 // GET CURRENT USER SAVED WRITINGS
 //
-// GET
-// /api/saved
+// GET /api/saved
 // =========================================================
 
 export async function getSavedWritings({
@@ -1707,19 +1662,16 @@ export async function getSavedWritings({
 
   const queryString =
     createQueryString({
-
       page,
 
       per_page:
         perPage,
-
     });
 
 
   return apiRequest(
     `/api/saved${queryString}`
   );
-
 }
 
 
@@ -1733,11 +1685,9 @@ export async function toggleSavedWriting(
 ) {
 
   if (!writingId) {
-
     throw new Error(
       "Writing ID is required."
     );
-
   }
 
 
@@ -1748,14 +1698,12 @@ export async function toggleSavedWriting(
     return unsaveWriting(
       writingId
     );
-
   }
 
 
   return saveWriting(
     writingId
   );
-
 }
 
 
@@ -1871,6 +1819,16 @@ const writingApi = {
 
   updateMyProfile,
 
+  validateProfileAvatar,
+
+  uploadMyProfileAvatar,
+
+  removeMyProfileAvatar,
+
+  uploadProfileAvatar,
+
+  removeProfileAvatar,
+
   getWriterProfile,
 
   getWriterWritings,
@@ -1898,7 +1856,6 @@ const writingApi = {
   // -------------------------------------------------------
 
   checkApiHealth,
-
 };
 
 

@@ -21,6 +21,10 @@ from services.notification_service import (
     emit_notification,
 )
 
+from services.profile_image_storage import (
+    upload_profile_avatar,
+    delete_profile_avatar,
+)
 
 # ============================================================
 # BLUEPRINT
@@ -501,8 +505,388 @@ def update_my_profile():
             "Profile updated successfully.",
 
         "user":
-            user.to_dict(),
+            public_user_dict(
+                user
+            ),
     }), 200
+
+
+# ============================================================
+# UPLOAD MY PROFILE IMAGE
+#
+# POST /api/users/me/avatar
+#
+# multipart/form-data
+# field name: avatar
+# ============================================================
+
+@user_bp.route(
+    "/me/avatar",
+    methods=["POST"],
+)
+@jwt_required()
+def upload_my_avatar():
+
+    # --------------------------------------------------------
+    # AUTHENTICATED USER
+    # --------------------------------------------------------
+
+    current_user_id = (
+        get_current_user_id()
+    )
+
+    if current_user_id is None:
+
+        return jsonify({
+            "message":
+                "Invalid authentication identity."
+        }), 401
+
+
+    user = (
+        get_active_user(
+            current_user_id
+        )
+    )
+
+    if not user:
+
+        return jsonify({
+            "message":
+                "Authenticated user not found."
+        }), 404
+
+
+    # --------------------------------------------------------
+    # UPLOADED FILE
+    # --------------------------------------------------------
+
+    avatar = (
+        request.files.get(
+            "avatar"
+        )
+    )
+
+    if avatar is None:
+
+        return jsonify({
+            "message":
+                "Profile image is required."
+        }), 400
+
+
+    # Empty browser file selection.
+    if not (
+        avatar.filename
+        or ""
+    ).strip():
+
+        return jsonify({
+            "message":
+                "Please select a profile image."
+        }), 400
+
+
+    try:
+
+        file_bytes = (
+            avatar.read()
+        )
+
+    except Exception as error:
+
+        print(
+            "AVATAR FILE READ ERROR:",
+            error,
+        )
+
+        return jsonify({
+            "message":
+                "Unable to read profile image."
+        }), 400
+
+
+    # --------------------------------------------------------
+    # CLOUDINARY UPLOAD
+    # --------------------------------------------------------
+
+    try:
+
+        upload_result = (
+            upload_profile_avatar(
+                user_id=
+                    user.id,
+
+                file_bytes=
+                    file_bytes,
+
+                content_type=
+                    avatar.mimetype,
+            )
+        )
+
+    except ValueError as error:
+
+        return jsonify({
+            "message":
+                str(
+                    error
+                )
+        }), 400
+
+    except RuntimeError as error:
+
+        print(
+            "AVATAR STORAGE ERROR:",
+            error,
+        )
+
+        return jsonify({
+            "message":
+                "Unable to upload profile image."
+        }), 500
+
+    except Exception as error:
+
+        print(
+            "UNEXPECTED AVATAR UPLOAD ERROR:",
+            repr(
+                error
+            ),
+        )
+
+        return jsonify({
+            "message":
+                "Unable to upload profile image."
+        }), 500
+
+
+    avatar_url = (
+        str(
+            upload_result.get(
+                "avatar_url"
+            )
+            or ""
+        )
+        .strip()
+    )
+
+
+    if not avatar_url:
+
+        return jsonify({
+            "message":
+                "Profile image upload returned no image URL."
+        }), 500
+
+
+    # --------------------------------------------------------
+    # SAVE URL TO USER
+    # --------------------------------------------------------
+
+    user.avatar_url = (
+        avatar_url
+    )
+
+
+    try:
+
+        db.session.commit()
+
+    except Exception as error:
+
+        db.session.rollback()
+
+        print(
+            "AVATAR DATABASE ERROR:",
+            error,
+        )
+
+        return jsonify({
+            "message":
+                "Profile image uploaded, but the profile could not be updated."
+        }), 500
+
+
+    # --------------------------------------------------------
+    # RESPONSE
+    # --------------------------------------------------------
+
+    return jsonify({
+        "message":
+            "Profile image updated successfully.",
+
+        "avatar_url":
+            user.avatar_url,
+
+        "user":
+            public_user_dict(
+                user
+            ),
+    }), 200
+
+
+# ============================================================
+# REMOVE MY PROFILE IMAGE
+#
+# DELETE /api/users/me/avatar
+# ============================================================
+
+@user_bp.route(
+    "/me/avatar",
+    methods=["DELETE"],
+)
+@jwt_required()
+def remove_my_avatar():
+
+    # --------------------------------------------------------
+    # AUTHENTICATED USER
+    # --------------------------------------------------------
+
+    current_user_id = (
+        get_current_user_id()
+    )
+
+    if current_user_id is None:
+
+        return jsonify({
+            "message":
+                "Invalid authentication identity."
+        }), 401
+
+
+    user = (
+        get_active_user(
+            current_user_id
+        )
+    )
+
+    if not user:
+
+        return jsonify({
+            "message":
+                "Authenticated user not found."
+        }), 404
+
+
+    # --------------------------------------------------------
+    # ALREADY EMPTY
+    # --------------------------------------------------------
+
+    if not (
+        user.avatar_url
+        or ""
+    ).strip():
+
+        return jsonify({
+            "message":
+                "Profile image is already removed.",
+
+            "avatar_url":
+                None,
+
+            "user":
+                public_user_dict(
+                    user
+                ),
+        }), 200
+
+
+    # --------------------------------------------------------
+    # CLEAR DATABASE FIRST
+    # --------------------------------------------------------
+    #
+    # The database is the source of truth for the profile.
+    # Cloudinary cleanup happens immediately afterwards.
+    #
+    # If Cloudinary cleanup fails, the user still no longer
+    # exposes the old image URL. A later upload reuses the
+    # deterministic public ID and overwrites the old asset.
+    # --------------------------------------------------------
+
+    previous_avatar_url = (
+        user.avatar_url
+    )
+
+    user.avatar_url = None
+
+
+    try:
+
+        db.session.commit()
+
+    except Exception as error:
+
+        db.session.rollback()
+
+        print(
+            "REMOVE AVATAR DATABASE ERROR:",
+            error,
+        )
+
+        return jsonify({
+            "message":
+                "Unable to update profile."
+        }), 500
+
+
+    # --------------------------------------------------------
+    # CLOUDINARY CLEANUP
+    # --------------------------------------------------------
+
+    storage_cleanup_succeeded = True
+
+
+    try:
+
+        delete_profile_avatar(
+            user.id
+        )
+
+    except Exception as error:
+
+        storage_cleanup_succeeded = False
+
+        print(
+            "REMOVE AVATAR STORAGE ERROR:",
+            repr(
+                error
+            ),
+        )
+
+
+    # --------------------------------------------------------
+    # RESPONSE
+    # --------------------------------------------------------
+
+    response = {
+        "message":
+            "Profile image removed successfully.",
+
+        "avatar_url":
+            None,
+
+        "user":
+            public_user_dict(
+                user
+            ),
+
+        "storage_cleanup_succeeded":
+            storage_cleanup_succeeded,
+    }
+
+
+    if not storage_cleanup_succeeded:
+
+        response["message"] = (
+            "Profile image removed from your SHOBDO profile. "
+            "Storage cleanup will be retried by a later replacement."
+        )
+
+
+    return jsonify(
+        response
+    ), 200
 
 
 # ============================================================
