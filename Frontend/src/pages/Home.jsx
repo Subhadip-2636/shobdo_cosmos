@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -36,6 +37,8 @@ import {
   useLanguage,
 } from "../Language/LanguageContext";
 
+import "./HomeAnimations.css";
+
 
 // =========================================================
 // CONSTANTS
@@ -43,139 +46,83 @@ import {
 
 const FEED_PAGE_SIZE = 12;
 
+const FEED_TYPES = {
+  FOR_YOU: "for-you",
+  FOLLOWING: "following",
+  LATEST: "latest",
+};
+
 
 // =========================================================
 // CLASSIC PUBLIC-DOMAIN QUOTES
 // =========================================================
 
 const LITERARY_QUOTES = [
-
   {
     quote:
       "To thine own self be true.",
-
     author:
       "William Shakespeare",
-
     source:
       "Hamlet",
   },
-
   {
     quote:
       "There is no charm equal to tenderness of heart.",
-
     author:
       "Jane Austen",
-
     source:
       "Emma",
   },
-
   {
     quote:
       "I am no bird; and no net ensnares me.",
-
     author:
       "Charlotte Brontë",
-
     source:
       "Jane Eyre",
   },
-
   {
     quote:
       "Forever is composed of nows.",
-
     author:
       "Emily Dickinson",
-
     source:
       "Poem 690",
   },
-
 ];
 
 
 // =========================================================
-// DATABASE CATEGORY VALUES
+// CATEGORIES
 // =========================================================
 
 const CATEGORIES = [
-
   {
-    value:
-      "কবিতা",
-
-    translationKey:
-      "categories.poetry",
-
-    symbol:
-      "✦",
-
-    number:
-      "01",
+    value: "কবিতা",
+    translationKey: "categories.poetry",
+    symbol: "✦",
+    number: "01",
   },
-
   {
-    value:
-      "গল্প",
-
-    translationKey:
-      "categories.story",
-
-    symbol:
-      "◈",
-
-    number:
-      "02",
+    value: "গল্প",
+    translationKey: "categories.story",
+    symbol: "◈",
+    number: "02",
   },
-
   {
-    value:
-      "অনুভূতি",
-
-    translationKey:
-      "categories.reflection",
-
-    symbol:
-      "●",
-
-    number:
-      "03",
+    value: "অনুভূতি",
+    translationKey: "categories.reflection",
+    symbol: "●",
+    number: "03",
   },
-
   {
-    value:
-      "প্রবন্ধ",
-
-    translationKey:
-      "categories.essay",
-
-    symbol:
-      "◇",
-
-    number:
-      "04",
+    value: "প্রবন্ধ",
+    translationKey: "categories.essay",
+    symbol: "◇",
+    number: "04",
   },
-
 ];
-
-
-// =========================================================
-// FEED TABS
-// =========================================================
-
-const FEED_TYPES = {
-  FOR_YOU:
-    "for-you",
-
-  FOLLOWING:
-    "following",
-
-  LATEST:
-    "latest",
-};
 
 
 // =========================================================
@@ -191,7 +138,6 @@ function safeNumber(
       value
     );
 
-
   return Number.isFinite(
     number
   )
@@ -204,8 +150,6 @@ function safeNumber(
 
 
 // =========================================================
-// DATE VALUE
-// =========================================================
 
 function getWritingTimestamp(
   writing
@@ -216,19 +160,14 @@ function getWritingTimestamp(
     writing?.created_at ||
     writing?.updated_at;
 
-
   if (!value) {
-
     return 0;
-
   }
-
 
   const timestamp =
     new Date(
       value
     ).getTime();
-
 
   return Number.isFinite(
     timestamp
@@ -239,14 +178,7 @@ function getWritingTimestamp(
 
 
 // =========================================================
-// TEMPORARY "FOR YOU" RELEVANCE SCORE
-//
-// Until SHOBDO gets a dedicated personalized recommendation
-// endpoint, public posts are ranked using engagement +
-// freshness.
-//
-// This keeps For You different from Latest without pretending
-// that the backend already has a full recommendation engine.
+// TEMPORARY FOR-YOU RANKING
 // =========================================================
 
 function getRecommendationScore(
@@ -259,22 +191,17 @@ function getRecommendationScore(
       writing?.likes
     );
 
-
   const comments =
     safeNumber(
       writing?.comments_count
     );
-
 
   const timestamp =
     getWritingTimestamp(
       writing
     );
 
-
-  let freshnessScore =
-    0;
-
+  let freshnessScore = 0;
 
   if (timestamp > 0) {
 
@@ -292,16 +219,12 @@ function getRecommendationScore(
         )
       );
 
-
-    // Recent activity gets a modest ranking bonus.
     freshnessScore =
       Math.max(
         0,
         168 - ageHours
       ) / 24;
-
   }
-
 
   return (
     likes * 2
@@ -313,8 +236,6 @@ function getRecommendationScore(
 }
 
 
-// =========================================================
-// SORT FEED
 // =========================================================
 
 function sortFeedItems(
@@ -329,7 +250,6 @@ function sortFeedItems(
       ? [...items]
       : [];
 
-
   if (
     feedType ===
     FEED_TYPES.FOR_YOU
@@ -341,7 +261,7 @@ function sortFeedItems(
         second
       ) => {
 
-        const scoreDifference =
+        const difference =
           getRecommendationScore(
             second
           )
@@ -350,15 +270,11 @@ function sortFeedItems(
             first
           );
 
-
         if (
-          scoreDifference !== 0
+          difference !== 0
         ) {
-
-          return scoreDifference;
-
+          return difference;
         }
-
 
         return (
           getWritingTimestamp(
@@ -369,12 +285,9 @@ function sortFeedItems(
             first
           )
         );
-
       }
     );
-
   }
-
 
   if (
     feedType ===
@@ -394,18 +307,12 @@ function sortFeedItems(
           first
         )
     );
-
   }
-
-
-  // Following feed keeps backend ordering.
 
   return safeItems;
 }
 
 
-// =========================================================
-// EXTRACT WRITINGS FROM API RESPONSE
 // =========================================================
 
 function extractFeedItems(
@@ -417,51 +324,37 @@ function extractFeedItems(
       response?.writings
     )
   ) {
-
     return response.writings;
-
   }
-
 
   if (
     Array.isArray(
       response?.items
     )
   ) {
-
     return response.items;
-
   }
-
 
   if (
     Array.isArray(
       response?.feed
     )
   ) {
-
     return response.feed;
-
   }
-
 
   if (
     Array.isArray(
       response
     )
   ) {
-
     return response;
-
   }
-
 
   return [];
 }
 
 
-// =========================================================
-// REMOVE DUPLICATE WRITINGS
 // =========================================================
 
 function mergeUniqueWritings(
@@ -477,7 +370,6 @@ function mergeUniqueWritings(
         ? existing
         : []
     ),
-
     ...(
       Array.isArray(
         incoming
@@ -487,11 +379,8 @@ function mergeUniqueWritings(
     ),
   ];
 
-
   return Array.from(
-
     new Map(
-
       combined
         .filter(
           (
@@ -503,18 +392,13 @@ function mergeUniqueWritings(
           (
             writing
           ) => [
-
             Number(
               writing.id
             ),
-
             writing,
-
           ]
         )
-
     ).values()
-
   );
 }
 
@@ -532,6 +416,16 @@ function Home({
     t,
     language,
   } = useLanguage();
+
+  const homeRef =
+    useRef(
+      null
+    );
+
+  const feedRequestIdRef =
+    useRef(
+      0
+    );
 
 
   // =======================================================
@@ -552,46 +446,33 @@ function Home({
           key
         );
 
-
       if (
         translated &&
         translated !== key
       ) {
-
         return translated;
-
       }
 
     } catch {
-
-      // Use fallback below.
-
+      // Fallback below.
     }
-
 
     if (
       language === "bn"
     ) {
-
       return fallbackBn;
-
     }
-
 
     if (
       language === "hi"
     ) {
-
       return (
         fallbackHi ||
         fallbackEn
       );
-
     }
 
-
     return fallbackEn;
-
   }
 
 
@@ -735,7 +616,6 @@ function Home({
         "Explore",
         "एक्सप्लोर"
       ),
-
   };
 
 
@@ -762,14 +642,12 @@ function Home({
     FEED_TYPES.FOR_YOU
   );
 
-
   const [
     feedWritings,
     setFeedWritings,
   ] = useState(
     []
   );
-
 
   const [
     feedLoading,
@@ -778,14 +656,12 @@ function Home({
     true
   );
 
-
   const [
     loadingMore,
     setLoadingMore,
   ] = useState(
     false
   );
-
 
   const [
     feedError,
@@ -794,14 +670,12 @@ function Home({
     ""
   );
 
-
   const [
     feedPage,
     setFeedPage,
   ] = useState(
     1
   );
-
 
   const [
     feedTotal,
@@ -810,14 +684,12 @@ function Home({
     0
   );
 
-
   const [
     feedHasNext,
     setFeedHasNext,
   ] = useState(
     false
   );
-
 
   const [
     followingRequiresLogin,
@@ -828,15 +700,150 @@ function Home({
 
 
   // =======================================================
+  // SCROLL REVEAL
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      const root =
+        homeRef.current;
+
+      if (!root) {
+        return undefined;
+      }
+
+      const elements =
+        Array.from(
+          root.querySelectorAll(
+            "[data-home-reveal]"
+          )
+        );
+
+      if (
+        elements.length === 0
+      ) {
+        return undefined;
+      }
+
+      const reducedMotion =
+        window.matchMedia?.(
+          "(prefers-reduced-motion: reduce)"
+        )?.matches;
+
+      if (
+        reducedMotion ||
+        !(
+          "IntersectionObserver"
+          in window
+        )
+      ) {
+
+        elements.forEach(
+          (
+            element
+          ) => {
+            element.classList.add(
+              "is-visible"
+            );
+          }
+        );
+
+        return undefined;
+      }
+
+      const observer =
+        new IntersectionObserver(
+          (
+            entries
+          ) => {
+
+            entries.forEach(
+              (
+                entry
+              ) => {
+
+                if (
+                  entry.isIntersecting
+                ) {
+
+                  entry.target.classList.add(
+                    "is-visible"
+                  );
+
+                  observer.unobserve(
+                    entry.target
+                  );
+                }
+              }
+            );
+          },
+          {
+            threshold: 0.12,
+            rootMargin:
+              "0px 0px -55px 0px",
+          }
+        );
+
+      elements.forEach(
+        (
+          element
+        ) => {
+
+          if (
+            !element.classList.contains(
+              "is-visible"
+            )
+          ) {
+
+            observer.observe(
+              element
+            );
+          }
+        }
+      );
+
+      return () => {
+        observer.disconnect();
+      };
+
+    },
+    [
+      language,
+      activeFeed,
+      feedWritings.length,
+      quoteIndex,
+    ]
+  );
+
+
+  // =======================================================
   // AUTO ROTATE QUOTES
   // =======================================================
 
   useEffect(
     () => {
 
+      const reducedMotion =
+        window.matchMedia?.(
+          "(prefers-reduced-motion: reduce)"
+        )?.matches;
+
+      if (
+        reducedMotion
+      ) {
+        return undefined;
+      }
+
       const timer =
         window.setInterval(
           () => {
+
+            if (
+              document.hidden
+            ) {
+              return;
+            }
 
             setQuoteIndex(
               (
@@ -848,18 +855,14 @@ function Home({
                 %
                 LITERARY_QUOTES.length
             );
-
           },
           7000
         );
 
-
       return () => {
-
         window.clearInterval(
           timer
         );
-
       };
 
     },
@@ -885,7 +888,6 @@ function Home({
         %
         LITERARY_QUOTES.length
     );
-
   }
 
 
@@ -901,7 +903,6 @@ function Home({
         %
         LITERARY_QUOTES.length
     );
-
   }
 
 
@@ -938,7 +939,6 @@ function Home({
   ) {
 
     const map = {
-
       "কবিতা":
         t(
           "categories.poetry"
@@ -963,15 +963,12 @@ function Home({
         t(
           "categories.other"
         ),
-
     };
-
 
     return (
       map[value] ||
       value
     );
-
   }
 
 
@@ -987,13 +984,19 @@ function Home({
         append = false,
       }) => {
 
+        const requestId =
+          feedRequestIdRef.current + 1;
+
+        feedRequestIdRef.current =
+          requestId;
+
         const selectedFeed =
           feedType ||
           FEED_TYPES.FOR_YOU;
 
 
         // =================================================
-        // FOLLOWING REQUIRES AUTHENTICATION
+        // FOLLOWING REQUIRES AUTH
         // =================================================
 
         if (
@@ -1003,48 +1006,46 @@ function Home({
           !getToken()
         ) {
 
+          if (
+            requestId !==
+            feedRequestIdRef.current
+          ) {
+            return;
+          }
+
           setFollowingRequiresLogin(
             true
           );
-
 
           setFeedWritings(
             []
           );
 
-
           setFeedPage(
             1
           );
-
 
           setFeedTotal(
             0
           );
 
-
           setFeedHasNext(
             false
           );
-
 
           setFeedError(
             ""
           );
 
-
           setFeedLoading(
             false
           );
-
 
           setLoadingMore(
             false
           );
 
-
           return;
-
         }
 
 
@@ -1070,7 +1071,6 @@ function Home({
           setFeedError(
             ""
           );
-
         }
 
 
@@ -1078,10 +1078,6 @@ function Home({
 
           let response;
 
-
-          // ===============================================
-          // FOLLOWING
-          // ===============================================
 
           if (
             selectedFeed ===
@@ -1097,14 +1093,7 @@ function Home({
                   FEED_PAGE_SIZE,
               });
 
-          }
-
-
-          // ===============================================
-          // PUBLIC FEEDS
-          // ===============================================
-
-          else {
+          } else {
 
             response =
               await getWritings({
@@ -1114,7 +1103,14 @@ function Home({
                 limit:
                   FEED_PAGE_SIZE,
               });
+          }
 
+
+          if (
+            requestId !==
+            feedRequestIdRef.current
+          ) {
+            return;
           }
 
 
@@ -1146,7 +1142,6 @@ function Home({
                     received
                   );
 
-
                 return (
                   selectedFeed ===
                     FEED_TYPES.FOLLOWING
@@ -1156,7 +1151,6 @@ function Home({
                         selectedFeed
                       )
                 );
-
               }
             );
 
@@ -1165,7 +1159,6 @@ function Home({
             setFeedWritings(
               received
             );
-
           }
 
 
@@ -1202,18 +1195,15 @@ function Home({
             currentPage
           );
 
-
           setFeedHasNext(
             inferredHasNext
           );
-
 
           setFeedTotal(
             safeNumber(
               response?.total
             )
           );
-
 
           setFeedError(
             ""
@@ -1222,6 +1212,13 @@ function Home({
         } catch (
           error
         ) {
+
+          if (
+            requestId !==
+            feedRequestIdRef.current
+          ) {
+            return;
+          }
 
           console.error(
             "HOME FEED ERROR:",
@@ -1232,11 +1229,9 @@ function Home({
           if (
             !append
           ) {
-
             setFeedWritings(
               []
             );
-
           }
 
 
@@ -1247,41 +1242,40 @@ function Home({
 
 
           if (
-            error?.status === 401 ||
-            error?.status === 422
+            (
+              error?.status === 401 ||
+              error?.status === 422
+            )
+            &&
+            selectedFeed ===
+              FEED_TYPES.FOLLOWING
           ) {
 
-            if (
-              selectedFeed ===
-              FEED_TYPES.FOLLOWING
-            ) {
+            setFollowingRequiresLogin(
+              true
+            );
 
-              setFollowingRequiresLogin(
-                true
-              );
-
-
-              setFeedError(
-                ""
-              );
-
-            }
-
+            setFeedError(
+              ""
+            );
           }
 
         } finally {
 
-          setFeedLoading(
-            false
-          );
+          if (
+            requestId ===
+            feedRequestIdRef.current
+          ) {
 
+            setFeedLoading(
+              false
+            );
 
-          setLoadingMore(
-            false
-          );
-
+            setLoadingMore(
+              false
+            );
+          }
         }
-
       },
       []
     );
@@ -1298,26 +1292,21 @@ function Home({
         []
       );
 
-
       setFeedPage(
         1
       );
-
 
       setFeedHasNext(
         false
       );
 
-
       setFeedTotal(
         0
       );
 
-
       setFeedError(
         ""
       );
-
 
       loadFeed({
         feedType:
@@ -1354,7 +1343,6 @@ function Home({
       append:
         false,
     });
-
   }
 
 
@@ -1369,11 +1357,8 @@ function Home({
       feedLoading ||
       !feedHasNext
     ) {
-
       return;
-
     }
-
 
     loadFeed({
       feedType:
@@ -1385,7 +1370,6 @@ function Home({
       append:
         true,
     });
-
   }
 
 
@@ -1410,7 +1394,10 @@ function Home({
   return (
 
     <main
-      className="literary-home"
+      ref={
+        homeRef
+      }
+      className="literary-home animated-home"
     >
 
       {/* =================================================
@@ -1418,11 +1405,29 @@ function Home({
       ================================================== */}
 
       <section
-        className="literary-hero"
+        className="literary-hero animated-literary-hero"
       >
 
         <div
           className="literary-hero-noise"
+        />
+
+
+        <div
+          className="home-hero-glow"
+          aria-hidden="true"
+        />
+
+
+        <div
+          className="home-hero-orbit home-hero-orbit-one"
+          aria-hidden="true"
+        />
+
+
+        <div
+          className="home-hero-orbit home-hero-orbit-two"
+          aria-hidden="true"
         />
 
 
@@ -1433,62 +1438,60 @@ function Home({
           {/* LEFT */}
 
           <div
-            className="literary-hero-copy"
+            key={
+              `hero-copy-${language}`
+            }
+            className="literary-hero-copy home-hero-copy-animated"
           >
 
             <div
-              className="literary-kicker"
+              className="literary-kicker home-hero-kicker"
             >
 
               <Sparkles
                 size={14}
               />
 
-
               <span>
-
                 {
                   t(
                     "home.eyebrow"
                   )
                 }
-
               </span>
 
             </div>
 
 
-            <h1>
-
+            <h1
+              className="home-hero-title-motion"
+            >
               {
                 t(
                   "home.heroTitle"
                 )
               }
-
             </h1>
 
 
             <p
-              className="literary-hero-description"
+              className="literary-hero-description home-hero-description-motion"
             >
-
               {
                 t(
                   "home.heroDescription"
                 )
               }
-
             </p>
 
 
             <div
-              className="literary-hero-buttons"
+              className="literary-hero-buttons home-hero-actions-motion"
             >
 
               <Link
                 to="/write"
-                className="literary-primary-button"
+                className="literary-primary-button home-motion-button"
               >
 
                 <PenLine
@@ -1506,7 +1509,7 @@ function Home({
 
               <Link
                 to="/explore"
-                className="literary-text-button"
+                className="literary-text-button home-motion-text-link"
               >
 
                 {
@@ -1525,21 +1528,18 @@ function Home({
 
 
             <div
-              className="literary-hero-footnote"
+              className="literary-hero-footnote home-hero-footnote-motion"
             >
 
               <span />
 
-
               <p>
-
                 {
                   t(
                     "home.writerInvitation",
                     "Some stories are waiting for only you to write them."
                   )
                 }
-
               </p>
 
             </div>
@@ -1550,16 +1550,19 @@ function Home({
           {/* RIGHT — MANUSCRIPT */}
 
           <div
-            className="literary-manuscript-wrap"
+            key={
+              `manuscript-${language}`
+            }
+            className="literary-manuscript-wrap home-manuscript-entrance"
           >
 
             <div
-              className="literary-manuscript-shadow"
+              className="literary-manuscript-shadow home-manuscript-shadow-motion"
             />
 
 
             <div
-              className="literary-manuscript"
+              className="literary-manuscript home-manuscript-card"
             >
 
               <div
@@ -1568,6 +1571,7 @@ function Home({
 
                 <Feather
                   size={25}
+                  className="home-feather-motion"
                 />
 
                 <span>
@@ -1578,38 +1582,34 @@ function Home({
 
 
               <div
-                className="manuscript-rule"
+                className="manuscript-rule home-rule-animation"
               />
 
 
               <p
                 className="manuscript-small"
               >
-
                 {
                   t(
                     "home.blankPageLabel",
                     "A BLANK PAGE"
                   )
                 }
-
               </p>
 
 
               <h2>
-
                 {
                   t(
                     "home.blankPageTitle",
                     "What will you write today?"
                   )
                 }
-
               </h2>
 
 
               <div
-                className="manuscript-lines"
+                className="manuscript-lines home-manuscript-lines"
               >
 
                 <span />
@@ -1623,7 +1623,7 @@ function Home({
 
               <Link
                 to="/write"
-                className="manuscript-write-link"
+                className="manuscript-write-link home-motion-text-link"
               >
 
                 <PenLine
@@ -1653,7 +1653,8 @@ function Home({
       ================================================== */}
 
       <section
-        className="literary-quotes-section"
+        className="literary-quotes-section home-reveal"
+        data-home-reveal
       >
 
         <div
@@ -1676,38 +1677,32 @@ function Home({
               <p
                 className="literary-section-label"
               >
-
                 {
                   t(
                     "home.quoteEyebrow",
                     "WORDS THAT REMAIN"
                   )
                 }
-
               </p>
 
 
               <h2>
-
                 {
                   t(
                     "home.quoteTitle",
                     "Words that moved generations."
                   )
                 }
-
               </h2>
 
 
               <p>
-
                 {
                   t(
                     "home.quoteDescription",
                     "Sometimes one sentence is enough to make someone pick up a pen."
                   )
                 }
-
               </p>
 
             </div>
@@ -1717,35 +1712,44 @@ function Home({
 
           <div
             className="quote-stage"
+            aria-live="polite"
           >
 
             <Quote
-              className="quote-stage-icon"
+              className="quote-stage-icon home-quote-icon-motion"
               size={46}
             />
 
 
-            <blockquote>
-              “{activeQuote.quote}”
-            </blockquote>
-
-
             <div
-              className="quote-author"
+              key={
+                `quote-${quoteIndex}`
+              }
+              className="home-quote-content-motion"
             >
 
-              <span />
+              <blockquote>
+                “{activeQuote.quote}”
+              </blockquote>
 
 
-              <div>
+              <div
+                className="quote-author"
+              >
 
-                <strong>
-                  {activeQuote.author}
-                </strong>
+                <span />
 
-                <small>
-                  {activeQuote.source}
-                </small>
+                <div>
+
+                  <strong>
+                    {activeQuote.author}
+                  </strong>
+
+                  <small>
+                    {activeQuote.source}
+                  </small>
+
+                </div>
 
               </div>
 
@@ -1762,6 +1766,7 @@ function Home({
                   previousQuote
                 }
                 aria-label="Previous quote"
+                className="home-round-motion-button"
               >
 
                 <ArrowLeft
@@ -1787,7 +1792,8 @@ function Home({
                       }
                       type="button"
                       className={
-                        index === quoteIndex
+                        index ===
+                        quoteIndex
                           ? "active"
                           : ""
                       }
@@ -1801,7 +1807,6 @@ function Home({
                         `Quote ${index + 1}`
                       }
                     />
-
                   )
                 )}
 
@@ -1814,6 +1819,7 @@ function Home({
                   nextQuote
                 }
                 aria-label="Next quote"
+                className="home-round-motion-button"
               >
 
                 <ArrowRight
@@ -1836,15 +1842,16 @@ function Home({
       ================================================== */}
 
       <section
-        className="literary-prompt-section"
+        className="literary-prompt-section home-reveal"
+        data-home-reveal
       >
 
         <div
-          className="literary-prompt-card"
+          className="literary-prompt-card home-prompt-card-motion"
         >
 
           <div
-            className="prompt-light"
+            className="prompt-light home-prompt-light"
           >
 
             <Lightbulb
@@ -1859,38 +1866,32 @@ function Home({
           >
 
             <span>
-
               {
                 t(
                   "home.promptEyebrow",
                   "A THOUGHT FOR TODAY"
                 )
               }
-
             </span>
 
 
             <h2>
-
               {
                 t(
                   "home.promptTitle",
                   "Write about something you never said aloud."
                 )
               }
-
             </h2>
 
 
             <p>
-
               {
                 t(
                   "home.promptDescription",
                   "It does not have to be perfect. It only has to be yours."
                 )
               }
-
             </p>
 
           </div>
@@ -1898,7 +1899,7 @@ function Home({
 
           <Link
             to="/write"
-            className="prompt-write-button"
+            className="prompt-write-button home-motion-button"
           >
 
             <PenLine
@@ -1927,7 +1928,8 @@ function Home({
       >
 
         <div
-          className="literary-section-header"
+          className="literary-section-header home-reveal"
+          data-home-reveal
         >
 
           <div>
@@ -1935,36 +1937,30 @@ function Home({
             <span
               className="literary-section-label"
             >
-
               {
                 t(
                   "home.discoverEyebrow",
                   "DISCOVER"
                 )
               }
-
             </span>
 
 
             <h2>
-
               {
                 t(
                   "home.categoriesTitle"
                 )
               }
-
             </h2>
 
 
             <p>
-
               {
                 t(
                   "home.categoriesDescription"
                 )
               }
-
             </p>
 
           </div>
@@ -1972,7 +1968,7 @@ function Home({
 
           <Link
             to="/explore"
-            className="literary-view-all"
+            className="literary-view-all home-motion-text-link"
           >
 
             {
@@ -1996,79 +1992,86 @@ function Home({
 
           {CATEGORIES.map(
             (
-              item
+              item,
+              index
             ) => (
 
-              <Link
+              <div
                 key={
                   item.value
                 }
-                to={
-                  `/explore?category=${encodeURIComponent(
-                    item.value
-                  )}`
-                }
-                className="literary-category-card"
+                className="home-reveal home-category-reveal"
+                data-home-reveal
+                style={{
+                  "--home-reveal-delay":
+                    `${index * 80}ms`,
+                }}
               >
 
-                <div
-                  className="category-card-top"
+                <Link
+                  to={
+                    `/explore?category=${encodeURIComponent(
+                      item.value
+                    )}`
+                  }
+                  className="literary-category-card home-category-card-motion"
                 >
 
-                  <span
-                    className="category-number"
+                  <div
+                    className="category-card-top"
                   >
-                    {item.number}
-                  </span>
+
+                    <span
+                      className="category-number"
+                    >
+                      {item.number}
+                    </span>
 
 
-                  <span
-                    className="category-symbol"
-                  >
-                    {item.symbol}
-                  </span>
-
-                </div>
-
-
-                <div
-                  className="category-card-bottom"
-                >
-
-                  <div>
-
-                    <h3>
-
-                      {
-                        t(
-                          item.translationKey
-                        )
-                      }
-
-                    </h3>
-
-
-                    <p>
-
-                      {
-                        t(
-                          "home.exploreWriting"
-                        )
-                      }
-
-                    </p>
+                    <span
+                      className="category-symbol"
+                    >
+                      {item.symbol}
+                    </span>
 
                   </div>
 
 
-                  <ArrowRight
-                    size={17}
-                  />
+                  <div
+                    className="category-card-bottom"
+                  >
 
-                </div>
+                    <div>
 
-              </Link>
+                      <h3>
+                        {
+                          t(
+                            item.translationKey
+                          )
+                        }
+                      </h3>
 
+
+                      <p>
+                        {
+                          t(
+                            "home.exploreWriting"
+                          )
+                        }
+                      </p>
+
+                    </div>
+
+
+                    <ArrowRight
+                      size={17}
+                    />
+
+                  </div>
+
+                </Link>
+
+              </div>
             )
           )}
 
@@ -2085,11 +2088,12 @@ function Home({
         featuredWriting && (
 
           <section
-            className="literary-featured-section"
+            className="literary-featured-section home-reveal"
+            data-home-reveal
           >
 
             <div
-              className="literary-featured-shell"
+              className="literary-featured-shell home-featured-motion"
             >
 
               <div
@@ -2102,14 +2106,12 @@ function Home({
 
 
                 <p>
-
                   {
                     t(
                       "home.featuredEyebrow",
                       "FROM THE COMMUNITY"
                     )
                   }
-
                 </p>
 
               </div>
@@ -2124,13 +2126,11 @@ function Home({
                 >
 
                   <span>
-
                     {
                       categoryLabel(
                         featuredWriting.category
                       )
                     }
-
                   </span>
 
 
@@ -2138,7 +2138,6 @@ function Home({
 
 
                   <span>
-
                     {
                       featuredWriting
                         ?.author
@@ -2151,14 +2150,12 @@ function Home({
                         "common.unknownAuthor"
                       )
                     }
-
                   </span>
 
                 </div>
 
 
                 <h2>
-
                   {
                     featuredWriting.title
                     ||
@@ -2166,12 +2163,10 @@ function Home({
                       "common.untitled"
                     )
                   }
-
                 </h2>
 
 
                 <p>
-
                   {
                     featuredWriting
                       ?.content
@@ -2186,7 +2181,6 @@ function Home({
                     )
                   }
 
-
                   {
                     featuredWriting
                       ?.content
@@ -2195,7 +2189,6 @@ function Home({
                       ? "…"
                       : ""
                   }
-
                 </p>
 
 
@@ -2203,8 +2196,8 @@ function Home({
                   to={
                     `/writings/${featuredWriting.id}`
                   }
+                  className="home-motion-text-link"
                 >
-
                   {
                     t(
                       "writingCard.read"
@@ -2214,14 +2207,13 @@ function Home({
                   <ArrowRight
                     size={16}
                   />
-
                 </Link>
 
               </article>
 
 
               <div
-                className="featured-quote-mark"
+                className="featured-quote-mark home-featured-quote-motion"
               >
 
                 <Quote
@@ -2233,7 +2225,6 @@ function Home({
             </div>
 
           </section>
-
         )}
 
 
@@ -2243,14 +2234,15 @@ function Home({
 
       <section
         className="literary-content-section home-feed-section"
+        aria-busy={
+          feedLoading ||
+          loadingMore
+        }
       >
 
-        {/* ===============================================
-            FEED HEADER
-        ================================================ */}
-
         <div
-          className="literary-section-header home-feed-heading"
+          className="literary-section-header home-feed-heading home-reveal"
+          data-home-reveal
         >
 
           <div>
@@ -2258,11 +2250,9 @@ function Home({
             <span
               className="literary-section-label"
             >
-
               {
                 labels.feedEyebrow
               }
-
             </span>
 
 
@@ -2301,20 +2291,16 @@ function Home({
 
             {feedLoading
               ? (
-
-                <Loader2
-                  size={17}
-                  className="home-feed-spin"
-                />
-
-              )
+                  <Loader2
+                    size={17}
+                    className="home-feed-spin"
+                  />
+                )
               : (
-
-                <RefreshCw
-                  size={17}
-                />
-
-              )}
+                  <RefreshCw
+                    size={17}
+                  />
+                )}
 
             <span>
               {
@@ -2327,14 +2313,17 @@ function Home({
         </div>
 
 
-        {/* ===============================================
-            FEED TAB BAR
-        ================================================ */}
+        {/* FEED TAB BAR */}
 
         <div
-          className="home-feed-tabs"
+          className="home-feed-tabs home-reveal"
+          data-home-reveal
           role="tablist"
           aria-label="SHOBDO feed"
+          style={{
+            "--home-reveal-delay":
+              "70ms",
+          }}
         >
 
           <button
@@ -2441,325 +2430,297 @@ function Home({
         </div>
 
 
-        {/* ===============================================
-            FOLLOWING LOGIN REQUIRED
-        ================================================ */}
+        {/* FEED CONTENT */}
 
-        {!feedLoading &&
-          followingRequiresLogin &&
-          activeFeed ===
-            FEED_TYPES.FOLLOWING && (
+        <div
+          key={
+            `feed-content-${activeFeed}`
+          }
+          className="home-feed-content-swap"
+        >
 
-            <div
-              className="home-feed-state home-feed-auth-state"
-            >
+          {!feedLoading &&
+            followingRequiresLogin &&
+            activeFeed ===
+              FEED_TYPES.FOLLOWING && (
 
               <div
-                className="home-feed-state-icon"
+                className="home-feed-state home-feed-auth-state"
               >
 
-                <UsersRound
-                  size={28}
-                />
+                <div
+                  className="home-feed-state-icon"
+                >
+                  <UsersRound
+                    size={28}
+                  />
+                </div>
+
+
+                <h3>
+                  {
+                    labels.followingLoginTitle
+                  }
+                </h3>
+
+
+                <p>
+                  {
+                    labels.followingLoginDescription
+                  }
+                </p>
+
+
+                <Link
+                  to="/login"
+                  className="literary-primary-button home-motion-button"
+                >
+                  {
+                    labels.login
+                  }
+                </Link>
 
               </div>
+            )}
 
 
-              <h3>
-                {
-                  labels.followingLoginTitle
-                }
-              </h3>
-
-
-              <p>
-                {
-                  labels.followingLoginDescription
-                }
-              </p>
-
-
-              <Link
-                to="/login"
-                className="literary-primary-button"
-              >
-
-                {
-                  labels.login
-                }
-
-              </Link>
-
-            </div>
-
-          )}
-
-
-        {/* ===============================================
-            LOADING
-        ================================================ */}
-
-        {feedLoading &&
-          !followingRequiresLogin && (
-
-            <div
-              className="home-feed-state"
-            >
-
-              <Loader2
-                size={30}
-                className="home-feed-spin"
-              />
-
-
-              <span>
-                {
-                  labels.loadingFeed
-                }
-              </span>
-
-            </div>
-
-          )}
-
-
-        {/* ===============================================
-            ERROR
-        ================================================ */}
-
-        {!feedLoading &&
-          !followingRequiresLogin &&
-          feedError && (
-
-            <div
-              className="home-feed-state home-feed-error-state"
-            >
-
-              <Feather
-                size={30}
-              />
-
-
-              <h3>
-                {
-                  labels.feedError
-                }
-              </h3>
-
-
-              <p>
-                {
-                  feedError
-                }
-              </p>
-
-
-              <button
-                type="button"
-                onClick={
-                  handleRefreshFeed
-                }
-              >
-
-                <RefreshCw
-                  size={16}
-                />
-
-                {
-                  labels.retry
-                }
-
-              </button>
-
-            </div>
-
-          )}
-
-
-        {/* ===============================================
-            EMPTY
-        ================================================ */}
-
-        {!feedLoading &&
-          !followingRequiresLogin &&
-          !feedError &&
-          feedWritings.length === 0 && (
-
-            <div
-              className="home-feed-state"
-            >
+          {feedLoading &&
+            !followingRequiresLogin && (
 
               <div
-                className="home-feed-state-icon"
+                className="home-feed-state home-feed-loading-motion"
+              >
+
+                <Loader2
+                  size={30}
+                  className="home-feed-spin"
+                />
+
+                <span>
+                  {
+                    labels.loadingFeed
+                  }
+                </span>
+
+              </div>
+            )}
+
+
+          {!feedLoading &&
+            !followingRequiresLogin &&
+            feedError && (
+
+              <div
+                className="home-feed-state home-feed-error-state"
               >
 
                 <Feather
-                  size={28}
+                  size={30}
                 />
+
+
+                <h3>
+                  {
+                    labels.feedError
+                  }
+                </h3>
+
+
+                <p>
+                  {
+                    feedError
+                  }
+                </p>
+
+
+                <button
+                  type="button"
+                  onClick={
+                    handleRefreshFeed
+                  }
+                >
+
+                  <RefreshCw
+                    size={16}
+                  />
+
+                  {
+                    labels.retry
+                  }
+
+                </button>
 
               </div>
+            )}
 
 
-              <h3>
-                {
-                  emptyFeedMessage
-                }
-              </h3>
-
-
-              <Link
-                to="/explore"
-                className="literary-text-button"
-              >
-
-                {
-                  labels.explore
-                }
-
-                <ArrowRight
-                  size={16}
-                />
-
-              </Link>
-
-            </div>
-
-          )}
-
-
-        {/* ===============================================
-            FEED
-        ================================================ */}
-
-        {!feedLoading &&
-          !followingRequiresLogin &&
-          !feedError &&
-          feedWritings.length > 0 && (
-
-            <>
+          {!feedLoading &&
+            !followingRequiresLogin &&
+            !feedError &&
+            feedWritings.length ===
+              0 && (
 
               <div
-                className="home-feed-list"
+                className="home-feed-state"
               >
 
-                {feedWritings.map(
-                  (
-                    writing
-                  ) => (
+                <div
+                  className="home-feed-state-icon"
+                >
+                  <Feather
+                    size={28}
+                  />
+                </div>
 
-                    <WritingCard
-                      key={
-                        writing.id
-                      }
-                      writing={
-                        writing
-                      }
-                    />
 
-                  )
-                )}
+                <h3>
+                  {
+                    emptyFeedMessage
+                  }
+                </h3>
+
+
+                <Link
+                  to="/explore"
+                  className="literary-text-button home-motion-text-link"
+                >
+
+                  {
+                    labels.explore
+                  }
+
+                  <ArrowRight
+                    size={16}
+                  />
+
+                </Link>
 
               </div>
+            )}
 
 
-              {/* =========================================
-                  FEED SUMMARY
-              ========================================== */}
+          {!feedLoading &&
+            !followingRequiresLogin &&
+            !feedError &&
+            feedWritings.length > 0 && (
 
-              {feedTotal > 0 && (
+              <>
 
                 <div
-                  className="home-feed-summary"
+                  className="home-feed-list"
                 >
 
-                  <span>
-                    {
-                      feedWritings.length
-                    }
-                  </span>
+                  {feedWritings.map(
+                    (
+                      writing,
+                      index
+                    ) => (
 
-                  <span>
-                    /
-                  </span>
+                      <div
+                        key={
+                          writing.id
+                        }
+                        className="home-feed-card-motion"
+                        style={{
+                          "--home-feed-index":
+                            index,
+                        }}
+                      >
 
-                  <span>
-                    {
-                      feedTotal
-                    }
-                  </span>
+                        <WritingCard
+                          writing={
+                            writing
+                          }
+                        />
+
+                      </div>
+                    )
+                  )}
 
                 </div>
 
-              )}
 
+                {feedTotal > 0 && (
 
-              {/* =========================================
-                  LOAD MORE
-              ========================================== */}
-
-              {feedHasNext && (
-
-                <div
-                  className="home-feed-load-more-wrap"
-                >
-
-                  <button
-                    type="button"
-                    className="home-feed-load-more"
-                    disabled={
-                      loadingMore
-                    }
-                    onClick={
-                      handleLoadMore
-                    }
+                  <div
+                    className="home-feed-summary home-feed-summary-motion"
                   >
 
-                    {loadingMore
-                      ? (
+                    <span>
+                      {
+                        feedWritings.length
+                      }
+                    </span>
 
-                        <>
+                    <span>
+                      /
+                    </span>
 
-                          <Loader2
-                            size={18}
-                            className="home-feed-spin"
-                          />
+                    <span>
+                      {
+                        feedTotal
+                      }
+                    </span>
 
-                          <span>
-                            {
-                              labels.loadingMore
-                            }
-                          </span>
+                  </div>
+                )}
 
-                        </>
 
-                      )
-                      : (
+                {feedHasNext && (
 
-                        <>
+                  <div
+                    className="home-feed-load-more-wrap"
+                  >
 
-                          <BookOpen
-                            size={18}
-                          />
+                    <button
+                      type="button"
+                      className="home-feed-load-more"
+                      disabled={
+                        loadingMore
+                      }
+                      onClick={
+                        handleLoadMore
+                      }
+                    >
 
-                          <span>
-                            {
-                              labels.loadMore
-                            }
-                          </span>
+                      {loadingMore
+                        ? (
+                            <>
+                              <Loader2
+                                size={18}
+                                className="home-feed-spin"
+                              />
 
-                        </>
+                              <span>
+                                {
+                                  labels.loadingMore
+                                }
+                              </span>
+                            </>
+                          )
+                        : (
+                            <>
+                              <BookOpen
+                                size={18}
+                              />
 
-                      )}
+                              <span>
+                                {
+                                  labels.loadMore
+                                }
+                              </span>
+                            </>
+                          )}
 
-                  </button>
+                    </button>
 
-                </div>
+                  </div>
+                )}
 
-              )}
+              </>
+            )}
 
-            </>
-
-          )}
+        </div>
 
       </section>
 
@@ -2769,64 +2730,64 @@ function Home({
       ================================================== */}
 
       <section
-        className="literary-final-section"
+        className="literary-final-section home-reveal"
+        data-home-reveal
       >
 
         <div
-          className="final-background-word"
+          className="final-background-word home-background-word-motion"
+          aria-hidden="true"
         >
           SHOBDO
         </div>
 
 
         <div
-          className="literary-final-inner"
+          key={
+            `final-${language}`
+          }
+          className="literary-final-inner home-final-content-motion"
         >
 
           <Feather
             size={34}
+            className="home-feather-motion"
           />
 
 
           <span>
-
             {
               t(
                 "home.finalEyebrow",
                 "YOUR PAGE IS STILL BLANK"
               )
             }
-
           </span>
 
 
           <h2>
-
             {
               t(
                 "home.finalTitle",
                 "Someone may be waiting to read the words only you can write."
               )
             }
-
           </h2>
 
 
           <p>
-
             {
               t(
                 "home.finalDescription",
                 "Begin with one sentence. The rest can find its way."
               )
             }
-
           </p>
 
 
           <Link
             to="/write"
-            className="literary-final-button"
+            className="literary-final-button home-motion-button"
           >
 
             {
@@ -2847,9 +2808,7 @@ function Home({
       </section>
 
     </main>
-
   );
-
 }
 
 

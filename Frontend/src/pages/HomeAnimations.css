@@ -1,0 +1,1600 @@
+/* =========================================================
+   SHOBDO — HOME ANIMATION SYSTEM
+   ---------------------------------------------------------
+   Lightweight:
+   - CSS animations
+   - IntersectionObserver
+   - No animation package
+========================================================= */
+
+
+/* =========================================================
+   ANIMATION TOKENS
+========================================================= */
+
+.animated-home {
+  --home-motion-fast: 220ms;
+  --home-motion-normal: 420ms;
+  --home-motion-slow: 680ms;
+
+  --home-ease:
+    cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    );
+
+  --home-ease-soft:
+    cubic-bezier(
+      0.16,
+      1,
+      0.3,
+      1
+    );
+}
+
+
+/* =========================================================
+   SCROLL REVEAL
+========================================================= */
+
+.home-reveal {
+  opacity: 0;
+
+  transform:
+    translate3d(
+      0,
+      28px,
+      0
+    );
+
+  filter:
+    blur(3px);
+
+  transition:
+    opacity 700ms var(--home-ease),
+    transform 700ms var(--home-ease),
+    filter 700ms var(--home-ease);
+
+  transition-delay:
+    var(
+      --home-reveal-delay,
+      0ms
+    );
+
+  will-change:
+    opacity,
+    transform;
+}
+
+
+.home-reveal.is-visible {
+  opacity: 1;
+
+  transform:
+    translate3d(
+      0,
+      0,
+      0
+    );
+
+  filter:
+    blur(0);
+}
+
+
+/* =========================================================
+   HERO BACKGROUND
+========================================================= */
+
+.animated-literary-hero {
+  isolation: isolate;
+}
+
+
+.home-hero-glow {
+  position: absolute;
+
+  width: 530px;
+  height: 530px;
+
+  right: -160px;
+  top: 20px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(
+        100,
+        43,
+        143,
+        0.09
+      ) 0%,
+      rgba(
+        166,
+        129,
+        67,
+        0.08
+      ) 36%,
+      rgba(
+        255,
+        255,
+        255,
+        0
+      ) 72%
+    );
+
+  filter:
+    blur(8px);
+
+  pointer-events: none;
+
+  z-index: 0;
+
+  animation:
+    homeGlowPulse
+    8s
+    ease-in-out
+    infinite;
+}
+
+
+@keyframes homeGlowPulse {
+
+  0%,
+  100% {
+    opacity: 0.55;
+
+    transform:
+      scale(0.95);
+  }
+
+  50% {
+    opacity: 1;
+
+    transform:
+      scale(1.08);
+  }
+}
+
+
+/* =========================================================
+   DECORATIVE HERO ORBITS
+========================================================= */
+
+.home-hero-orbit {
+  position: absolute;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+
+  z-index: 0;
+}
+
+
+.home-hero-orbit-one {
+  width: 390px;
+  height: 390px;
+
+  right: -80px;
+  top: 90px;
+
+  border:
+    1px solid
+    rgba(
+      100,
+      43,
+      143,
+      0.09
+    );
+
+  animation:
+    homeOrbitRotate
+    25s
+    linear
+    infinite;
+}
+
+
+.home-hero-orbit-one::after {
+  content: "";
+
+  position: absolute;
+
+  width: 8px;
+  height: 8px;
+
+  top: 51px;
+  left: 50px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(
+      100,
+      43,
+      143,
+      0.3
+    );
+
+  box-shadow:
+    0 0 20px
+    rgba(
+      100,
+      43,
+      143,
+      0.15
+    );
+}
+
+
+.home-hero-orbit-two {
+  width: 250px;
+  height: 250px;
+
+  right: 65px;
+  top: 160px;
+
+  border:
+    1px dashed
+    rgba(
+      155,
+      120,
+      55,
+      0.1
+    );
+
+  animation:
+    homeOrbitReverse
+    19s
+    linear
+    infinite;
+}
+
+
+@keyframes homeOrbitRotate {
+
+  to {
+    transform:
+      rotate(360deg);
+  }
+}
+
+
+@keyframes homeOrbitReverse {
+
+  to {
+    transform:
+      rotate(-360deg);
+  }
+}
+
+
+/* =========================================================
+   HERO TEXT ENTRANCE
+========================================================= */
+
+.home-hero-copy-animated
+.home-hero-kicker,
+.home-hero-copy-animated
+.home-hero-title-motion,
+.home-hero-copy-animated
+.home-hero-description-motion,
+.home-hero-copy-animated
+.home-hero-actions-motion,
+.home-hero-copy-animated
+.home-hero-footnote-motion {
+  opacity: 0;
+
+  transform:
+    translate3d(
+      0,
+      26px,
+      0
+    );
+
+  animation:
+    homeHeroEnter
+    760ms
+    var(--home-ease)
+    forwards;
+}
+
+
+.home-hero-copy-animated
+.home-hero-kicker {
+  animation-delay:
+    80ms;
+}
+
+
+.home-hero-copy-animated
+.home-hero-title-motion {
+  animation-delay:
+    170ms;
+}
+
+
+.home-hero-copy-animated
+.home-hero-description-motion {
+  animation-delay:
+    280ms;
+}
+
+
+.home-hero-copy-animated
+.home-hero-actions-motion {
+  animation-delay:
+    390ms;
+}
+
+
+.home-hero-copy-animated
+.home-hero-footnote-motion {
+  animation-delay:
+    500ms;
+}
+
+
+@keyframes homeHeroEnter {
+
+  from {
+    opacity: 0;
+
+    transform:
+      translate3d(
+        0,
+        28px,
+        0
+      );
+
+    filter:
+      blur(3px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translate3d(
+        0,
+        0,
+        0
+      );
+
+    filter:
+      blur(0);
+  }
+}
+
+
+/* =========================================================
+   MANUSCRIPT ENTRANCE
+========================================================= */
+
+.home-manuscript-entrance {
+  opacity: 0;
+
+  transform:
+    translate3d(
+      38px,
+      20px,
+      0
+    )
+    rotate(2.5deg);
+
+  animation:
+    homeManuscriptEnter
+    950ms
+    var(--home-ease)
+    260ms
+    forwards;
+}
+
+
+@keyframes homeManuscriptEnter {
+
+  from {
+    opacity: 0;
+
+    transform:
+      translate3d(
+        42px,
+        24px,
+        0
+      )
+      rotate(3deg);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translate3d(
+        0,
+        0,
+        0
+      )
+      rotate(0);
+  }
+}
+
+
+/* =========================================================
+   MANUSCRIPT HOVER
+========================================================= */
+
+.home-manuscript-card {
+  transition:
+    transform 500ms var(--home-ease),
+    box-shadow 500ms var(--home-ease);
+}
+
+
+.home-manuscript-entrance:hover
+.home-manuscript-card {
+  transform:
+    translateY(-7px)
+    rotate(-0.6deg);
+}
+
+
+/* =========================================================
+   MANUSCRIPT SHADOW
+========================================================= */
+
+.home-manuscript-shadow-motion {
+  animation:
+    homePaperShadow
+    5.5s
+    ease-in-out
+    1.2s
+    infinite;
+}
+
+
+@keyframes homePaperShadow {
+
+  0%,
+  100% {
+    opacity: 0.7;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+
+  50% {
+    opacity: 0.45;
+
+    transform:
+      translateY(7px)
+      scale(0.97);
+  }
+}
+
+
+/* =========================================================
+   FEATHER
+========================================================= */
+
+.home-feather-motion {
+  transform-origin:
+    70% 70%;
+
+  animation:
+    homeFeatherFloat
+    4.8s
+    ease-in-out
+    infinite;
+}
+
+
+@keyframes homeFeatherFloat {
+
+  0%,
+  100% {
+    transform:
+      rotate(-2deg)
+      translateY(0);
+  }
+
+  50% {
+    transform:
+      rotate(4deg)
+      translateY(-3px);
+  }
+}
+
+
+/* =========================================================
+   MANUSCRIPT RULE
+========================================================= */
+
+.home-rule-animation {
+  transform-origin:
+    left center;
+
+  animation:
+    homeRuleDraw
+    900ms
+    var(--home-ease)
+    850ms
+    both;
+}
+
+
+@keyframes homeRuleDraw {
+
+  from {
+    transform:
+      scaleX(0);
+
+    opacity: 0;
+  }
+
+  to {
+    transform:
+      scaleX(1);
+
+    opacity: 1;
+  }
+}
+
+
+/* =========================================================
+   MANUSCRIPT LINES
+========================================================= */
+
+.home-manuscript-lines span {
+  transform-origin:
+    left center;
+
+  animation:
+    homeWritingLine
+    650ms
+    var(--home-ease)
+    both;
+}
+
+
+.home-manuscript-lines span:nth-child(1) {
+  animation-delay:
+    900ms;
+}
+
+
+.home-manuscript-lines span:nth-child(2) {
+  animation-delay:
+    1010ms;
+}
+
+
+.home-manuscript-lines span:nth-child(3) {
+  animation-delay:
+    1120ms;
+}
+
+
+.home-manuscript-lines span:nth-child(4) {
+  animation-delay:
+    1230ms;
+}
+
+
+.home-manuscript-lines span:nth-child(5) {
+  animation-delay:
+    1340ms;
+}
+
+
+@keyframes homeWritingLine {
+
+  from {
+    transform:
+      scaleX(0);
+
+    opacity: 0;
+  }
+
+  to {
+    transform:
+      scaleX(1);
+
+    opacity: 1;
+  }
+}
+
+
+/* =========================================================
+   PRIMARY BUTTON MICRO MOTION
+========================================================= */
+
+.home-motion-button {
+  position: relative;
+
+  overflow: hidden;
+
+  transition:
+    transform 220ms var(--home-ease),
+    box-shadow 220ms var(--home-ease),
+    background-color 220ms ease;
+}
+
+
+.home-motion-button::after {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  transform:
+    translateX(-125%);
+
+  background:
+    linear-gradient(
+      105deg,
+      transparent 25%,
+      rgba(
+        255,
+        255,
+        255,
+        0.16
+      ) 48%,
+      transparent 70%
+    );
+
+  transition:
+    transform
+    600ms
+    var(--home-ease);
+}
+
+
+.home-motion-button:hover {
+  transform:
+    translateY(-2px);
+}
+
+
+.home-motion-button:hover::after {
+  transform:
+    translateX(125%);
+}
+
+
+.home-motion-button:active {
+  transform:
+    translateY(0)
+    scale(0.98);
+}
+
+
+/* =========================================================
+   TEXT LINK MICRO MOTION
+========================================================= */
+
+.home-motion-text-link svg {
+  transition:
+    transform 240ms
+    var(--home-ease);
+}
+
+
+.home-motion-text-link:hover svg {
+  transform:
+    translateX(4px);
+}
+
+
+/* =========================================================
+   QUOTE ICON
+========================================================= */
+
+.home-quote-icon-motion {
+  animation:
+    homeQuoteIconFloat
+    5s
+    ease-in-out
+    infinite;
+}
+
+
+@keyframes homeQuoteIconFloat {
+
+  0%,
+  100% {
+    transform:
+      translateY(0)
+      rotate(0deg);
+  }
+
+  50% {
+    transform:
+      translateY(-5px)
+      rotate(-3deg);
+  }
+}
+
+
+/* =========================================================
+   QUOTE CHANGE
+========================================================= */
+
+.home-quote-content-motion {
+  animation:
+    homeQuoteChange
+    560ms
+    var(--home-ease)
+    both;
+}
+
+
+@keyframes homeQuoteChange {
+
+  from {
+    opacity: 0;
+
+    transform:
+      translate3d(
+        18px,
+        0,
+        0
+      );
+
+    filter:
+      blur(2px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translate3d(
+        0,
+        0,
+        0
+      );
+
+    filter:
+      blur(0);
+  }
+}
+
+
+/* =========================================================
+   ROUND QUOTE BUTTONS
+========================================================= */
+
+.home-round-motion-button {
+  transition:
+    transform 200ms var(--home-ease),
+    background-color 200ms ease,
+    border-color 200ms ease;
+}
+
+
+.home-round-motion-button:hover {
+  transform:
+    scale(1.08);
+}
+
+
+.home-round-motion-button:active {
+  transform:
+    scale(0.94);
+}
+
+
+/* =========================================================
+   QUOTE DOTS
+========================================================= */
+
+.quote-dots button {
+  transition:
+    width 260ms var(--home-ease),
+    transform 260ms var(--home-ease),
+    opacity 260ms ease,
+    background-color 260ms ease;
+}
+
+
+.quote-dots button.active {
+  transform:
+    scale(1.15);
+}
+
+
+/* =========================================================
+   PROMPT
+========================================================= */
+
+.home-prompt-card-motion {
+  transition:
+    transform 420ms var(--home-ease),
+    box-shadow 420ms var(--home-ease),
+    border-color 420ms ease;
+}
+
+
+.home-prompt-card-motion:hover {
+  transform:
+    translateY(-4px);
+}
+
+
+.home-prompt-light {
+  animation:
+    homePromptLight
+    4s
+    ease-in-out
+    infinite;
+}
+
+
+@keyframes homePromptLight {
+
+  0%,
+  100% {
+    transform:
+      scale(1);
+
+    box-shadow:
+      0 0 0
+      rgba(
+        163,
+        131,
+        59,
+        0
+      );
+  }
+
+  50% {
+    transform:
+      scale(1.06);
+
+    box-shadow:
+      0 0 30px
+      rgba(
+        163,
+        131,
+        59,
+        0.16
+      );
+  }
+}
+
+
+/* =========================================================
+   CATEGORY REVEAL WRAPPER
+========================================================= */
+
+.home-category-reveal {
+  height: 100%;
+}
+
+
+.home-category-reveal
+.literary-category-card {
+  height: 100%;
+}
+
+
+/* =========================================================
+   CATEGORY MICRO MOTION
+========================================================= */
+
+.home-category-card-motion {
+  position: relative;
+
+  overflow: hidden;
+}
+
+
+.home-category-card-motion::after {
+  content: "";
+
+  position: absolute;
+
+  width: 100%;
+  height: 2px;
+
+  left: 0;
+  bottom: 0;
+
+  transform:
+    scaleX(0);
+
+  transform-origin:
+    left center;
+
+  background:
+    linear-gradient(
+      90deg,
+      #642b8f,
+      #a7833b
+    );
+
+  transition:
+    transform
+    420ms
+    var(--home-ease);
+}
+
+
+.home-category-card-motion:hover::after {
+  transform:
+    scaleX(1);
+}
+
+
+.home-category-card-motion
+.category-symbol {
+  transition:
+    transform
+    420ms
+    var(--home-ease);
+}
+
+
+.home-category-card-motion:hover
+.category-symbol {
+  transform:
+    rotate(12deg)
+    scale(1.08);
+}
+
+
+/* =========================================================
+   FEATURED WRITING
+========================================================= */
+
+.home-featured-motion {
+  transition:
+    transform 600ms var(--home-ease),
+    box-shadow 600ms var(--home-ease);
+}
+
+
+.home-featured-motion:hover {
+  transform:
+    translateY(-3px);
+}
+
+
+.home-featured-quote-motion {
+  animation:
+    homeFeaturedQuote
+    7s
+    ease-in-out
+    infinite;
+}
+
+
+@keyframes homeFeaturedQuote {
+
+  0%,
+  100% {
+    transform:
+      rotate(0deg)
+      translateY(0);
+
+    opacity: 0.75;
+  }
+
+  50% {
+    transform:
+      rotate(-4deg)
+      translateY(-5px);
+
+    opacity: 1;
+  }
+}
+
+
+/* =========================================================
+   FEED CONTENT SWITCH
+========================================================= */
+
+.home-feed-content-swap {
+  animation:
+    homeFeedSwap
+    430ms
+    var(--home-ease)
+    both;
+}
+
+
+@keyframes homeFeedSwap {
+
+  from {
+    opacity: 0;
+
+    transform:
+      translate3d(
+        0,
+        14px,
+        0
+      );
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translate3d(
+        0,
+        0,
+        0
+      );
+  }
+}
+
+
+/* =========================================================
+   FEED CARDS
+========================================================= */
+
+.home-feed-card-motion {
+  width: 100%;
+
+  opacity: 0;
+
+  transform:
+    translate3d(
+      0,
+      18px,
+      0
+    );
+
+  animation:
+    homeFeedCardEnter
+    520ms
+    var(--home-ease)
+    forwards;
+
+  animation-delay:
+    calc(
+      min(
+        var(
+          --home-feed-index,
+          0
+        ),
+        8
+      )
+      * 55ms
+    );
+}
+
+
+.home-feed-card-motion
+> .writing-card {
+  width: 100%;
+}
+
+
+@keyframes homeFeedCardEnter {
+
+  to {
+    opacity: 1;
+
+    transform:
+      translate3d(
+        0,
+        0,
+        0
+      );
+  }
+}
+
+
+/* =========================================================
+   WRITING CARD MOTION
+========================================================= */
+
+.home-feed-card-motion
+.writing-card {
+  transition:
+    transform 280ms var(--home-ease),
+    box-shadow 280ms var(--home-ease),
+    border-color 280ms ease;
+}
+
+
+.home-feed-card-motion
+.writing-card:hover {
+  transform:
+    translateY(-3px);
+}
+
+
+/* =========================================================
+   FEED TAB
+========================================================= */
+
+.home-feed-tab {
+  overflow: hidden;
+
+  position: relative;
+}
+
+
+.home-feed-tab::before {
+  content: "";
+
+  position: absolute;
+
+  width: 42%;
+  height: 100%;
+
+  left: -55%;
+  top: 0;
+
+  transform:
+    skewX(-18deg);
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(
+        255,
+        255,
+        255,
+        0.16
+      ),
+      transparent
+    );
+
+  transition:
+    left 520ms
+    var(--home-ease);
+}
+
+
+.home-feed-tab-active::before {
+  left: 115%;
+}
+
+
+/* =========================================================
+   FEED LOADING STATE
+========================================================= */
+
+.home-feed-loading-motion {
+  animation:
+    homeLoadingState
+    1.7s
+    ease-in-out
+    infinite;
+}
+
+
+@keyframes homeLoadingState {
+
+  0%,
+  100% {
+    box-shadow:
+      0 0 0
+      rgba(
+        100,
+        43,
+        143,
+        0
+      );
+  }
+
+  50% {
+    box-shadow:
+      0 10px 35px
+      rgba(
+        100,
+        43,
+        143,
+        0.055
+      );
+  }
+}
+
+
+/* =========================================================
+   FEED SUMMARY
+========================================================= */
+
+.home-feed-summary-motion {
+  animation:
+    homeSummaryEnter
+    420ms
+    var(--home-ease)
+    both;
+}
+
+
+@keyframes homeSummaryEnter {
+
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+
+/* =========================================================
+   SPINNER
+========================================================= */
+
+.home-feed-spin {
+  animation:
+    homeSpin
+    0.72s
+    linear
+    infinite;
+}
+
+
+@keyframes homeSpin {
+
+  to {
+    transform:
+      rotate(360deg);
+  }
+}
+
+
+/* =========================================================
+   FINAL CTA BACKGROUND WORD
+========================================================= */
+
+.home-background-word-motion {
+  animation:
+    homeBackgroundWord
+    11s
+    ease-in-out
+    infinite;
+}
+
+
+@keyframes homeBackgroundWord {
+
+  0%,
+  100% {
+    transform:
+      translateX(-1%)
+      scale(1);
+
+    opacity: 0.035;
+  }
+
+  50% {
+    transform:
+      translateX(1%)
+      scale(1.025);
+
+    opacity: 0.06;
+  }
+}
+
+
+/* =========================================================
+   FINAL LANGUAGE TRANSITION
+========================================================= */
+
+.home-final-content-motion {
+  animation:
+    homeFinalLanguageEnter
+    550ms
+    var(--home-ease)
+    both;
+}
+
+
+@keyframes homeFinalLanguageEnter {
+
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}
+
+
+/* =========================================================
+   BUTTON / LINK FOCUS
+========================================================= */
+
+.animated-home
+a:focus-visible,
+.animated-home
+button:focus-visible {
+  outline:
+    3px solid
+    rgba(
+      100,
+      43,
+      143,
+      0.2
+    );
+
+  outline-offset:
+    3px;
+}
+
+
+/* =========================================================
+   DESKTOP LARGE
+========================================================= */
+
+@media (
+  min-width: 1100px
+) {
+
+  .home-manuscript-entrance {
+    will-change:
+      opacity,
+      transform;
+  }
+
+
+  .home-hero-copy-animated {
+    will-change:
+      opacity,
+      transform;
+  }
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (
+  max-width: 900px
+) {
+
+  .home-hero-orbit-one {
+    width: 320px;
+    height: 320px;
+
+    right: -140px;
+  }
+
+
+  .home-hero-orbit-two {
+    width: 210px;
+    height: 210px;
+
+    right: -20px;
+  }
+
+
+  .home-hero-glow {
+    right: -260px;
+  }
+
+
+  .home-manuscript-entrance {
+    animation-duration:
+      750ms;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+  max-width: 700px
+) {
+
+  .home-hero-orbit,
+  .home-hero-glow {
+    opacity: 0.55;
+  }
+
+
+  .home-hero-orbit-one {
+    width: 250px;
+    height: 250px;
+
+    right: -160px;
+    top: 50px;
+  }
+
+
+  .home-hero-orbit-two {
+    display: none;
+  }
+
+
+  .home-reveal {
+    transform:
+      translate3d(
+        0,
+        18px,
+        0
+      );
+  }
+
+
+  .home-hero-copy-animated
+  .home-hero-kicker,
+  .home-hero-copy-animated
+  .home-hero-title-motion,
+  .home-hero-copy-animated
+  .home-hero-description-motion,
+  .home-hero-copy-animated
+  .home-hero-actions-motion,
+  .home-hero-copy-animated
+  .home-hero-footnote-motion {
+    transform:
+      translate3d(
+        0,
+        18px,
+        0
+      );
+  }
+
+
+  .home-manuscript-entrance {
+    transform:
+      translate3d(
+        0,
+        18px,
+        0
+      )
+      rotate(1deg);
+  }
+
+
+  .home-feed-card-motion {
+    animation-delay:
+      calc(
+        min(
+          var(
+            --home-feed-index,
+            0
+          ),
+          5
+        )
+        * 42ms
+      );
+  }
+
+
+  .home-featured-motion:hover,
+  .home-prompt-card-motion:hover {
+    transform: none;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (
+  max-width: 420px
+) {
+
+  .home-feed-card-motion {
+    animation-duration:
+      400ms;
+  }
+
+
+  .home-hero-copy-animated
+  .home-hero-kicker {
+    animation-delay:
+      30ms;
+  }
+
+
+  .home-hero-copy-animated
+  .home-hero-title-motion {
+    animation-delay:
+      100ms;
+  }
+
+
+  .home-hero-copy-animated
+  .home-hero-description-motion {
+    animation-delay:
+      170ms;
+  }
+
+
+  .home-hero-copy-animated
+  .home-hero-actions-motion {
+    animation-delay:
+      240ms;
+  }
+
+
+  .home-hero-copy-animated
+  .home-hero-footnote-motion {
+    animation-delay:
+      310ms;
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION / ACCESSIBILITY
+========================================================= */
+
+@media (
+  prefers-reduced-motion: reduce
+) {
+
+  .animated-home *,
+  .animated-home *::before,
+  .animated-home *::after {
+    scroll-behavior: auto !important;
+
+    animation-duration:
+      0.001ms !important;
+
+    animation-iteration-count:
+      1 !important;
+
+    transition-duration:
+      0.001ms !important;
+
+    transition-delay:
+      0ms !important;
+  }
+
+
+  .home-reveal {
+    opacity: 1 !important;
+
+    transform:
+      none !important;
+
+    filter:
+      none !important;
+  }
+
+
+  .home-manuscript-entrance,
+  .home-feed-card-motion,
+  .home-hero-copy-animated
+  .home-hero-kicker,
+  .home-hero-copy-animated
+  .home-hero-title-motion,
+  .home-hero-copy-animated
+  .home-hero-description-motion,
+  .home-hero-copy-animated
+  .home-hero-actions-motion,
+  .home-hero-copy-animated
+  .home-hero-footnote-motion {
+    opacity: 1 !important;
+
+    transform:
+      none !important;
+
+    filter:
+      none !important;
+  }
+
+}
