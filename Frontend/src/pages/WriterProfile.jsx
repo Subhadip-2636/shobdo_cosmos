@@ -5,10 +5,13 @@ import {
   useState,
 } from "react";
 
+
 import {
+  ArrowUpRight,
   BookOpen,
   CalendarDays,
   Camera,
+  CheckCircle2,
   ExternalLink,
   Globe2,
   Heart,
@@ -17,6 +20,7 @@ import {
   MessageCircle,
   Pencil,
   Save,
+  Share2,
   Trash2,
   Upload,
   UserCheck,
@@ -25,11 +29,13 @@ import {
   X,
 } from "lucide-react";
 
+
 import {
   Link,
   useNavigate,
   useParams,
 } from "react-router-dom";
+
 
 import {
   followUser,
@@ -44,12 +50,742 @@ import {
   validateProfileAvatar,
 } from "../api/api";
 
+
+import {
+  useLanguage,
+} from "../Language/LanguageContext";
+
+
 import "./WriterProfile.css";
+
+
+
+// =========================================================
+// MULTILINGUAL PROFILE COPY
+// =========================================================
+
+const PROFILE_COPY = {
+
+  en: {
+
+    writerProfile:
+      "Writer Profile",
+
+    editProfile:
+      "Edit Profile",
+
+    follow:
+      "Follow",
+
+    following:
+      "Following",
+
+    followers:
+      "Followers",
+
+    writings:
+      "Writings",
+
+    about:
+      "About",
+
+    share:
+      "Share",
+
+    shareProfile:
+      "Share profile",
+
+    linkCopied:
+      "Profile link copied",
+
+    memberSince:
+      "Member since {{date}}",
+
+    website:
+      "Website",
+
+    location:
+      "Location",
+
+    likesReceived:
+      "Likes received",
+
+    comments:
+      "Comments",
+
+    publishedWritings:
+      "Published writings",
+
+    publishedWorks:
+      "Published works",
+
+    writingsBy:
+      "Writings by {{name}}",
+
+    writingCount:
+      "{{count}} writing",
+
+    writingsCount:
+      "{{count}} writings",
+
+    noWritings:
+      "No published writings yet",
+
+    noWritingsDescription:
+      "This writer has not published any writings yet.",
+
+    noBio:
+      "This writer has not added a bio yet.",
+
+    loading:
+      "Loading writer profile...",
+
+    notFound:
+      "Writer not found",
+
+    unavailable:
+      "This writer profile is unavailable.",
+
+    invalidWriter:
+      "Invalid writer ID.",
+
+    loadError:
+      "Unable to load writer profile.",
+
+    exploreWritings:
+      "Explore writings",
+
+    followError:
+      "Unable to update follow status.",
+
+    readWriting:
+      "Read writing",
+
+    writing:
+      "Writing",
+
+    untitled:
+      "Untitled",
+
+    profileInformation:
+      "Profile information",
+
+    creatorActivity:
+      "Creator activity",
+
+    accountProfile:
+      "Account Profile",
+
+    profilePhoto:
+      "Profile photo",
+
+    photoDescription:
+      "JPG, PNG or WEBP. Maximum file size 5 MB.",
+
+    choosePhoto:
+      "Choose Photo",
+
+    changePhoto:
+      "Change Photo",
+
+    uploadPhoto:
+      "Upload Photo",
+
+    uploading:
+      "Uploading...",
+
+    removePhoto:
+      "Remove Photo",
+
+    removing:
+      "Removing...",
+
+    cancelSelection:
+      "Cancel Selection",
+
+    removePhotoConfirm:
+      "Remove your current profile photo?",
+
+    photoUpdated:
+      "Profile photo updated successfully.",
+
+    photoRemoved:
+      "Profile photo removed.",
+
+    invalidPhoto:
+      "Invalid profile image.",
+
+    photoUploadError:
+      "Unable to upload profile photo.",
+
+    photoRemoveError:
+      "Unable to remove profile photo.",
+
+    name:
+      "Name",
+
+    username:
+      "Username",
+
+    bio:
+      "Bio",
+
+    namePlaceholder:
+      "Your name",
+
+    usernamePlaceholder:
+      "username",
+
+    bioPlaceholder:
+      "Tell readers something about yourself...",
+
+    locationPlaceholder:
+      "City, Country",
+
+    websitePlaceholder:
+      "https://example.com",
+
+    nameError:
+      "Name must contain at least 2 characters.",
+
+    saveProfile:
+      "Save Profile",
+
+    saving:
+      "Saving...",
+
+    cancel:
+      "Cancel",
+
+    close:
+      "Close edit profile",
+
+    profileUpdated:
+      "Profile updated successfully.",
+
+    profileUpdateError:
+      "Unable to update profile.",
+
+    selectedPhoto:
+      "Selected profile preview",
+
+    currentPhoto:
+      "Current profile photo",
+
+    joined:
+      "Joined",
+
+  },
+
+
+  bn: {
+
+    writerProfile:
+      "লেখকের প্রোফাইল",
+
+    editProfile:
+      "প্রোফাইল সম্পাদনা",
+
+    follow:
+      "অনুসরণ করুন",
+
+    following:
+      "অনুসরণ করছেন",
+
+    followers:
+      "অনুসরণকারী",
+
+    writings:
+      "লেখা",
+
+    about:
+      "পরিচিতি",
+
+    share:
+      "শেয়ার",
+
+    shareProfile:
+      "প্রোফাইল শেয়ার করুন",
+
+    linkCopied:
+      "প্রোফাইলের লিঙ্ক কপি হয়েছে",
+
+    memberSince:
+      "{{date}} থেকে সদস্য",
+
+    website:
+      "ওয়েবসাইট",
+
+    location:
+      "অবস্থান",
+
+    likesReceived:
+      "প্রাপ্ত পছন্দ",
+
+    comments:
+      "মন্তব্য",
+
+    publishedWritings:
+      "প্রকাশিত লেখা",
+
+    publishedWorks:
+      "প্রকাশিত রচনা",
+
+    writingsBy:
+      "{{name}}-এর লেখা",
+
+    writingCount:
+      "{{count}}টি লেখা",
+
+    writingsCount:
+      "{{count}}টি লেখা",
+
+    noWritings:
+      "এখনও কোনো প্রকাশিত লেখা নেই",
+
+    noWritingsDescription:
+      "এই লেখক এখনও কোনো লেখা প্রকাশ করেননি।",
+
+    noBio:
+      "এই লেখক এখনও নিজের সম্পর্কে কিছু লেখেননি।",
+
+    loading:
+      "লেখকের প্রোফাইল লোড হচ্ছে...",
+
+    notFound:
+      "লেখককে পাওয়া যায়নি",
+
+    unavailable:
+      "এই লেখকের প্রোফাইলটি উপলভ্য নয়।",
+
+    invalidWriter:
+      "লেখকের আইডি সঠিক নয়।",
+
+    loadError:
+      "লেখকের প্রোফাইল লোড করা যায়নি।",
+
+    exploreWritings:
+      "লেখা অন্বেষণ করুন",
+
+    followError:
+      "অনুসরণের অবস্থা পরিবর্তন করা যায়নি।",
+
+    readWriting:
+      "লেখাটি পড়ুন",
+
+    writing:
+      "লেখা",
+
+    untitled:
+      "শিরোনামহীন",
+
+    profileInformation:
+      "প্রোফাইল তথ্য",
+
+    creatorActivity:
+      "লেখকের কার্যক্রম",
+
+    accountProfile:
+      "অ্যাকাউন্ট প্রোফাইল",
+
+    profilePhoto:
+      "প্রোফাইল ছবি",
+
+    photoDescription:
+      "JPG, PNG অথবা WEBP। সর্বোচ্চ ফাইল সাইজ ৫ MB।",
+
+    choosePhoto:
+      "ছবি নির্বাচন করুন",
+
+    changePhoto:
+      "ছবি পরিবর্তন করুন",
+
+    uploadPhoto:
+      "ছবি আপলোড করুন",
+
+    uploading:
+      "আপলোড হচ্ছে...",
+
+    removePhoto:
+      "ছবি সরান",
+
+    removing:
+      "সরানো হচ্ছে...",
+
+    cancelSelection:
+      "নির্বাচন বাতিল করুন",
+
+    removePhotoConfirm:
+      "আপনার বর্তমান প্রোফাইল ছবি সরাতে চান?",
+
+    photoUpdated:
+      "প্রোফাইল ছবি সফলভাবে আপডেট হয়েছে।",
+
+    photoRemoved:
+      "প্রোফাইল ছবি সরানো হয়েছে।",
+
+    invalidPhoto:
+      "প্রোফাইল ছবিটি সঠিক নয়।",
+
+    photoUploadError:
+      "প্রোফাইল ছবি আপলোড করা যায়নি।",
+
+    photoRemoveError:
+      "প্রোফাইল ছবি সরানো যায়নি।",
+
+    name:
+      "নাম",
+
+    username:
+      "ইউজারনেম",
+
+    bio:
+      "পরিচিতি",
+
+    namePlaceholder:
+      "আপনার নাম",
+
+    usernamePlaceholder:
+      "ইউজারনেম",
+
+    bioPlaceholder:
+      "নিজের সম্পর্কে পাঠকদের কিছু বলুন...",
+
+    locationPlaceholder:
+      "শহর, দেশ",
+
+    websitePlaceholder:
+      "https://example.com",
+
+    nameError:
+      "নামে অন্তত ২টি অক্ষর থাকতে হবে।",
+
+    saveProfile:
+      "প্রোফাইল সংরক্ষণ করুন",
+
+    saving:
+      "সংরক্ষণ হচ্ছে...",
+
+    cancel:
+      "বাতিল",
+
+    close:
+      "প্রোফাইল সম্পাদনা বন্ধ করুন",
+
+    profileUpdated:
+      "প্রোফাইল সফলভাবে আপডেট হয়েছে।",
+
+    profileUpdateError:
+      "প্রোফাইল আপডেট করা যায়নি।",
+
+    selectedPhoto:
+      "নির্বাচিত ছবির প্রিভিউ",
+
+    currentPhoto:
+      "বর্তমান প্রোফাইল ছবি",
+
+    joined:
+      "যোগ দিয়েছেন",
+
+  },
+
+
+  hi: {
+
+    writerProfile:
+      "लेखक प्रोफ़ाइल",
+
+    editProfile:
+      "प्रोफ़ाइल संपादित करें",
+
+    follow:
+      "फ़ॉलो करें",
+
+    following:
+      "फ़ॉलो कर रहे हैं",
+
+    followers:
+      "फ़ॉलोअर्स",
+
+    writings:
+      "रचनाएँ",
+
+    about:
+      "परिचय",
+
+    share:
+      "साझा करें",
+
+    shareProfile:
+      "प्रोफ़ाइल साझा करें",
+
+    linkCopied:
+      "प्रोफ़ाइल लिंक कॉपी हो गया",
+
+    memberSince:
+      "{{date}} से सदस्य",
+
+    website:
+      "वेबसाइट",
+
+    location:
+      "स्थान",
+
+    likesReceived:
+      "प्राप्त पसंद",
+
+    comments:
+      "टिप्पणियाँ",
+
+    publishedWritings:
+      "प्रकाशित रचनाएँ",
+
+    publishedWorks:
+      "प्रकाशित रचनाएँ",
+
+    writingsBy:
+      "{{name}} की रचनाएँ",
+
+    writingCount:
+      "{{count}} रचना",
+
+    writingsCount:
+      "{{count}} रचनाएँ",
+
+    noWritings:
+      "अभी कोई प्रकाशित रचना नहीं है",
+
+    noWritingsDescription:
+      "इस लेखक ने अभी तक कोई रचना प्रकाशित नहीं की है।",
+
+    noBio:
+      "इस लेखक ने अभी अपने बारे में कुछ नहीं लिखा है।",
+
+    loading:
+      "लेखक प्रोफ़ाइल लोड हो रही है...",
+
+    notFound:
+      "लेखक नहीं मिला",
+
+    unavailable:
+      "यह लेखक प्रोफ़ाइल उपलब्ध नहीं है।",
+
+    invalidWriter:
+      "अमान्य लेखक आईडी।",
+
+    loadError:
+      "लेखक प्रोफ़ाइल लोड नहीं हो सकी।",
+
+    exploreWritings:
+      "रचनाएँ देखें",
+
+    followError:
+      "फ़ॉलो स्थिति अपडेट नहीं हो सकी।",
+
+    readWriting:
+      "रचना पढ़ें",
+
+    writing:
+      "रचना",
+
+    untitled:
+      "बिना शीर्षक",
+
+    profileInformation:
+      "प्रोफ़ाइल जानकारी",
+
+    creatorActivity:
+      "लेखक गतिविधि",
+
+    accountProfile:
+      "अकाउंट प्रोफ़ाइल",
+
+    profilePhoto:
+      "प्रोफ़ाइल फ़ोटो",
+
+    photoDescription:
+      "JPG, PNG या WEBP। अधिकतम फ़ाइल आकार 5 MB।",
+
+    choosePhoto:
+      "फ़ोटो चुनें",
+
+    changePhoto:
+      "फ़ोटो बदलें",
+
+    uploadPhoto:
+      "फ़ोटो अपलोड करें",
+
+    uploading:
+      "अपलोड हो रहा है...",
+
+    removePhoto:
+      "फ़ोटो हटाएँ",
+
+    removing:
+      "हटाया जा रहा है...",
+
+    cancelSelection:
+      "चयन रद्द करें",
+
+    removePhotoConfirm:
+      "क्या आप अपनी वर्तमान प्रोफ़ाइल फ़ोटो हटाना चाहते हैं?",
+
+    photoUpdated:
+      "प्रोफ़ाइल फ़ोटो सफलतापूर्वक अपडेट हुई।",
+
+    photoRemoved:
+      "प्रोफ़ाइल फ़ोटो हटा दी गई।",
+
+    invalidPhoto:
+      "अमान्य प्रोफ़ाइल फ़ोटो।",
+
+    photoUploadError:
+      "प्रोफ़ाइल फ़ोटो अपलोड नहीं हो सकी।",
+
+    photoRemoveError:
+      "प्रोफ़ाइल फ़ोटो हटाई नहीं जा सकी।",
+
+    name:
+      "नाम",
+
+    username:
+      "यूज़रनेम",
+
+    bio:
+      "परिचय",
+
+    namePlaceholder:
+      "आपका नाम",
+
+    usernamePlaceholder:
+      "यूज़रनेम",
+
+    bioPlaceholder:
+      "अपने बारे में पाठकों को कुछ बताएँ...",
+
+    locationPlaceholder:
+      "शहर, देश",
+
+    websitePlaceholder:
+      "https://example.com",
+
+    nameError:
+      "नाम में कम से कम 2 अक्षर होने चाहिए।",
+
+    saveProfile:
+      "प्रोफ़ाइल सहेजें",
+
+    saving:
+      "सहेजा जा रहा है...",
+
+    cancel:
+      "रद्द करें",
+
+    close:
+      "प्रोफ़ाइल संपादन बंद करें",
+
+    profileUpdated:
+      "प्रोफ़ाइल सफलतापूर्वक अपडेट हुई।",
+
+    profileUpdateError:
+      "प्रोफ़ाइल अपडेट नहीं हो सकी।",
+
+    selectedPhoto:
+      "चुनी गई फ़ोटो का पूर्वावलोकन",
+
+    currentPhoto:
+      "वर्तमान प्रोफ़ाइल फ़ोटो",
+
+    joined:
+      "जुड़े",
+
+  },
+
+};
+
+
+
+// =========================================================
+// CATEGORY LABELS
+// =========================================================
+
+const CATEGORY_LABELS = {
+
+  en: {
+    কবিতা: "Poetry",
+    গল্প: "Story",
+    অনুভূতি: "Feelings",
+    প্রবন্ধ: "Essay",
+    উপন্যাস: "Novel",
+    অন্যান্য: "Other",
+  },
+
+  bn: {
+    কবিতা: "কবিতা",
+    গল্প: "গল্প",
+    অনুভূতি: "অনুভূতি",
+    প্রবন্ধ: "প্রবন্ধ",
+    উপন্যাস: "উপন্যাস",
+    অন্যান্য: "অন্যান্য",
+  },
+
+  hi: {
+    কবিতা: "कविता",
+    গল্প: "कहानी",
+    অনুভূতি: "भावनाएँ",
+    প্রবন্ধ: "निबंध",
+    উপন্যাস: "उपन्यास",
+    অন্যান্য: "अन्य",
+  },
+
+};
+
+
+
+// =========================================================
+// WRITING LANGUAGE LABELS
+// =========================================================
+
+const WRITING_LANGUAGE_LABELS = {
+
+  en: {
+    bn: "Bengali",
+    en: "English",
+    hi: "Hindi",
+    as: "Assamese",
+    or: "Odia",
+    ta: "Tamil",
+    te: "Telugu",
+  },
+
+  bn: {
+    bn: "বাংলা",
+    en: "ইংরেজি",
+    hi: "হিন্দি",
+    as: "অসমীয়া",
+    or: "ওড়িয়া",
+    ta: "তামিল",
+    te: "তেলুগু",
+  },
+
+  hi: {
+    bn: "बंगाली",
+    en: "अंग्रेज़ी",
+    hi: "हिन्दी",
+    as: "असमिया",
+    or: "ओड़िया",
+    ta: "तमिल",
+    te: "तेलुगु",
+  },
+
+};
+
 
 
 // =========================================================
 // HELPERS
 // =========================================================
+
 
 function safeNumber(
   value
@@ -66,7 +802,9 @@ function safeNumber(
   )
     ? number
     : 0;
+
 }
+
 
 
 function getInitial(
@@ -87,7 +825,9 @@ function getInitial(
   return normalized
     .charAt(0)
     .toUpperCase();
+
 }
+
 
 
 function getWebsiteLabel(
@@ -108,24 +848,141 @@ function getWebsiteLabel(
 
 
     return (
-      url.hostname +
-      (
-        url.pathname !== "/"
-          ? url.pathname
-          : ""
-      )
+      url.hostname
+        .replace(
+          /^www\./,
+          ""
+        )
     );
 
   } catch {
 
     return website;
+
   }
+
 }
+
+
+
+function interpolate(
+  value,
+  params = {}
+) {
+
+  let result =
+    String(
+      value || ""
+    );
+
+
+  Object.entries(
+    params
+  ).forEach(
+    ([
+      key,
+      replacement,
+    ]) => {
+
+      result =
+        result.replaceAll(
+          `{{${key}}}`,
+          String(
+            replacement ?? ""
+          )
+        );
+
+    }
+  );
+
+
+  return result;
+
+}
+
+
+
+function getLocale(
+  language
+) {
+
+  const map = {
+    en: "en-IN",
+    bn: "bn-BD",
+    hi: "hi-IN",
+  };
+
+
+  return (
+    map[language] ||
+    "en-IN"
+  );
+
+}
+
+
+
+function getCategoryLabel(
+  language,
+  category,
+  fallback
+) {
+
+  return (
+    CATEGORY_LABELS[
+      language
+    ]?.[
+      category
+    ] ||
+    CATEGORY_LABELS.en[
+      category
+    ] ||
+    fallback ||
+    category
+  );
+
+}
+
+
+
+function getWritingLanguageLabel(
+  language,
+  writingLanguage
+) {
+
+  const normalized =
+    String(
+      writingLanguage || ""
+    )
+      .trim()
+      .toLowerCase();
+
+
+  if (!normalized) {
+    return "";
+  }
+
+
+  return (
+    WRITING_LANGUAGE_LABELS[
+      language
+    ]?.[
+      normalized
+    ] ||
+    WRITING_LANGUAGE_LABELS.en[
+      normalized
+    ] ||
+    normalized.toUpperCase()
+  );
+
+}
+
 
 
 // =========================================================
 // WRITER PROFILE
 // =========================================================
+
 
 function WriterProfile() {
 
@@ -138,8 +995,22 @@ function WriterProfile() {
     useNavigate();
 
 
+  const {
+    language,
+  } = useLanguage();
+
+
+  const copy =
+    PROFILE_COPY[
+      language
+    ] ||
+    PROFILE_COPY.en;
+
+
   const avatarInputRef =
-    useRef(null);
+    useRef(
+      null
+    );
 
 
   const userId =
@@ -161,9 +1032,11 @@ function WriterProfile() {
     );
 
 
+
   // =======================================================
   // PROFILE STATE
   // =======================================================
+
 
   const [
     profile,
@@ -223,9 +1096,27 @@ function WriterProfile() {
   );
 
 
+  const [
+    activeTab,
+    setActiveTab,
+  ] = useState(
+    "writings"
+  );
+
+
+  const [
+    shareStatus,
+    setShareStatus,
+  ] = useState(
+    ""
+  );
+
+
+
   // =======================================================
-  // FOLLOW STATE
+  // FOLLOW
   // =======================================================
+
 
   const [
     followLoading,
@@ -235,9 +1126,11 @@ function WriterProfile() {
   );
 
 
+
   // =======================================================
-  // EDIT PROFILE STATE
+  // EDIT PROFILE
   // =======================================================
+
 
   const [
     editOpen,
@@ -283,9 +1176,11 @@ function WriterProfile() {
   );
 
 
+
   // =======================================================
-  // AVATAR STATE
+  // AVATAR
   // =======================================================
+
 
   const [
     avatarFile,
@@ -343,9 +1238,11 @@ function WriterProfile() {
   );
 
 
+
   // =======================================================
   // LOAD PROFILE
   // =======================================================
+
 
   useEffect(
     () => {
@@ -361,20 +1258,24 @@ function WriterProfile() {
         ) {
 
           setError(
-            "Invalid writer ID."
+            copy.invalidWriter
           );
+
 
           setLoading(
             false
           );
 
+
           return;
+
         }
 
 
         setLoading(
           true
         );
+
 
         setError(
           ""
@@ -388,6 +1289,7 @@ function WriterProfile() {
             writingsData,
           ] =
             await Promise.all([
+
               getWriterProfile(
                 userId
               ),
@@ -395,6 +1297,7 @@ function WriterProfile() {
               getWriterWritings(
                 userId
               ),
+
             ]);
 
 
@@ -412,6 +1315,7 @@ function WriterProfile() {
 
 
           setStats({
+
             writings_count:
               safeNumber(
                 profileData
@@ -446,6 +1350,7 @@ function WriterProfile() {
                   ?.stats
                   ?.following_count
               ),
+
           });
 
 
@@ -503,6 +1408,7 @@ function WriterProfile() {
                 (
                   current
                 ) => ({
+
                   ...current,
 
                   followers_count:
@@ -520,17 +1426,20 @@ function WriterProfile() {
                       current
                         .following_count
                     ),
+
                 })
               );
 
+
             } catch (
-              followError
+              followStatusError
             ) {
 
               console.error(
                 "FOLLOW STATUS ERROR:",
-                followError
+                followStatusError
               );
+
             }
 
           } else {
@@ -539,9 +1448,11 @@ function WriterProfile() {
               false
             );
 
+
             setIsSelf(
               false
             );
+
           }
 
 
@@ -560,9 +1471,14 @@ function WriterProfile() {
           ) {
 
             setError(
-              loadError?.message ||
-              "Unable to load writer profile."
+              language === "en"
+                ? (
+                    loadError?.message ||
+                    copy.loadError
+                  )
+                : copy.loadError
             );
+
           }
 
 
@@ -575,8 +1491,11 @@ function WriterProfile() {
             setLoading(
               false
             );
+
           }
+
         }
+
       }
 
 
@@ -587,6 +1506,7 @@ function WriterProfile() {
 
         mounted =
           false;
+
       };
 
     },
@@ -594,13 +1514,16 @@ function WriterProfile() {
       userId,
       validUserId,
       isLoggedIn,
+      language,
     ]
   );
+
 
 
   // =======================================================
   // AVATAR PREVIEW CLEANUP
   // =======================================================
+
 
   useEffect(
     () => {
@@ -614,7 +1537,9 @@ function WriterProfile() {
           URL.revokeObjectURL(
             avatarPreviewUrl
           );
+
         }
+
       };
 
     },
@@ -624,9 +1549,55 @@ function WriterProfile() {
   );
 
 
+
+  // =======================================================
+  // SHARE STATUS CLEANUP
+  // =======================================================
+
+
+  useEffect(
+    () => {
+
+      if (
+        !shareStatus
+      ) {
+        return undefined;
+      }
+
+
+      const timer =
+        window.setTimeout(
+          () => {
+
+            setShareStatus(
+              ""
+            );
+
+          },
+          2500
+        );
+
+
+      return () => {
+
+        window.clearTimeout(
+          timer
+        );
+
+      };
+
+    },
+    [
+      shareStatus,
+    ]
+  );
+
+
+
   // =======================================================
   // MEMBER SINCE
   // =======================================================
+
 
   const memberSince =
     useMemo(
@@ -657,47 +1628,51 @@ function WriterProfile() {
         try {
 
           return (
-            new Intl
-              .DateTimeFormat(
-                undefined,
-                {
-                  month:
-                    "long",
+            new Intl.DateTimeFormat(
+              getLocale(
+                language
+              ),
+              {
+                month:
+                  "long",
 
-                  year:
-                    "numeric",
-                }
-              )
-              .format(
-                date
-              )
+                year:
+                  "numeric",
+              }
+            ).format(
+              date
+            )
           );
+
 
         } catch {
 
           return (
-            date
-              .toLocaleDateString()
+            date.toLocaleDateString()
           );
+
         }
+
       },
       [
         profile?.created_at,
+        language,
       ]
     );
 
 
+
   // =======================================================
-  // PROFILE AVATAR URL
+  // AVATAR URL
   // =======================================================
+
 
   const displayedAvatarUrl =
     useMemo(
       () => {
 
         if (
-          !profile
-            ?.avatar_url
+          !profile?.avatar_url
         ) {
           return "";
         }
@@ -723,11 +1698,13 @@ function WriterProfile() {
             url.toString()
           );
 
+
         } catch {
 
           return (
             profile.avatar_url
           );
+
         }
 
       },
@@ -738,9 +1715,11 @@ function WriterProfile() {
     );
 
 
+
   // =======================================================
-  // OPEN EDIT PROFILE
+  // OPEN EDIT
   // =======================================================
+
 
   function openEditProfile() {
 
@@ -753,6 +1732,7 @@ function WriterProfile() {
 
 
     setEditForm({
+
       name:
         profile.name ||
         "",
@@ -772,6 +1752,7 @@ function WriterProfile() {
       website:
         profile.website ||
         "",
+
     });
 
 
@@ -779,13 +1760,16 @@ function WriterProfile() {
       ""
     );
 
+
     setProfileSuccess(
       ""
     );
 
+
     setAvatarError(
       ""
     );
+
 
     setAvatarSuccess(
       ""
@@ -795,12 +1779,15 @@ function WriterProfile() {
     setEditOpen(
       true
     );
+
   }
 
 
+
   // =======================================================
-  // CLOSE EDIT PROFILE
+  // CLOSE EDIT
   // =======================================================
+
 
   function closeEditProfile() {
 
@@ -820,6 +1807,7 @@ function WriterProfile() {
       URL.revokeObjectURL(
         avatarPreviewUrl
       );
+
     }
 
 
@@ -827,25 +1815,31 @@ function WriterProfile() {
       null
     );
 
+
     setAvatarPreviewUrl(
       ""
     );
+
 
     setAvatarError(
       ""
     );
 
+
     setAvatarSuccess(
       ""
     );
+
 
     setProfileError(
       ""
     );
 
+
     setProfileSuccess(
       ""
     );
+
 
     setEditOpen(
       false
@@ -856,17 +1850,19 @@ function WriterProfile() {
       avatarInputRef.current
     ) {
 
-      avatarInputRef
-        .current
-        .value =
+      avatarInputRef.current.value =
         "";
+
     }
+
   }
 
 
+
   // =======================================================
-  // EDIT FIELD CHANGE
+  // EDIT FIELD
   // =======================================================
+
 
   function handleEditChange(
     event
@@ -883,10 +1879,12 @@ function WriterProfile() {
       (
         current
       ) => ({
+
         ...current,
 
         [name]:
           value,
+
       })
     );
 
@@ -895,15 +1893,19 @@ function WriterProfile() {
       ""
     );
 
+
     setProfileSuccess(
       ""
     );
+
   }
+
 
 
   // =======================================================
   // SAVE PROFILE
   // =======================================================
+
 
   async function handleSaveProfile(
     event
@@ -941,10 +1943,11 @@ function WriterProfile() {
     ) {
 
       setProfileError(
-        "Name must contain at least 2 characters."
+        copy.nameError
       );
 
       return;
+
     }
 
 
@@ -952,9 +1955,11 @@ function WriterProfile() {
       true
     );
 
+
     setProfileError(
       ""
     );
+
 
     setProfileSuccess(
       ""
@@ -965,6 +1970,7 @@ function WriterProfile() {
 
       const result =
         await updateMyProfile({
+
           name:
             normalizedName,
 
@@ -985,6 +1991,7 @@ function WriterProfile() {
             editForm
               .website
               .trim(),
+
         });
 
 
@@ -996,8 +2003,11 @@ function WriterProfile() {
           (
             current
           ) => ({
+
             ...current,
+
             ...result.user,
+
           })
         );
 
@@ -1006,25 +2016,47 @@ function WriterProfile() {
           (
             current
           ) => ({
+
             ...current,
 
             name:
-              result.user
+              result
+                .user
                 ?.name ??
               current.name,
 
             username:
-              result.user
+              result
+                .user
                 ?.username ??
               "",
+
+            bio:
+              result
+                .user
+                ?.bio ??
+              "",
+
+            location:
+              result
+                .user
+                ?.location ??
+              "",
+
+            website:
+              result
+                .user
+                ?.website ??
+              "",
+
           })
         );
+
       }
 
 
       setProfileSuccess(
-        result?.message ||
-        "Profile updated successfully."
+        copy.profileUpdated
       );
 
 
@@ -1039,8 +2071,12 @@ function WriterProfile() {
 
 
       setProfileError(
-        saveError?.message ||
-        "Unable to update profile."
+        language === "en"
+          ? (
+              saveError?.message ||
+              copy.profileUpdateError
+            )
+          : copy.profileUpdateError
       );
 
 
@@ -1049,13 +2085,17 @@ function WriterProfile() {
       setProfileSaving(
         false
       );
+
     }
+
   }
+
 
 
   // =======================================================
   // SELECT AVATAR
   // =======================================================
+
 
   function handleAvatarSelection(
     event
@@ -1076,6 +2116,7 @@ function WriterProfile() {
       ""
     );
 
+
     setAvatarSuccess(
       ""
     );
@@ -1095,6 +2136,7 @@ function WriterProfile() {
         URL.revokeObjectURL(
           avatarPreviewUrl
         );
+
       }
 
 
@@ -1118,9 +2160,16 @@ function WriterProfile() {
       validationError
     ) {
 
+      console.error(
+        "AVATAR VALIDATION ERROR:",
+        validationError
+      );
+
+
       setAvatarFile(
         null
       );
+
 
       setAvatarPreviewUrl(
         ""
@@ -1128,8 +2177,13 @@ function WriterProfile() {
 
 
       setAvatarError(
-        validationError?.message ||
-        "Invalid profile image."
+        language === "en"
+          ? (
+              validationError
+                ?.message ||
+              copy.invalidPhoto
+            )
+          : copy.invalidPhoto
       );
 
 
@@ -1137,18 +2191,21 @@ function WriterProfile() {
         avatarInputRef.current
       ) {
 
-        avatarInputRef
-          .current
-          .value =
+        avatarInputRef.current.value =
           "";
+
       }
+
     }
+
   }
 
 
+
   // =======================================================
-  // CANCEL SELECTED AVATAR
+  // CANCEL AVATAR SELECTION
   // =======================================================
+
 
   function cancelAvatarSelection() {
 
@@ -1166,6 +2223,7 @@ function WriterProfile() {
       URL.revokeObjectURL(
         avatarPreviewUrl
       );
+
     }
 
 
@@ -1173,9 +2231,11 @@ function WriterProfile() {
       null
     );
 
+
     setAvatarPreviewUrl(
       ""
     );
+
 
     setAvatarError(
       ""
@@ -1186,17 +2246,19 @@ function WriterProfile() {
       avatarInputRef.current
     ) {
 
-      avatarInputRef
-        .current
-        .value =
+      avatarInputRef.current.value =
         "";
+
     }
+
   }
+
 
 
   // =======================================================
   // UPLOAD AVATAR
   // =======================================================
+
 
   async function handleAvatarUpload() {
 
@@ -1212,9 +2274,11 @@ function WriterProfile() {
       true
     );
 
+
     setAvatarError(
       ""
     );
+
 
     setAvatarSuccess(
       ""
@@ -1241,6 +2305,7 @@ function WriterProfile() {
         (
           current
         ) => ({
+
           ...current,
 
           ...(
@@ -1250,9 +2315,9 @@ function WriterProfile() {
 
           avatar_url:
             nextAvatarUrl ||
-            current
-              ?.avatar_url ||
+            current?.avatar_url ||
             null,
+
         })
       );
 
@@ -1269,12 +2334,14 @@ function WriterProfile() {
         URL.revokeObjectURL(
           avatarPreviewUrl
         );
+
       }
 
 
       setAvatarFile(
         null
       );
+
 
       setAvatarPreviewUrl(
         ""
@@ -1285,16 +2352,14 @@ function WriterProfile() {
         avatarInputRef.current
       ) {
 
-        avatarInputRef
-          .current
-          .value =
+        avatarInputRef.current.value =
           "";
+
       }
 
 
       setAvatarSuccess(
-        result?.message ||
-        "Profile photo updated successfully."
+        copy.photoUpdated
       );
 
 
@@ -1309,8 +2374,12 @@ function WriterProfile() {
 
 
       setAvatarError(
-        uploadError?.message ||
-        "Unable to upload profile photo."
+        language === "en"
+          ? (
+              uploadError?.message ||
+              copy.photoUploadError
+            )
+          : copy.photoUploadError
       );
 
 
@@ -1319,13 +2388,17 @@ function WriterProfile() {
       setAvatarUploading(
         false
       );
+
     }
+
   }
+
 
 
   // =======================================================
   // REMOVE AVATAR
   // =======================================================
+
 
   async function handleRemoveAvatar() {
 
@@ -1339,7 +2412,7 @@ function WriterProfile() {
 
     const confirmed =
       window.confirm(
-        "Remove your current profile photo?"
+        copy.removePhotoConfirm
       );
 
 
@@ -1354,9 +2427,11 @@ function WriterProfile() {
       true
     );
 
+
     setAvatarError(
       ""
     );
+
 
     setAvatarSuccess(
       ""
@@ -1373,6 +2448,7 @@ function WriterProfile() {
         (
           current
         ) => ({
+
           ...current,
 
           ...(
@@ -1382,6 +2458,7 @@ function WriterProfile() {
 
           avatar_url:
             null,
+
         })
       );
 
@@ -1398,12 +2475,14 @@ function WriterProfile() {
         URL.revokeObjectURL(
           avatarPreviewUrl
         );
+
       }
 
 
       setAvatarFile(
         null
       );
+
 
       setAvatarPreviewUrl(
         ""
@@ -1414,16 +2493,14 @@ function WriterProfile() {
         avatarInputRef.current
       ) {
 
-        avatarInputRef
-          .current
-          .value =
+        avatarInputRef.current.value =
           "";
+
       }
 
 
       setAvatarSuccess(
-        result?.message ||
-        "Profile photo removed."
+        copy.photoRemoved
       );
 
 
@@ -1438,8 +2515,12 @@ function WriterProfile() {
 
 
       setAvatarError(
-        removeError?.message ||
-        "Unable to remove profile photo."
+        language === "en"
+          ? (
+              removeError?.message ||
+              copy.photoRemoveError
+            )
+          : copy.photoRemoveError
       );
 
 
@@ -1448,13 +2529,17 @@ function WriterProfile() {
       setAvatarRemoving(
         false
       );
+
     }
+
   }
+
 
 
   // =======================================================
   // FOLLOW / UNFOLLOW
   // =======================================================
+
 
   async function handleFollow() {
 
@@ -1471,10 +2556,17 @@ function WriterProfile() {
     ) {
 
       navigate(
-        "/login"
+        "/login",
+        {
+          state: {
+            from:
+              `/users/${userId}`,
+          },
+        }
       );
 
       return;
+
     }
 
 
@@ -1501,8 +2593,6 @@ function WriterProfile() {
     );
 
 
-    // Optimistic UI
-
     setFollowing(
       !previousFollowing
     );
@@ -1512,12 +2602,12 @@ function WriterProfile() {
       (
         current
       ) => ({
+
         ...current,
 
         followers_count:
           Math.max(
             0,
-
             previousFollowers +
             (
               previousFollowing
@@ -1525,6 +2615,7 @@ function WriterProfile() {
                 : 1
             )
           ),
+
       })
     );
 
@@ -1536,7 +2627,6 @@ function WriterProfile() {
           ? await unfollowUser(
               userId
             )
-
           : await followUser(
               userId
             );
@@ -1544,8 +2634,7 @@ function WriterProfile() {
 
       setFollowing(
         Boolean(
-          result
-            ?.following
+          result?.following
         )
       );
 
@@ -1554,6 +2643,7 @@ function WriterProfile() {
         (
           current
         ) => ({
+
           ...current,
 
           followers_count:
@@ -1571,6 +2661,7 @@ function WriterProfile() {
               current
                 .following_count
             ),
+
         })
       );
 
@@ -1594,17 +2685,23 @@ function WriterProfile() {
         (
           current
         ) => ({
+
           ...current,
 
           followers_count:
             previousFollowers,
+
         })
       );
 
 
       window.alert(
-        followError?.message ||
-        "Unable to update follow status."
+        language === "en"
+          ? (
+              followError?.message ||
+              copy.followError
+            )
+          : copy.followError
       );
 
 
@@ -1613,13 +2710,167 @@ function WriterProfile() {
       setFollowLoading(
         false
       );
+
     }
+
   }
+
+
+
+  // =======================================================
+  // SHARE PROFILE
+  // =======================================================
+
+
+  async function handleShareProfile() {
+
+    const profileUrl =
+      window.location.href;
+
+
+    const shareData = {
+
+      title:
+        `${profile?.name || "Writer"} — SHOBDO`,
+
+      text:
+        `${profile?.name || "Writer"} — SHOBDO`,
+
+      url:
+        profileUrl,
+
+    };
+
+
+    try {
+
+      if (
+        navigator.share
+      ) {
+
+        await navigator.share(
+          shareData
+        );
+
+
+        return;
+
+      }
+
+
+      if (
+        navigator.clipboard
+      ) {
+
+        await navigator.clipboard.writeText(
+          profileUrl
+        );
+
+
+        setShareStatus(
+          copy.linkCopied
+        );
+
+
+        return;
+
+      }
+
+
+      window.prompt(
+        copy.shareProfile,
+        profileUrl
+      );
+
+
+    } catch (
+      shareError
+    ) {
+
+      if (
+        shareError?.name !==
+        "AbortError"
+      ) {
+
+        console.error(
+          "PROFILE SHARE ERROR:",
+          shareError
+        );
+
+      }
+
+    }
+
+  }
+
+
+
+  // =======================================================
+  // WRITING DATE
+  // =======================================================
+
+
+  function getWritingDate(
+    writing
+  ) {
+
+    const value =
+      writing?.published_at ||
+      writing?.created_at;
+
+
+    if (!value) {
+      return "";
+    }
+
+
+    const date =
+      new Date(
+        value
+      );
+
+
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+      return "";
+    }
+
+
+    try {
+
+      return (
+        new Intl.DateTimeFormat(
+          getLocale(
+            language
+          ),
+          {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          }
+        ).format(
+          date
+        )
+      );
+
+
+    } catch {
+
+      return "";
+
+    }
+
+  }
+
 
 
   // =======================================================
   // LOADING
   // =======================================================
+
 
   if (
     loading
@@ -1627,28 +2878,19 @@ function WriterProfile() {
 
     return (
 
-      <main
-        className=
-          "writer-profile-page"
-      >
+      <main className="writer-profile-page">
 
-        <div
-          className=
-            "writer-profile-shell"
-        >
+        <div className="writer-profile-shell">
 
-          <div
-            className=
-              "writer-profile-state"
-          >
+          <div className="writer-profile-state">
 
             <Loader2
-              size={34}
+              size={36}
               className="spin"
             />
 
             <p>
-              Loading writer profile...
+              {copy.loading}
             </p>
 
           </div>
@@ -1656,13 +2898,17 @@ function WriterProfile() {
         </div>
 
       </main>
+
     );
+
   }
+
 
 
   // =======================================================
   // ERROR
   // =======================================================
+
 
   if (
     error ||
@@ -1671,42 +2917,32 @@ function WriterProfile() {
 
     return (
 
-      <main
-        className=
-          "writer-profile-page"
-      >
+      <main className="writer-profile-page">
 
-        <div
-          className=
-            "writer-profile-shell"
-        >
+        <div className="writer-profile-shell">
 
-          <section
-            className=
-              "writer-profile-state"
-          >
+          <section className="writer-profile-state">
 
             <Users
-              size={38}
+              size={42}
             />
 
             <h1>
-              Writer not found
+              {copy.notFound}
             </h1>
 
             <p>
               {
                 error ||
-                "This writer profile is unavailable."
+                copy.unavailable
               }
             </p>
 
             <Link
               to="/explore"
-              className=
-                "writer-profile-primary-link"
+              className="writer-profile-primary-link"
             >
-              Explore writings
+              {copy.exploreWritings}
             </Link>
 
           </section>
@@ -1714,125 +2950,140 @@ function WriterProfile() {
         </div>
 
       </main>
+
     );
+
   }
+
+
+
+  // =======================================================
+  // DERIVED COUNTS
+  // =======================================================
+
+
+  const writingsCount =
+    safeNumber(
+      stats.writings_count ||
+      writings.length
+    );
+
+
+  const followersCount =
+    safeNumber(
+      stats.followers_count
+    );
+
+
+  const followingCount =
+    safeNumber(
+      stats.following_count
+    );
+
+
+  const likesCount =
+    safeNumber(
+      stats.likes_count
+    );
+
+
+  const commentsCount =
+    safeNumber(
+      stats.comments_count
+    );
+
 
 
   // =======================================================
   // UI
   // =======================================================
 
+
   return (
 
-    <main
-      className=
-        "writer-profile-page"
-    >
+    <main className="writer-profile-page">
 
-      <div
-        className=
-          "writer-profile-shell"
-      >
+      <div className="writer-profile-shell">
 
 
-        {/* ===============================================
-            PROFILE HEADER
-        ================================================ */}
+        {/* =================================================
+            PROFESSIONAL SOCIAL PROFILE HEADER
+        ================================================== */}
 
-        <section
-          className=
-            "writer-profile-header"
-        >
+        <section className="writer-social-profile-card">
 
-          <div
-            className=
-              "writer-profile-avatar"
-          >
 
-            {
-              displayedAvatarUrl
-                ? (
+          <div className="writer-social-cover">
 
-                    <img
-                      src={
-                        displayedAvatarUrl
-                      }
-                      alt={`${profile.name || "Writer"} profile`}
-                      onError={
-                        (
-                          event
-                        ) => {
-
-                          event
-                            .currentTarget
-                            .style
-                            .display =
-                            "none";
-                        }
-                      }
-                    />
-
-                  )
-
-                : getInitial(
-                    profile.name
-                  )
-            }
+            <span className="writer-cover-word">
+              SHOBDO
+            </span>
 
           </div>
 
 
-          <div
-            className=
-              "writer-profile-main"
-          >
-
-            <div
-              className=
-                "writer-profile-heading-row"
-            >
-
-              <div>
-
-                <p
-                  className=
-                    "writer-profile-eyebrow"
-                >
-                  Writer Profile
-                </p>
+          <div className="writer-social-profile-content">
 
 
-                <h1>
-                  {
-                    profile.name
-                  }
-                </h1>
+            {/* =============================================
+                AVATAR + ACTIONS
+            ============================================== */}
 
+            <div className="writer-social-profile-top">
+
+
+              <div className="writer-profile-avatar">
 
                 {
-                  profile
-                    .username && (
+                  displayedAvatarUrl
+                    ? (
 
-                    <p
-                      className=
-                        "writer-profile-username"
-                    >
-                      @
-                      {
-                        profile
-                          .username
-                      }
-                    </p>
-                  )
+                        <img
+                          src={
+                            displayedAvatarUrl
+                          }
+                          alt={
+                            `${profile.name || "Writer"} profile`
+                          }
+                          onLoad={
+                            (
+                              event
+                            ) => {
+
+                              event
+                                .currentTarget
+                                .style
+                                .display =
+                                "block";
+
+                            }
+                          }
+                          onError={
+                            (
+                              event
+                            ) => {
+
+                              event
+                                .currentTarget
+                                .style
+                                .display =
+                                "none";
+
+                            }
+                          }
+                        />
+
+                      )
+                    : getInitial(
+                        profile.name
+                      )
                 }
 
               </div>
 
 
-              <div
-                className=
-                  "writer-profile-actions"
-              >
+              <div className="writer-profile-actions">
+
 
                 {
                   !isSelf && (
@@ -1862,7 +3113,6 @@ function WriterProfile() {
                               />
 
                             )
-
                           : following
                             ? (
 
@@ -1871,7 +3121,6 @@ function WriterProfile() {
                                 />
 
                               )
-
                             : (
 
                                 <UserPlus
@@ -1881,15 +3130,19 @@ function WriterProfile() {
                               )
                       }
 
+
                       <span>
+
                         {
                           following
-                            ? "Following"
-                            : "Follow"
+                            ? copy.following
+                            : copy.follow
                         }
+
                       </span>
 
                     </button>
+
                   )
                 }
 
@@ -1899,8 +3152,7 @@ function WriterProfile() {
 
                     <button
                       type="button"
-                      className=
-                        "writer-profile-edit-button"
+                      className="writer-profile-edit-button"
                       onClick={
                         openEditProfile
                       }
@@ -1910,108 +3162,252 @@ function WriterProfile() {
                         size={16}
                       />
 
-                      Edit Profile
+                      <span>
+                        {copy.editProfile}
+                      </span>
 
                     </button>
+
                   )
                 }
+
+
+                <button
+                  type="button"
+                  className="writer-profile-share-button"
+                  onClick={
+                    handleShareProfile
+                  }
+                  title={
+                    copy.shareProfile
+                  }
+                >
+
+                  {
+                    shareStatus
+                      ? (
+
+                          <CheckCircle2
+                            size={17}
+                          />
+
+                        )
+                      : (
+
+                          <Share2
+                            size={17}
+                          />
+
+                        )
+                  }
+
+                  <span>
+
+                    {
+                      shareStatus ||
+                      copy.share
+                    }
+
+                  </span>
+
+                </button>
 
               </div>
 
             </div>
 
 
-            {
-              profile
-                .bio && (
 
-                <p
-                  className=
-                    "writer-profile-bio"
-                >
-                  {
-                    profile.bio
-                  }
-                </p>
-              )
-            }
+            {/* =============================================
+                IDENTITY
+            ============================================== */}
+
+            <div className="writer-social-identity">
+
+              <p className="writer-profile-eyebrow">
+                {copy.writerProfile}
+              </p>
 
 
-            <div
-              className=
-                "writer-profile-meta"
-            >
+              <h1>
+                {profile.name}
+              </h1>
+
 
               {
-                profile
-                  .location && (
+                profile.username && (
 
-                  <span>
+                  <p className="writer-profile-username">
+                    @{profile.username}
+                  </p>
 
-                    <MapPin
-                      size={15}
-                    />
-
-                    {
-                      profile
-                        .location
-                    }
-
-                  </span>
                 )
               }
 
 
               {
-                profile
-                  .website && (
+                profile.bio && (
 
-                  <a
-                    href={
-                      profile
-                        .website
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <p className="writer-profile-bio">
+                    {profile.bio}
+                  </p>
 
-                    <Globe2
-                      size={15}
-                    />
+                )
+              }
 
-                    {
-                      getWebsiteLabel(
-                        profile
-                          .website
+
+
+              {/* ===========================================
+                  META
+              ============================================ */}
+
+              <div className="writer-profile-meta">
+
+
+                {
+                  profile.location && (
+
+                    <span>
+
+                      <MapPin
+                        size={15}
+                      />
+
+                      {
+                        profile.location
+                      }
+
+                    </span>
+
+                  )
+                }
+
+
+                {
+                  profile.website && (
+
+                    <a
+                      href={
+                        profile.website
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+
+                      <Globe2
+                        size={15}
+                      />
+
+                      {
+                        getWebsiteLabel(
+                          profile.website
+                        )
+                      }
+
+                      <ExternalLink
+                        size={12}
+                      />
+
+                    </a>
+
+                  )
+                }
+
+
+                {
+                  memberSince && (
+
+                    <span>
+
+                      <CalendarDays
+                        size={15}
+                      />
+
+                      {
+                        interpolate(
+                          copy.memberSince,
+                          {
+                            date:
+                              memberSince,
+                          }
+                        )
+                      }
+
+                    </span>
+
+                  )
+                }
+
+              </div>
+
+
+
+              {/* ===========================================
+                  SOCIAL COUNTS
+              ============================================ */}
+
+              <div className="writer-social-stats">
+
+
+                <button
+                  type="button"
+                  className="writer-social-stat"
+                  onClick={
+                    () =>
+                      setActiveTab(
+                        "writings"
                       )
-                    }
+                  }
+                >
 
-                    <ExternalLink
-                      size={13}
-                    />
-
-                  </a>
-                )
-              }
-
-
-              {
-                memberSince && (
+                  <strong>
+                    {writingsCount}
+                  </strong>
 
                   <span>
-
-                    <CalendarDays
-                      size={15}
-                    />
-
-                    Member since{" "}
-                    {
-                      memberSince
-                    }
-
+                    {copy.writings}
                   </span>
-                )
-              }
+
+                </button>
+
+
+                <Link
+                  to={
+                    `/users/${userId}/followers`
+                  }
+                  className="writer-social-stat"
+                >
+
+                  <strong>
+                    {followersCount}
+                  </strong>
+
+                  <span>
+                    {copy.followers}
+                  </span>
+
+                </Link>
+
+
+                <Link
+                  to={
+                    `/users/${userId}/following`
+                  }
+                  className="writer-social-stat"
+                >
+
+                  <strong>
+                    {followingCount}
+                  </strong>
+
+                  <span>
+                    {copy.following}
+                  </span>
+
+                </Link>
+
+
+              </div>
 
             </div>
 
@@ -2020,35 +3416,28 @@ function WriterProfile() {
         </section>
 
 
-        {/* ===============================================
+
+        {/* =================================================
             EDIT PROFILE PANEL
-        ================================================ */}
+        ================================================== */}
 
         {
           isSelf &&
           editOpen && (
 
-            <section
-              className=
-                "writer-profile-edit-panel"
-            >
+            <section className="writer-profile-edit-panel">
 
-              <div
-                className=
-                  "writer-profile-edit-heading"
-              >
+
+              <div className="writer-profile-edit-heading">
 
                 <div>
 
-                  <p
-                    className=
-                      "writer-profile-eyebrow"
-                  >
-                    Account Profile
+                  <p className="writer-profile-eyebrow">
+                    {copy.accountProfile}
                   </p>
 
                   <h2>
-                    Edit Profile
+                    {copy.editProfile}
                   </h2>
 
                 </div>
@@ -2056,8 +3445,7 @@ function WriterProfile() {
 
                 <button
                   type="button"
-                  className=
-                    "writer-profile-close-button"
+                  className="writer-profile-close-button"
                   onClick={
                     closeEditProfile
                   }
@@ -2066,8 +3454,9 @@ function WriterProfile() {
                     avatarUploading ||
                     avatarRemoving
                   }
-                  aria-label=
-                    "Close edit profile"
+                  aria-label={
+                    copy.close
+                  }
                 >
 
                   <X
@@ -2079,19 +3468,15 @@ function WriterProfile() {
               </div>
 
 
-              {/* =========================================
-                  PROFILE PHOTO
-              ========================================== */}
 
-              <div
-                className=
-                  "writer-profile-photo-editor"
-              >
+              {/* ===========================================
+                  PHOTO EDITOR
+              ============================================ */}
 
-                <div
-                  className=
-                    "writer-profile-photo-preview"
-                >
+              <div className="writer-profile-photo-editor">
+
+
+                <div className="writer-profile-photo-preview">
 
                   {
                     avatarPreviewUrl
@@ -2101,12 +3486,12 @@ function WriterProfile() {
                             src={
                               avatarPreviewUrl
                             }
-                            alt=
-                              "Selected profile preview"
+                            alt={
+                              copy.selectedPhoto
+                            }
                           />
 
                         )
-
                       : displayedAvatarUrl
                         ? (
 
@@ -2114,12 +3499,12 @@ function WriterProfile() {
                               src={
                                 displayedAvatarUrl
                               }
-                              alt=
-                                "Current profile"
+                              alt={
+                                copy.currentPhoto
+                              }
                             />
 
                           )
-
                         : (
 
                             <span>
@@ -2129,26 +3514,24 @@ function WriterProfile() {
                                 )
                               }
                             </span>
+
                           )
                   }
 
                 </div>
 
 
-                <div
-                  className=
-                    "writer-profile-photo-controls"
-                >
+                <div className="writer-profile-photo-controls">
 
-                  <div>
+
+                  <div className="writer-profile-photo-copy">
 
                     <h3>
-                      Profile photo
+                      {copy.profilePhoto}
                     </h3>
 
                     <p>
-                      JPG, PNG or WEBP.
-                      Maximum file size 5 MB.
+                      {copy.photoDescription}
                     </p>
 
                   </div>
@@ -2159,8 +3542,7 @@ function WriterProfile() {
                       avatarInputRef
                     }
                     type="file"
-                    accept=
-                      "image/jpeg,image/jpg,image/png,image/webp"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
                     hidden
                     onChange={
                       handleAvatarSelection
@@ -2168,15 +3550,12 @@ function WriterProfile() {
                   />
 
 
-                  <div
-                    className=
-                      "writer-profile-photo-buttons"
-                  >
+                  <div className="writer-profile-photo-buttons">
+
 
                     <button
                       type="button"
-                      className=
-                        "writer-profile-photo-select-button"
+                      className="writer-profile-photo-select-button"
                       onClick={
                         () =>
                           avatarInputRef
@@ -2194,10 +3573,9 @@ function WriterProfile() {
                       />
 
                       {
-                        profile
-                          .avatar_url
-                          ? "Change Photo"
-                          : "Choose Photo"
+                        profile.avatar_url
+                          ? copy.changePhoto
+                          : copy.choosePhoto
                       }
 
                     </button>
@@ -2208,8 +3586,7 @@ function WriterProfile() {
 
                         <button
                           type="button"
-                          className=
-                            "writer-profile-photo-upload-button"
+                          className="writer-profile-photo-upload-button"
                           onClick={
                             handleAvatarUpload
                           }
@@ -2229,7 +3606,6 @@ function WriterProfile() {
                                   />
 
                                 )
-
                               : (
 
                                   <Upload
@@ -2241,11 +3617,12 @@ function WriterProfile() {
 
                           {
                             avatarUploading
-                              ? "Uploading..."
-                              : "Upload Photo"
+                              ? copy.uploading
+                              : copy.uploadPhoto
                           }
 
                         </button>
+
                       )
                     }
 
@@ -2255,8 +3632,7 @@ function WriterProfile() {
 
                         <button
                           type="button"
-                          className=
-                            "writer-profile-photo-cancel-button"
+                          className="writer-profile-photo-cancel-button"
                           onClick={
                             cancelAvatarSelection
                           }
@@ -2269,22 +3645,21 @@ function WriterProfile() {
                             size={16}
                           />
 
-                          Cancel Selection
+                          {copy.cancelSelection}
 
                         </button>
+
                       )
                     }
 
 
                     {
-                      profile
-                        .avatar_url &&
+                      profile.avatar_url &&
                       !avatarFile && (
 
                         <button
                           type="button"
-                          className=
-                            "writer-profile-photo-remove-button"
+                          className="writer-profile-photo-remove-button"
                           onClick={
                             handleRemoveAvatar
                           }
@@ -2304,7 +3679,6 @@ function WriterProfile() {
                                   />
 
                                 )
-
                               : (
 
                                   <Trash2
@@ -2316,11 +3690,12 @@ function WriterProfile() {
 
                           {
                             avatarRemoving
-                              ? "Removing..."
-                              : "Remove Photo"
+                              ? copy.removing
+                              : copy.removePhoto
                           }
 
                         </button>
+
                       )
                     }
 
@@ -2330,23 +3705,17 @@ function WriterProfile() {
                   {
                     avatarFile && (
 
-                      <div
-                        className=
-                          "writer-profile-selected-file"
-                      >
+                      <div className="writer-profile-selected-file">
 
                         <strong>
-                          {
-                            avatarFile
-                              .name
-                          }
+                          {avatarFile.name}
                         </strong>
 
                         <span>
+
                           {
                             (
-                              avatarFile
-                                .size /
+                              avatarFile.size /
                               (
                                 1024 *
                                 1024
@@ -2354,11 +3723,14 @@ function WriterProfile() {
                             ).toFixed(
                               2
                             )
-                          }{" "}
-                          MB
+                          }
+
+                          {" MB"}
+
                         </span>
 
                       </div>
+
                     )
                   }
 
@@ -2366,14 +3738,10 @@ function WriterProfile() {
                   {
                     avatarError && (
 
-                      <p
-                        className=
-                          "writer-profile-form-error"
-                      >
-                        {
-                          avatarError
-                        }
+                      <p className="writer-profile-form-error">
+                        {avatarError}
                       </p>
+
                     )
                   }
 
@@ -2381,14 +3749,10 @@ function WriterProfile() {
                   {
                     avatarSuccess && (
 
-                      <p
-                        className=
-                          "writer-profile-form-success"
-                      >
-                        {
-                          avatarSuccess
-                        }
+                      <p className="writer-profile-form-success">
+                        {avatarSuccess}
                       </p>
+
                     )
                   }
 
@@ -2397,35 +3761,32 @@ function WriterProfile() {
               </div>
 
 
-              {/* =========================================
-                  PROFILE INFORMATION
-              ========================================== */}
+
+              {/* ===========================================
+                  PROFILE FORM
+              ============================================ */}
 
               <form
-                className=
-                  "writer-profile-edit-form"
+                className="writer-profile-edit-form"
                 onSubmit={
                   handleSaveProfile
                 }
               >
 
-                <div
-                  className=
-                    "writer-profile-form-grid"
-                >
+                <div className="writer-profile-form-grid">
+
 
                   <label>
 
                     <span>
-                      Name
+                      {copy.name}
                     </span>
 
                     <input
                       type="text"
                       name="name"
                       value={
-                        editForm
-                          .name
+                        editForm.name
                       }
                       onChange={
                         handleEditChange
@@ -2436,8 +3797,9 @@ function WriterProfile() {
                       disabled={
                         profileSaving
                       }
-                      placeholder=
-                        "Your name"
+                      placeholder={
+                        copy.namePlaceholder
+                      }
                     />
 
                   </label>
@@ -2446,13 +3808,10 @@ function WriterProfile() {
                   <label>
 
                     <span>
-                      Username
+                      {copy.username}
                     </span>
 
-                    <div
-                      className=
-                        "writer-profile-username-input"
-                    >
+                    <div className="writer-profile-username-input">
 
                       <span>
                         @
@@ -2462,8 +3821,7 @@ function WriterProfile() {
                         type="text"
                         name="username"
                         value={
-                          editForm
-                            .username
+                          editForm.username
                         }
                         onChange={
                           handleEditChange
@@ -2472,8 +3830,9 @@ function WriterProfile() {
                         disabled={
                           profileSaving
                         }
-                        placeholder=
-                          "username"
+                        placeholder={
+                          copy.usernamePlaceholder
+                        }
                         autoCapitalize="none"
                         autoCorrect="off"
                       />
@@ -2483,20 +3842,16 @@ function WriterProfile() {
                   </label>
 
 
-                  <label
-                    className=
-                      "writer-profile-wide-field"
-                  >
+                  <label className="writer-profile-wide-field">
 
                     <span>
-                      Bio
+                      {copy.bio}
                     </span>
 
                     <textarea
                       name="bio"
                       value={
-                        editForm
-                          .bio
+                        editForm.bio
                       }
                       onChange={
                         handleEditChange
@@ -2505,8 +3860,9 @@ function WriterProfile() {
                       disabled={
                         profileSaving
                       }
-                      placeholder=
-                        "Tell readers something about yourself..."
+                      placeholder={
+                        copy.bioPlaceholder
+                      }
                     />
 
                     <small>
@@ -2524,15 +3880,14 @@ function WriterProfile() {
                   <label>
 
                     <span>
-                      Location
+                      {copy.location}
                     </span>
 
                     <input
                       type="text"
                       name="location"
                       value={
-                        editForm
-                          .location
+                        editForm.location
                       }
                       onChange={
                         handleEditChange
@@ -2541,8 +3896,9 @@ function WriterProfile() {
                       disabled={
                         profileSaving
                       }
-                      placeholder=
-                        "Kolkata, India"
+                      placeholder={
+                        copy.locationPlaceholder
+                      }
                     />
 
                   </label>
@@ -2551,15 +3907,14 @@ function WriterProfile() {
                   <label>
 
                     <span>
-                      Website
+                      {copy.website}
                     </span>
 
                     <input
                       type="url"
                       name="website"
                       value={
-                        editForm
-                          .website
+                        editForm.website
                       }
                       onChange={
                         handleEditChange
@@ -2568,8 +3923,9 @@ function WriterProfile() {
                       disabled={
                         profileSaving
                       }
-                      placeholder=
-                        "https://example.com"
+                      placeholder={
+                        copy.websitePlaceholder
+                      }
                     />
 
                   </label>
@@ -2580,14 +3936,10 @@ function WriterProfile() {
                 {
                   profileError && (
 
-                    <p
-                      className=
-                        "writer-profile-form-error"
-                    >
-                      {
-                        profileError
-                      }
+                    <p className="writer-profile-form-error">
+                      {profileError}
                     </p>
+
                   )
                 }
 
@@ -2595,27 +3947,20 @@ function WriterProfile() {
                 {
                   profileSuccess && (
 
-                    <p
-                      className=
-                        "writer-profile-form-success"
-                    >
-                      {
-                        profileSuccess
-                      }
+                    <p className="writer-profile-form-success">
+                      {profileSuccess}
                     </p>
+
                   )
                 }
 
 
-                <div
-                  className=
-                    "writer-profile-edit-actions"
-                >
+                <div className="writer-profile-edit-actions">
+
 
                   <button
                     type="button"
-                    className=
-                      "writer-profile-cancel-button"
+                    className="writer-profile-cancel-button"
                     onClick={
                       closeEditProfile
                     }
@@ -2625,14 +3970,15 @@ function WriterProfile() {
                       avatarRemoving
                     }
                   >
-                    Cancel
+
+                    {copy.cancel}
+
                   </button>
 
 
                   <button
                     type="submit"
-                    className=
-                      "writer-profile-save-button"
+                    className="writer-profile-save-button"
                     disabled={
                       profileSaving
                     }
@@ -2648,7 +3994,6 @@ function WriterProfile() {
                             />
 
                           )
-
                         : (
 
                             <Save
@@ -2660,8 +4005,8 @@ function WriterProfile() {
 
                     {
                       profileSaving
-                        ? "Saving..."
-                        : "Save Profile"
+                        ? copy.saving
+                        : copy.saveProfile
                     }
 
                   </button>
@@ -2671,397 +4016,647 @@ function WriterProfile() {
               </form>
 
             </section>
+
           )
         }
 
 
-        {/* ===============================================
-            FOLLOW STATS
-        ================================================ */}
 
-        <section
-          className=
-            "writer-follow-stats"
-        >
+        {/* =================================================
+            SOCIAL PROFILE TABS
+        ================================================== */}
 
-          <Link
-            to={
-              `/users/${userId}/followers`
+        <nav className="writer-profile-tabs">
+
+          <button
+            type="button"
+            className={
+              activeTab ===
+              "writings"
+                ? "active"
+                : ""
             }
-            className=
-              "writer-follow-stat"
-          >
-
-            <strong>
-              {
-                safeNumber(
-                  stats
-                    .followers_count
+            onClick={
+              () =>
+                setActiveTab(
+                  "writings"
                 )
-              }
-            </strong>
-
-            <span>
-              Followers
-            </span>
-
-          </Link>
-
-
-          <Link
-            to={
-              `/users/${userId}/following`
             }
-            className=
-              "writer-follow-stat"
-          >
-
-            <strong>
-              {
-                safeNumber(
-                  stats
-                    .following_count
-                )
-              }
-            </strong>
-
-            <span>
-              Following
-            </span>
-
-          </Link>
-
-        </section>
-
-
-        {/* ===============================================
-            COMMUNITY STATS
-        ================================================ */}
-
-        <section
-          className=
-            "writer-profile-stats"
-        >
-
-          <div
-            className=
-              "writer-profile-stat"
           >
 
             <BookOpen
-              size={20}
+              size={17}
             />
 
-            <div>
+            {copy.writings}
 
-              <strong>
-                {
-                  safeNumber(
-                    stats
-                      .writings_count ||
-                    writings
-                      .length
-                  )
-                }
-              </strong>
-
-              <span>
-                Published Writings
-              </span>
-
-            </div>
-
-          </div>
-
-
-          <div
-            className=
-              "writer-profile-stat"
-          >
-
-            <Heart
-              size={20}
-            />
-
-            <div>
-
-              <strong>
-                {
-                  safeNumber(
-                    stats
-                      .likes_count
-                  )
-                }
-              </strong>
-
-              <span>
-                Likes Received
-              </span>
-
-            </div>
-
-          </div>
-
-
-          <div
-            className=
-              "writer-profile-stat"
-          >
-
-            <MessageCircle
-              size={20}
-            />
-
-            <div>
-
-              <strong>
-                {
-                  safeNumber(
-                    stats
-                      .comments_count
-                  )
-                }
-              </strong>
-
-              <span>
-                Comments
-              </span>
-
-            </div>
-
-          </div>
-
-        </section>
-
-
-        {/* ===============================================
-            WRITINGS
-        ================================================ */}
-
-        <section
-          className=
-            "writer-profile-writings"
-        >
-
-          <div
-            className=
-              "writer-profile-section-heading"
-          >
-
-            <div>
-
-              <p
-                className=
-                  "writer-profile-eyebrow"
-              >
-                Published Works
-              </p>
-
-              <h2>
-                Writings by{" "}
-                {
-                  profile.name
-                }
-              </h2>
-
-            </div>
-
-
-            <span
-              className=
-                "writer-writing-count"
-            >
-
-              {
-                writings
-                  .length
-              }
-              {" "}
-              writings
-
+            <span>
+              {writingsCount}
             </span>
 
-          </div>
+          </button>
 
 
-          {
-            writings.length ===
-            0
-              ? (
-
-                  <div
-                    className=
-                      "writer-profile-empty"
-                  >
-
-                    <BookOpen
-                      size={34}
-                    />
-
-                    <h3>
-                      No published writings yet
-                    </h3>
-
-                    <p>
-                      This writer has not published any writings yet.
-                    </p>
-
-                  </div>
+          <button
+            type="button"
+            className={
+              activeTab ===
+              "about"
+                ? "active"
+                : ""
+            }
+            onClick={
+              () =>
+                setActiveTab(
+                  "about"
                 )
+            }
+          >
 
-              : (
+            <Users
+              size={17}
+            />
 
-                  <div
-                    className=
-                      "writer-profile-writing-grid"
-                  >
+            {copy.about}
+
+          </button>
+
+        </nav>
+
+
+
+        {/* =================================================
+            WRITINGS TAB
+        ================================================== */}
+
+        {
+          activeTab ===
+            "writings" && (
+
+            <section className="writer-profile-feed">
+
+
+              <div className="writer-profile-section-heading">
+
+                <div>
+
+                  <p className="writer-profile-eyebrow">
+                    {copy.publishedWorks}
+                  </p>
+
+                  <h2>
 
                     {
-                      writings.map(
-                        (
-                          writing
-                        ) => {
-
-                          const content =
-                            String(
-                              writing
-                                ?.content ||
-                              ""
-                            )
-                              .trim();
-
-
-                          return (
-
-                            <Link
-                              key={
-                                writing.id
-                              }
-                              to={
-                                `/writings/${writing.id}`
-                              }
-                              className=
-                                "writer-profile-writing-card"
-                            >
-
-                              <div
-                                className=
-                                  "writer-profile-writing-top"
-                              >
-
-                                <span>
-                                  {
-                                    writing
-                                      .category ||
-                                    "Writing"
-                                  }
-                                </span>
-
-
-                                {
-                                  writing
-                                    .language && (
-
-                                    <small>
-                                      {
-                                        String(
-                                          writing
-                                            .language
-                                        )
-                                          .toUpperCase()
-                                      }
-                                    </small>
-                                  )
-                                }
-
-                              </div>
-
-
-                              <h3>
-                                {
-                                  writing
-                                    .title ||
-                                  "Untitled"
-                                }
-                              </h3>
-
-
-                              <p>
-
-                                {
-                                  content
-                                    .slice(
-                                      0,
-                                      180
-                                    )
-                                }
-
-                                {
-                                  content
-                                    .length >
-                                  180
-                                    ? "..."
-                                    : ""
-                                }
-
-                              </p>
-
-
-                              <div
-                                className=
-                                  "writer-profile-writing-meta"
-                              >
-
-                                <span>
-
-                                  <Heart
-                                    size={14}
-                                  />
-
-                                  {
-                                    safeNumber(
-                                      writing
-                                        .likes_count
-                                    )
-                                  }
-
-                                </span>
-
-
-                                <span>
-
-                                  <MessageCircle
-                                    size={14}
-                                  />
-
-                                  {
-                                    safeNumber(
-                                      writing
-                                        .comments_count
-                                    )
-                                  }
-
-                                </span>
-
-                              </div>
-
-                            </Link>
-                          );
+                      interpolate(
+                        copy.writingsBy,
+                        {
+                          name:
+                            profile.name,
                         }
                       )
                     }
 
-                  </div>
-                )
-          }
+                  </h2>
 
-        </section>
+                </div>
+
+
+                <span className="writer-writing-count">
+
+                  {
+                    interpolate(
+                      writings.length ===
+                      1
+                        ? copy.writingCount
+                        : copy.writingsCount,
+                      {
+                        count:
+                          writings.length,
+                      }
+                    )
+                  }
+
+                </span>
+
+              </div>
+
+
+              {
+                writings.length ===
+                0
+                  ? (
+
+                      <div className="writer-profile-empty">
+
+                        <BookOpen
+                          size={38}
+                        />
+
+                        <h3>
+                          {copy.noWritings}
+                        </h3>
+
+                        <p>
+                          {copy.noWritingsDescription}
+                        </p>
+
+                      </div>
+
+                    )
+                  : (
+
+                      <div className="writer-profile-writing-list">
+
+                        {
+                          writings.map(
+                            (
+                              writing
+                            ) => {
+
+                              const content =
+                                String(
+                                  writing
+                                    ?.content ||
+                                  ""
+                                )
+                                  .trim();
+
+
+                              const writingDate =
+                                getWritingDate(
+                                  writing
+                                );
+
+
+                              return (
+
+                                <article
+                                  key={
+                                    writing.id
+                                  }
+                                  className="writer-profile-writing-card"
+                                >
+
+
+                                  <div className="writer-writing-author-row">
+
+
+                                    <div className="writer-writing-mini-avatar">
+
+                                      {
+                                        displayedAvatarUrl
+                                          ? (
+
+                                              <img
+                                                src={
+                                                  displayedAvatarUrl
+                                                }
+                                                alt=""
+                                              />
+
+                                            )
+                                          : getInitial(
+                                              profile.name
+                                            )
+                                      }
+
+                                    </div>
+
+
+                                    <div>
+
+                                      <strong>
+                                        {profile.name}
+                                      </strong>
+
+                                      <div className="writer-writing-post-meta">
+
+                                        {
+                                          profile.username && (
+
+                                            <span>
+                                              @{profile.username}
+                                            </span>
+
+                                          )
+                                        }
+
+
+                                        {
+                                          writingDate && (
+
+                                            <span>
+                                              · {writingDate}
+                                            </span>
+
+                                          )
+                                        }
+
+                                      </div>
+
+                                    </div>
+
+                                  </div>
+
+
+
+                                  <div className="writer-profile-writing-top">
+
+                                    <span>
+
+                                      {
+                                        getCategoryLabel(
+                                          language,
+                                          writing.category,
+                                          copy.writing
+                                        )
+                                      }
+
+                                    </span>
+
+
+                                    {
+                                      writing.language && (
+
+                                        <small>
+
+                                          {
+                                            getWritingLanguageLabel(
+                                              language,
+                                              writing.language
+                                            )
+                                          }
+
+                                        </small>
+
+                                      )
+                                    }
+
+                                  </div>
+
+
+                                  <Link
+                                    to={
+                                      `/writings/${writing.id}`
+                                    }
+                                    className="writer-writing-content-link"
+                                  >
+
+                                    <h3>
+
+                                      {
+                                        writing.title ||
+                                        copy.untitled
+                                      }
+
+                                    </h3>
+
+
+                                    {
+                                      content && (
+
+                                        <p>
+
+                                          {
+                                            content.slice(
+                                              0,
+                                              320
+                                            )
+                                          }
+
+                                          {
+                                            content.length >
+                                            320
+                                              ? "..."
+                                              : ""
+                                          }
+
+                                        </p>
+
+                                      )
+                                    }
+
+                                  </Link>
+
+
+
+                                  <div className="writer-profile-writing-footer">
+
+
+                                    <div className="writer-profile-writing-meta">
+
+                                      <span>
+
+                                        <Heart
+                                          size={16}
+                                        />
+
+                                        {
+                                          safeNumber(
+                                            writing
+                                              .likes_count
+                                          )
+                                        }
+
+                                      </span>
+
+
+                                      <span>
+
+                                        <MessageCircle
+                                          size={16}
+                                        />
+
+                                        {
+                                          safeNumber(
+                                            writing
+                                              .comments_count
+                                          )
+                                        }
+
+                                      </span>
+
+                                    </div>
+
+
+                                    <Link
+                                      to={
+                                        `/writings/${writing.id}`
+                                      }
+                                      className="writer-read-writing"
+                                    >
+
+                                      {copy.readWriting}
+
+                                      <ArrowUpRight
+                                        size={15}
+                                      />
+
+                                    </Link>
+
+                                  </div>
+
+                                </article>
+
+                              );
+
+                            }
+                          )
+                        }
+
+                      </div>
+
+                    )
+              }
+
+            </section>
+
+          )
+        }
+
+
+
+        {/* =================================================
+            ABOUT TAB
+        ================================================== */}
+
+        {
+          activeTab ===
+            "about" && (
+
+            <section className="writer-profile-about">
+
+
+              <div className="writer-about-main">
+
+
+                <div className="writer-about-card">
+
+                  <p className="writer-profile-eyebrow">
+                    {copy.about}
+                  </p>
+
+                  <h2>
+                    {profile.name}
+                  </h2>
+
+
+                  <p className="writer-about-bio">
+
+                    {
+                      profile.bio ||
+                      copy.noBio
+                    }
+
+                  </p>
+
+                </div>
+
+
+
+                <div className="writer-about-card">
+
+                  <p className="writer-profile-eyebrow">
+                    {copy.profileInformation}
+                  </p>
+
+
+                  <div className="writer-about-info-list">
+
+
+                    {
+                      profile.location && (
+
+                        <div>
+
+                          <MapPin
+                            size={18}
+                          />
+
+                          <span>
+
+                            <small>
+                              {copy.location}
+                            </small>
+
+                            <strong>
+                              {profile.location}
+                            </strong>
+
+                          </span>
+
+                        </div>
+
+                      )
+                    }
+
+
+                    {
+                      profile.website && (
+
+                        <div>
+
+                          <Globe2
+                            size={18}
+                          />
+
+                          <span>
+
+                            <small>
+                              {copy.website}
+                            </small>
+
+                            <a
+                              href={
+                                profile.website
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+
+                              {
+                                getWebsiteLabel(
+                                  profile.website
+                                )
+                              }
+
+                              <ExternalLink
+                                size={12}
+                              />
+
+                            </a>
+
+                          </span>
+
+                        </div>
+
+                      )
+                    }
+
+
+                    {
+                      memberSince && (
+
+                        <div>
+
+                          <CalendarDays
+                            size={18}
+                          />
+
+                          <span>
+
+                            <small>
+                              {copy.joined}
+                            </small>
+
+                            <strong>
+                              {memberSince}
+                            </strong>
+
+                          </span>
+
+                        </div>
+
+                      )
+                    }
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+
+              <aside className="writer-about-sidebar">
+
+
+                <div className="writer-activity-card">
+
+                  <p className="writer-profile-eyebrow">
+                    {copy.creatorActivity}
+                  </p>
+
+
+                  <div className="writer-activity-stat">
+
+                    <BookOpen
+                      size={20}
+                    />
+
+                    <div>
+
+                      <strong>
+                        {writingsCount}
+                      </strong>
+
+                      <span>
+                        {copy.publishedWritings}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="writer-activity-stat">
+
+                    <Heart
+                      size={20}
+                    />
+
+                    <div>
+
+                      <strong>
+                        {likesCount}
+                      </strong>
+
+                      <span>
+                        {copy.likesReceived}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="writer-activity-stat">
+
+                    <MessageCircle
+                      size={20}
+                    />
+
+                    <div>
+
+                      <strong>
+                        {commentsCount}
+                      </strong>
+
+                      <span>
+                        {copy.comments}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </aside>
+
+            </section>
+
+          )
+        }
 
       </div>
 
     </main>
+
   );
+
 }
+
 
 
 export default WriterProfile;
