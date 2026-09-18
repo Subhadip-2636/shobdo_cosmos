@@ -1,0 +1,863 @@
+/* =========================================================
+   CONNECTIONS PAGE
+========================================================= */
+
+.connections-page {
+  min-height: 80vh;
+  background: var(--bg, #f6f3ec);
+  color: var(--ink, #191816);
+  padding: 56px 20px 90px;
+}
+
+
+.connections-shell {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+
+/* =========================================================
+   BACK LINK
+========================================================= */
+
+.connections-back-link {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-bottom: 30px;
+
+  color: var(--muted, #756f66);
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+
+.connections-back-link:hover {
+  color: var(--ink, #191816);
+  transform: translateX(-3px);
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.connections-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+
+  margin-bottom: 30px;
+  padding-bottom: 30px;
+
+  border-bottom: 1px solid var(--line, #ded9cf);
+}
+
+
+.connections-header-copy {
+  min-width: 0;
+}
+
+
+.connections-eyebrow {
+  margin: 0 0 7px;
+
+  color: var(--gold-dark, #8b6b32);
+
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+
+
+.connections-header h1 {
+  margin: 0;
+
+  font-family:
+    "Playfair Display",
+    "Noto Serif Bengali",
+    Georgia,
+    serif;
+
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 500;
+}
+
+
+.connections-owner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+
+  margin-top: 8px;
+
+  font-size: 15px;
+  font-weight: 600;
+}
+
+
+.connections-owner-username {
+  color: var(--muted, #756f66);
+  font-weight: 500;
+}
+
+
+.connections-total {
+  margin: 8px 0 0;
+  color: var(--muted, #756f66);
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   AVATAR
+========================================================= */
+
+.connections-avatar {
+  position: relative;
+
+  width: 58px;
+  height: 58px;
+
+  flex: 0 0 58px;
+
+  display: grid;
+  place-items: center;
+
+  overflow: hidden;
+
+  border-radius: 50%;
+
+  background:
+    var(--soft, #ece5d8);
+
+  border:
+    1px solid
+    var(--line, #ddd6ca);
+
+  color:
+    var(--gold-dark, #765b2f);
+
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+
+.connections-avatar-large {
+  width: 84px;
+  height: 84px;
+
+  flex-basis: 84px;
+
+  font-size: 24px;
+}
+
+
+.connections-avatar img {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+
+/* =========================================================
+   LIST
+========================================================= */
+
+.connections-list {
+  display: grid;
+  gap: 12px;
+}
+
+
+.connection-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  padding: 18px 20px;
+
+  background:
+    var(--surface, #ffffff);
+
+  border:
+    1px solid
+    var(--line, #ddd8ce);
+
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+.connection-card:hover {
+  transform: translateY(-2px);
+
+  border-color:
+    var(--gold, #b18a48);
+
+  box-shadow:
+    0 10px 28px
+    rgba(30, 24, 18, 0.06);
+}
+
+
+.connection-profile-link {
+  min-width: 0;
+  flex: 1;
+
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  color: inherit;
+  text-decoration: none;
+}
+
+
+.connection-card-main {
+  min-width: 0;
+  flex: 1;
+}
+
+
+.connection-name-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+
+  gap: 7px;
+}
+
+
+.connection-name-row h2 {
+  margin: 0;
+
+  font-size: 17px;
+  font-weight: 700;
+}
+
+
+.connection-name-row span {
+  color:
+    var(--muted, #756f66);
+
+  font-size: 13px;
+}
+
+
+.connection-bio {
+  display: -webkit-box;
+
+  margin: 7px 0 0;
+
+  overflow: hidden;
+
+  color:
+    var(--muted, #665f57);
+
+  font-size: 13px;
+  line-height: 1.55;
+
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+
+.connection-meta {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 10px 16px;
+
+  margin-top: 9px;
+}
+
+
+.connection-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  color:
+    var(--muted, #81796f);
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   PROFILE BUTTON
+========================================================= */
+
+.connection-view-button {
+  flex-shrink: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 9px 15px;
+
+  border:
+    1px solid
+    var(--line, #d9d2c6);
+
+  color:
+    var(--ink, #191816);
+
+  background: transparent;
+
+  text-decoration: none;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+
+.connection-view-button:hover {
+  background:
+    var(--ink, #191816);
+
+  border-color:
+    var(--ink, #191816);
+
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   EMPTY / ERROR STATE
+========================================================= */
+
+.connections-state,
+.connections-empty {
+  min-height: 320px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  padding: 40px 20px;
+}
+
+
+.connections-state h1,
+.connections-empty h2 {
+  margin: 18px 0 8px;
+
+  font-family:
+    "Playfair Display",
+    "Noto Serif Bengali",
+    Georgia,
+    serif;
+
+  font-weight: 500;
+}
+
+
+.connections-state p,
+.connections-empty p {
+  max-width: 520px;
+
+  margin:
+    0 0 24px;
+
+  color:
+    var(--muted, #756f66);
+
+  line-height: 1.7;
+}
+
+
+.connections-empty-icon {
+  width: 66px;
+  height: 66px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background:
+    var(--soft, #ece5d8);
+
+  color:
+    var(--gold-dark, #765b2f);
+}
+
+
+.connections-primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  padding: 11px 17px;
+
+  background:
+    var(--ink, #191816);
+
+  color: #ffffff;
+
+  border:
+    1px solid
+    var(--ink, #191816);
+
+  text-decoration: none;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+.connections-error {
+  margin-bottom: 18px;
+  padding: 12px 15px;
+
+  border:
+    1px solid
+    rgba(180, 65, 65, 0.25);
+
+  background:
+    rgba(180, 65, 65, 0.06);
+
+  color: #a23b3b;
+
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+.connections-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 18px;
+
+  margin-top: 32px;
+}
+
+
+.connections-pagination button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
+  min-height: 40px;
+
+  padding: 8px 14px;
+
+  border:
+    1px solid
+    var(--line, #d9d2c6);
+
+  background:
+    var(--surface, #ffffff);
+
+  color:
+    var(--ink, #191816);
+
+  cursor: pointer;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+.connections-pagination button:hover:not(:disabled) {
+  border-color:
+    var(--ink, #191816);
+}
+
+
+.connections-pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+
+.connections-page-number {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  color:
+    var(--muted, #756f66);
+
+  font-size: 12px;
+}
+
+
+.connections-page-number strong {
+  color:
+    var(--ink, #191816);
+}
+
+
+.connections-refreshing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  margin-top: 18px;
+
+  color:
+    var(--muted, #756f66);
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   SPINNER
+========================================================= */
+
+.connections-spin {
+  animation:
+    connections-spin-animation
+    0.8s linear infinite;
+}
+
+
+@keyframes connections-spin-animation {
+
+  to {
+    transform:
+      rotate(360deg);
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .connections-page {
+    padding:
+      34px 14px
+      70px;
+  }
+
+
+  .connections-header {
+    align-items:
+      flex-start;
+
+    gap: 16px;
+  }
+
+
+  .connections-avatar-large {
+    width: 68px;
+    height: 68px;
+
+    flex-basis: 68px;
+
+    font-size: 20px;
+  }
+
+
+  .connection-card {
+    align-items:
+      flex-start;
+
+    padding:
+      16px;
+  }
+
+
+  .connection-view-button {
+    display: none;
+  }
+
+
+  .connection-profile-link {
+    align-items:
+      flex-start;
+  }
+
+
+  .connections-pagination {
+    gap: 9px;
+  }
+
+
+  .connections-pagination button {
+    padding:
+      8px 10px;
+  }
+
+
+  .connections-page-number {
+    font-size: 11px;
+  }
+
+}
+
+
+@media (max-width: 460px) {
+
+  .connections-header h1 {
+    font-size:
+      31px;
+  }
+
+
+  .connections-avatar {
+    width: 50px;
+    height: 50px;
+
+    flex-basis: 50px;
+  }
+
+
+  .connections-avatar-large {
+    width: 62px;
+    height: 62px;
+
+    flex-basis: 62px;
+  }
+
+
+  .connection-name-row {
+    display: block;
+  }
+
+
+  .connection-name-row span {
+    display: block;
+    margin-top: 2px;
+  }
+
+
+  .connections-pagination {
+    justify-content:
+      space-between;
+  }
+
+
+  .connections-page-number {
+    display: none;
+  }
+
+}
+
+/* =========================================================
+   CONNECTION ACTIONS
+========================================================= */
+
+.connection-actions {
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+
+/* =========================================================
+   FOLLOW BUTTON
+========================================================= */
+
+.connection-follow-button {
+  min-width: 108px;
+  min-height: 39px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  padding: 9px 14px;
+
+  border: 1px solid var(--ink, #191816);
+
+  background: var(--ink, #191816);
+  color: #ffffff;
+
+  cursor: pointer;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+
+.connection-follow-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+
+.connection-follow-button.following {
+  background: transparent;
+
+  color: var(--ink, #191816);
+
+  border-color:
+    var(--line, #d9d2c6);
+}
+
+
+.connection-follow-button.following:hover:not(:disabled) {
+  border-color: #a54848;
+  color: #a54848;
+}
+
+
+.connection-follow-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   SELF BADGE
+========================================================= */
+
+.connection-self-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 38px;
+
+  padding: 8px 13px;
+
+  border:
+    1px solid
+    var(--line, #d9d2c6);
+
+  color:
+    var(--muted, #756f66);
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   DISMISSIBLE ERROR
+========================================================= */
+
+.connections-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+
+.connections-error button {
+  border: 0;
+  background: transparent;
+
+  color: inherit;
+
+  cursor: pointer;
+
+  font-size: 20px;
+  line-height: 1;
+}
+
+
+/* =========================================================
+   MOBILE ACTIONS
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .connection-actions {
+    align-self: center;
+  }
+
+
+  .connection-view-button {
+    display: none;
+  }
+
+
+  .connection-follow-button {
+    min-width: 94px;
+
+    padding:
+      8px 11px;
+  }
+
+}
+
+
+@media (max-width: 520px) {
+
+  .connection-card {
+    position: relative;
+  }
+
+
+  .connection-actions {
+    align-self: flex-start;
+  }
+
+
+  .connection-follow-button {
+    min-width: 42px;
+    width: 42px;
+    height: 42px;
+
+    padding: 0;
+
+    border-radius: 50%;
+  }
+
+
+  .connection-follow-button span {
+    display: none;
+  }
+
+
+  .connection-self-badge {
+    padding: 7px 10px;
+  }
+
+}

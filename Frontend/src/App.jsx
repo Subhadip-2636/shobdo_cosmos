@@ -31,6 +31,7 @@ import Explore from "./pages/Explore";
 import Write from "./pages/Write";
 import WritingDetails from "./pages/WritingDetails";
 import MyWritings from "./pages/MyWritings";
+import ConnectionsPage from "./pages/ConnectionsPage";
 
 
 // =========================================================
@@ -834,6 +835,24 @@ function App() {
                 <WriterProfile />
               }
 
+            />
+
+            <Route
+              path="/users/:id/followers"
+              element={
+                <ConnectionsPage
+                  mode="followers"
+                />
+              }
+            />
+
+            <Route
+              path="/users/:id/following"
+              element={
+                <ConnectionsPage
+                  mode="following"
+                />
+              }
             />
 
 
