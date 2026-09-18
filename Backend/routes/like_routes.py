@@ -33,10 +33,20 @@ like_bp = Blueprint(
 
 
 # =========================================================
-# CURRENT USER HELPER
+# HELPERS
 # =========================================================
 
+
 def get_current_user():
+    """
+    Return the currently authenticated active User.
+
+    Returns None when:
+    - JWT identity is missing
+    - JWT identity is invalid
+    - user does not exist
+    - user is inactive
+    """
 
     identity = get_jwt_identity()
 
@@ -54,22 +64,38 @@ def get_current_user():
         return None
 
 
-    return db.session.get(
+    user = db.session.get(
         User,
         user_id,
     )
 
 
-# =========================================================
-# GET WRITING LIKE COUNT
-# =========================================================
+    if not user:
+        return None
 
-@like_bp.get(
-    "/writing/<int:writing_id>"
-)
-def get_writing_likes(
+
+    if not getattr(
+        user,
+        "is_active",
+        True,
+    ):
+
+        return None
+
+
+    return user
+
+
+
+def get_published_writing(
     writing_id,
 ):
+    """
+    Return a published Writing or None.
+
+    Private, draft, deleted, archived, or otherwise
+    unpublished writings are treated as unavailable.
+    """
 
     writing = db.session.get(
         Writing,
@@ -78,11 +104,7 @@ def get_writing_likes(
 
 
     if not writing:
-
-        return jsonify({
-            "message":
-                "Writing not found."
-        }), 404
+        return None
 
 
     if getattr(
@@ -91,20 +113,173 @@ def get_writing_likes(
         None,
     ) != "published":
 
+        return None
+
+
+    return writing
+
+
+
+def get_like_count(
+    writing_id,
+):
+    """
+    Return total number of likes for a writing.
+    """
+
+    return (
+        Like.query
+        .filter(
+            Like.writing_id
+            == writing_id
+        )
+        .count()
+    )
+
+
+
+def get_user_like(
+    user_id,
+    writing_id,
+):
+    """
+    Return the Like relationship for one user/writing
+    combination, or None.
+    """
+
+    return (
+        Like.query
+        .filter_by(
+            user_id=user_id,
+            writing_id=writing_id,
+        )
+        .first()
+    )
+
+
+
+def serialize_like(
+    like,
+):
+    """
+    Safely serialize a Like object.
+
+    Uses model.to_dict() when available, otherwise
+    returns a minimal fallback representation.
+    """
+
+    if like is None:
+        return None
+
+
+    if hasattr(
+        like,
+        "to_dict",
+    ):
+
+        try:
+
+            return like.to_dict()
+
+        except Exception as error:
+
+            print(
+                "LIKE SERIALIZATION WARNING:",
+                error,
+            )
+
+
+    created_at = getattr(
+        like,
+        "created_at",
+        None,
+    )
+
+
+    return {
+        "id":
+            getattr(
+                like,
+                "id",
+                None,
+            ),
+
+        "user_id":
+            getattr(
+                like,
+                "user_id",
+                None,
+            ),
+
+        "writing_id":
+            getattr(
+                like,
+                "writing_id",
+                None,
+            ),
+
+        "created_at":
+            (
+                created_at.isoformat()
+                if created_at
+                else None
+            ),
+    }
+
+
+# =========================================================
+# GET WRITING LIKE COUNT
+#
+# GET:
+# /api/likes/writing/<writing_id>
+#
+# Public endpoint
+# =========================================================
+
+
+@like_bp.get(
+    "/writing/<int:writing_id>"
+)
+def get_writing_likes(
+    writing_id,
+):
+
+    # -----------------------------------------------------
+    # WRITING
+    # -----------------------------------------------------
+
+    writing = get_published_writing(
+        writing_id
+    )
+
+
+    if not writing:
+
         return jsonify({
+            "success": False,
             "message":
-                "Writing not found."
+                "Writing not found.",
         }), 404
 
 
-    count = Like.query.filter_by(
-        writing_id=writing_id,
-    ).count()
+    # -----------------------------------------------------
+    # LIKE COUNT
+    # -----------------------------------------------------
 
+    count = get_like_count(
+        writing.id
+    )
+
+
+    # -----------------------------------------------------
+    # RESPONSE
+    # -----------------------------------------------------
 
     return jsonify({
+        "success": True,
+
         "writing_id":
-            writing_id,
+            writing.id,
 
         "likes_count":
             count,
@@ -113,7 +288,13 @@ def get_writing_likes(
 
 # =========================================================
 # GET CURRENT USER LIKE STATUS
+#
+# GET:
+# /api/likes/writing/<writing_id>/me
+#
+# Requires JWT
 # =========================================================
+
 
 @like_bp.get(
     "/writing/<int:writing_id>/me"
@@ -123,54 +304,87 @@ def get_my_like_status(
     writing_id,
 ):
 
+    # -----------------------------------------------------
+    # CURRENT USER
+    # -----------------------------------------------------
+
     user = get_current_user()
 
 
     if not user:
 
         return jsonify({
+            "success": False,
             "message":
-                "User not found."
+                "Authenticated user not found.",
         }), 404
 
 
-    writing = db.session.get(
-        Writing,
-        writing_id,
+    # -----------------------------------------------------
+    # PUBLISHED WRITING
+    # -----------------------------------------------------
+
+    writing = get_published_writing(
+        writing_id
     )
 
 
     if not writing:
 
         return jsonify({
+            "success": False,
             "message":
-                "Writing not found."
+                "Writing not found.",
         }), 404
 
 
-    like = Like.query.filter_by(
-        user_id=user.id,
-        writing_id=writing_id,
-    ).first()
+    # -----------------------------------------------------
+    # LIKE STATUS
+    # -----------------------------------------------------
+
+    like = get_user_like(
+        user.id,
+        writing.id,
+    )
 
 
-    count = Like.query.filter_by(
-        writing_id=writing_id,
-    ).count()
+    count = get_like_count(
+        writing.id
+    )
 
+
+    # -----------------------------------------------------
+    # RESPONSE
+    # -----------------------------------------------------
 
     return jsonify({
+        "success": True,
+
+        "writing_id":
+            writing.id,
+
         "liked":
             like is not None,
 
         "likes_count":
             count,
+
+        "like":
+            serialize_like(
+                like
+            ),
     }), 200
 
 
 # =========================================================
 # LIKE WRITING
+#
+# POST:
+# /api/likes/writing/<writing_id>
+#
+# Requires JWT
 # =========================================================
+
 
 @like_bp.post(
     "/writing/<int:writing_id>"
@@ -190,87 +404,82 @@ def like_writing(
     if not user:
 
         return jsonify({
+            "success": False,
             "message":
-                "User not found."
+                "Authenticated user not found.",
         }), 404
 
 
     # -----------------------------------------------------
-    # GET WRITING
+    # WRITING
     # -----------------------------------------------------
 
-    writing = db.session.get(
-        Writing,
-        writing_id,
+    writing = get_published_writing(
+        writing_id
     )
 
 
     if not writing:
 
         return jsonify({
+            "success": False,
             "message":
-                "Writing not found."
+                "Writing not found.",
         }), 404
-
-
-    # -----------------------------------------------------
-    # ONLY PUBLISHED WRITINGS
-    # -----------------------------------------------------
-
-    if getattr(
-        writing,
-        "status",
-        None,
-    ) != "published":
-
-        return jsonify({
-            "message":
-                (
-                    "Only published writings "
-                    "can be liked."
-                )
-        }), 400
 
 
     # -----------------------------------------------------
     # CHECK EXISTING LIKE
     # -----------------------------------------------------
 
-    existing_like = (
-        Like.query
-        .filter_by(
-            user_id=user.id,
-            writing_id=writing_id,
-        )
-        .first()
+    existing_like = get_user_like(
+        user.id,
+        writing.id,
     )
 
 
+    # -----------------------------------------------------
+    # IDEMPOTENT RESPONSE
+    # -----------------------------------------------------
+
     if existing_like:
 
-        count = Like.query.filter_by(
-            writing_id=writing_id,
-        ).count()
+        count = get_like_count(
+            writing.id
+        )
 
 
         return jsonify({
+            "success": True,
+
             "message":
-                (
-                    "You already liked "
-                    "this writing."
-                ),
+                "You already liked this writing.",
+
+            "writing_id":
+                writing.id,
 
             "liked":
                 True,
 
             "likes_count":
                 count,
+
+            "like":
+                serialize_like(
+                    existing_like
+                ),
         }), 200
 
 
     # -----------------------------------------------------
-    # CREATE LIKE + NOTIFICATION
+    # CREATE LIKE OBJECT
     # -----------------------------------------------------
+
+    like = Like(
+        user_id=user.id,
+        writing_id=writing.id,
+    )
+
 
     notification = None
 
@@ -278,14 +487,8 @@ def like_writing(
     try:
 
         # -------------------------------------------------
-        # CREATE LIKE
+        # ADD LIKE
         # -------------------------------------------------
-
-        like = Like(
-            user_id=user.id,
-            writing_id=writing_id,
-        )
-
 
         db.session.add(
             like
@@ -293,33 +496,45 @@ def like_writing(
 
 
         # -------------------------------------------------
-        # CREATE DATABASE NOTIFICATION
-        # -------------------------------------------------
+        # FLUSH
         #
-        # Recipient = writing author
-        # Actor     = user who liked
-        #
-        # Self-likes automatically return None.
-        #
+        # Gives like.id before final commit when required.
         # -------------------------------------------------
 
-        notification = create_notification(
-            recipient_id=
-                writing.user_id,
+        db.session.flush()
 
-            actor_id=
-                user.id,
 
-            notification_type=
-                "like",
+        # -------------------------------------------------
+        # CREATE LIKE NOTIFICATION
+        #
+        # recipient = writing author
+        # actor     = user liking the writing
+        #
+        # Self-likes automatically create no notification
+        # because notification_service handles that.
+        # -------------------------------------------------
 
-            writing_id=
-                writing.id,
+        notification = (
+            create_notification(
+                recipient_id=
+                    writing.user_id,
+
+                actor_id=
+                    user.id,
+
+                notification_type=
+                    "like",
+
+                writing_id=
+                    writing.id,
+
+                commit=False,
+            )
         )
 
 
         # -------------------------------------------------
-        # COMMIT LIKE + NOTIFICATION TOGETHER
+        # COMMIT LIKE + NOTIFICATION ATOMICALLY
         # -------------------------------------------------
 
         db.session.commit()
@@ -331,27 +546,24 @@ def like_writing(
 
 
         print(
-            "LIKE ERROR:",
-            error
+            "LIKE CREATE ERROR:",
+            error,
         )
 
 
         return jsonify({
+            "success": False,
             "message":
-                "Unable to like writing."
+                "Unable to like this writing.",
         }), 500
 
 
     # -----------------------------------------------------
     # REAL-TIME NOTIFICATION
-    # -----------------------------------------------------
     #
-    # IMPORTANT:
-    # Emit only AFTER successful database commit.
+    # Only emit after successful database commit.
     #
-    # If WebSocket delivery fails, the like should still
-    # remain successful because it is already committed.
-    #
+    # Socket.IO failure should never undo a successful like.
     # -----------------------------------------------------
 
     if notification:
@@ -367,29 +579,34 @@ def like_writing(
             print(
                 "LIKE REAL-TIME "
                 "NOTIFICATION ERROR:",
-                error
+                error,
             )
 
 
     # -----------------------------------------------------
-    # UPDATED LIKE COUNT
+    # UPDATED COUNT
     # -----------------------------------------------------
 
-    count = Like.query.filter_by(
-        writing_id=writing_id,
-    ).count()
+    count = get_like_count(
+        writing.id
+    )
 
 
     # -----------------------------------------------------
-    # RESPONSE
+    # INFORM OTHER FRONTEND COMPONENTS
+    #
+    # This is returned to the caller. The frontend can use
+    # it to immediately update WritingCard / WritingDetails.
     # -----------------------------------------------------
 
     return jsonify({
+        "success": True,
+
         "message":
-            (
-                "Writing liked "
-                "successfully."
-            ),
+            "Writing liked successfully.",
+
+        "writing_id":
+            writing.id,
 
         "liked":
             True,
@@ -398,13 +615,21 @@ def like_writing(
             count,
 
         "like":
-            like.to_dict(),
+            serialize_like(
+                like
+            ),
     }), 201
 
 
 # =========================================================
 # UNLIKE WRITING
+#
+# DELETE:
+# /api/likes/writing/<writing_id>
+#
+# Requires JWT
 # =========================================================
+
 
 @like_bp.delete(
     "/writing/<int:writing_id>"
@@ -424,53 +649,59 @@ def unlike_writing(
     if not user:
 
         return jsonify({
+            "success": False,
             "message":
-                "User not found."
+                "Authenticated user not found.",
         }), 404
 
 
     # -----------------------------------------------------
-    # GET WRITING
+    # WRITING
     # -----------------------------------------------------
 
-    writing = db.session.get(
-        Writing,
-        writing_id,
+    writing = get_published_writing(
+        writing_id
     )
 
 
     if not writing:
 
         return jsonify({
+            "success": False,
             "message":
-                "Writing not found."
+                "Writing not found.",
         }), 404
 
 
     # -----------------------------------------------------
-    # FIND LIKE
+    # EXISTING LIKE
     # -----------------------------------------------------
 
-    like = (
-        Like.query
-        .filter_by(
-            user_id=user.id,
-            writing_id=writing_id,
-        )
-        .first()
+    like = get_user_like(
+        user.id,
+        writing.id,
     )
 
 
+    # -----------------------------------------------------
+    # IDEMPOTENT RESPONSE
+    # -----------------------------------------------------
+
     if not like:
 
-        count = Like.query.filter_by(
-            writing_id=writing_id,
-        ).count()
+        count = get_like_count(
+            writing.id
+        )
 
 
         return jsonify({
+            "success": True,
+
             "message":
                 "Writing was not liked.",
+
+            "writing_id":
+                writing.id,
 
             "liked":
                 False,
@@ -481,15 +712,26 @@ def unlike_writing(
 
 
     # -----------------------------------------------------
-    # DELETE LIKE + MATCHING NOTIFICATION
+    # DELETE LIKE + NOTIFICATION
     # -----------------------------------------------------
 
     try:
+
+        # -------------------------------------------------
+        # DELETE LIKE
+        # -------------------------------------------------
 
         db.session.delete(
             like
         )
 
+
+        # -------------------------------------------------
+        # DELETE MATCHING LIKE NOTIFICATION
+        #
+        # Removing a like should remove the corresponding
+        # social notification generated by that like.
+        # -------------------------------------------------
 
         delete_notification(
             recipient_id=
@@ -503,11 +745,13 @@ def unlike_writing(
 
             writing_id=
                 writing.id,
+
+            commit=False,
         )
 
 
         # -------------------------------------------------
-        # COMMIT BOTH TOGETHER
+        # COMMIT BOTH ATOMICALLY
         # -------------------------------------------------
 
         db.session.commit()
@@ -519,14 +763,15 @@ def unlike_writing(
 
 
         print(
-            "UNLIKE ERROR:",
-            error
+            "LIKE DELETE ERROR:",
+            error,
         )
 
 
         return jsonify({
+            "success": False,
             "message":
-                "Unable to remove like."
+                "Unable to remove like.",
         }), 500
 
 
@@ -534,9 +779,9 @@ def unlike_writing(
     # UPDATED COUNT
     # -----------------------------------------------------
 
-    count = Like.query.filter_by(
-        writing_id=writing_id,
-    ).count()
+    count = get_like_count(
+        writing.id
+    )
 
 
     # -----------------------------------------------------
@@ -544,11 +789,13 @@ def unlike_writing(
     # -----------------------------------------------------
 
     return jsonify({
+        "success": True,
+
         "message":
-            (
-                "Like removed "
-                "successfully."
-            ),
+            "Like removed successfully.",
+
+        "writing_id":
+            writing.id,
 
         "liked":
             False,

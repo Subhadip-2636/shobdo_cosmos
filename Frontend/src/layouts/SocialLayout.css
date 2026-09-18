@@ -1,0 +1,1868 @@
+/* =========================================================
+   SHOBDO SOCIAL APP SHELL
+========================================================= */
+
+.social-layout {
+  width: min(100%, 1480px);
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns:
+    238px
+    minmax(0, 1fr)
+    310px;
+
+  gap: 28px;
+
+  padding:
+    24px
+    28px
+    56px;
+
+  align-items: start;
+}
+
+
+/* =========================================================
+   LEFT SIDEBAR
+========================================================= */
+
+.social-left-sidebar {
+  min-width: 0;
+}
+
+
+.social-left-inner {
+  position: sticky;
+  top: 94px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 20px;
+}
+
+
+/* =========================================================
+   MAIN NAVIGATION
+========================================================= */
+
+.social-navigation {
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+
+.social-nav-item {
+  position: relative;
+
+  min-height: 48px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  padding:
+    0
+    13px;
+
+  border-radius: 14px;
+
+  color: #5a535f;
+
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+
+.social-nav-item:hover {
+  background: #f5f0f8;
+
+  color: #642b8f;
+
+  transform: translateX(1px);
+}
+
+
+.social-nav-item-active {
+  background: #f1e8f7;
+
+  color: #642b8f;
+
+  font-weight: 700;
+}
+
+
+.social-nav-item-active::before {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  top: 50%;
+
+  width: 3px;
+  height: 24px;
+
+  border-radius:
+    0
+    6px
+    6px
+    0;
+
+  background: #642b8f;
+
+  transform:
+    translateY(-50%);
+}
+
+
+.social-nav-icon {
+  width: 27px;
+  height: 27px;
+
+  display: grid;
+  place-items: center;
+
+  flex-shrink: 0;
+}
+
+
+.social-nav-label {
+  min-width: 0;
+
+  flex: 1;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   NAVIGATION NOTIFICATION BADGE
+========================================================= */
+
+.social-nav-badge {
+  min-width: 21px;
+  height: 21px;
+
+  padding:
+    0
+    6px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 999px;
+
+  background: #642b8f;
+
+  color: #ffffff;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  line-height: 1;
+}
+
+
+/* =========================================================
+   CREATE BUTTON
+========================================================= */
+
+.social-create-button {
+  min-height: 50px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  padding:
+    0
+    18px;
+
+  border-radius: 15px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #642b8f,
+      #7d3fa8
+    );
+
+  color: #ffffff;
+
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  box-shadow:
+    0
+    8px
+    24px
+    rgba(100, 43, 143, 0.17);
+
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+
+.social-create-button:hover {
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0
+    12px
+    30px
+    rgba(100, 43, 143, 0.22);
+}
+
+
+.social-create-button:active {
+  transform:
+    translateY(0);
+}
+
+
+/* =========================================================
+   CURRENT USER CARD
+========================================================= */
+
+.social-sidebar-user {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  padding: 10px;
+
+  border:
+    1px solid
+    transparent;
+
+  border-radius: 16px;
+
+  text-decoration: none;
+
+  color: inherit;
+
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+
+.social-sidebar-user:hover {
+  border-color: #e8e1eb;
+
+  background: #faf8fb;
+}
+
+
+.social-sidebar-avatar {
+  width: 42px;
+  height: 42px;
+
+  flex-shrink: 0;
+
+  overflow: hidden;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      135deg,
+      #642b8f,
+      #965ec0
+    );
+
+  color: #ffffff;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  box-shadow:
+    0
+    3px
+    10px
+    rgba(100, 43, 143, 0.13);
+}
+
+
+.social-sidebar-avatar img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+
+.social-sidebar-user-text {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+
+.social-sidebar-user-text strong {
+  overflow: hidden;
+
+  color: #211c24;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.social-sidebar-user-text span {
+  overflow: hidden;
+
+  color: #8e8791;
+
+  font-size: 11px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   MAIN CONTENT
+========================================================= */
+
+.social-main-content {
+  width: 100%;
+  min-width: 0;
+
+  position: relative;
+}
+
+
+/* =========================================================
+   RIGHT SIDEBAR
+========================================================= */
+
+.social-right-sidebar {
+  min-width: 0;
+}
+
+
+.social-right-inner {
+  position: sticky;
+  top: 94px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 15px;
+
+  max-height:
+    calc(
+      100vh - 110px
+    );
+
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  padding-bottom: 14px;
+
+  scrollbar-width: none;
+}
+
+
+.social-right-inner::-webkit-scrollbar {
+  display: none;
+}
+
+
+/* =========================================================
+   RIGHT SIDEBAR CARDS
+========================================================= */
+
+.social-side-card {
+  min-width: 0;
+
+  padding: 17px;
+
+  border:
+    1px solid
+    #e8e2eb;
+
+  border-radius: 18px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0
+    1px
+    2px
+    rgba(30, 22, 35, 0.02);
+
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+
+.social-side-card:hover {
+  border-color: #ded5e3;
+
+  box-shadow:
+    0
+    7px
+    24px
+    rgba(40, 27, 48, 0.045);
+}
+
+
+/* =========================================================
+   CARD HEADING
+========================================================= */
+
+.social-side-card-heading {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+}
+
+
+.social-side-heading-icon {
+  width: 31px;
+  height: 31px;
+
+  display: grid;
+  place-items: center;
+
+  flex-shrink: 0;
+
+  border-radius: 10px;
+
+  background: #f1e8f7;
+
+  color: #642b8f;
+}
+
+
+.social-side-card-heading h3,
+.social-side-title {
+  min-width: 0;
+
+  margin: 0;
+
+  color: #211d24;
+
+  font-size: 15px;
+  font-weight: 750;
+
+  line-height: 1.3;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   SUGGESTED WRITERS CARD
+========================================================= */
+
+.social-suggestions-card {
+  padding:
+    16px
+    15px;
+}
+
+
+.social-suggestions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin-bottom: 12px;
+}
+
+
+/* =========================================================
+   REFRESH SUGGESTIONS BUTTON
+========================================================= */
+
+.social-side-refresh {
+  width: 32px;
+  height: 32px;
+
+  flex-shrink: 0;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  border:
+    1px solid
+    #e8e1eb;
+
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  color: #77707b;
+
+  cursor: pointer;
+
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+
+
+.social-side-refresh:hover:not(:disabled) {
+  border-color: #d8c9e1;
+
+  background: #f6f1f8;
+
+  color: #642b8f;
+}
+
+
+.social-side-refresh:active:not(:disabled) {
+  transform:
+    scale(0.95);
+}
+
+
+.social-side-refresh:disabled {
+  opacity: 0.55;
+
+  cursor: default;
+}
+
+
+/* =========================================================
+   SUGGESTION LIST
+========================================================= */
+
+.social-suggestion-list {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+
+.social-suggestion-item {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding:
+    9px
+    4px;
+
+  border-radius: 13px;
+
+  transition:
+    background 150ms ease;
+}
+
+
+.social-suggestion-item:hover {
+  background: #faf8fb;
+}
+
+
+/* =========================================================
+   SUGGESTED PROFILE
+========================================================= */
+
+.social-suggestion-profile {
+  min-width: 0;
+
+  flex: 1;
+
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  text-decoration: none;
+
+  color: inherit;
+}
+
+
+.social-suggestion-avatar {
+  width: 40px;
+  height: 40px;
+
+  flex-shrink: 0;
+
+  overflow: hidden;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      135deg,
+      #642b8f,
+      #9b67be
+    );
+
+  color: #ffffff;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  box-shadow:
+    0
+    2px
+    8px
+    rgba(100, 43, 143, 0.12);
+}
+
+
+.social-suggestion-avatar img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+
+/* =========================================================
+   SUGGESTED USER INFO
+========================================================= */
+
+.social-suggestion-info {
+  min-width: 0;
+
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 1px;
+}
+
+
+.social-suggestion-info strong {
+  max-width: 100%;
+
+  overflow: hidden;
+
+  color: #241f27;
+
+  font-size: 12px;
+  font-weight: 750;
+
+  line-height: 1.35;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.social-suggestion-profile:hover
+.social-suggestion-info strong {
+  color: #642b8f;
+}
+
+
+.social-suggestion-username {
+  max-width: 100%;
+
+  overflow: hidden;
+
+  color: #938c96;
+
+  font-size: 10px;
+
+  line-height: 1.3;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.social-suggestion-info small {
+  max-width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 4px;
+
+  margin-top: 2px;
+
+  overflow: hidden;
+
+  color: #aaa3ac;
+
+  font-size: 9px;
+  font-weight: 500;
+
+  line-height: 1.3;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.social-suggestion-info small span {
+  color: #c1bbc3;
+}
+
+
+/* =========================================================
+   FOLLOW BUTTON
+========================================================= */
+
+.social-follow-button {
+  min-width: 72px;
+  min-height: 32px;
+
+  flex-shrink: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
+  padding:
+    0
+    9px;
+
+  border:
+    1px solid
+    #642b8f;
+
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  color: #642b8f;
+
+  font-family: inherit;
+
+  font-size: 10px;
+  font-weight: 750;
+
+  cursor: pointer;
+
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+
+.social-follow-button:hover:not(:disabled) {
+  background: #642b8f;
+
+  color: #ffffff;
+
+  box-shadow:
+    0
+    5px
+    14px
+    rgba(100, 43, 143, 0.17);
+
+  transform:
+    translateY(-1px);
+}
+
+
+.social-follow-button:active:not(:disabled) {
+  transform:
+    translateY(0);
+}
+
+
+.social-follow-button:disabled {
+  border-color: #d8cde0;
+
+  background: #f7f3f9;
+
+  color: #9c8ca7;
+
+  cursor: default;
+}
+
+
+/* =========================================================
+   SUGGESTIONS MORE LINK
+========================================================= */
+
+.social-suggestions-more {
+  min-height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  margin-top: 8px;
+
+  border-top:
+    1px solid
+    #eee9f0;
+
+  padding-top: 10px;
+
+  color: #642b8f;
+
+  text-decoration: none;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  transition:
+    color 150ms ease,
+    background 150ms ease;
+}
+
+
+.social-suggestions-more:hover {
+  color: #4f1f72;
+}
+
+
+/* =========================================================
+   SUGGESTION EMPTY / ERROR STATE
+========================================================= */
+
+.social-suggestions-state {
+  min-height: 110px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  padding:
+    16px
+    8px;
+
+  text-align: center;
+
+  color: #938b96;
+}
+
+
+.social-suggestions-state > svg {
+  color: #9e79b6;
+}
+
+
+.social-suggestions-state p {
+  max-width: 230px;
+
+  margin: 0;
+
+  color: #7f7782;
+
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+
+.social-suggestions-state button {
+  min-height: 31px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
+  padding:
+    0
+    11px;
+
+  border:
+    1px solid
+    #ded2e4;
+
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #642b8f;
+
+  font-family: inherit;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 150ms ease,
+    border-color 150ms ease;
+}
+
+
+.social-suggestions-state button:hover {
+  border-color: #cab7d6;
+
+  background: #f6f1f8;
+}
+
+
+/* =========================================================
+   SUGGESTION LOADING SKELETON
+========================================================= */
+
+.social-suggestions-loading {
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+
+.social-suggestion-skeleton {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  min-height: 54px;
+
+  padding:
+    7px
+    4px;
+}
+
+
+.social-skeleton-avatar {
+  width: 40px;
+  height: 40px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      90deg,
+      #f0edf2 25%,
+      #f7f5f8 50%,
+      #f0edf2 75%
+    );
+
+  background-size:
+    200%
+    100%;
+
+  animation:
+    socialSkeletonPulse
+    1.4s
+    linear
+    infinite;
+}
+
+
+.social-skeleton-lines {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+
+.social-skeleton-lines span {
+  display: block;
+
+  height: 8px;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #f0edf2 25%,
+      #f7f5f8 50%,
+      #f0edf2 75%
+    );
+
+  background-size:
+    200%
+    100%;
+
+  animation:
+    socialSkeletonPulse
+    1.4s
+    linear
+    infinite;
+}
+
+
+.social-skeleton-lines span:first-child {
+  width: 74%;
+}
+
+
+.social-skeleton-lines span:last-child {
+  width: 50%;
+}
+
+
+@keyframes socialSkeletonPulse {
+
+  from {
+    background-position:
+      200%
+      0;
+  }
+
+  to {
+    background-position:
+      -200%
+      0;
+  }
+
+}
+
+
+/* =========================================================
+   LOADING SPINNER
+========================================================= */
+
+.social-spin {
+  animation:
+    socialSpin
+    700ms
+    linear
+    infinite;
+}
+
+
+@keyframes socialSpin {
+
+  to {
+    transform:
+      rotate(360deg);
+  }
+
+}
+
+
+/* =========================================================
+   POPULAR TOPICS
+========================================================= */
+
+.social-topic-list {
+  margin-top: 11px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+
+.social-topic-item {
+  min-height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  padding:
+    0
+    9px;
+
+  border-radius: 10px;
+
+  color: #4e4752;
+
+  text-decoration: none;
+
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+
+
+.social-topic-item:hover {
+  background: #f6f1f8;
+
+  color: #642b8f;
+}
+
+
+.social-topic-name {
+  min-width: 0;
+
+  overflow: hidden;
+
+  font-size: 12px;
+  font-weight: 650;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.social-topic-arrow {
+  flex-shrink: 0;
+
+  color: #9c94a0;
+
+  font-size: 15px;
+
+  transition:
+    transform 150ms ease,
+    color 150ms ease;
+}
+
+
+.social-topic-item:hover
+.social-topic-arrow {
+  color: #642b8f;
+
+  transform:
+    translateX(2px);
+}
+
+
+/* =========================================================
+   GUEST COMMUNITY CARD
+========================================================= */
+
+.social-community-card {
+  padding:
+    20px
+    17px;
+
+  text-align: center;
+}
+
+
+.social-community-icon {
+  width: 44px;
+  height: 44px;
+
+  margin:
+    0
+    auto
+    11px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #642b8f,
+      #965ec0
+    );
+
+  color: #ffffff;
+
+  box-shadow:
+    0
+    7px
+    20px
+    rgba(100, 43, 143, 0.17);
+}
+
+
+.social-community-card h3 {
+  margin:
+    0
+    0
+    7px;
+
+  color: #231e26;
+
+  font-size: 15px;
+  font-weight: 750;
+}
+
+
+.social-community-card p {
+  margin:
+    0
+    0
+    15px;
+
+  color: #777079;
+
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+
+.social-community-button {
+  min-height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 11px;
+
+  background: #642b8f;
+
+  color: #ffffff;
+
+  text-decoration: none;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  transition:
+    background 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+
+.social-community-button:hover {
+  background: #542278;
+
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0
+    7px
+    18px
+    rgba(100, 43, 143, 0.17);
+}
+
+
+/* =========================================================
+   MINI FOOTER
+========================================================= */
+
+.social-mini-footer {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap:
+    5px
+    11px;
+
+  padding:
+    4px
+    6px
+    12px;
+
+  color: #99929c;
+
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+
+.social-mini-footer a {
+  color: inherit;
+
+  text-decoration: none;
+
+  transition:
+    color 150ms ease;
+}
+
+
+.social-mini-footer a:hover {
+  color: #642b8f;
+}
+
+
+/* =========================================================
+   MOBILE NAV DEFAULT
+========================================================= */
+
+.social-mobile-nav {
+  display: none;
+}
+
+
+/* =========================================================
+   FOCUS ACCESSIBILITY
+========================================================= */
+
+.social-nav-item:focus-visible,
+.social-create-button:focus-visible,
+.social-sidebar-user:focus-visible,
+.social-side-refresh:focus-visible,
+.social-suggestion-profile:focus-visible,
+.social-follow-button:focus-visible,
+.social-suggestions-more:focus-visible,
+.social-suggestions-state button:focus-visible,
+.social-topic-item:focus-visible,
+.social-community-button:focus-visible,
+.social-mobile-link:focus-visible,
+.social-mobile-create:focus-visible {
+  outline:
+    2px solid
+    rgba(100, 43, 143, 0.5);
+
+  outline-offset: 2px;
+}
+
+
+/* =========================================================
+   LARGE LAPTOP
+========================================================= */
+
+@media (
+  max-width: 1320px
+) {
+
+  .social-layout {
+    grid-template-columns:
+      220px
+      minmax(0, 1fr)
+      285px;
+
+    gap: 22px;
+
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
+
+  .social-follow-button {
+    min-width: 64px;
+
+    padding:
+      0
+      7px;
+
+    font-size: 9px;
+  }
+
+
+  .social-follow-button svg {
+    display: none;
+  }
+
+}
+
+
+/* =========================================================
+   TABLET / SMALL LAPTOP
+========================================================= */
+
+@media (
+  max-width: 1180px
+) {
+
+  .social-layout {
+    width:
+      min(
+        100%,
+        1080px
+      );
+
+    grid-template-columns:
+      210px
+      minmax(0, 1fr);
+
+    gap: 24px;
+  }
+
+
+  .social-right-sidebar {
+    display: none;
+  }
+
+}
+
+
+/* =========================================================
+   COMPACT TABLET
+========================================================= */
+
+@media (
+  max-width: 900px
+) {
+
+  .social-layout {
+    grid-template-columns:
+      68px
+      minmax(0, 1fr);
+
+    gap: 18px;
+
+    padding:
+      20px
+      16px
+      46px;
+  }
+
+
+  .social-left-inner {
+    align-items: center;
+
+    gap: 17px;
+  }
+
+
+  .social-navigation {
+    width: 100%;
+
+    align-items: center;
+  }
+
+
+  .social-nav-item {
+    width: 48px;
+    height: 48px;
+
+    min-height: 48px;
+
+    justify-content: center;
+
+    padding: 0;
+
+    gap: 0;
+  }
+
+
+  .social-nav-item:hover {
+    transform: none;
+  }
+
+
+  .social-nav-item-active::before {
+    display: none;
+  }
+
+
+  .social-nav-label {
+    display: none;
+  }
+
+
+  .social-nav-badge {
+    position: absolute;
+
+    top: 2px;
+    right: 1px;
+
+    min-width: 17px;
+    height: 17px;
+
+    padding:
+      0
+      4px;
+
+    border:
+      2px solid
+      #ffffff;
+
+    font-size: 8px;
+  }
+
+
+  .social-create-button {
+    width: 48px;
+    height: 48px;
+
+    min-height: 48px;
+
+    padding: 0;
+
+    border-radius: 14px;
+  }
+
+
+  .social-create-button span {
+    display: none;
+  }
+
+
+  .social-sidebar-user {
+    padding: 3px;
+
+    border-radius: 50%;
+  }
+
+
+  .social-sidebar-avatar {
+    width: 42px;
+    height: 42px;
+  }
+
+
+  .social-sidebar-user-text {
+    display: none;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+  max-width: 700px
+) {
+
+  .social-layout {
+    display: block;
+
+    width: 100%;
+
+    padding:
+      10px
+      0
+      calc(
+        88px +
+        env(safe-area-inset-bottom)
+      );
+  }
+
+
+  .social-left-sidebar,
+  .social-right-sidebar {
+    display: none;
+  }
+
+
+  .social-main-content {
+    width: 100%;
+    min-width: 0;
+  }
+
+
+  /* =====================================================
+     MOBILE BOTTOM NAVIGATION
+  ====================================================== */
+
+  .social-mobile-nav {
+    position: fixed;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    z-index: 1150;
+
+    min-height: 64px;
+
+    display: grid;
+
+    grid-template-columns:
+      repeat(
+        5,
+        1fr
+      );
+
+    align-items: center;
+
+    padding:
+      5px
+      max(
+        8px,
+        env(safe-area-inset-left)
+      )
+      calc(
+        5px +
+        env(safe-area-inset-bottom)
+      )
+      max(
+        8px,
+        env(safe-area-inset-right)
+      );
+
+    border-top:
+      1px solid
+      rgba(38, 27, 43, 0.1);
+
+    background:
+      rgba(
+        255,
+        255,
+        255,
+        0.97
+      );
+
+    backdrop-filter:
+      blur(18px);
+
+    -webkit-backdrop-filter:
+      blur(18px);
+
+    box-shadow:
+      0
+      -6px
+      25px
+      rgba(
+        30,
+        20,
+        35,
+        0.045
+      );
+  }
+
+
+  .social-mobile-link {
+    min-width: 0;
+    min-height: 50px;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 3px;
+
+    border-radius: 11px;
+
+    color: #777079;
+
+    text-decoration: none;
+
+    font-size: 9px;
+    font-weight: 600;
+
+    transition:
+      color 150ms ease,
+      background 150ms ease;
+  }
+
+
+  .social-mobile-link:hover {
+    background: #f8f4fa;
+  }
+
+
+  .social-mobile-link-active {
+    color: #642b8f;
+
+    font-weight: 700;
+  }
+
+
+  .social-mobile-icon-wrap {
+    position: relative;
+
+    display: grid;
+    place-items: center;
+  }
+
+
+  /* =====================================================
+     MOBILE NOTIFICATION BADGE
+  ====================================================== */
+
+  .social-mobile-badge {
+    position: absolute;
+
+    top: -7px;
+    right: -10px;
+
+    min-width: 16px;
+    height: 16px;
+
+    padding:
+      0
+      3px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border:
+      2px solid
+      #ffffff;
+
+    border-radius: 999px;
+
+    background: #642b8f;
+
+    color: #ffffff;
+
+    font-size: 7px;
+    font-weight: 800;
+
+    line-height: 1;
+  }
+
+
+  /* =====================================================
+     MOBILE CREATE BUTTON
+  ====================================================== */
+
+  .social-mobile-create {
+    width: 48px;
+    height: 48px;
+
+    margin: 0 auto;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 15px;
+
+    background:
+      linear-gradient(
+        135deg,
+        #642b8f,
+        #8244ac
+      );
+
+    color: #ffffff;
+
+    text-decoration: none;
+
+    box-shadow:
+      0
+      8px
+      20px
+      rgba(
+        100,
+        43,
+        143,
+        0.23
+      );
+
+    transition:
+      transform 150ms ease,
+      box-shadow 150ms ease;
+  }
+
+
+  .social-mobile-create:active {
+    transform:
+      scale(0.96);
+  }
+
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (
+  max-width: 420px
+) {
+
+  .social-mobile-nav {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+
+  .social-mobile-link {
+    font-size: 8px;
+  }
+
+
+  .social-mobile-create {
+    width: 45px;
+    height: 45px;
+
+    border-radius: 14px;
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (
+  prefers-reduced-motion: reduce
+) {
+
+  .social-nav-item,
+  .social-create-button,
+  .social-sidebar-user,
+  .social-side-card,
+  .social-side-refresh,
+  .social-suggestion-item,
+  .social-suggestion-info strong,
+  .social-follow-button,
+  .social-suggestions-more,
+  .social-suggestions-state button,
+  .social-topic-item,
+  .social-topic-arrow,
+  .social-community-button,
+  .social-mobile-link,
+  .social-mobile-create {
+    transition: none;
+  }
+
+
+  .social-spin,
+  .social-skeleton-avatar,
+  .social-skeleton-lines span {
+    animation: none;
+  }
+
+}

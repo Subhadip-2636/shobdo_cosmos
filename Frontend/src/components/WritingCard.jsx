@@ -10,6 +10,7 @@ import {
   CalendarDays,
   Clock3,
   Globe2,
+  Hash,
   Heart,
   MessageCircle,
   User,
@@ -23,8 +24,8 @@ import {
 import {
   getSavedWritingStatus,
   getToken,
-  likeWriting,
   saveWriting,
+  toggleLike,
   unsaveWriting,
 } from "../api/api";
 
@@ -35,6 +36,74 @@ import {
 import {
   useLanguage,
 } from "../Language/LanguageContext";
+
+import "./WritingCard.css";
+
+// =========================================================
+// HELPERS
+// =========================================================
+
+function safeNumber(
+  value
+) {
+
+  const number =
+    Number(
+      value
+    );
+
+
+  return Number.isFinite(
+    number
+  )
+    ? Math.max(
+        0,
+        number
+      )
+    : 0;
+}
+
+
+// =========================================================
+// INITIALS
+// =========================================================
+
+function getInitials(
+  value
+) {
+
+  const text =
+    String(
+      value || ""
+    ).trim();
+
+
+  if (!text) {
+    return "";
+  }
+
+
+  const parts =
+    text
+      .split(/\s+/)
+      .filter(Boolean);
+
+
+  if (
+    parts.length === 1
+  ) {
+
+    return parts[0]
+      .slice(0, 2)
+      .toUpperCase();
+
+  }
+
+
+  return (
+    `${parts[0][0]}${parts[1][0]}`
+  ).toUpperCase();
+}
 
 
 // =========================================================
@@ -47,6 +116,7 @@ function WritingCard({
 
   const {
     t,
+    language,
   } = useLanguage();
 
 
@@ -54,18 +124,202 @@ function WritingCard({
     useNavigate();
 
 
-  // =====================================================
+  // =======================================================
+  // TRANSLATION FALLBACK
+  // =======================================================
+
+  function translate(
+    key,
+    fallbackBn,
+    fallbackEn,
+    fallbackHi = null,
+  ) {
+
+    try {
+
+      const translated =
+        t(
+          key
+        );
+
+
+      if (
+        translated &&
+        translated !== key
+      ) {
+
+        return translated;
+
+      }
+
+    } catch {
+
+      // Use local fallback.
+
+    }
+
+
+    if (
+      language === "bn"
+    ) {
+
+      return fallbackBn;
+
+    }
+
+
+    if (
+      language === "hi"
+    ) {
+
+      return (
+        fallbackHi ||
+        fallbackEn
+      );
+
+    }
+
+
+    return fallbackEn;
+
+  }
+
+
+  // =======================================================
+  // LABELS
+  // =======================================================
+
+  const labels = {
+
+    by:
+      translate(
+        "writingCard.by",
+        "লেখক",
+        "By",
+        "लेखक"
+      ),
+
+    unknownAuthor:
+      translate(
+        "common.unknownAuthor",
+        "অজানা লেখক",
+        "Unknown author",
+        "अज्ञात लेखक"
+      ),
+
+    untitled:
+      translate(
+        "common.untitled",
+        "শিরোনামহীন",
+        "Untitled",
+        "बिना शीर्षक"
+      ),
+
+    previewUnavailable:
+      translate(
+        "writingCard.previewUnavailable",
+        "লেখার কোনো প্রিভিউ নেই।",
+        "No preview available.",
+        "कोई पूर्वावलोकन उपलब्ध नहीं है।"
+      ),
+
+    minutes:
+      translate(
+        "writingCard.minutes",
+        "মিনিট পড়া",
+        "min read",
+        "मिनट पढ़ें"
+      ),
+
+    words:
+      translate(
+        "writingCard.words",
+        "শব্দ",
+        "words",
+        "शब्द"
+      ),
+
+    read:
+      translate(
+        "writingCard.read",
+        "পড়ুন",
+        "Read",
+        "पढ़ें"
+      ),
+
+    like:
+      language === "bn"
+        ? "পছন্দ করুন"
+        : language === "hi"
+          ? "पसंद करें"
+          : "Like",
+
+    unlike:
+      language === "bn"
+        ? "পছন্দ সরান"
+        : language === "hi"
+          ? "पसंद हटाएँ"
+          : "Unlike",
+
+    comments:
+      language === "bn"
+        ? "মন্তব্য"
+        : language === "hi"
+          ? "टिप्पणियाँ"
+          : "Comments",
+
+    save:
+      language === "bn"
+        ? "সংরক্ষণ করুন"
+        : language === "hi"
+          ? "सहेजें"
+          : "Save",
+
+    saved:
+      language === "bn"
+        ? "সংরক্ষিত"
+        : language === "hi"
+          ? "सहेजा गया"
+          : "Saved",
+
+    removeSaved:
+      language === "bn"
+        ? "সংরক্ষিত তালিকা থেকে সরান"
+        : language === "hi"
+          ? "सहेजी गई सूची से हटाएँ"
+          : "Remove from saved writings",
+
+  };
+
+
+  // =======================================================
+  // WRITING ID
+  // =======================================================
+
+  const writingId =
+    Number(
+      writing?.id
+    );
+
+
+  const hasWritingId =
+    Number.isInteger(
+      writingId
+    ) &&
+    writingId > 0;
+
+
+  // =======================================================
   // LIKE STATE
-  // =====================================================
+  // =======================================================
 
   const [
     likesCount,
     setLikesCount,
   ] = useState(
-    Number(
+    safeNumber(
       writing?.likes_count ??
-      writing?.likes ??
-      0
+      writing?.likes
     )
   );
 
@@ -91,9 +345,61 @@ function WritingCard({
   );
 
 
-  // =====================================================
-  // SAVE / BOOKMARK STATE
-  // =====================================================
+  // Keep local interaction state synchronized if this card
+  // receives another writing or refreshed server data.
+
+  useEffect(
+    () => {
+
+      setLikesCount(
+        safeNumber(
+          writing?.likes_count ??
+          writing?.likes
+        )
+      );
+
+
+      setLiked(
+        Boolean(
+          writing?.liked_by_current_user ??
+          writing?.is_liked ??
+          writing?.liked ??
+          false
+        )
+      );
+
+    },
+    [
+      writing?.id,
+      writing?.likes_count,
+      writing?.likes,
+      writing?.liked_by_current_user,
+      writing?.is_liked,
+      writing?.liked,
+    ]
+  );
+
+
+  // =======================================================
+  // COMMENT COUNT
+  // =======================================================
+
+  const commentsCount =
+    safeNumber(
+      writing?.comments_count ??
+      (
+        Array.isArray(
+          writing?.comments
+        )
+          ? writing.comments.length
+          : writing?.comments
+      )
+    );
+
+
+  // =======================================================
+  // SAVE STATE
+  // =======================================================
 
   const [
     saved,
@@ -124,9 +430,40 @@ function WritingCard({
   );
 
 
-  // =====================================================
+  // =======================================================
+  // RESET SAVE STATE WHEN WRITING CHANGES
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      setSaved(
+        Boolean(
+          writing?.saved_by_current_user ??
+          writing?.is_saved ??
+          writing?.saved ??
+          false
+        )
+      );
+
+
+      setSaveStatusLoaded(
+        false
+      );
+
+    },
+    [
+      writing?.id,
+      writing?.saved_by_current_user,
+      writing?.is_saved,
+      writing?.saved,
+    ]
+  );
+
+
+  // =======================================================
   // LOAD SAVED STATUS
-  // =====================================================
+  // =======================================================
 
   useEffect(
     () => {
@@ -138,8 +475,19 @@ function WritingCard({
       async function loadSavedStatus() {
 
         if (
-          !writing?.id
+          !hasWritingId
         ) {
+
+          if (
+            !cancelled
+          ) {
+
+            setSaveStatusLoaded(
+              true
+            );
+
+          }
+
 
           return;
 
@@ -154,9 +502,16 @@ function WritingCard({
           !token
         ) {
 
-          setSaveStatusLoaded(
-            true
-          );
+          if (
+            !cancelled
+          ) {
+
+            setSaveStatusLoaded(
+              true
+            );
+
+          }
+
 
           return;
 
@@ -167,7 +522,7 @@ function WritingCard({
 
           const data =
             await getSavedWritingStatus(
-              writing.id
+              writingId
             );
 
 
@@ -182,25 +537,26 @@ function WritingCard({
 
           setSaved(
             Boolean(
-              data?.saved
+              data?.saved ??
+              data?.is_saved ??
+              false
             )
           );
-
 
         } catch (
           error
         ) {
 
-          /*
-           * Do not break the writing card if the
-           * bookmark status request temporarily fails.
-           */
+          if (
+            !cancelled
+          ) {
 
-          console.error(
-            "GET SAVED WRITING STATUS ERROR:",
-            error
-          );
+            console.error(
+              "GET SAVED WRITING STATUS ERROR:",
+              error
+            );
 
+          }
 
         } finally {
 
@@ -231,14 +587,15 @@ function WritingCard({
 
     },
     [
-      writing?.id,
+      hasWritingId,
+      writingId,
     ]
   );
 
 
-  // =====================================================
-  // CATEGORY LABEL
-  // =====================================================
+  // =======================================================
+  // CATEGORY
+  // =======================================================
 
   function getCategoryLabel(
     value
@@ -247,28 +604,43 @@ function WritingCard({
     const map = {
 
       "কবিতা":
-        t(
-          "categories.poetry"
+        translate(
+          "categories.poetry",
+          "কবিতা",
+          "Poetry",
+          "कविता"
         ),
 
       "গল্প":
-        t(
-          "categories.story"
+        translate(
+          "categories.story",
+          "গল্প",
+          "Story",
+          "कहानी"
         ),
 
       "অনুভূতি":
-        t(
-          "categories.reflection"
+        translate(
+          "categories.reflection",
+          "অনুভূতি",
+          "Reflection",
+          "अनुभूति"
         ),
 
       "প্রবন্ধ":
-        t(
-          "categories.essay"
+        translate(
+          "categories.essay",
+          "প্রবন্ধ",
+          "Essay",
+          "निबंध"
         ),
 
       "অন্যান্য":
-        t(
-          "categories.other"
+        translate(
+          "categories.other",
+          "অন্যান্য",
+          "Other",
+          "अन्य"
         ),
 
     };
@@ -277,17 +649,15 @@ function WritingCard({
     return (
       map[value] ||
       value ||
-      t(
-        "categories.other"
-      )
+      map["অন্যান্য"]
     );
 
   }
 
 
-  // =====================================================
-  // AUTHOR DATA
-  // =====================================================
+  // =======================================================
+  // AUTHOR
+  // =======================================================
 
   const authorId =
     Number(
@@ -300,7 +670,7 @@ function WritingCard({
 
 
   const hasAuthorId =
-    Number.isFinite(
+    Number.isInteger(
       authorId
     ) &&
     authorId > 0;
@@ -311,14 +681,35 @@ function WritingCard({
     writing?.user?.name ||
     writing?.author_name ||
     writing?.user_name ||
-    t(
-      "common.unknownAuthor"
-    );
+    labels.unknownAuthor;
 
 
-  // =====================================================
+  const authorUsername =
+    String(
+      writing?.author?.username ||
+      writing?.user?.username ||
+      writing?.author_username ||
+      writing?.username ||
+      ""
+    )
+      .trim()
+      .replace(
+        /^@+/,
+        ""
+      );
+
+
+  const authorAvatar =
+    writing?.author?.avatar_url ||
+    writing?.user?.avatar_url ||
+    writing?.author_avatar_url ||
+    writing?.avatar_url ||
+    "";
+
+
+  // =======================================================
   // CATEGORY / LANGUAGE
-  // =====================================================
+  // =======================================================
 
   const category =
     getCategoryLabel(
@@ -337,34 +728,192 @@ function WritingCard({
     );
 
 
-  // =====================================================
-  // PREVIEW
-  // =====================================================
+  // =======================================================
+  // TAGS / HASHTAGS
+  // =======================================================
 
-  const preview =
+  const tags =
     useMemo(
       () => {
 
-        const text =
-          writing?.content
-            ?.trim() ||
-          "";
+        const source = [];
 
 
         if (
-          !text
+          Array.isArray(
+            writing?.tags
+          )
         ) {
 
-          return t(
-            "writingCard.previewUnavailable"
+          writing.tags.forEach(
+            (
+              tag
+            ) => {
+
+              if (
+                typeof tag === "string"
+              ) {
+
+                source.push({
+                  name:
+                    tag,
+                });
+
+                return;
+
+              }
+
+
+              if (
+                tag &&
+                typeof tag === "object"
+              ) {
+
+                source.push({
+                  id:
+                    tag.id,
+
+                  name:
+                    tag.name ||
+                    tag.hashtag ||
+                    "",
+                });
+
+              }
+
+            }
           );
 
         }
 
 
         if (
-          text.length <=
-          190
+          source.length === 0 &&
+          Array.isArray(
+            writing?.hashtags
+          )
+        ) {
+
+          writing.hashtags.forEach(
+            (
+              hashtag
+            ) => {
+
+              source.push({
+                name:
+                  hashtag,
+              });
+
+            }
+          );
+
+        }
+
+
+        const seen =
+          new Set();
+
+
+        return source
+          .map(
+            (
+              tag
+            ) => {
+
+              const name =
+                String(
+                  tag?.name || ""
+                )
+                  .trim()
+                  .replace(
+                    /^#+/,
+                    ""
+                  )
+                  .trim();
+
+
+              if (!name) {
+
+                return null;
+
+              }
+
+
+              const key =
+                name.toLocaleLowerCase();
+
+
+              if (
+                seen.has(
+                  key
+                )
+              ) {
+
+                return null;
+
+              }
+
+
+              seen.add(
+                key
+              );
+
+
+              return {
+
+                id:
+                  tag?.id ||
+                  null,
+
+                name,
+
+                hashtag:
+                  `#${name}`,
+
+              };
+
+            }
+          )
+          .filter(Boolean)
+          .slice(
+            0,
+            20
+          );
+
+      },
+      [
+        writing?.tags,
+        writing?.hashtags,
+      ]
+    );
+
+
+  // =======================================================
+  // CONTENT PREVIEW
+  // =======================================================
+
+  const preview =
+    useMemo(
+      () => {
+
+        const text =
+          String(
+            writing?.content ||
+            ""
+          ).trim();
+
+
+        if (!text) {
+
+          return (
+            labels.previewUnavailable
+          );
+
+        }
+
+
+        if (
+          text.length <= 240
         ) {
 
           return text;
@@ -375,34 +924,34 @@ function WritingCard({
         return (
           `${text.slice(
             0,
-            190
-          )}...`
+            240
+          ).trim()}…`
         );
 
       },
       [
         writing?.content,
-        t,
+        labels.previewUnavailable,
       ]
     );
 
 
-  // =====================================================
+  // =======================================================
   // WORD COUNT
-  // =====================================================
+  // =======================================================
 
   const wordCount =
     useMemo(
       () => {
 
         const content =
-          writing?.content ||
-          "";
+          String(
+            writing?.content ||
+            ""
+          ).trim();
 
 
-        if (
-          !content.trim()
-        ) {
+        if (!content) {
 
           return 0;
 
@@ -410,13 +959,10 @@ function WritingCard({
 
 
         return content
-          .trim()
           .split(
             /\s+/
           )
-          .filter(
-            Boolean
-          )
+          .filter(Boolean)
           .length;
 
       },
@@ -426,31 +972,28 @@ function WritingCard({
     );
 
 
-  // =====================================================
+  // =======================================================
   // READING TIME
-  // =====================================================
+  // =======================================================
 
   const readingTime =
     Math.max(
       1,
       Math.ceil(
-        wordCount /
-        180
+        wordCount / 180
       )
     );
 
 
-  // =====================================================
-  // DATE
-  // =====================================================
+  // =======================================================
+  // FULL DATE
+  // =======================================================
 
   function formatDate(
-    dateString
+    value
   ) {
 
-    if (
-      !dateString
-    ) {
+    if (!value) {
 
       return "";
 
@@ -459,7 +1002,7 @@ function WritingCard({
 
     const date =
       new Date(
-        dateString
+        value
       );
 
 
@@ -477,7 +1020,11 @@ function WritingCard({
     try {
 
       return new Intl.DateTimeFormat(
-        undefined,
+        language === "bn"
+          ? "bn-IN"
+          : language === "hi"
+            ? "hi-IN"
+            : undefined,
         {
           day:
             "numeric",
@@ -494,24 +1041,202 @@ function WritingCard({
 
     } catch {
 
-      return date
-        .toLocaleDateString();
+      return (
+        date.toLocaleDateString()
+      );
 
     }
 
   }
 
 
+  // =======================================================
+  // RELATIVE PUBLISHED TIME
+  // =======================================================
+
+  function formatRelativeTime(
+    value
+  ) {
+
+    if (!value) {
+
+      return "";
+
+    }
+
+
+    const date =
+      new Date(
+        value
+      );
+
+
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+
+      return "";
+
+    }
+
+
+    const differenceMs =
+      date.getTime() -
+      Date.now();
+
+
+    const absoluteMs =
+      Math.abs(
+        differenceMs
+      );
+
+
+    const minute =
+      60 * 1000;
+
+    const hour =
+      60 * minute;
+
+    const day =
+      24 * hour;
+
+    const week =
+      7 * day;
+
+
+    let valueNumber;
+    let unit;
+
+
+    if (
+      absoluteMs < hour
+    ) {
+
+      valueNumber =
+        Math.round(
+          differenceMs /
+          minute
+        );
+
+      unit =
+        "minute";
+
+    } else if (
+      absoluteMs < day
+    ) {
+
+      valueNumber =
+        Math.round(
+          differenceMs /
+          hour
+        );
+
+      unit =
+        "hour";
+
+    } else if (
+      absoluteMs < week
+    ) {
+
+      valueNumber =
+        Math.round(
+          differenceMs /
+          day
+        );
+
+      unit =
+        "day";
+
+    } else {
+
+      return formatDate(
+        value
+      );
+
+    }
+
+
+    if (
+      valueNumber === 0
+    ) {
+
+      if (
+        language === "bn"
+      ) {
+
+        return "এইমাত্র";
+
+      }
+
+
+      if (
+        language === "hi"
+      ) {
+
+        return "अभी";
+
+      }
+
+
+      return "just now";
+
+    }
+
+
+    try {
+
+      const formatter =
+        new Intl.RelativeTimeFormat(
+          language === "bn"
+            ? "bn"
+            : language === "hi"
+              ? "hi"
+              : "en",
+          {
+            numeric:
+              "auto",
+          }
+        );
+
+
+      return formatter.format(
+        valueNumber,
+        unit
+      );
+
+    } catch {
+
+      return formatDate(
+        value
+      );
+
+    }
+
+  }
+
+
+  const publishedValue =
+    writing?.published_at ||
+    writing?.created_at;
+
+
   const publishedDate =
     formatDate(
-      writing?.published_at ||
-      writing?.created_at
+      publishedValue
     );
 
 
-  // =====================================================
-  // LIKE
-  // =====================================================
+  const relativePublishedDate =
+    formatRelativeTime(
+      publishedValue
+    );
+
+
+  // =======================================================
+  // LIKE / UNLIKE
+  // =======================================================
 
   async function handleLike(
     event
@@ -524,7 +1249,7 @@ function WritingCard({
 
     if (
       liking ||
-      !writing?.id
+      !hasWritingId
     ) {
 
       return;
@@ -545,6 +1270,36 @@ function WritingCard({
     }
 
 
+    const previousLiked =
+      liked;
+
+
+    const previousCount =
+      likesCount;
+
+
+    // -----------------------------------------------------
+    // OPTIMISTIC UI
+    // -----------------------------------------------------
+
+    setLiked(
+      !previousLiked
+    );
+
+
+    setLikesCount(
+      Math.max(
+        0,
+        previousCount +
+        (
+          previousLiked
+            ? -1
+            : 1
+        )
+      )
+    );
+
+
     setLiking(
       true
     );
@@ -553,8 +1308,9 @@ function WritingCard({
     try {
 
       const data =
-        await likeWriting(
-          writing.id
+        await toggleLike(
+          writingId,
+          previousLiked
         );
 
 
@@ -580,46 +1336,71 @@ function WritingCard({
 
 
       if (
-        typeof data?.likes_count ===
-        "number"
+        Number.isFinite(
+          Number(
+            data?.likes_count
+          )
+        )
       ) {
 
         setLikesCount(
-          data.likes_count
+          safeNumber(
+            data.likes_count
+          )
         );
 
       } else if (
-        typeof data?.writing
-          ?.likes_count ===
-        "number"
+        Number.isFinite(
+          Number(
+            data?.writing
+              ?.likes_count
+          )
+        )
       ) {
 
         setLikesCount(
-          data.writing
-            .likes_count
+          safeNumber(
+            data.writing
+              .likes_count
+          )
         );
 
       } else if (
-        typeof data?.likes ===
-        "number"
+        Number.isFinite(
+          Number(
+            data?.likes
+          )
+        )
       ) {
 
         setLikesCount(
-          data.likes
+          safeNumber(
+            data.likes
+          )
         );
 
       }
-
 
     } catch (
       error
     ) {
 
+      // Restore optimistic state.
+
+      setLiked(
+        previousLiked
+      );
+
+
+      setLikesCount(
+        previousCount
+      );
+
+
       console.error(
         "LIKE WRITING ERROR:",
         error
       );
-
 
     } finally {
 
@@ -632,9 +1413,9 @@ function WritingCard({
   }
 
 
-  // =====================================================
+  // =======================================================
   // SAVE / UNSAVE
-  // =====================================================
+  // =======================================================
 
   async function handleSave(
     event
@@ -647,17 +1428,13 @@ function WritingCard({
 
     if (
       saving ||
-      !writing?.id
+      !hasWritingId
     ) {
 
       return;
 
     }
 
-
-    // ---------------------------------------------------
-    // REQUIRE LOGIN
-    // ---------------------------------------------------
 
     if (
       !getToken()
@@ -676,14 +1453,14 @@ function WritingCard({
       saved;
 
 
-    /*
-     * Optimistic UI:
-     * update the bookmark immediately.
-     */
+    // -----------------------------------------------------
+    // OPTIMISTIC UI
+    // -----------------------------------------------------
 
     setSaved(
       !previousSaved
     );
+
 
     setSaving(
       true
@@ -695,10 +1472,10 @@ function WritingCard({
       const data =
         previousSaved
           ? await unsaveWriting(
-              writing.id
+              writingId
             )
           : await saveWriting(
-              writing.id
+              writingId
             );
 
 
@@ -711,16 +1488,20 @@ function WritingCard({
           data.saved
         );
 
-      }
+      } else if (
+        typeof data?.is_saved ===
+        "boolean"
+      ) {
 
+        setSaved(
+          data.is_saved
+        );
+
+      }
 
     } catch (
       error
     ) {
-
-      /*
-       * Restore previous state if the request fails.
-       */
 
       setSaved(
         previousSaved
@@ -731,7 +1512,6 @@ function WritingCard({
         "SAVE WRITING ERROR:",
         error
       );
-
 
     } finally {
 
@@ -744,9 +1524,52 @@ function WritingCard({
   }
 
 
-  // =====================================================
+  // =======================================================
+  // AUTHOR AVATAR
+  // =======================================================
+
+  const authorInitials =
+    getInitials(
+      authorName ||
+      authorUsername
+    );
+
+
+  const authorAvatarContent =
+    authorAvatar
+      ? (
+
+        <img
+          src={
+            authorAvatar
+          }
+          alt=""
+          loading="lazy"
+        />
+
+      )
+      : authorInitials
+        ? (
+
+          <span>
+            {
+              authorInitials
+            }
+          </span>
+
+        )
+        : (
+
+          <User
+            size={17}
+          />
+
+        );
+
+
+  // =======================================================
   // AUTHOR CONTENT
-  // =====================================================
+  // =======================================================
 
   const authorContent = (
 
@@ -757,14 +1580,7 @@ function WritingCard({
       >
 
         {
-          authorName
-            ?.trim()
-            ?.charAt(0)
-            ?.toUpperCase()
-          ||
-          <User
-            size={15}
-          />
+          authorAvatarContent
         }
 
       </div>
@@ -774,24 +1590,39 @@ function WritingCard({
         className="writing-author-info"
       >
 
-        <span>
+        <div
+          className="writing-author-name-row"
+        >
+
+          <strong>
+            {
+              authorName
+            }
+          </strong>
+
+
+          {authorUsername && (
+
+            <span
+              className="writing-author-username"
+            >
+              @{authorUsername}
+            </span>
+
+          )}
+
+        </div>
+
+
+        <span
+          className="writing-author-byline"
+        >
 
           {
-            t(
-              "writingCard.by"
-            )
+            labels.by
           }
 
         </span>
-
-
-        <strong>
-
-          {
-            authorName
-          }
-
-        </strong>
 
       </div>
 
@@ -800,15 +1631,101 @@ function WritingCard({
   );
 
 
-  // =====================================================
+  // =======================================================
+  // INVALID WRITING SAFETY
+  // =======================================================
+
+  if (
+    !writing ||
+    !hasWritingId
+  ) {
+
+    return null;
+
+  }
+
+
+  // =======================================================
   // UI
-  // =====================================================
+  // =======================================================
 
   return (
 
     <article
       className="writing-card"
     >
+
+      {/* ===============================================
+          HEADER / AUTHOR
+      ================================================ */}
+
+      <div
+        className="writing-card-header"
+      >
+
+        {hasAuthorId
+          ? (
+
+            <Link
+              to={
+                `/users/${authorId}`
+              }
+              className="writing-card-author writing-card-author-link"
+              aria-label={
+                `${authorName} profile`
+              }
+            >
+
+              {
+                authorContent
+              }
+
+            </Link>
+
+          )
+          : (
+
+            <div
+              className="writing-card-author"
+            >
+
+              {
+                authorContent
+              }
+
+            </div>
+
+          )}
+
+
+        <div
+          className="writing-card-header-meta"
+        >
+
+          {relativePublishedDate && (
+
+            <span
+              className="writing-card-published-time"
+              title={
+                publishedDate
+              }
+            >
+
+              <CalendarDays
+                size={13}
+              />
+
+              {
+                relativePublishedDate
+              }
+
+            </span>
+
+          )}
+
+        </div>
+
+      </div>
 
 
       {/* ===============================================
@@ -854,13 +1771,10 @@ function WritingCard({
       ================================================ */}
 
       <Link
-
         to={
-          `/writings/${writing.id}`
+          `/writings/${writingId}`
         }
-
         className="writing-card-title-link"
-
       >
 
         <h2
@@ -869,9 +1783,7 @@ function WritingCard({
 
           {
             writing?.title ||
-            t(
-              "common.untitled"
-            )
+            labels.untitled
           }
 
         </h2>
@@ -895,75 +1807,85 @@ function WritingCard({
 
 
       {/* ===============================================
-          AUTHOR
+          CLICKABLE HASHTAGS
       ================================================ */}
 
-      {
-        hasAuthorId
-          ? (
+      {tags.length > 0 && (
+
+        <div
+          className="writing-card-tags"
+          aria-label="Hashtags"
+        >
+
+          {tags.map(
+            (
+              tag
+            ) => (
 
               <Link
-
+                key={
+                  tag.id ||
+                  tag.name
+                }
                 to={
-                  `/users/${authorId}`
+                  `/tag/${encodeURIComponent(
+                    tag.name
+                  )}`
                 }
-
-                className="writing-card-author writing-card-author-link"
-
-                aria-label={
-                  `${authorName} profile`
+                className="writing-card-tag"
+                title={
+                  tag.hashtag
                 }
-
               >
 
-                {
-                  authorContent
-                }
+                <Hash
+                  size={13}
+                  aria-hidden="true"
+                />
+
+                <span>
+                  {
+                    tag.name
+                  }
+                </span>
 
               </Link>
 
             )
-          : (
+          )}
 
-              <div
-                className="writing-card-author"
-              >
+        </div>
 
-                {
-                  authorContent
-                }
-
-              </div>
-
-            )
-      }
+      )}
 
 
       {/* ===============================================
-          META
+          READING META
       ================================================ */}
 
       <div
         className="writing-card-meta"
       >
 
-        {
-          publishedDate && (
+        {publishedDate && (
 
-            <span>
+          <span
+            title={
+              publishedDate
+            }
+          >
 
-              <CalendarDays
-                size={13}
-              />
+            <CalendarDays
+              size={13}
+            />
 
-              {
-                publishedDate
-              }
+            {
+              publishedDate
+            }
 
-            </span>
+          </span>
 
-          )
-        }
+        )}
 
 
         <span>
@@ -979,9 +1901,7 @@ function WritingCard({
           {" "}
 
           {
-            t(
-              "writingCard.minutes"
-            )
+            labels.minutes
           }
 
         </span>
@@ -1000,9 +1920,7 @@ function WritingCard({
           {" "}
 
           {
-            t(
-              "writingCard.words"
-            )
+            labels.words
           }
 
         </span>
@@ -1011,65 +1929,63 @@ function WritingCard({
 
 
       {/* ===============================================
-          FOOTER
+          FOOTER ACTIONS
       ================================================ */}
 
       <div
         className="writing-card-footer"
       >
 
-
         <div
           className="writing-card-social"
         >
-
 
           {/* ===========================================
               LIKE
           ============================================ */}
 
           <button
-
             type="button"
-
             className={
               liked
                 ? "writing-like-button liked"
                 : "writing-like-button"
             }
-
             onClick={
               handleLike
             }
-
             disabled={
               liking
             }
-
-            aria-label="Like writing"
-
-            title="Like"
-
+            aria-pressed={
+              liked
+            }
+            aria-label={
+              liked
+                ? labels.unlike
+                : labels.like
+            }
+            title={
+              liked
+                ? labels.unlike
+                : labels.like
+            }
           >
 
             <Heart
-
-              size={15}
-
+              size={16}
               fill={
                 liked
                   ? "currentColor"
                   : "none"
               }
-
             />
 
-            <span>
 
+            <span>
               {
                 likesCount
               }
-
             </span>
 
           </button>
@@ -1079,76 +1995,73 @@ function WritingCard({
               COMMENTS
           ============================================ */}
 
-          <span
-
+          <Link
+            to={
+              `/writings/${writingId}#comments`
+            }
             className="writing-comment-count"
-
-            title="Comments"
-
+            title={
+              labels.comments
+            }
+            aria-label={
+              `${labels.comments}: ${commentsCount}`
+            }
           >
 
             <MessageCircle
-              size={15}
+              size={16}
             />
 
-            {
-              Number(
-                writing?.comments_count ??
-                writing?.comments ??
-                0
-              )
-            }
 
-          </span>
+            <span>
+              {
+                commentsCount
+              }
+            </span>
+
+          </Link>
 
 
           {/* ===========================================
-              SAVE / BOOKMARK
+              SAVE
           ============================================ */}
 
           <button
-
             type="button"
-
             className={
               saved
                 ? "writing-save-button saved"
                 : "writing-save-button"
             }
-
             onClick={
               handleSave
             }
-
             disabled={
               saving ||
               !saveStatusLoaded
             }
-
+            aria-pressed={
+              saved
+            }
             aria-label={
               saved
-                ? "Remove from saved writings"
-                : "Save writing"
+                ? labels.removeSaved
+                : labels.save
             }
-
             title={
               saved
-                ? "Saved"
-                : "Save"
+                ? labels.saved
+                : labels.save
             }
-
           >
 
             <Bookmark
-
               size={16}
-
               fill={
                 saved
                   ? "currentColor"
                   : "none"
               }
-
             />
 
           </button>
@@ -1161,20 +2074,16 @@ function WritingCard({
         ============================================== */}
 
         <Link
-
           to={
-            `/writings/${writing.id}`
+            `/writings/${writingId}`
           }
-
           className="writing-read-link"
-
         >
 
           {
-            t(
-              "writingCard.read"
-            )
+            labels.read
           }
+
 
           <span
             aria-hidden="true"

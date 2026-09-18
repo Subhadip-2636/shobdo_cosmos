@@ -13,6 +13,13 @@ import {
 
 
 // =========================================================
+// LAYOUTS
+// =========================================================
+
+import SocialLayout from "./layouts/SocialLayout";
+
+
+// =========================================================
 // COMPONENTS
 // =========================================================
 
@@ -33,6 +40,13 @@ import WritingDetails from "./pages/WritingDetails";
 import MyWritings from "./pages/MyWritings";
 import ConnectionsPage from "./pages/ConnectionsPage";
 import SearchPage from "./pages/SearchPage";
+
+
+// =========================================================
+// NEW: HASHTAG / TAG PAGE
+// =========================================================
+
+import TagPage from "./pages/TagPage";
 
 
 // =========================================================
@@ -106,19 +120,15 @@ function PrivateRoute({
 }) {
 
   // -------------------------------------------------------
-  // WAIT FOR AUTH CHECK
+  // WAIT FOR AUTHENTICATION CHECK
   // -------------------------------------------------------
 
   if (authLoading) {
 
     return (
-
       <div className="app-route-loading">
-
         Loading...
-
       </div>
-
     );
 
   }
@@ -131,23 +141,82 @@ function PrivateRoute({
   if (!user) {
 
     return (
-
       <Navigate
         to="/login"
         replace
       />
-
     );
 
   }
 
 
-  // -------------------------------------------------------
-  // AUTHENTICATED
-  // -------------------------------------------------------
+  return children;
+}
+
+
+// =========================================================
+// PUBLIC-ONLY ROUTE
+// =========================================================
+
+function PublicOnlyRoute({
+  user,
+  authLoading,
+  children,
+}) {
+
+  if (authLoading) {
+
+    return (
+      <div className="app-route-loading">
+        Loading...
+      </div>
+    );
+
+  }
+
+
+  if (user) {
+
+    return (
+      <Navigate
+        to="/"
+        replace
+      />
+    );
+
+  }
+
 
   return children;
+}
 
+
+// =========================================================
+// STANDALONE PAGE
+//
+// Used by authentication, About and legal pages.
+// Social pages are rendered inside SocialLayout.
+// =========================================================
+
+function StandalonePage({
+  children,
+  showFooter = true,
+}) {
+
+  return (
+    <>
+
+      <main className="app-standalone-content">
+        {children}
+      </main>
+
+
+      {showFooter && (
+        <Footer />
+      )}
+
+    </>
+  );
 }
 
 
@@ -230,7 +299,6 @@ function App() {
 
           return currentUser;
 
-
         } catch (
           error
         ) {
@@ -248,7 +316,6 @@ function App() {
 
           return null;
 
-
         } finally {
 
           setAuthLoading(
@@ -263,7 +330,7 @@ function App() {
 
 
   // =======================================================
-  // LOAD WRITINGS
+  // LOAD PUBLIC WRITINGS
   // =======================================================
 
   const loadWritings =
@@ -284,14 +351,21 @@ function App() {
             });
 
 
-          setWritings(
+          const items =
             Array.isArray(
               data?.writings
             )
               ? data.writings
-              : []
-          );
+              : Array.isArray(
+                    data?.items
+                  )
+                ? data.items
+                : [];
 
+
+          setWritings(
+            items
+          );
 
         } catch (
           error
@@ -307,7 +381,6 @@ function App() {
             []
           );
 
-
         } finally {
 
           setWritingsLoading(
@@ -322,7 +395,7 @@ function App() {
 
 
   // =======================================================
-  // INITIAL LOAD
+  // INITIAL APPLICATION LOAD
   // =======================================================
 
   useEffect(
@@ -348,12 +421,10 @@ function App() {
     () => {
 
       // ---------------------------------------------------
-      // WAIT FOR AUTH
+      // WAIT UNTIL AUTH CHECK IS FINISHED
       // ---------------------------------------------------
 
-      if (
-        authLoading
-      ) {
+      if (authLoading) {
 
         return undefined;
 
@@ -361,12 +432,10 @@ function App() {
 
 
       // ---------------------------------------------------
-      // USER LOGGED OUT
+      // LOGGED OUT
       // ---------------------------------------------------
 
-      if (
-        !user
-      ) {
+      if (!user) {
 
         disconnectSocket();
 
@@ -389,14 +458,11 @@ function App() {
         connectSocket();
 
 
-      if (
-        !socket
-      ) {
+      if (!socket) {
 
         console.warn(
           "SHOBDO SOCKET: No socket created."
         );
-
 
         return undefined;
 
@@ -404,7 +470,7 @@ function App() {
 
 
       // ===================================================
-      // SOCKET CONNECTED
+      // CONNECTED
       // ===================================================
 
       function handleConnect() {
@@ -418,7 +484,7 @@ function App() {
 
 
       // ===================================================
-      // SOCKET READY
+      // SERVER READY
       // ===================================================
 
       function handleSocketReady(
@@ -490,10 +556,11 @@ function App() {
 
 
         // -------------------------------------------------
-        // INFORM NAVBAR / NOTIFICATION PAGE
+        // INFORM NAVBAR / SIDEBAR / NOTIFICATION PAGE
         // -------------------------------------------------
 
         window.dispatchEvent(
+
           new CustomEvent(
             "shobdo:notifications-changed",
             {
@@ -501,6 +568,7 @@ function App() {
                 notification,
             }
           )
+
         );
 
       }
@@ -523,7 +591,7 @@ function App() {
 
 
       // ===================================================
-      // REGISTER EVENTS
+      // REGISTER SOCKET EVENTS
       // ===================================================
 
       socket.on(
@@ -562,10 +630,6 @@ function App() {
       );
 
 
-      // ---------------------------------------------------
-      // SOCKET MAY ALREADY BE CONNECTED
-      // ---------------------------------------------------
-
       if (
         socket.connected
       ) {
@@ -579,7 +643,7 @@ function App() {
 
 
       // ===================================================
-      // CLEANUP LISTENERS
+      // CLEANUP
       // ===================================================
 
       return () => {
@@ -703,24 +767,21 @@ function App() {
 
     <BrowserRouter>
 
-
-      {/* =================================================
+      {/* ===================================================
           SCROLL TO TOP
-      ================================================== */}
+      ==================================================== */}
 
       <ScrollToTop />
 
 
-      {/* =================================================
-          REAL-TIME NOTIFICATION TOAST
-      ================================================== */}
+      {/* ===================================================
+          GLOBAL REAL-TIME NOTIFICATION TOAST
+      ==================================================== */}
 
       <NotificationToast
-
         notification={
           realtimeNotification
         }
-
         onClose={
           () => {
 
@@ -730,83 +791,81 @@ function App() {
 
           }
         }
-
       />
 
 
-      {/* =================================================
-          APPLICATION SHELL
-      ================================================== */}
+      {/* ===================================================
+          APPLICATION
+      ==================================================== */}
 
       <div className="app-shell">
 
-
         {/* ===============================================
-            NAVBAR
+            GLOBAL NAVBAR
         ================================================ */}
 
         <Navbar
-
           user={
             user
           }
-
           setUser={
             setUser
           }
-
         />
 
 
         {/* ===============================================
-            MAIN CONTENT
+            ROUTER
         ================================================ */}
 
-        <div className="app-content">
+        <Routes>
 
-          <Routes>
+          {/* =================================================
+              SOCIAL APPLICATION
+          ================================================== */}
 
+          <Route
+            element={
+              <SocialLayout
+                user={user}
+              />
+            }
+          >
 
-            {/* =========================================
-                PUBLIC — HOME
-            ========================================== */}
+            {/* =============================================
+                HOME
+            ============================================== */}
 
             <Route
-
               path="/"
-
               element={
-
                 <Home
-
                   writings={
                     writings
                   }
-
                   loading={
                     writingsLoading
                   }
-
                 />
-
               }
-
             />
 
 
-            {/* =========================================
-                PUBLIC — EXPLORE
-            ========================================== */}
+            {/* =============================================
+                EXPLORE
+            ============================================== */}
 
             <Route
-
               path="/explore"
-
               element={
                 <Explore />
               }
-
             />
+
+
+            {/* =============================================
+                GLOBAL SEARCH
+            ============================================== */}
 
             <Route
               path="/search"
@@ -816,34 +875,51 @@ function App() {
             />
 
 
-            {/* =========================================
-                PUBLIC — WRITING DETAILS
-            ========================================== */}
+            {/* =============================================
+                HASHTAG PAGE
+
+                Example:
+
+                /tag/কবিতা
+                /tag/Poetry
+                /tag/प्रकृति
+            ============================================== */}
 
             <Route
+              path="/tag/:tagName"
+              element={
+                <TagPage />
+              }
+            />
 
+
+            {/* =============================================
+                WRITING DETAILS
+            ============================================== */}
+
+            <Route
               path="/writings/:id"
-
               element={
                 <WritingDetails />
               }
-
             />
 
 
-            {/* =========================================
-                PUBLIC — WRITER PROFILE
-            ========================================== */}
+            {/* =============================================
+                PUBLIC WRITER PROFILE
+            ============================================== */}
 
             <Route
-
               path="/users/:id"
-
               element={
                 <WriterProfile />
               }
-
             />
+
+
+            {/* =============================================
+                FOLLOWERS
+            ============================================== */}
 
             <Route
               path="/users/:id/followers"
@@ -853,6 +929,11 @@ function App() {
                 />
               }
             />
+
+
+            {/* =============================================
+                FOLLOWING
+            ============================================== */}
 
             <Route
               path="/users/:id/following"
@@ -864,210 +945,85 @@ function App() {
             />
 
 
-            {/* =========================================
-                AUTH — LOGIN
-            ========================================== */}
+            {/* =============================================
+                WRITE
+            ============================================== */}
 
             <Route
-
-              path="/login"
-
-              element={
-
-                user
-                  ? (
-
-                      <Navigate
-                        to="/"
-                        replace
-                      />
-
-                    )
-                  : (
-
-                      <Login
-
-                        onLogin={
-                          handleAuthSuccess
-                        }
-
-                      />
-
-                    )
-
-              }
-
-            />
-
-
-            {/* =========================================
-                AUTH — REGISTER
-            ========================================== */}
-
-            <Route
-
-              path="/register"
-
-              element={
-
-                user
-                  ? (
-
-                      <Navigate
-                        to="/"
-                        replace
-                      />
-
-                    )
-                  : (
-
-                      <Register
-
-                        onRegister={
-                          handleAuthSuccess
-                        }
-
-                      />
-
-                    )
-
-              }
-
-            />
-
-
-            {/* =========================================
-                AUTH — FORGOT PASSWORD
-            ========================================== */}
-
-            <Route
-
-              path="/forgot-password"
-
-              element={
-                <ForgotPassword />
-              }
-
-            />
-
-
-            {/* =========================================
-                AUTH — RESET PASSWORD
-            ========================================== */}
-
-            <Route
-
-              path="/reset-password/:token"
-
-              element={
-                <ResetPassword />
-              }
-
-            />
-
-
-            {/* =========================================
-                PROTECTED — WRITE
-            ========================================== */}
-
-            <Route
-
               path="/write"
-
               element={
 
                 <PrivateRoute
-
                   user={
                     user
                   }
-
                   authLoading={
                     authLoading
                   }
-
                 >
 
                   <Write
-
                     user={
                       user
                     }
-
                     onWritingCreated={
                       handleWritingChanged
                     }
-
                   />
 
                 </PrivateRoute>
 
               }
-
             />
 
 
-            {/* =========================================
-                PROTECTED — EDIT WRITING
-            ========================================== */}
+            {/* =============================================
+                EDIT WRITING
+            ============================================== */}
 
             <Route
-
               path="/write/:id"
-
               element={
 
                 <PrivateRoute
-
                   user={
                     user
                   }
-
                   authLoading={
                     authLoading
                   }
-
                 >
 
                   <Write
-
                     user={
                       user
                     }
-
                     onWritingCreated={
                       handleWritingChanged
                     }
-
                   />
 
                 </PrivateRoute>
 
               }
-
             />
 
 
-            {/* =========================================
-                PROTECTED — MY WRITINGS
-            ========================================== */}
+            {/* =============================================
+                MY WRITINGS
+            ============================================== */}
 
             <Route
-
               path="/my-writings"
-
               element={
 
                 <PrivateRoute
-
                   user={
                     user
                   }
-
                   authLoading={
                     authLoading
                   }
-
                 >
 
                   <MyWritings />
@@ -1075,30 +1031,24 @@ function App() {
                 </PrivateRoute>
 
               }
-
             />
 
 
-            {/* =========================================
-                PROTECTED — SAVED WRITINGS
-            ========================================== */}
+            {/* =============================================
+                SAVED WRITINGS
+            ============================================== */}
 
             <Route
-
               path="/saved"
-
               element={
 
                 <PrivateRoute
-
                   user={
                     user
                   }
-
                   authLoading={
                     authLoading
                   }
-
                 >
 
                   <Saved />
@@ -1106,30 +1056,24 @@ function App() {
                 </PrivateRoute>
 
               }
-
             />
 
 
-            {/* =========================================
-                PROTECTED — NOTIFICATIONS
-            ========================================== */}
+            {/* =============================================
+                NOTIFICATIONS
+            ============================================== */}
 
             <Route
-
               path="/notifications"
-
               element={
 
                 <PrivateRoute
-
                   user={
                     user
                   }
-
                   authLoading={
                     authLoading
                   }
-
                 >
 
                   <Notifications />
@@ -1137,142 +1081,242 @@ function App() {
                 </PrivateRoute>
 
               }
-
             />
 
 
-            {/* =========================================
-                PROTECTED — EDIT PROFILE
-            ========================================== */}
+            {/* =============================================
+                EDIT PROFILE
+            ============================================== */}
 
             <Route
-
               path="/profile/edit"
-
               element={
 
                 <PrivateRoute
-
                   user={
                     user
                   }
-
                   authLoading={
                     authLoading
                   }
-
                 >
 
                   <EditProfile
-
                     user={
                       user
                     }
-
                     onProfileUpdated={
                       loadCurrentUser
                     }
-
                   />
 
                 </PrivateRoute>
 
               }
-
             />
 
+          </Route>
 
-            {/* =========================================
-                INFORMATION — ABOUT
-            ========================================== */}
 
-            <Route
+          {/* =================================================
+              AUTHENTICATION PAGES
+          ================================================== */}
 
-              path="/about"
+          <Route
+            path="/login"
+            element={
 
-              element={
+              <StandalonePage>
+
+                <PublicOnlyRoute
+                  user={
+                    user
+                  }
+                  authLoading={
+                    authLoading
+                  }
+                >
+
+                  <Login
+                    onLogin={
+                      handleAuthSuccess
+                    }
+                  />
+
+                </PublicOnlyRoute>
+
+              </StandalonePage>
+
+            }
+          />
+
+
+          <Route
+            path="/register"
+            element={
+
+              <StandalonePage>
+
+                <PublicOnlyRoute
+                  user={
+                    user
+                  }
+                  authLoading={
+                    authLoading
+                  }
+                >
+
+                  <Register
+                    onRegister={
+                      handleAuthSuccess
+                    }
+                  />
+
+                </PublicOnlyRoute>
+
+              </StandalonePage>
+
+            }
+          />
+
+
+          <Route
+            path="/forgot-password"
+            element={
+
+              <StandalonePage>
+
+                <PublicOnlyRoute
+                  user={
+                    user
+                  }
+                  authLoading={
+                    authLoading
+                  }
+                >
+
+                  <ForgotPassword />
+
+                </PublicOnlyRoute>
+
+              </StandalonePage>
+
+            }
+          />
+
+
+          <Route
+            path="/reset-password/:token"
+            element={
+
+              <StandalonePage>
+
+                <PublicOnlyRoute
+                  user={
+                    user
+                  }
+                  authLoading={
+                    authLoading
+                  }
+                >
+
+                  <ResetPassword />
+
+                </PublicOnlyRoute>
+
+              </StandalonePage>
+
+            }
+          />
+
+
+          {/* =================================================
+              ABOUT
+          ================================================== */}
+
+          <Route
+            path="/about"
+            element={
+
+              <StandalonePage>
+
                 <About />
-              }
 
-            />
+              </StandalonePage>
+
+            }
+          />
 
 
-            {/* =========================================
-                LEGAL — PRIVACY
-            ========================================== */}
+          {/* =================================================
+              PRIVACY
+          ================================================== */}
 
-            <Route
+          <Route
+            path="/privacy"
+            element={
 
-              path="/privacy"
+              <StandalonePage>
 
-              element={
                 <Privacy />
-              }
 
-            />
+              </StandalonePage>
+
+            }
+          />
 
 
-            {/* =========================================
-                LEGAL — TERMS
-            ========================================== */}
+          {/* =================================================
+              TERMS
+          ================================================== */}
 
-            <Route
+          <Route
+            path="/terms"
+            element={
 
-              path="/terms"
+              <StandalonePage>
 
-              element={
                 <Terms />
-              }
 
-            />
+              </StandalonePage>
+
+            }
+          />
 
 
-            {/* =========================================
-                LEGAL — DATA DELETION
-            ========================================== */}
+          {/* =================================================
+              DATA DELETION
+          ================================================== */}
 
-            <Route
+          <Route
+            path="/data-deletion"
+            element={
 
-              path="/data-deletion"
+              <StandalonePage>
 
-              element={
                 <DataDeletion />
-              }
 
-            />
+              </StandalonePage>
 
-
-            {/* =========================================
-                404
-            ========================================== */}
-
-            <Route
-
-              path="*"
-
-              element={
-
-                <Navigate
-                  to="/"
-                  replace
-                />
-
-              }
-
-            />
+            }
+          />
 
 
-          </Routes>
+          {/* =================================================
+              404
+          ================================================== */}
 
-        </div>
+          <Route
+            path="*"
+            element={
+              <Navigate
+                to="/"
+                replace
+              />
+            }
+          />
 
-
-        {/* ===============================================
-            FOOTER
-        ================================================ */}
-
-        <Footer />
-
+        </Routes>
 
       </div>
 

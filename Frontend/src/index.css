@@ -21484,3 +21484,2224 @@ a.footer-contact-item:hover strong {
   background: #f1edfb;
   color: #6546c5;
 }
+
+/* =========================================================
+   SHOBDO PROFESSIONAL SOCIAL NAVBAR
+========================================================= */
+
+.shobdo-navbar {
+  position: sticky;
+  top: 0;
+
+  z-index: 1200;
+
+  width: 100%;
+
+  border-bottom:
+    1px solid
+    rgba(35, 25, 42, 0.08);
+
+  background:
+    rgba(255, 255, 255, 0.94);
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+}
+
+
+.shobdo-navbar-inner {
+  width: min(
+    100%,
+    1480px
+  );
+
+  min-height: 72px;
+
+  margin: 0 auto;
+
+  padding:
+    0
+    28px;
+
+  display: grid;
+
+  grid-template-columns:
+    auto
+    minmax(280px, 620px)
+    auto;
+
+  align-items: center;
+
+  gap: 32px;
+}
+
+
+/* =========================================================
+   BRAND
+========================================================= */
+
+.shobdo-navbar-brand {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 10px;
+
+  color: #642b8f;
+
+  text-decoration: none;
+
+  white-space: nowrap;
+}
+
+
+.shobdo-navbar-logo {
+  width: 36px;
+  height: 36px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 11px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #642b8f,
+      #8e55b7
+    );
+
+  color: #ffffff;
+
+  box-shadow:
+    0 5px 16px
+    rgba(100, 43, 143, 0.16);
+}
+
+
+.shobdo-navbar-brand-name {
+  font-size: 19px;
+  font-weight: 800;
+
+  letter-spacing: 0.08em;
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.shobdo-navbar-search {
+  position: relative;
+
+  width: 100%;
+
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+
+  border:
+    1px solid
+    #e7e2e9;
+
+  border-radius: 14px;
+
+  background:
+    #f7f5f8;
+
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+
+.shobdo-navbar-search:focus-within {
+  border-color:
+    rgba(
+      100,
+      43,
+      143,
+      0.42
+    );
+
+  background:
+    #ffffff;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(
+      100,
+      43,
+      143,
+      0.07
+    );
+}
+
+
+.shobdo-navbar-search-icon {
+  position: absolute;
+
+  left: 14px;
+
+  color: #77717c;
+
+  pointer-events: none;
+}
+
+
+.shobdo-navbar-search input {
+  width: 100%;
+  height: 100%;
+
+  border: 0;
+  outline: 0;
+
+  padding:
+    0
+    42px
+    0
+    43px;
+
+  border-radius: inherit;
+
+  background: transparent;
+
+  color: #211c24;
+
+  font: inherit;
+
+  font-size: 14px;
+}
+
+
+.shobdo-navbar-search input::placeholder {
+  color: #99939d;
+}
+
+
+.shobdo-search-clear {
+  position: absolute;
+
+  right: 10px;
+
+  width: 27px;
+  height: 27px;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: #918b94;
+
+  cursor: pointer;
+}
+
+
+.shobdo-search-clear:hover {
+  background: #ece8ee;
+
+  color: #4e4851;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.shobdo-navbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 8px;
+
+  min-width: 0;
+}
+
+
+.shobdo-navbar-icon-button {
+  position: relative;
+
+  width: 42px;
+  height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  flex-shrink: 0;
+
+  border:
+    1px solid
+    transparent;
+
+  border-radius: 12px;
+
+  background: transparent;
+
+  color: #514a55;
+
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+
+.shobdo-navbar-icon-button:hover {
+  background: #f4eff7;
+
+  color: #642b8f;
+}
+
+
+.shobdo-navbar-icon-button.active {
+  border-color:
+    #ded4e5;
+
+  background:
+    #f2eaf7;
+
+  color:
+    #642b8f;
+}
+
+
+/* =========================================================
+   NOTIFICATION BADGE
+========================================================= */
+
+.shobdo-notification-button {
+  overflow: visible;
+}
+
+
+.shobdo-navbar-notification-badge {
+  position: absolute;
+
+  top: 2px;
+  right: 0;
+
+  min-width: 18px;
+  height: 18px;
+
+  padding:
+    0
+    4px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border:
+    2px solid
+    #ffffff;
+
+  border-radius: 999px;
+
+  background:
+    #642b8f;
+
+  color: #ffffff;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  line-height: 1;
+}
+
+
+/* =========================================================
+   GENERIC DROPDOWN
+========================================================= */
+
+.shobdo-navbar-dropdown {
+  position: relative;
+}
+
+
+.shobdo-dropdown-divider {
+  width: 100%;
+
+  height: 1px;
+
+  margin:
+    7px
+    0;
+
+  background:
+    #eee9f0;
+}
+
+
+.shobdo-dropdown-heading {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding:
+    4px
+    8px
+    12px;
+
+  color:
+    #5a535e;
+
+  font-size:
+    12px;
+
+  font-weight:
+    700;
+}
+
+
+/* =========================================================
+   LANGUAGE
+========================================================= */
+
+.shobdo-language-button {
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  padding:
+    0
+    12px;
+
+  border:
+    1px solid
+    #e5dfe8;
+
+  border-radius: 13px;
+
+  background:
+    #ffffff;
+
+  color:
+    #55505a;
+
+  cursor: pointer;
+
+  font: inherit;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
+}
+
+
+.shobdo-language-button:hover,
+.shobdo-language-button.active {
+  border-color:
+    #d7c9df;
+
+  background:
+    #f7f2fa;
+
+  color:
+    #642b8f;
+}
+
+
+.shobdo-language-button .rotate,
+.shobdo-profile-trigger .rotate {
+  transform:
+    rotate(180deg);
+}
+
+
+.shobdo-language-button svg,
+.shobdo-profile-trigger svg {
+  transition:
+    transform 160ms ease;
+}
+
+
+.shobdo-language-dropdown {
+  position: absolute;
+
+  top: calc(100% + 10px);
+  right: 0;
+
+  width: 245px;
+
+  padding: 10px;
+
+  border:
+    1px solid
+    #e6e0e9;
+
+  border-radius: 16px;
+
+  background:
+    #ffffff;
+
+  box-shadow:
+    0 18px 50px
+    rgba(31, 23, 36, 0.12);
+}
+
+
+.shobdo-language-options {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+
+.shobdo-language-option {
+  width: 100%;
+
+  min-height: 47px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  padding:
+    6px
+    9px;
+
+  border: 0;
+
+  border-radius: 11px;
+
+  background: transparent;
+
+  color: #4e4851;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  font: inherit;
+}
+
+
+.shobdo-language-option:hover {
+  background:
+    #f6f2f8;
+}
+
+
+.shobdo-language-option.selected {
+  background:
+    #f2eaf7;
+
+  color:
+    #642b8f;
+}
+
+
+.shobdo-language-check {
+  width: 18px;
+
+  display: grid;
+  place-items: center;
+
+  flex-shrink: 0;
+}
+
+
+.shobdo-language-option-text {
+  display: flex;
+  flex-direction: column;
+
+  gap: 1px;
+}
+
+
+.shobdo-language-option-text strong {
+  font-size:
+    13px;
+}
+
+
+.shobdo-language-option-text small {
+  color:
+    #9a949d;
+
+  font-size:
+    10px;
+}
+
+
+/* =========================================================
+   PROFILE TRIGGER
+========================================================= */
+
+.shobdo-profile-trigger {
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  padding:
+    3px
+    8px
+    3px
+    4px;
+
+  border:
+    1px solid
+    transparent;
+
+  border-radius: 14px;
+
+  background:
+    transparent;
+
+  color:
+    #373139;
+
+  cursor: pointer;
+
+  font: inherit;
+
+  transition:
+    background 150ms ease,
+    border-color 150ms ease;
+}
+
+
+.shobdo-profile-trigger:hover,
+.shobdo-profile-trigger.active {
+  border-color:
+    #e5dee8;
+
+  background:
+    #f6f2f8;
+}
+
+
+.shobdo-profile-avatar,
+.shobdo-profile-dropdown-avatar {
+  overflow: hidden;
+
+  display: grid;
+  place-items: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      135deg,
+      #642b8f,
+      #8e55b7
+    );
+
+  color: #ffffff;
+
+  font-weight: 700;
+}
+
+
+.shobdo-profile-avatar {
+  width: 36px;
+  height: 36px;
+
+  font-size: 11px;
+}
+
+
+.shobdo-profile-dropdown-avatar {
+  width: 45px;
+  height: 45px;
+
+  font-size: 12px;
+}
+
+
+.shobdo-profile-avatar img,
+.shobdo-profile-dropdown-avatar img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+
+.shobdo-profile-trigger-text {
+  max-width: 135px;
+
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  text-align: left;
+}
+
+
+.shobdo-profile-trigger-text strong {
+  overflow: hidden;
+
+  color:
+    #2e2831;
+
+  font-size:
+    12px;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.shobdo-profile-trigger-text small {
+  overflow: hidden;
+
+  color:
+    #99929c;
+
+  font-size:
+    9px;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+/* =========================================================
+   PROFILE DROPDOWN
+========================================================= */
+
+.shobdo-profile-dropdown {
+  position: absolute;
+
+  top: calc(100% + 10px);
+  right: 0;
+
+  width: 270px;
+
+  padding: 10px;
+
+  border:
+    1px solid
+    #e6e0e9;
+
+  border-radius: 17px;
+
+  background:
+    #ffffff;
+
+  box-shadow:
+    0 20px 55px
+    rgba(31, 23, 36, 0.13);
+}
+
+
+.shobdo-profile-dropdown-user {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  padding:
+    8px;
+
+  border-radius:
+    12px;
+
+  color:
+    inherit;
+
+  text-decoration:
+    none;
+}
+
+
+.shobdo-profile-dropdown-user:hover {
+  background:
+    #f7f4f8;
+}
+
+
+.shobdo-profile-dropdown-user-text {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+
+.shobdo-profile-dropdown-user-text strong {
+  overflow: hidden;
+
+  color:
+    #272229;
+
+  font-size:
+    13px;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.shobdo-profile-dropdown-user-text small {
+  overflow: hidden;
+
+  color:
+    #938d96;
+
+  font-size:
+    10px;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.shobdo-profile-menu-item {
+  width: 100%;
+
+  min-height: 42px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  padding:
+    0
+    10px;
+
+  border: 0;
+
+  border-radius:
+    10px;
+
+  background:
+    transparent;
+
+  color:
+    #514b54;
+
+  text-decoration:
+    none;
+
+  cursor:
+    pointer;
+
+  font: inherit;
+
+  font-size:
+    12px;
+
+  font-weight:
+    600;
+}
+
+
+.shobdo-profile-menu-item:hover {
+  background:
+    #f5f1f7;
+
+  color:
+    #642b8f;
+}
+
+
+.shobdo-logout-item {
+  color:
+    #b23b4a;
+}
+
+
+.shobdo-logout-item:hover {
+  background:
+    #fff1f2;
+
+  color:
+    #a82f3e;
+}
+
+
+/* =========================================================
+   LOGIN BUTTON
+========================================================= */
+
+.shobdo-login-button {
+  min-height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  padding:
+    0
+    16px;
+
+  border-radius:
+    13px;
+
+  background:
+    #642b8f;
+
+  color:
+    #ffffff;
+
+  text-decoration:
+    none;
+
+  font-size:
+    12px;
+
+  font-weight:
+    700;
+}
+
+
+.shobdo-login-button:hover {
+  background:
+    #552278;
+}
+
+
+/* =========================================================
+   MOBILE SEARCH TRIGGER
+========================================================= */
+
+.shobdo-mobile-search-trigger {
+  display:
+    none;
+}
+
+
+/* =========================================================
+   MOBILE SEARCH PANEL
+========================================================= */
+
+.shobdo-mobile-search-panel {
+  display:
+    none;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (
+  max-width: 1100px
+) {
+
+  .shobdo-navbar-inner {
+    grid-template-columns:
+      auto
+      minmax(
+        220px,
+        1fr
+      )
+      auto;
+
+    gap:
+      18px;
+
+    padding:
+      0
+      20px;
+  }
+
+
+  .shobdo-profile-trigger-text {
+    display:
+      none;
+  }
+
+
+  .shobdo-profile-trigger {
+    padding:
+      3px;
+  }
+
+
+  .shobdo-profile-trigger > svg {
+    display:
+      none;
+  }
+
+
+  .shobdo-language-name {
+    display:
+      none;
+  }
+
+
+  .shobdo-language-button {
+    width:
+      42px;
+
+    padding:
+      0;
+
+    justify-content:
+      center;
+  }
+
+
+  .shobdo-language-button > svg:last-child {
+    display:
+      none;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+  max-width: 700px
+) {
+
+  .shobdo-navbar {
+    position:
+      sticky;
+  }
+
+
+  .shobdo-navbar-inner {
+    min-height:
+      62px;
+
+    display:
+      flex;
+
+    justify-content:
+      space-between;
+
+    gap:
+      10px;
+
+    padding:
+      0
+      14px;
+  }
+
+
+  .shobdo-navbar-logo {
+    width:
+      34px;
+
+    height:
+      34px;
+  }
+
+
+  .shobdo-navbar-brand-name {
+    font-size:
+      16px;
+  }
+
+
+  .shobdo-navbar-search {
+    display:
+      none;
+  }
+
+
+  .shobdo-mobile-search-trigger {
+    display:
+      grid;
+  }
+
+
+  .shobdo-language-button {
+    width:
+      39px;
+
+    height:
+      39px;
+
+    border:
+      0;
+
+    background:
+      transparent;
+  }
+
+
+  .shobdo-language-dropdown {
+    position:
+      fixed;
+
+    top:
+      68px;
+
+    left:
+      12px;
+
+    right:
+      12px;
+
+    width:
+      auto;
+  }
+
+
+  .shobdo-profile-trigger {
+    height:
+      40px;
+  }
+
+
+  .shobdo-profile-avatar {
+    width:
+      34px;
+
+    height:
+      34px;
+  }
+
+
+  .shobdo-profile-dropdown {
+    position:
+      fixed;
+
+    top:
+      68px;
+
+    left:
+      12px;
+
+    right:
+      12px;
+
+    width:
+      auto;
+  }
+
+
+  .shobdo-navbar-icon-button {
+    width:
+      39px;
+
+    height:
+      39px;
+  }
+
+
+  .shobdo-login-button span {
+    display:
+      none;
+  }
+
+
+  .shobdo-login-button {
+    width:
+      39px;
+
+    height:
+      39px;
+
+    min-height:
+      39px;
+
+    padding:
+      0;
+  }
+
+
+  /* MOBILE SEARCH */
+
+  .shobdo-mobile-search-panel {
+    position:
+      fixed;
+
+    inset:
+      0;
+
+    z-index:
+      1500;
+
+    display:
+      block;
+
+    padding:
+      10px;
+
+    background:
+      rgba(
+        255,
+        255,
+        255,
+        0.98
+      );
+  }
+
+
+  .shobdo-mobile-search-form {
+    height:
+      48px;
+
+    display:
+      grid;
+
+    grid-template-columns:
+      auto
+      1fr
+      auto;
+
+    align-items:
+      center;
+
+    gap:
+      10px;
+
+    padding:
+      0
+      12px;
+
+    border:
+      1px solid
+      #ded5e4;
+
+    border-radius:
+      14px;
+
+    background:
+      #ffffff;
+
+    box-shadow:
+      0 10px 35px
+      rgba(
+        31,
+        22,
+        36,
+        0.08
+      );
+  }
+
+
+  .shobdo-mobile-search-form > svg {
+    color:
+      #746e77;
+  }
+
+
+  .shobdo-mobile-search-form input {
+    width:
+      100%;
+
+    border:
+      0;
+
+    outline:
+      0;
+
+    background:
+      transparent;
+
+    color:
+      #211c24;
+
+    font:
+      inherit;
+
+    font-size:
+      14px;
+  }
+
+
+  .shobdo-mobile-search-form button {
+    width:
+      34px;
+
+    height:
+      34px;
+
+    display:
+      grid;
+
+    place-items:
+      center;
+
+    border:
+      0;
+
+    border-radius:
+      9px;
+
+    background:
+      transparent;
+
+    color:
+      #716a74;
+
+    cursor:
+      pointer;
+  }
+
+
+  .shobdo-mobile-search-form button:hover {
+    background:
+      #f1edf3;
+  }
+
+}
+
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (
+  max-width: 420px
+) {
+
+  .shobdo-navbar-brand-name {
+    display:
+      none;
+  }
+
+
+  .shobdo-navbar-actions {
+    gap:
+      3px;
+  }
+
+}
+
+/* =========================================================
+   SHOBDO — PROFESSIONAL HOME SOCIAL FEED
+========================================================= */
+
+.home-feed-section {
+  position: relative;
+
+  padding-top: 76px;
+  padding-bottom: 90px;
+}
+
+
+/* =========================================================
+   FEED HEADER
+========================================================= */
+
+.home-feed-heading {
+  align-items: flex-end;
+}
+
+
+.home-feed-heading > div:first-child {
+  max-width: 650px;
+}
+
+
+/* =========================================================
+   REFRESH BUTTON
+========================================================= */
+
+.home-feed-refresh {
+  min-height: 40px;
+
+  padding: 8px 14px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  flex-shrink: 0;
+
+  border: 1px solid #e3dce7;
+  border-radius: 11px;
+
+  background: #ffffff;
+
+  color: #642b8f;
+
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+
+.home-feed-refresh:hover:not(:disabled) {
+  background:
+    rgba(
+      100,
+      43,
+      143,
+      0.06
+    );
+
+  border-color:
+    rgba(
+      100,
+      43,
+      143,
+      0.24
+    );
+
+  box-shadow:
+    0 5px 16px
+    rgba(
+      55,
+      33,
+      67,
+      0.05
+    );
+
+  transform:
+    translateY(-1px);
+}
+
+
+.home-feed-refresh:active:not(:disabled) {
+  transform:
+    scale(0.97);
+}
+
+
+.home-feed-refresh:disabled {
+  opacity: 0.6;
+
+  cursor: default;
+}
+
+
+/* =========================================================
+   TABS WRAPPER
+========================================================= */
+
+.home-feed-tabs {
+  position: sticky;
+
+  top: 76px;
+
+  z-index: 20;
+
+  margin-bottom: 22px;
+
+  padding: 5px;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+
+  gap: 5px;
+
+  border: 1px solid #e7e2e9;
+
+  border-radius: 14px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.94
+    );
+
+  box-shadow:
+    0 8px 30px
+    rgba(
+      34,
+      24,
+      40,
+      0.035
+    );
+
+  backdrop-filter:
+    blur(16px);
+
+  -webkit-backdrop-filter:
+    blur(16px);
+}
+
+
+/* =========================================================
+   TAB
+========================================================= */
+
+.home-feed-tab {
+  position: relative;
+
+  min-height: 43px;
+
+  padding: 8px 13px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: transparent;
+
+  color: #78717b;
+
+  font: inherit;
+
+  font-size: 0.81rem;
+  font-weight: 680;
+
+  cursor: pointer;
+
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+
+.home-feed-tab svg {
+  flex-shrink: 0;
+}
+
+
+.home-feed-tab:hover {
+  background: #f7f4f8;
+
+  color: #4b3455;
+}
+
+
+.home-feed-tab:active {
+  transform:
+    scale(0.985);
+}
+
+
+/* =========================================================
+   ACTIVE TAB
+========================================================= */
+
+.home-feed-tab-active {
+  background: #642b8f;
+
+  color: #ffffff;
+
+  box-shadow:
+    0 5px 16px
+    rgba(
+      100,
+      43,
+      143,
+      0.19
+    );
+}
+
+
+.home-feed-tab-active:hover {
+  background: #642b8f;
+
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   FEED LIST
+========================================================= */
+
+.home-feed-list {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 16px;
+}
+
+
+/* =========================================================
+   WRITING CARD INSIDE SOCIAL FEED
+========================================================= */
+
+.home-feed-list > .writing-card {
+  width: 100%;
+
+  margin: 0;
+}
+
+
+/* =========================================================
+   GENERAL FEED STATE
+========================================================= */
+
+.home-feed-state {
+  width: 100%;
+
+  min-height: 280px;
+
+  padding: 46px 30px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  text-align: center;
+
+  border: 1px solid #e8e2ea;
+  border-radius: 17px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff 0%,
+      #fdfbfd 100%
+    );
+
+  color: #77707a;
+}
+
+
+.home-feed-state > svg {
+  color: #642b8f;
+}
+
+
+.home-feed-state h3 {
+  max-width: 500px;
+
+  margin: 4px 0 0;
+
+  color: #29242d;
+
+  font-size: 1.02rem;
+
+  font-weight: 720;
+
+  line-height: 1.45;
+}
+
+
+.home-feed-state p {
+  max-width: 520px;
+
+  margin: 0;
+
+  color: #7f7881;
+
+  font-size: 0.88rem;
+
+  line-height: 1.65;
+}
+
+
+/* =========================================================
+   STATE ICON
+========================================================= */
+
+.home-feed-state-icon {
+  width: 58px;
+  height: 58px;
+
+  margin-bottom: 6px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 16px;
+
+  background:
+    rgba(
+      100,
+      43,
+      143,
+      0.075
+    );
+
+  color: #642b8f;
+}
+
+
+/* =========================================================
+   AUTH STATE
+========================================================= */
+
+.home-feed-auth-state {
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff 0%,
+      #faf7fc 100%
+    );
+}
+
+
+.home-feed-auth-state
+.literary-primary-button {
+  margin-top: 13px;
+}
+
+
+/* =========================================================
+   ERROR STATE
+========================================================= */
+
+.home-feed-error-state {
+  border-color:
+    rgba(
+      175,
+      62,
+      72,
+      0.16
+    );
+
+  background:
+    linear-gradient(
+      145deg,
+      #fffefe 0%,
+      #fff9f9 100%
+    );
+}
+
+
+.home-feed-error-state > svg {
+  color: #a34953;
+}
+
+
+.home-feed-error-state button {
+  min-height: 40px;
+
+  margin-top: 11px;
+
+  padding: 8px 15px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  border:
+    1px solid
+    rgba(
+      100,
+      43,
+      143,
+      0.2
+    );
+
+  border-radius: 10px;
+
+  background:
+    rgba(
+      100,
+      43,
+      143,
+      0.06
+    );
+
+  color: #642b8f;
+
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+
+.home-feed-error-state button:hover {
+  background:
+    rgba(
+      100,
+      43,
+      143,
+      0.1
+    );
+
+  border-color:
+    rgba(
+      100,
+      43,
+      143,
+      0.3
+    );
+}
+
+
+.home-feed-error-state button:active {
+  transform:
+    scale(0.97);
+}
+
+
+/* =========================================================
+   FEED SUMMARY
+========================================================= */
+
+.home-feed-summary {
+  margin-top: 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
+  color: #99919a;
+
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   LOAD MORE WRAPPER
+========================================================= */
+
+.home-feed-load-more-wrap {
+  padding-top: 22px;
+
+  display: flex;
+  justify-content: center;
+}
+
+
+/* =========================================================
+   LOAD MORE BUTTON
+========================================================= */
+
+.home-feed-load-more {
+  min-width: 190px;
+  min-height: 44px;
+
+  padding: 9px 18px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  border: 1px solid #ded5e4;
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  color: #642b8f;
+
+  font: inherit;
+
+  font-size: 0.84rem;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 4px 14px
+    rgba(
+      35,
+      26,
+      42,
+      0.025
+    );
+
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+
+.home-feed-load-more:hover:not(:disabled) {
+  border-color:
+    rgba(
+      100,
+      43,
+      143,
+      0.28
+    );
+
+  background:
+    rgba(
+      100,
+      43,
+      143,
+      0.055
+    );
+
+  box-shadow:
+    0 7px 20px
+    rgba(
+      43,
+      28,
+      51,
+      0.05
+    );
+
+  transform:
+    translateY(-1px);
+}
+
+
+.home-feed-load-more:active:not(:disabled) {
+  transform:
+    scale(0.98);
+}
+
+
+.home-feed-load-more:disabled {
+  opacity: 0.62;
+
+  cursor: default;
+}
+
+
+/* =========================================================
+   SPINNER
+========================================================= */
+
+.home-feed-spin {
+  animation:
+    homeFeedSpin
+    0.75s
+    linear
+    infinite;
+}
+
+
+@keyframes homeFeedSpin {
+
+  to {
+    transform:
+      rotate(360deg);
+  }
+
+}
+
+
+/* =========================================================
+   PROFESSIONAL FEED DIVIDER
+========================================================= */
+
+.home-feed-list
+.writing-card + .writing-card {
+  position: relative;
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+========================================================= */
+
+.home-feed-tab:focus-visible,
+.home-feed-refresh:focus-visible,
+.home-feed-load-more:focus-visible,
+.home-feed-error-state button:focus-visible {
+  outline:
+    3px solid
+    rgba(
+      100,
+      43,
+      143,
+      0.18
+    );
+
+  outline-offset:
+    2px;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (
+  max-width: 900px
+) {
+
+  .home-feed-section {
+    padding-top: 66px;
+    padding-bottom: 74px;
+  }
+
+
+  .home-feed-heading {
+    align-items: flex-start;
+  }
+
+
+  .home-feed-refresh {
+    flex-shrink: 0;
+  }
+
+
+  .home-feed-tabs {
+    top: 74px;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+  max-width: 700px
+) {
+
+  .home-feed-section {
+    width: 100%;
+
+    padding:
+      48px
+      0
+      68px;
+  }
+
+
+  .home-feed-heading {
+    width:
+      calc(
+        100% - 28px
+      );
+
+    margin:
+      0 auto 22px;
+
+    gap: 18px;
+  }
+
+
+  .home-feed-refresh {
+    min-height: 38px;
+
+    padding:
+      7px 11px;
+  }
+
+
+  .home-feed-refresh span {
+    display: none;
+  }
+
+
+  .home-feed-tabs {
+    top: 62px;
+
+    margin:
+      0
+      14px
+      12px;
+
+    padding: 4px;
+
+    border-radius: 13px;
+  }
+
+
+  .home-feed-tab {
+    min-height: 40px;
+
+    padding:
+      7px 8px;
+
+    gap: 5px;
+
+    font-size: 0.75rem;
+  }
+
+
+  .home-feed-tab svg {
+    width: 16px;
+    height: 16px;
+  }
+
+
+  .home-feed-list {
+    gap: 9px;
+  }
+
+
+  .home-feed-state {
+    min-height: 250px;
+
+    margin:
+      0 14px;
+
+    width:
+      calc(
+        100% - 28px
+      );
+
+    padding:
+      36px 20px;
+
+    border-radius: 15px;
+  }
+
+
+  .home-feed-load-more-wrap {
+    padding:
+      18px
+      14px
+      0;
+  }
+
+
+  .home-feed-load-more {
+    width: 100%;
+  }
+
+
+  .home-feed-summary {
+    margin-top: 14px;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (
+  max-width: 420px
+) {
+
+  .home-feed-heading {
+    width:
+      calc(
+        100% - 24px
+      );
+  }
+
+
+  .home-feed-tabs {
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+
+
+  .home-feed-tab {
+    min-height: 39px;
+
+    font-size: 0.7rem;
+  }
+
+
+  .home-feed-tab svg {
+    display: none;
+  }
+
+
+  .home-feed-state {
+    width:
+      calc(
+        100% - 24px
+      );
+
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+
+
+  .home-feed-state h3 {
+    font-size: 0.95rem;
+  }
+
+
+  .home-feed-state p {
+    font-size: 0.82rem;
+  }
+
+
+  .home-feed-load-more-wrap {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (
+  prefers-reduced-motion: reduce
+) {
+
+  .home-feed-spin {
+    animation: none;
+  }
+
+
+  .home-feed-refresh,
+  .home-feed-tab,
+  .home-feed-load-more,
+  .home-feed-error-state button {
+    transition: none;
+  }
+
+}

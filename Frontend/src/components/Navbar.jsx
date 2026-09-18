@@ -1,20 +1,21 @@
 import {
   Bell,
-  BookOpen,
+  Bookmark,
   Check,
   ChevronDown,
   Feather,
+  FileText,
   Globe2,
+  LogIn,
   LogOut,
-  Menu,
-  PenLine,
   Search,
+  Settings,
+  UserRound,
   X,
 } from "lucide-react";
 
 import {
   Link,
-  NavLink,
   useLocation,
   useNavigate,
 } from "react-router-dom";
@@ -37,7 +38,45 @@ import {
   useLanguage,
 } from "../Language/LanguageContext";
 
+import "./Navbar.css";
 
+
+// =========================================================
+// HELPERS
+// =========================================================
+
+function getInitials(name) {
+
+  const safeName =
+    String(name || "")
+      .trim();
+
+  if (!safeName) {
+    return "U";
+  }
+
+  const parts =
+    safeName
+      .split(/\s+/)
+      .filter(Boolean);
+
+  if (parts.length === 1) {
+
+    return parts[0]
+      .slice(0, 2)
+      .toUpperCase();
+
+  }
+
+  return (
+    `${parts[0][0]}${parts[1][0]}`
+  ).toUpperCase();
+}
+
+
+// =========================================================
+// NAVBAR
+// =========================================================
 
 function Navbar({
   user,
@@ -46,7 +85,6 @@ function Navbar({
 
   const navigate =
     useNavigate();
-
 
   const location =
     useLocation();
@@ -61,15 +99,14 @@ function Navbar({
   } = useLanguage();
 
 
-
-  // =====================================================
+  // =======================================================
   // STATE
-  // =====================================================
+  // =======================================================
 
   const [
-    mobileOpen,
-    setMobileOpen,
-  ] = useState(false);
+    searchQuery,
+    setSearchQuery,
+  ] = useState("");
 
 
   const [
@@ -79,141 +116,251 @@ function Navbar({
 
 
   const [
+    profileOpen,
+    setProfileOpen,
+  ] = useState(false);
+
+
+  const [
+    mobileSearchOpen,
+    setMobileSearchOpen,
+  ] = useState(false);
+
+
+  const [
     unreadNotificationCount,
     setUnreadNotificationCount,
   ] = useState(0);
 
 
+  // =======================================================
+  // REFS
+  // =======================================================
+
   const languageMenuRef =
     useRef(null);
 
+  const profileMenuRef =
+    useRef(null);
+
+  const searchInputRef =
+    useRef(null);
 
 
-  // =====================================================
-  // NOTIFICATION TRANSLATION FALLBACK
-  // =====================================================
+  // =======================================================
+  // TRANSLATION FALLBACK
+  // =======================================================
 
-  function getNotificationLabel() {
+  function translate(
+    key,
+    fallback,
+  ) {
 
-    const translated =
-      t(
-        "navbar.notifications"
-      );
+    try {
 
+      const translated =
+        t(key);
 
-    if (
-      translated &&
-      translated !==
-        "navbar.notifications"
-    ) {
+      if (
+        translated &&
+        translated !== key
+      ) {
 
-      return translated;
+        return translated;
 
+      }
+
+    } catch {
+
+      // Ignore missing translation.
     }
 
-
-    if (
-      language === "bn"
-    ) {
-
-      return "বিজ্ঞপ্তি";
-
-    }
-
-
-    if (
-      language === "hi"
-    ) {
-
-      return "सूचनाएँ";
-
-    }
-
-
-    return "Notifications";
-
+    return fallback;
   }
 
 
+  const labels = {
 
-  // =====================================================
-  // SEARCH TRANSLATION FALLBACK
-  // =====================================================
-
-  function getSearchLabel() {
-
-    const translated =
-      t(
-        "navbar.search"
-      );
-
-
-    if (
-      translated &&
-      translated !==
-        "navbar.search"
-    ) {
-
-      return translated;
-
-    }
-
-
-    if (
+    search:
       language === "bn"
-    ) {
+        ? "লেখা, লেখক ও বিষয় খুঁজুন"
+        : language === "hi"
+          ? "लेख, लेखक और विषय खोजें"
+          : "Search writings, people and topics",
 
-      return "অনুসন্ধান";
+    notifications:
+      translate(
+        "navbar.notifications",
+        language === "bn"
+          ? "বিজ্ঞপ্তি"
+          : language === "hi"
+            ? "सूचनाएँ"
+            : "Notifications"
+      ),
 
-    }
+    profile:
+      language === "bn"
+        ? "প্রোফাইল"
+        : language === "hi"
+          ? "प्रोफ़ाइल"
+          : "Profile",
+
+    myWritings:
+      translate(
+        "navbar.myWritings",
+        language === "bn"
+          ? "আমার লেখা"
+          : language === "hi"
+            ? "मेरी रचनाएँ"
+            : "My writings"
+      ),
+
+    saved:
+      language === "bn"
+        ? "সংরক্ষিত"
+        : language === "hi"
+          ? "सहेजे गए"
+          : "Saved",
+
+    editProfile:
+      language === "bn"
+        ? "প্রোফাইল সম্পাদনা"
+        : language === "hi"
+          ? "प्रोफ़ाइल संपादित करें"
+          : "Edit profile",
+
+    logout:
+      translate(
+        "navbar.logout",
+        language === "bn"
+          ? "লগ আউট"
+          : language === "hi"
+            ? "लॉग आउट"
+            : "Log out"
+      ),
+
+    login:
+      translate(
+        "navbar.login",
+        language === "bn"
+          ? "লগ ইন"
+          : language === "hi"
+            ? "लॉग इन"
+            : "Log in"
+      ),
+
+    language:
+      translate(
+        "navbar.websiteLanguage",
+        language === "bn"
+          ? "ওয়েবসাইটের ভাষা"
+          : language === "hi"
+            ? "वेबसाइट भाषा"
+            : "Website language"
+      ),
+
+  };
 
 
-    if (
-      language === "hi"
-    ) {
+  // =======================================================
+  // USER INFO
+  // =======================================================
 
-      return "खोज";
-
-    }
-
-
-    return "Search";
-
-  }
-
-
-
-  const notificationLabel =
-    getNotificationLabel();
-
-
-  const searchLabel =
-    getSearchLabel();
-
-
-
-  // =====================================================
-  // CLOSE MENUS
-  // =====================================================
-
-  function closeMenus() {
-
-    setMobileOpen(
-      false
+  const userInitials =
+    getInitials(
+      user?.name
     );
 
+
+  const profilePath =
+    user?.id
+      ? `/users/${user.id}`
+      : "/login";
+
+
+  const notificationBadge =
+    unreadNotificationCount > 99
+      ? "99+"
+      : unreadNotificationCount;
+
+
+  // =======================================================
+  // CLOSE MENUS
+  // =======================================================
+
+  function closeMenus() {
 
     setLanguageOpen(
       false
     );
 
+    setProfileOpen(
+      false
+    );
+
   }
 
 
+  // =======================================================
+  // SEARCH
+  // =======================================================
 
-  // =====================================================
+  function handleSearchSubmit(
+    event
+  ) {
+
+    event.preventDefault();
+
+    const query =
+      searchQuery.trim();
+
+    closeMenus();
+
+    setMobileSearchOpen(
+      false
+    );
+
+
+    if (!query) {
+
+      navigate(
+        "/search"
+      );
+
+      return;
+
+    }
+
+
+    navigate(
+      `/search?q=${encodeURIComponent(
+        query
+      )}`
+    );
+
+  }
+
+
+  function openMobileSearch() {
+
+    setMobileSearchOpen(
+      true
+    );
+
+    setLanguageOpen(
+      false
+    );
+
+    setProfileOpen(
+      false
+    );
+
+  }
+
+
+  // =======================================================
   // LANGUAGE
-  // =====================================================
+  // =======================================================
 
   function handleLanguageChange(
     code
@@ -223,7 +370,6 @@ function Navbar({
       code
     );
 
-
     setLanguageOpen(
       false
     );
@@ -231,15 +377,62 @@ function Navbar({
   }
 
 
+  // =======================================================
+  // LOGOUT
+  // =======================================================
 
-  // =====================================================
-  // CLICK OUTSIDE LANGUAGE MENU
-  // =====================================================
+  async function handleLogout() {
+
+    try {
+
+      await logoutUser();
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        "LOGOUT ERROR:",
+        error
+      );
+
+    } finally {
+
+      if (setUser) {
+
+        setUser(
+          null
+        );
+
+      }
+
+
+      setUnreadNotificationCount(
+        0
+      );
+
+      closeMenus();
+
+      navigate(
+        "/",
+        {
+          replace: true,
+        }
+      );
+
+    }
+
+  }
+
+
+  // =======================================================
+  // CLICK OUTSIDE MENUS
+  // =======================================================
 
   useEffect(
     () => {
 
-      function handleClickOutside(
+      function handleOutsideClick(
         event
       ) {
 
@@ -256,12 +449,26 @@ function Navbar({
 
         }
 
+
+        if (
+          profileMenuRef.current &&
+          !profileMenuRef.current.contains(
+            event.target
+          )
+        ) {
+
+          setProfileOpen(
+            false
+          );
+
+        }
+
       }
 
 
       document.addEventListener(
         "mousedown",
-        handleClickOutside
+        handleOutsideClick
       );
 
 
@@ -269,7 +476,7 @@ function Navbar({
 
         document.removeEventListener(
           "mousedown",
-          handleClickOutside
+          handleOutsideClick
         );
 
       };
@@ -279,20 +486,16 @@ function Navbar({
   );
 
 
-
-  // =====================================================
-  // CLOSE MOBILE MENU WHEN ROUTE CHANGES
-  // =====================================================
+  // =======================================================
+  // CLOSE ON ROUTE CHANGE
+  // =======================================================
 
   useEffect(
     () => {
 
-      setMobileOpen(
-        false
-      );
+      closeMenus();
 
-
-      setLanguageOpen(
+      setMobileSearchOpen(
         false
       );
 
@@ -304,10 +507,39 @@ function Navbar({
   );
 
 
+  // =======================================================
+  // MOBILE SEARCH AUTOFOCUS
+  // =======================================================
 
-  // =====================================================
-  // NOTIFICATION COUNT
-  // =====================================================
+  useEffect(
+    () => {
+
+      if (
+        mobileSearchOpen
+      ) {
+
+        window.setTimeout(
+          () => {
+
+            searchInputRef.current
+              ?.focus();
+
+          },
+          50
+        );
+
+      }
+
+    },
+    [
+      mobileSearchOpen,
+    ]
+  );
+
+
+  // =======================================================
+  // UNREAD NOTIFICATION COUNT
+  // =======================================================
 
   useEffect(
     () => {
@@ -316,28 +548,16 @@ function Navbar({
         false;
 
 
-      // -------------------------------------------------
-      // LOGGED OUT
-      // -------------------------------------------------
-
-      if (
-        !user
-      ) {
+      if (!user) {
 
         setUnreadNotificationCount(
           0
         );
 
-
         return undefined;
 
       }
 
-
-
-      // -------------------------------------------------
-      // LOAD UNREAD COUNT
-      // -------------------------------------------------
 
       async function loadUnreadCount() {
 
@@ -347,12 +567,8 @@ function Navbar({
             await getUnreadNotificationCount();
 
 
-          if (
-            cancelled
-          ) {
-
+          if (cancelled) {
             return;
-
           }
 
 
@@ -363,27 +579,24 @@ function Navbar({
 
 
           setUnreadNotificationCount(
+
             Number.isFinite(
               count
             )
               ? Math.max(
-                  0,
-                  count
+                  count,
+                  0
                 )
               : 0
-          );
 
+          );
 
         } catch (
           error
         ) {
 
-          if (
-            cancelled
-          ) {
-
+          if (cancelled) {
             return;
-
           }
 
 
@@ -395,7 +608,6 @@ function Navbar({
             setUnreadNotificationCount(
               0
             );
-
 
             return;
 
@@ -412,30 +624,8 @@ function Navbar({
       }
 
 
-
-      // -------------------------------------------------
-      // INITIAL LOAD
-      // -------------------------------------------------
-
       loadUnreadCount();
 
-
-
-      // -------------------------------------------------
-      // WINDOW FOCUS
-      // -------------------------------------------------
-
-      function handleWindowFocus() {
-
-        loadUnreadCount();
-
-      }
-
-
-
-      // -------------------------------------------------
-      // NOTIFICATION CHANGE EVENT
-      // -------------------------------------------------
 
       function handleNotificationChange() {
 
@@ -444,11 +634,11 @@ function Navbar({
       }
 
 
+      function handleWindowFocus() {
 
-      window.addEventListener(
-        "focus",
-        handleWindowFocus
-      );
+        loadUnreadCount();
+
+      }
 
 
       window.addEventListener(
@@ -457,17 +647,17 @@ function Navbar({
       );
 
 
+      window.addEventListener(
+        "focus",
+        handleWindowFocus
+      );
 
-      // -------------------------------------------------
-      // FALLBACK POLLING
-      // -------------------------------------------------
 
       const intervalId =
         window.setInterval(
           loadUnreadCount,
           60000
         );
-
 
 
       return () => {
@@ -477,14 +667,14 @@ function Navbar({
 
 
         window.removeEventListener(
-          "focus",
-          handleWindowFocus
+          "shobdo:notifications-changed",
+          handleNotificationChange
         );
 
 
         window.removeEventListener(
-          "shobdo:notifications-changed",
-          handleNotificationChange
+          "focus",
+          handleWindowFocus
         );
 
 
@@ -497,118 +687,23 @@ function Navbar({
     },
     [
       user?.id,
-      location.pathname,
     ]
   );
 
 
-
-  // =====================================================
-  // LOGOUT
-  // =====================================================
-
-  async function handleLogout() {
-
-    try {
-
-      await logoutUser();
-
-
-    } catch (
-      error
-    ) {
-
-      console.error(
-        "LOGOUT ERROR:",
-        error
-      );
-
-
-    } finally {
-
-      if (
-        setUser
-      ) {
-
-        setUser(
-          null
-        );
-
-      }
-
-
-      setUnreadNotificationCount(
-        0
-      );
-
-
-      closeMenus();
-
-
-      navigate(
-        "/",
-        {
-          replace:
-            true,
-        }
-      );
-
-    }
-
-  }
-
-
-
-  // =====================================================
-  // USER INITIAL
-  // =====================================================
-
-  const userInitial =
-    user?.name
-      ?.trim()
-      ?.charAt(0)
-      ?.toUpperCase()
-    ||
-    "U";
-
-
-
-  // =====================================================
-  // NOTIFICATION BADGE
-  // =====================================================
-
-  const notificationBadge =
-    unreadNotificationCount >
-    9
-      ? "9+"
-      : unreadNotificationCount;
-
-
-
-  // =====================================================
-  // SEARCH ACTIVE
-  // =====================================================
-
-  const searchActive =
-    location.pathname ===
-    "/search";
-
-
-
-  // =====================================================
+  // =======================================================
   // UI
-  // =====================================================
+  // =======================================================
 
   return (
 
     <header
-      className="shobdo-navbar-header"
+      className="shobdo-navbar"
     >
 
       <div
-        className="shobdo-navbar-container"
+        className="shobdo-navbar-inner"
       >
-
 
         {/* ===============================================
             BRAND
@@ -617,9 +712,7 @@ function Navbar({
         <Link
           to="/"
           className="shobdo-navbar-brand"
-          onClick={
-            closeMenus
-          }
+          aria-label="SHOBDO"
         >
 
           <span
@@ -627,297 +720,164 @@ function Navbar({
           >
 
             <Feather
-              size={22}
+              size={21}
+              strokeWidth={2}
             />
 
           </span>
 
 
           <span
-            className="shobdo-navbar-brand-text"
+            className="shobdo-navbar-brand-name"
           >
-
-            <strong>
-              SHOBDO
-            </strong>
-
-
-            <small>
-              শব্দ
-            </small>
-
+            SHOBDO
           </span>
 
         </Link>
 
 
-
         {/* ===============================================
-            DESKTOP NAVIGATION
+            DESKTOP GLOBAL SEARCH
         ================================================ */}
 
-        <nav
-          className="shobdo-navbar-links"
+        <form
+          className="shobdo-navbar-search"
+          onSubmit={
+            handleSearchSubmit
+          }
         >
 
+          <Search
+            className="shobdo-navbar-search-icon"
+            size={18}
+            strokeWidth={1.9}
+          />
 
-          {/* HOME */}
 
-          <NavLink
-            to="/"
-            end
-            className={({
-              isActive,
-            }) =>
-              isActive
-                ? "shobdo-nav-link active"
-                : "shobdo-nav-link"
+          <input
+            type="search"
+            value={
+              searchQuery
             }
-          >
-
-            {
-              t(
-                "navbar.home"
-              )
+            onChange={
+              (
+                event
+              ) =>
+                setSearchQuery(
+                  event.target.value
+                )
             }
-
-          </NavLink>
-
-
-
-          {/* EXPLORE */}
-
-          <NavLink
-            to="/explore"
-            className={({
-              isActive,
-            }) =>
-              isActive
-                ? "shobdo-nav-link active"
-                : "shobdo-nav-link"
+            placeholder={
+              labels.search
             }
-          >
-
-            {
-              t(
-                "navbar.explore"
-              )
+            aria-label={
+              labels.search
             }
-
-          </NavLink>
-
-
-
-          {/* ABOUT */}
-
-          <NavLink
-            to="/about"
-            className={({
-              isActive,
-            }) =>
-              isActive
-                ? "shobdo-nav-link active"
-                : "shobdo-nav-link"
-            }
-          >
-
-            {
-              t(
-                "navbar.about"
-              )
-            }
-
-          </NavLink>
+            autoComplete="off"
+          />
 
 
+          {searchQuery && (
 
-          {/* MY WRITINGS */}
+            <button
+              type="button"
+              className="shobdo-search-clear"
+              aria-label="Clear search"
+              onClick={
+                () =>
+                  setSearchQuery("")
+              }
+            >
 
-          {
-            user && (
+              <X
+                size={15}
+              />
 
-              <NavLink
-                to="/my-writings"
-                className={({
-                  isActive,
-                }) =>
-                  isActive
-                    ? "shobdo-nav-link active"
-                    : "shobdo-nav-link"
-                }
-              >
+            </button>
 
-                <BookOpen
-                  size={15}
-                />
+          )}
 
-
-                <span>
-
-                  {
-                    t(
-                      "navbar.myWritings"
-                    )
-                  }
-
-                </span>
-
-              </NavLink>
-
-            )
-          }
-
-
-
-          {/* WRITE */}
-
-          {
-            user && (
-
-              <NavLink
-                to="/write"
-                className={({
-                  isActive,
-                }) =>
-                  isActive
-                    ? "shobdo-nav-link active"
-                    : "shobdo-nav-link"
-                }
-              >
-
-                <PenLine
-                  size={15}
-                />
-
-
-                <span>
-
-                  {
-                    t(
-                      "navbar.write"
-                    )
-                  }
-
-                </span>
-
-              </NavLink>
-
-            )
-          }
-
-        </nav>
-
+        </form>
 
 
         {/* ===============================================
-            RIGHT ACTIONS
+            RIGHT SIDE
         ================================================ */}
 
         <div
           className="shobdo-navbar-actions"
         >
 
+          {/* MOBILE SEARCH */}
 
-          {/* =============================================
-              GLOBAL SEARCH
-          ============================================== */}
-
-          <Link
-            to="/search"
-            className={
-              searchActive
-                ? "shobdo-navbar-search active"
-                : "shobdo-navbar-search"
-            }
+          <button
+            type="button"
+            className="shobdo-navbar-icon-button shobdo-mobile-search-trigger"
             aria-label={
-              searchLabel
-            }
-            title={
-              searchLabel
-            }
-            aria-current={
-              searchActive
-                ? "page"
-                : undefined
+              labels.search
             }
             onClick={
-              closeMenus
+              openMobileSearch
             }
           >
 
             <Search
-              size={19}
+              size={20}
             />
 
-          </Link>
-
+          </button>
 
 
           {/* =============================================
-              DESKTOP NOTIFICATION BELL
+              NOTIFICATIONS
           ============================================== */}
 
-          {
-            user && (
+          {user && (
 
-              <Link
-                to="/notifications"
-                className={
-                  location.pathname ===
-                  "/notifications"
-                    ? "shobdo-navbar-notification active"
-                    : "shobdo-navbar-notification"
-                }
-                aria-label={
-                  unreadNotificationCount >
-                  0
-                    ? `${notificationLabel} (${unreadNotificationCount})`
-                    : notificationLabel
-                }
-                title={
-                  notificationLabel
-                }
-                onClick={
-                  closeMenus
-                }
-              >
+            <Link
+              to="/notifications"
+              className={
+                location.pathname ===
+                "/notifications"
+                  ? "shobdo-navbar-icon-button shobdo-notification-button active"
+                  : "shobdo-navbar-icon-button shobdo-notification-button"
+              }
+              aria-label={
+                labels.notifications
+              }
+              title={
+                labels.notifications
+              }
+            >
 
-                <Bell
-                  size={19}
-                />
+              <Bell
+                size={20}
+                strokeWidth={1.9}
+              />
 
 
-                {
-                  unreadNotificationCount >
-                  0 && (
+              {unreadNotificationCount >
+                0 && (
 
-                    <span
-                      className="shobdo-notification-badge"
-                      aria-hidden="true"
-                    >
+                <span
+                  className="shobdo-navbar-notification-badge"
+                >
+                  {notificationBadge}
+                </span>
 
-                      {
-                        notificationBadge
-                      }
+              )}
 
-                    </span>
+            </Link>
 
-                  )
-                }
-
-              </Link>
-
-            )
-          }
-
+          )}
 
 
           {/* =============================================
-              LANGUAGE SELECTOR
+              LANGUAGE
           ============================================== */}
 
           <div
-            className="shobdo-language"
+            className="shobdo-navbar-dropdown"
             ref={
               languageMenuRef
             }
@@ -927,49 +887,56 @@ function Navbar({
               type="button"
               className={
                 languageOpen
-                  ? "shobdo-language-trigger active"
-                  : "shobdo-language-trigger"
+                  ? "shobdo-language-button active"
+                  : "shobdo-language-button"
               }
               onClick={
-                () =>
+                () => {
+
                   setLanguageOpen(
                     (
                       current
                     ) =>
                       !current
-                  )
+                  );
+
+                  setProfileOpen(
+                    false
+                  );
+
+                }
               }
               aria-expanded={
                 languageOpen
               }
               aria-haspopup="menu"
               title={
-                t(
-                  "navbar.websiteLanguage"
-                )
+                labels.language
               }
             >
 
               <Globe2
-                size={15}
+                size={18}
               />
 
 
-              <span>
-
+              <span
+                className="shobdo-language-name"
+              >
                 {
                   currentLanguage
-                    ?.nativeName
+                    ?.nativeName ||
+                  language
+                    ?.toUpperCase()
                 }
-
               </span>
 
 
               <ChevronDown
-                size={13}
+                size={14}
                 className={
                   languageOpen
-                    ? "open"
+                    ? "rotate"
                     : ""
                 }
               />
@@ -977,802 +944,509 @@ function Navbar({
             </button>
 
 
+            {languageOpen && (
 
-            {
-              languageOpen && (
+              <div
+                className="shobdo-language-dropdown"
+                role="menu"
+              >
 
                 <div
-                  className="shobdo-language-menu"
-                  role="menu"
+                  className="shobdo-dropdown-heading"
                 >
 
-                  <div
-                    className="shobdo-language-menu-title"
-                  >
+                  <Globe2
+                    size={17}
+                  />
 
-                    <Globe2
-                      size={14}
-                    />
-
-
-                    <span>
-
-                      {
-                        t(
-                          "navbar.websiteLanguage"
-                        )
-                      }
-
-                    </span>
-
-                  </div>
-
-
-
-                  {
-                    languages.map(
-                      (
-                        item
-                      ) => {
-
-                        const selected =
-                          language ===
-                          item.code;
-
-
-                        return (
-
-                          <button
-                            key={
-                              item.code
-                            }
-                            type="button"
-                            className={
-                              selected
-                                ? "selected"
-                                : ""
-                            }
-                            onClick={
-                              () =>
-                                handleLanguageChange(
-                                  item.code
-                                )
-                            }
-                          >
-
-                            <span
-                              className="language-check"
-                            >
-
-                              {
-                                selected
-                                  ? (
-
-                                      <Check
-                                        size={13}
-                                      />
-
-                                    )
-                                  : null
-                              }
-
-                            </span>
-
-
-                            <span>
-
-                              <strong>
-
-                                {
-                                  item.nativeName
-                                }
-
-                              </strong>
-
-
-                              {
-                                item.nativeName !==
-                                  item.name && (
-
-                                  <small>
-
-                                    {
-                                      item.name
-                                    }
-
-                                  </small>
-
-                                )
-                              }
-
-                            </span>
-
-                          </button>
-
-                        );
-
-                      }
-                    )
-                  }
+                  <span>
+                    {labels.language}
+                  </span>
 
                 </div>
 
-              )
-            }
+
+                <div
+                  className="shobdo-language-options"
+                >
+
+                  {languages.map(
+                    (
+                      item
+                    ) => {
+
+                      const selected =
+                        language ===
+                        item.code;
+
+
+                      return (
+
+                        <button
+                          key={
+                            item.code
+                          }
+                          type="button"
+                          className={
+                            selected
+                              ? "shobdo-language-option selected"
+                              : "shobdo-language-option"
+                          }
+                          onClick={
+                            () =>
+                              handleLanguageChange(
+                                item.code
+                              )
+                          }
+                        >
+
+                          <span
+                            className="shobdo-language-check"
+                          >
+
+                            {selected && (
+
+                              <Check
+                                size={14}
+                              />
+
+                            )}
+
+                          </span>
+
+
+                          <span
+                            className="shobdo-language-option-text"
+                          >
+
+                            <strong>
+                              {
+                                item.nativeName
+                              }
+                            </strong>
+
+
+                            {
+                              item.name &&
+                              item.nativeName !==
+                                item.name && (
+
+                                <small>
+                                  {
+                                    item.name
+                                  }
+                                </small>
+
+                              )
+                            }
+
+                          </span>
+
+                        </button>
+
+                      );
+
+                    }
+                  )}
+
+                </div>
+
+              </div>
+
+            )}
 
           </div>
 
 
-
           {/* =============================================
-              AUTH
+              PROFILE / AUTH
           ============================================== */}
 
-          {
-            user
-              ? (
+          {user
+            ? (
 
-                  <>
+              <div
+                className="shobdo-navbar-dropdown shobdo-profile-wrapper"
+                ref={
+                  profileMenuRef
+                }
+              >
 
-                    {/* USER PROFILE */}
+                <button
+                  type="button"
+                  className={
+                    profileOpen
+                      ? "shobdo-profile-trigger active"
+                      : "shobdo-profile-trigger"
+                  }
+                  onClick={
+                    () => {
+
+                      setProfileOpen(
+                        (
+                          current
+                        ) =>
+                          !current
+                      );
+
+                      setLanguageOpen(
+                        false
+                      );
+
+                    }
+                  }
+                  aria-expanded={
+                    profileOpen
+                  }
+                  aria-haspopup="menu"
+                >
+
+                  <span
+                    className="shobdo-profile-avatar"
+                  >
+
+                    {user?.avatar_url
+                      ? (
+
+                        <img
+                          src={
+                            user.avatar_url
+                          }
+                          alt=""
+                        />
+
+                      )
+                      : (
+
+                        <span>
+                          {
+                            userInitials
+                          }
+                        </span>
+
+                      )}
+
+                  </span>
+
+
+                  <span
+                    className="shobdo-profile-trigger-text"
+                  >
+
+                    <strong>
+                      {
+                        user?.name ||
+                        "Writer"
+                      }
+                    </strong>
+
+
+                    {user?.username && (
+
+                      <small>
+                        @{user.username}
+                      </small>
+
+                    )}
+
+                  </span>
+
+
+                  <ChevronDown
+                    size={15}
+                    className={
+                      profileOpen
+                        ? "rotate"
+                        : ""
+                    }
+                  />
+
+                </button>
+
+
+                {profileOpen && (
+
+                  <div
+                    className="shobdo-profile-dropdown"
+                    role="menu"
+                  >
+
+                    {/* PROFILE HEADER */}
 
                     <Link
                       to={
-                        user?.id
-                          ? `/users/${user.id}`
-                          : "/my-writings"
+                        profilePath
                       }
-                      className="shobdo-navbar-user"
-                      onClick={
-                        closeMenus
-                      }
+                      className="shobdo-profile-dropdown-user"
                     >
 
                       <span
-                        className="shobdo-navbar-avatar"
+                        className="shobdo-profile-dropdown-avatar"
                       >
 
-                        {
-                          userInitial
-                        }
+                        {user?.avatar_url
+                          ? (
+
+                            <img
+                              src={
+                                user.avatar_url
+                              }
+                              alt=""
+                            />
+
+                          )
+                          : (
+
+                            <span>
+                              {
+                                userInitials
+                              }
+                            </span>
+
+                          )}
 
                       </span>
 
 
                       <span
-                        className="shobdo-navbar-user-name"
+                        className="shobdo-profile-dropdown-user-text"
                       >
 
-                        {
-                          user?.name ||
-                          "Writer"
-                        }
+                        <strong>
+                          {
+                            user?.name ||
+                            "Writer"
+                          }
+                        </strong>
+
+
+                        {user?.username
+                          ? (
+
+                            <small>
+                              @{user.username}
+                            </small>
+
+                          )
+                          : (
+
+                            <small>
+                              {labels.profile}
+                            </small>
+
+                          )}
 
                       </span>
 
                     </Link>
 
+
+                    <div
+                      className="shobdo-dropdown-divider"
+                    />
+
+
+                    {/* PROFILE */}
+
+                    <Link
+                      to={
+                        profilePath
+                      }
+                      className="shobdo-profile-menu-item"
+                    >
+
+                      <UserRound
+                        size={18}
+                      />
+
+                      <span>
+                        {labels.profile}
+                      </span>
+
+                    </Link>
+
+
+                    {/* MY WRITINGS */}
+
+                    <Link
+                      to="/my-writings"
+                      className="shobdo-profile-menu-item"
+                    >
+
+                      <FileText
+                        size={18}
+                      />
+
+                      <span>
+                        {labels.myWritings}
+                      </span>
+
+                    </Link>
+
+
+                    {/* SAVED */}
+
+                    <Link
+                      to="/saved"
+                      className="shobdo-profile-menu-item"
+                    >
+
+                      <Bookmark
+                        size={18}
+                      />
+
+                      <span>
+                        {labels.saved}
+                      </span>
+
+                    </Link>
+
+
+                    {/* SETTINGS / EDIT */}
+
+                    <Link
+                      to="/profile/edit"
+                      className="shobdo-profile-menu-item"
+                    >
+
+                      <Settings
+                        size={18}
+                      />
+
+                      <span>
+                        {labels.editProfile}
+                      </span>
+
+                    </Link>
+
+
+                    <div
+                      className="shobdo-dropdown-divider"
+                    />
 
 
                     {/* LOGOUT */}
 
                     <button
                       type="button"
-                      className="shobdo-navbar-logout"
+                      className="shobdo-profile-menu-item shobdo-logout-item"
                       onClick={
                         handleLogout
                       }
                     >
 
                       <LogOut
-                        size={15}
+                        size={18}
                       />
 
-
                       <span>
-
-                        {
-                          t(
-                            "navbar.logout"
-                          )
-                        }
-
+                        {labels.logout}
                       </span>
 
                     </button>
 
-                  </>
+                  </div>
 
-                )
-              : (
+                )}
 
-                  <Link
-                    to="/login"
-                    className="shobdo-navbar-login"
-                    onClick={
-                      closeMenus
-                    }
-                  >
+              </div>
 
-                    {
-                      t(
-                        "navbar.login"
-                      )
-                    }
-
-                  </Link>
-
-                )
-          }
-
-
-
-          {/* =============================================
-              MOBILE TOP NOTIFICATION BELL
-          ============================================== */}
-
-          {
-            user && (
+            )
+            : (
 
               <Link
-                to="/notifications"
-                className={
-                  location.pathname ===
-                  "/notifications"
-                    ? "shobdo-mobile-top-notification active"
-                    : "shobdo-mobile-top-notification"
-                }
-                aria-label={
-                  notificationLabel
-                }
-                title={
-                  notificationLabel
-                }
-                onClick={
-                  closeMenus
-                }
+                to="/login"
+                className="shobdo-login-button"
               >
 
-                <Bell
-                  size={20}
+                <LogIn
+                  size={17}
                 />
 
-
-                {
-                  unreadNotificationCount >
-                  0 && (
-
-                    <span
-                      className="shobdo-mobile-top-notification-badge"
-                    >
-
-                      {
-                        notificationBadge
-                      }
-
-                    </span>
-
-                  )
-                }
+                <span>
+                  {labels.login}
+                </span>
 
               </Link>
 
-            )
-          }
-
-
-
-          {/* =============================================
-              MOBILE MENU BUTTON
-          ============================================== */}
-
-          <button
-            type="button"
-            className="shobdo-mobile-menu-button"
-            onClick={
-              () =>
-                setMobileOpen(
-                  (
-                    current
-                  ) =>
-                    !current
-                )
-            }
-            aria-expanded={
-              mobileOpen
-            }
-            aria-label={
-              mobileOpen
-                ? t(
-                    "navbar.closeMenu"
-                  )
-                : t(
-                    "navbar.openMenu"
-                  )
-            }
-          >
-
-            {
-              mobileOpen
-                ? (
-
-                    <X
-                      size={21}
-                    />
-
-                  )
-                : (
-
-                    <Menu
-                      size={21}
-                    />
-
-                  )
-            }
-
-          </button>
+            )}
 
         </div>
 
       </div>
 
 
-
       {/* ===============================================
-          MOBILE NAVIGATION
+          MOBILE SEARCH OVERLAY
       ================================================ */}
 
-      {
-        mobileOpen && (
+      {mobileSearchOpen && (
 
-          <div
-            className="shobdo-mobile-nav"
+        <div
+          className="shobdo-mobile-search-panel"
+        >
+
+          <form
+            onSubmit={
+              handleSearchSubmit
+            }
+            className="shobdo-mobile-search-form"
           >
 
+            <Search
+              size={19}
+            />
 
-            {/* HOME */}
 
-            <NavLink
-              to="/"
-              end
-              className={({
-                isActive,
-              }) =>
-                isActive
-                  ? "active"
-                  : ""
+            <input
+              ref={
+                searchInputRef
               }
+              type="search"
+              value={
+                searchQuery
+              }
+              onChange={
+                (
+                  event
+                ) =>
+                  setSearchQuery(
+                    event.target.value
+                  )
+              }
+              placeholder={
+                labels.search
+              }
+              autoComplete="off"
+            />
+
+
+            <button
+              type="button"
+              aria-label="Close search"
               onClick={
-                closeMenus
+                () =>
+                  setMobileSearchOpen(
+                    false
+                  )
               }
             >
 
-              {
-                t(
-                  "navbar.home"
-                )
-              }
-
-            </NavLink>
-
-
-
-            {/* EXPLORE */}
-
-            <NavLink
-              to="/explore"
-              className={({
-                isActive,
-              }) =>
-                isActive
-                  ? "active"
-                  : ""
-              }
-              onClick={
-                closeMenus
-              }
-            >
-
-              {
-                t(
-                  "navbar.explore"
-                )
-              }
-
-            </NavLink>
-
-
-
-            {/* ===========================================
-                GLOBAL SEARCH
-            ============================================ */}
-
-            <NavLink
-              to="/search"
-              className={({
-                isActive,
-              }) =>
-                isActive
-                  ? "shobdo-mobile-search active"
-                  : "shobdo-mobile-search"
-              }
-              onClick={
-                closeMenus
-              }
-            >
-
-              <Search
-                size={16}
+              <X
+                size={19}
               />
 
+            </button>
 
-              <span>
+          </form>
 
-                {
-                  searchLabel
-                }
+        </div>
 
-              </span>
-
-            </NavLink>
-
-
-
-            {/* ABOUT */}
-
-            <NavLink
-              to="/about"
-              className={({
-                isActive,
-              }) =>
-                isActive
-                  ? "active"
-                  : ""
-              }
-              onClick={
-                closeMenus
-              }
-            >
-
-              {
-                t(
-                  "navbar.about"
-                )
-              }
-
-            </NavLink>
-
-
-
-            {/* MY WRITINGS */}
-
-            {
-              user && (
-
-                <NavLink
-                  to="/my-writings"
-                  className={({
-                    isActive,
-                  }) =>
-                    isActive
-                      ? "active"
-                      : ""
-                  }
-                  onClick={
-                    closeMenus
-                  }
-                >
-
-                  <BookOpen
-                    size={16}
-                  />
-
-
-                  {
-                    t(
-                      "navbar.myWritings"
-                    )
-                  }
-
-                </NavLink>
-
-              )
-            }
-
-
-
-            {/* WRITE */}
-
-            {
-              user && (
-
-                <NavLink
-                  to="/write"
-                  className={({
-                    isActive,
-                  }) =>
-                    isActive
-                      ? "active"
-                      : ""
-                  }
-                  onClick={
-                    closeMenus
-                  }
-                >
-
-                  <PenLine
-                    size={16}
-                  />
-
-
-                  {
-                    t(
-                      "navbar.write"
-                    )
-                  }
-
-                </NavLink>
-
-              )
-            }
-
-
-
-            {/* ===========================================
-                MOBILE NOTIFICATIONS
-            ============================================ */}
-
-            {
-              user && (
-
-                <NavLink
-                  to="/notifications"
-                  className={({
-                    isActive,
-                  }) =>
-                    isActive
-                      ? "shobdo-mobile-notification active"
-                      : "shobdo-mobile-notification"
-                  }
-                  onClick={
-                    closeMenus
-                  }
-                >
-
-                  <Bell
-                    size={17}
-                  />
-
-
-                  <span
-                    className="shobdo-mobile-notification-label"
-                  >
-
-                    {
-                      notificationLabel
-                    }
-
-                  </span>
-
-
-                  {
-                    unreadNotificationCount >
-                    0 && (
-
-                      <span
-                        className="shobdo-mobile-notification-badge"
-                      >
-
-                        {
-                          notificationBadge
-                        }
-
-                      </span>
-
-                    )
-                  }
-
-                </NavLink>
-
-              )
-            }
-
-
-
-            {/* ===========================================
-                MOBILE LANGUAGE
-            ============================================ */}
-
-            <div
-              className="shobdo-mobile-language"
-            >
-
-              <span>
-
-                <Globe2
-                  size={15}
-                />
-
-
-                {
-                  t(
-                    "navbar.websiteLanguage"
-                  )
-                }
-
-              </span>
-
-
-              <div>
-
-                {
-                  languages.map(
-                    (
-                      item
-                    ) => (
-
-                      <button
-                        key={
-                          item.code
-                        }
-                        type="button"
-                        className={
-                          language ===
-                            item.code
-                            ? "selected"
-                            : ""
-                        }
-                        onClick={
-                          () =>
-                            handleLanguageChange(
-                              item.code
-                            )
-                        }
-                      >
-
-                        {
-                          language ===
-                            item.code && (
-
-                            <Check
-                              size={12}
-                            />
-
-                          )
-                        }
-
-
-                        {
-                          item.nativeName
-                        }
-
-                      </button>
-
-                    )
-                  )
-                }
-
-              </div>
-
-            </div>
-
-
-
-            {/* ===========================================
-                MOBILE AUTH
-            ============================================ */}
-
-            {
-              user
-                ? (
-
-                    <>
-
-                      <Link
-                        to={
-                          user?.id
-                            ? `/users/${user.id}`
-                            : "/my-writings"
-                        }
-                        className="shobdo-mobile-user"
-                        onClick={
-                          closeMenus
-                        }
-                      >
-
-                        <span
-                          className="shobdo-navbar-avatar"
-                        >
-
-                          {
-                            userInitial
-                          }
-
-                        </span>
-
-
-                        <div>
-
-                          <small>
-
-                            {
-                              t(
-                                "navbar.signedInAs"
-                              )
-                            }
-
-                          </small>
-
-
-                          <strong>
-
-                            {
-                              user?.name ||
-                              "Writer"
-                            }
-
-                          </strong>
-
-                        </div>
-
-                      </Link>
-
-
-
-                      <button
-                        type="button"
-                        className="shobdo-mobile-logout"
-                        onClick={
-                          handleLogout
-                        }
-                      >
-
-                        <LogOut
-                          size={16}
-                        />
-
-
-                        {
-                          t(
-                            "navbar.logout"
-                          )
-                        }
-
-                      </button>
-
-                    </>
-
-                  )
-                : (
-
-                    <Link
-                      to="/login"
-                      className="shobdo-mobile-login"
-                      onClick={
-                        closeMenus
-                      }
-                    >
-
-                      {
-                        t(
-                          "navbar.login"
-                        )
-                      }
-
-                    </Link>
-
-                  )
-            }
-
-          </div>
-
-        )
-      }
+      )}
 
     </header>
 
   );
-
 }
 
 

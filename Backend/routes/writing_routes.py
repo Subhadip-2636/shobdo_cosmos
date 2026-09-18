@@ -5,7 +5,9 @@
 from datetime import datetime, timezone
 import io
 import os
+import re
 import shutil
+import unicodedata
 from pathlib import Path
 
 import pymupdf
@@ -33,6 +35,7 @@ from database import db
 from models.writing import Writing
 from models.comment import Comment
 from models.like import Like
+from models.tag import Tag
 
 
 # =========================================================
@@ -44,8 +47,7 @@ writings_bp = Blueprint(
     __name__,
 )
 
-
-# Compatibility alias if App.py imports writing_bp
+# Compatibility alias if App.py imports writing_bp.
 writing_bp = writings_bp
 
 
@@ -53,9 +55,9 @@ writing_bp = writings_bp
 # CONSTANTS
 # =========================================================
 
-MAX_FILE_SIZE = (
-    10 * 1024 * 1024
-)
+MAX_FILE_SIZE = 10 * 1024 * 1024
+
+MAX_PDF_PAGES = 30
 
 
 ALLOWED_EXTENSIONS = {
@@ -97,8 +99,24 @@ ALLOWED_CATEGORIES = {
 }
 
 
-# Prevent extremely large PDFs from taking too long
-MAX_PDF_PAGES = 30
+# =========================================================
+# HASHTAG CONFIGURATION
+# =========================================================
+
+MAX_HASHTAGS_PER_WRITING = 20
+
+MAX_TAG_LENGTH = 60
+
+
+# Detect only the hashtag marker here.
+#
+# The characters following "#" are parsed manually using
+# Unicode categories so that Bengali, Hindi, English and
+# other Indic scripts work correctly.
+HASHTAG_MARKER_PATTERN = re.compile(
+    r"(?<![\w#])#",
+    flags=re.UNICODE,
+)
 
 
 # =========================================================
@@ -107,12 +125,11 @@ MAX_PDF_PAGES = 30
 
 def configure_tesseract():
     """
-    Find the Windows Tesseract executable.
-
     Search order:
+
     1. TESSERACT_CMD environment variable
     2. Windows PATH
-    3. Standard Program Files installation paths
+    3. Standard Windows installation locations
     """
 
     environment_command = os.getenv(
@@ -150,12 +167,15 @@ def configure_tesseract():
 
 
     possible_locations = [
+
         Path(
             r"C:\Program Files\Tesseract-OCR\tesseract.exe"
         ),
+
         Path(
             r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe"
         ),
+
     ]
 
 
@@ -164,7 +184,9 @@ def configure_tesseract():
         if location.is_file():
 
             pytesseract.pytesseract.tesseract_cmd = (
-                str(location)
+                str(
+                    location
+                )
             )
 
             return
@@ -183,21 +205,36 @@ def error_response(
 ):
 
     return (
+
         jsonify({
-            "message": message,
+            "success":
+                False,
+
+            "message":
+                message,
         }),
+
         status_code,
+
     )
+
+
+# =========================================================
 
 
 def get_current_user_id():
 
-    identity = get_jwt_identity()
+    identity = (
+        get_jwt_identity()
+    )
 
 
     try:
 
-        return int(identity)
+        return int(
+            identity
+        )
+
 
     except (
         TypeError,
@@ -205,6 +242,39 @@ def get_current_user_id():
     ):
 
         return None
+
+
+# =========================================================
+
+
+def get_optional_user_id():
+
+    identity = (
+        get_jwt_identity()
+    )
+
+
+    if identity is None:
+
+        return None
+
+
+    try:
+
+        return int(
+            identity
+        )
+
+
+    except (
+        TypeError,
+        ValueError,
+    ):
+
+        return None
+
+
+# =========================================================
 
 
 def get_model_item(
@@ -218,30 +288,44 @@ def get_model_item(
     )
 
 
+# =========================================================
+
+
 def get_author_name(
     user,
 ):
 
     if user is None:
 
-        return "Unknown Author"
+        return (
+            "Unknown Author"
+        )
 
 
     return (
+
         getattr(
             user,
             "name",
             None,
         )
+
         or
+
         getattr(
             user,
             "username",
             None,
         )
+
         or
+
         "Unknown Author"
+
     )
+
+
+# =========================================================
 
 
 def get_author_id(
@@ -260,6 +344,9 @@ def get_author_id(
     )
 
 
+# =========================================================
+
+
 def get_created_at(
     item,
 ):
@@ -271,12 +358,18 @@ def get_created_at(
     )
 
 
-    if created_at is None:
+    return (
 
-        return None
+        created_at.isoformat()
+
+        if created_at
+
+        else None
+
+    )
 
 
-    return created_at.isoformat()
+# =========================================================
 
 
 def get_updated_at(
@@ -290,12 +383,661 @@ def get_updated_at(
     )
 
 
-    if updated_at is None:
+    return (
+
+        updated_at.isoformat()
+
+        if updated_at
+
+        else None
+
+    )
+
+
+# =========================================================
+
+
+def parse_page_and_limit(
+    default_limit=12,
+    max_limit=50,
+):
+
+    try:
+
+        page = int(
+
+            request.args.get(
+                "page",
+                1,
+            )
+
+        )
+
+
+    except (
+        TypeError,
+        ValueError,
+    ):
+
+        page = 1
+
+
+    try:
+
+        limit = int(
+
+            request.args.get(
+                "limit",
+                default_limit,
+            )
+
+        )
+
+
+    except (
+        TypeError,
+        ValueError,
+    ):
+
+        limit = (
+            default_limit
+        )
+
+
+    page = max(
+        page,
+        1,
+    )
+
+
+    limit = min(
+
+        max(
+            limit,
+            1,
+        ),
+
+        max_limit,
+
+    )
+
+
+    return (
+        page,
+        limit,
+    )
+
+
+# =========================================================
+# HASHTAG HELPERS
+# =========================================================
+
+def is_hashtag_start_character(
+    character,
+):
+    """
+    A hashtag may begin with a Unicode letter or number.
+
+    Examples:
+
+    #কবিতা
+    #कविता
+    #Poetry
+    #2026
+    """
+
+    if not character:
+
+        return False
+
+
+    category = (
+        unicodedata.category(
+            character
+        )
+    )
+
+
+    return category.startswith(
+        (
+            "L",
+            "N",
+        )
+    )
+
+
+# =========================================================
+
+
+def is_hashtag_character(
+    character,
+):
+    """
+    Characters allowed after the first hashtag character:
+
+    - Unicode letters
+    - Unicode combining marks
+    - Unicode numbers
+    - underscore
+    - ZWNJ
+    - ZWJ
+    """
+
+    if not character:
+
+        return False
+
+
+    if character in {
+        "_",
+        "\u200c",
+        "\u200d",
+    }:
+
+        return True
+
+
+    category = (
+        unicodedata.category(
+            character
+        )
+    )
+
+
+    return category.startswith(
+        (
+            "L",
+            "M",
+            "N",
+        )
+    )
+
+
+# =========================================================
+
+
+def normalize_tag_name(
+    value,
+):
+    """
+    Normalize one hashtag.
+
+    Input examples:
+
+    #কবিতা
+    কবিতা
+    #Poetry
+
+    Returned value does not contain "#".
+    """
+
+    value = (
+        unicodedata.normalize(
+            "NFKC",
+            str(
+                value or ""
+            ),
+        )
+        .strip()
+    )
+
+
+    if value.startswith(
+        "#"
+    ):
+
+        value = value[
+            1:
+        ]
+
+
+    if not value:
 
         return None
 
 
-    return updated_at.isoformat()
+    characters = []
+
+
+    for character in value:
+
+        if not characters:
+
+            if not is_hashtag_start_character(
+                character
+            ):
+
+                return None
+
+
+            characters.append(
+                character
+            )
+
+            continue
+
+
+        if not is_hashtag_character(
+            character
+        ):
+
+            break
+
+
+        characters.append(
+            character
+        )
+
+
+        if (
+            len(
+                characters
+            )
+            >
+            MAX_TAG_LENGTH
+        ):
+
+            return None
+
+
+    tag_name = (
+        "".join(
+            characters
+        )
+        .strip(
+            "_"
+        )
+    )
+
+
+    if not tag_name:
+
+        return None
+
+
+    if (
+        len(
+            tag_name
+        )
+        >
+        MAX_TAG_LENGTH
+    ):
+
+        return None
+
+
+    return tag_name
+
+
+# =========================================================
+
+
+def extract_hashtags(
+    title="",
+    content="",
+):
+    """
+    Extract unique hashtags from title + content.
+
+    Example:
+
+    আজ #কবিতা লিখলাম।
+    #বাংলাসাহিত্য #প্রকৃতি
+
+    Result:
+
+    [
+        "কবিতা",
+        "বাংলাসাহিত্য",
+        "প্রকৃতি",
+    ]
+    """
+
+    combined_text = (
+        unicodedata.normalize(
+            "NFKC",
+            (
+                f"{title or ''}\n"
+                f"{content or ''}"
+            ),
+        )
+    )
+
+
+    tag_names = []
+
+    seen = set()
+
+
+    for marker in (
+        HASHTAG_MARKER_PATTERN
+        .finditer(
+            combined_text
+        )
+    ):
+
+        start_index = (
+            marker.end()
+        )
+
+
+        if (
+            start_index
+            >=
+            len(
+                combined_text
+            )
+        ):
+
+            continue
+
+
+        first_character = (
+            combined_text[
+                start_index
+            ]
+        )
+
+
+        if not is_hashtag_start_character(
+            first_character
+        ):
+
+            continue
+
+
+        characters = [
+            first_character
+        ]
+
+
+        current_index = (
+            start_index + 1
+        )
+
+
+        while (
+            current_index
+            <
+            len(
+                combined_text
+            )
+        ):
+
+            character = (
+                combined_text[
+                    current_index
+                ]
+            )
+
+
+            if not is_hashtag_character(
+                character
+            ):
+
+                break
+
+
+            characters.append(
+                character
+            )
+
+
+            if (
+                len(
+                    characters
+                )
+                >
+                MAX_TAG_LENGTH
+            ):
+
+                break
+
+
+            current_index += 1
+
+
+        if (
+            len(
+                characters
+            )
+            >
+            MAX_TAG_LENGTH
+        ):
+
+            continue
+
+
+        tag_name = (
+            normalize_tag_name(
+                "".join(
+                    characters
+                )
+            )
+        )
+
+
+        if not tag_name:
+
+            continue
+
+
+        key = (
+            tag_name.lower()
+        )
+
+
+        if key in seen:
+
+            continue
+
+
+        seen.add(
+            key
+        )
+
+
+        tag_names.append(
+            tag_name
+        )
+
+
+        if (
+            len(
+                tag_names
+            )
+            >=
+            MAX_HASHTAGS_PER_WRITING
+        ):
+
+            break
+
+
+    return tag_names
+
+
+# =========================================================
+
+
+def serialize_tag(
+    tag,
+):
+
+    name = str(
+
+        getattr(
+            tag,
+            "name",
+            "",
+        )
+
+        or ""
+
+    )
+
+
+    return {
+
+        "id":
+            getattr(
+                tag,
+                "id",
+                None,
+            ),
+
+        "name":
+            name,
+
+        "hashtag":
+            (
+                f"#{name}"
+
+                if name
+
+                else ""
+            ),
+
+    }
+
+
+# =========================================================
+
+
+def sync_writing_tags(
+    writing,
+):
+    """
+    Synchronize Writing.tags with hashtags in the current
+    title and content.
+
+    Existing tags are reused.
+
+    Missing tags are automatically created.
+
+    Removed hashtags are automatically detached from the
+    writing.
+
+    The caller controls db.session.commit().
+    """
+
+    tag_names = (
+        extract_hashtags(
+
+            title=
+                getattr(
+                    writing,
+                    "title",
+                    "",
+                ),
+
+            content=
+                getattr(
+                    writing,
+                    "content",
+                    "",
+                ),
+
+        )
+    )
+
+
+    if not tag_names:
+
+        writing.tags = []
+
+        return []
+
+
+    match_keys = [
+
+        tag_name.lower()
+
+        for tag_name
+        in tag_names
+
+    ]
+
+
+    existing_tags = (
+
+        Tag.query
+
+        .filter(
+
+            db.func.lower(
+                Tag.name
+            )
+            .in_(
+                match_keys
+            )
+
+        )
+
+        .all()
+
+    )
+
+
+    tags_by_key = {
+
+        str(
+            tag.name
+            or ""
+        ).lower():
+            tag
+
+        for tag
+        in existing_tags
+
+    }
+
+
+    resolved_tags = []
+
+
+    for tag_name in tag_names:
+
+        key = (
+            tag_name.lower()
+        )
+
+
+        tag = (
+            tags_by_key.get(
+                key
+            )
+        )
+
+
+        if tag is None:
+
+            tag = Tag(
+                name=
+                    tag_name
+            )
+
+
+            db.session.add(
+                tag
+            )
+
+
+            tags_by_key[
+                key
+            ] = tag
+
+
+        resolved_tags.append(
+            tag
+        )
+
+
+    writing.tags = (
+        resolved_tags
+    )
+
+
+    return resolved_tags
 
 
 # =========================================================
@@ -322,17 +1064,22 @@ def serialize_comment(
         )
 
 
-    author_name = get_author_name(
-        user
+    author_name = (
+        get_author_name(
+            user
+        )
     )
 
 
-    author_id_value = get_author_id(
-        user
+    author_id_value = (
+        get_author_id(
+            user
+        )
     )
 
 
     return {
+
         "id":
             comment.id,
 
@@ -353,17 +1100,46 @@ def serialize_comment(
             author_name,
 
         "author": {
+
             "id":
                 author_id_value,
 
             "name":
                 author_name,
+
+            "username":
+                (
+                    getattr(
+                        user,
+                        "username",
+                        None,
+                    )
+
+                    if user
+
+                    else None
+                ),
+
+            "avatar_url":
+                (
+                    getattr(
+                        user,
+                        "avatar_url",
+                        None,
+                    )
+
+                    if user
+
+                    else None
+                ),
+
         },
 
         "created_at":
             get_created_at(
                 comment
             ),
+
     }
 
 
@@ -406,11 +1182,19 @@ def serialize_writing(
     )
 
 
+    writing_tags = getattr(
+        writing,
+        "tags",
+        [],
+    )
+
+
     try:
 
         likes_count = len(
             writing_likes
         )
+
 
     except TypeError:
 
@@ -423,9 +1207,29 @@ def serialize_writing(
             writing_comments
         )
 
+
     except TypeError:
 
         comments_count = 0
+
+
+    try:
+
+        serialized_tags = [
+
+            serialize_tag(
+                tag
+            )
+
+            for tag
+            in writing_tags
+
+        ]
+
+
+    except TypeError:
+
+        serialized_tags = []
 
 
     is_liked = False
@@ -436,13 +1240,20 @@ def serialize_writing(
         try:
 
             is_liked = any(
+
                 getattr(
                     like,
                     "user_id",
                     None,
-                ) == current_user_id
-                for like in writing_likes
+                )
+                ==
+                current_user_id
+
+                for like
+                in writing_likes
+
             )
+
 
         except TypeError:
 
@@ -450,6 +1261,11 @@ def serialize_writing(
 
 
     return {
+
+        # -------------------------------------------------
+        # WRITING
+        # -------------------------------------------------
+
         "id":
             writing.id,
 
@@ -469,6 +1285,10 @@ def serialize_writing(
                 "bn",
             ),
 
+        # -------------------------------------------------
+        # AUTHOR
+        # -------------------------------------------------
+
         "user_id":
             getattr(
                 writing,
@@ -486,7 +1306,34 @@ def serialize_writing(
                 author
             ),
 
+        "author_username":
+            (
+                getattr(
+                    author,
+                    "username",
+                    None,
+                )
+
+                if author
+
+                else None
+            ),
+
+        "author_avatar_url":
+            (
+                getattr(
+                    author,
+                    "avatar_url",
+                    None,
+                )
+
+                if author
+
+                else None
+            ),
+
         "author": {
+
             "id":
                 get_author_id(
                     author
@@ -496,7 +1343,60 @@ def serialize_writing(
                 get_author_name(
                     author
                 ),
+
+            "username":
+                (
+                    getattr(
+                        author,
+                        "username",
+                        None,
+                    )
+
+                    if author
+
+                    else None
+                ),
+
+            "avatar_url":
+                (
+                    getattr(
+                        author,
+                        "avatar_url",
+                        None,
+                    )
+
+                    if author
+
+                    else None
+                ),
+
         },
+
+        # -------------------------------------------------
+        # TAGS
+        # -------------------------------------------------
+
+        "tags":
+            serialized_tags,
+
+        "hashtags": [
+
+            item[
+                "hashtag"
+            ]
+
+            for item
+            in serialized_tags
+
+            if item.get(
+                "hashtag"
+            )
+
+        ],
+
+        # -------------------------------------------------
+        # ENGAGEMENT
+        # -------------------------------------------------
 
         "likes":
             likes_count,
@@ -510,6 +1410,10 @@ def serialize_writing(
         "is_liked":
             is_liked,
 
+        # -------------------------------------------------
+        # DATES
+        # -------------------------------------------------
+
         "created_at":
             get_created_at(
                 writing
@@ -519,55 +1423,56 @@ def serialize_writing(
             get_updated_at(
                 writing
             ),
+
+        "published_at":
+            (
+                writing
+                .published_at
+                .isoformat()
+
+                if getattr(
+                    writing,
+                    "published_at",
+                    None,
+                )
+
+                else None
+            ),
+
+        # -------------------------------------------------
+        # STATUS
+        # -------------------------------------------------
+
         "status":
             getattr(
                 writing,
                 "status",
                 "draft",
             ),
-        "previous_status": 
+
+        "previous_status":
             getattr(
                 writing,
                 "previous_status",
                 None,
             ),
+
         "deleted_at":
             (
-                writing.deleted_at.isoformat()
+                writing
+                .deleted_at
+                .isoformat()
+
                 if getattr(
                     writing,
                     "deleted_at",
                     None,
                 )
+
                 else None
             ),
+
     }
-
-
-# =========================================================
-# OPTIONAL JWT IDENTITY
-# =========================================================
-
-def get_optional_user_id():
-
-    identity = get_jwt_identity()
-
-
-    if identity is None:
-
-        return None
-
-
-    try:
-
-        return int(identity)
-
-    except (
-        TypeError,
-        ValueError,
-    ):
-
-        return None
 
 
 # =========================================================
@@ -579,63 +1484,92 @@ def get_optional_user_id():
     methods=["GET"],
 )
 def get_supported_languages():
-    """
-    Return the writing languages supported by SHOBDO.
-    This endpoint is public and does not require JWT.
-    """
 
-    try:
+    return jsonify({
 
-        languages = [
+        "success":
+            True,
+
+        "languages": [
+
             {
-                "code": "bn",
-                "name": "Bengali",
-                "label": "বাংলা",
-                "nativeName": "বাংলা",
-                "native_name": "বাংলা",
+                "code":
+                    "bn",
+
+                "name":
+                    "Bengali",
+
+                "label":
+                    "বাংলা",
+
+                "nativeName":
+                    "বাংলা",
+
+                "native_name":
+                    "বাংলা",
             },
+
             {
-                "code": "en",
-                "name": "English",
-                "label": "English",
-                "nativeName": "English",
-                "native_name": "English",
+                "code":
+                    "en",
+
+                "name":
+                    "English",
+
+                "label":
+                    "English",
+
+                "nativeName":
+                    "English",
+
+                "native_name":
+                    "English",
             },
+
             {
-                "code": "hi",
-                "name": "Hindi",
-                "label": "हिन्दी",
-                "nativeName": "हिन्दी",
-                "native_name": "हिन्दी",
+                "code":
+                    "hi",
+
+                "name":
+                    "Hindi",
+
+                "label":
+                    "हिन्दी",
+
+                "nativeName":
+                    "हिन्दी",
+
+                "native_name":
+                    "हिन्दी",
             },
-        ]
 
-        return jsonify({
-            "languages": languages,
-        }), 200
+        ],
 
-    except Exception as error:
-
-        print(
-            "Get supported languages error:",
-            error,
-        )
-
-        return error_response(
-            "Unable to load supported languages.",
-            500,
-        )
+    }), 200
 
 
 # =========================================================
-# GET ALL WRITINGS
+# GET ALL PUBLISHED WRITINGS
+#
+# GET /api/writings
+#
+# Supports:
+#
+# ?search=
+# ?category=
+# ?language=
+# ?tag=
+# ?page=
+# ?limit=
 # =========================================================
 
 @writings_bp.route(
     "",
     methods=["GET"],
 )
-@jwt_required(optional=True)
+@jwt_required(
+    optional=True
+)
 def get_writings():
 
     try:
@@ -645,67 +1579,67 @@ def get_writings():
         )
 
 
-        search = request.args.get(
-            "search",
-            "",
-        ).strip()
-
-
-        category = request.args.get(
-            "category",
-            "",
-        ).strip()
-
-
-        language = request.args.get(
-            "language",
-            "",
-        ).strip()
-
-
-        try:
-
-            page = max(
-                int(
-                    request.args.get(
-                        "page",
-                        1,
-                    )
-                ),
-                1,
+        search = (
+            request.args.get(
+                "search",
+                "",
             )
-
-        except ValueError:
-
-            page = 1
-
-
-        try:
-
-            limit = int(
-                request.args.get(
-                    "limit",
-                    12,
-                )
-            )
-
-        except ValueError:
-
-            limit = 12
-
-
-        limit = min(
-            max(
-                limit,
-                1,
-            ),
-            50,
+            .strip()
         )
 
 
-        query = Writing.query.filter(
-            Writing.status == "published"
+        category = (
+            request.args.get(
+                "category",
+                "",
+            )
+            .strip()
         )
+
+
+        language = (
+            request.args.get(
+                "language",
+                "",
+            )
+            .strip()
+            .lower()
+        )
+
+
+        tag = (
+            request.args.get(
+                "tag",
+                "",
+            )
+            .strip()
+        )
+
+
+        (
+            page,
+            limit,
+        ) = (
+            parse_page_and_limit()
+        )
+
+
+        query = (
+
+            Writing.query
+
+            .filter(
+                Writing.status
+                ==
+                "published"
+            )
+
+        )
+
+
+        # =================================================
+        # SEARCH
+        # =================================================
 
         if search:
 
@@ -715,16 +1649,25 @@ def get_writings():
 
 
             query = query.filter(
+
                 db.or_(
+
                     Writing.title.ilike(
                         search_pattern
                     ),
+
                     Writing.content.ilike(
                         search_pattern
                     ),
+
                 )
+
             )
 
+
+        # =================================================
+        # CATEGORY
+        # =================================================
 
         if category:
 
@@ -735,14 +1678,11 @@ def get_writings():
             )
 
 
-        if (
-            language
-            and
-            hasattr(
-                Writing,
-                "language",
-            )
-        ):
+        # =================================================
+        # LANGUAGE
+        # =================================================
+
+        if language:
 
             query = query.filter(
                 Writing.language
@@ -751,40 +1691,109 @@ def get_writings():
             )
 
 
-        if hasattr(
-            Writing,
-            "created_at",
-        ):
+        # =================================================
+        # HASHTAG
+        # =================================================
 
-            query = query.order_by(
-                Writing.created_at.desc()
-            )
+        if tag:
 
-        else:
-
-            query = query.order_by(
-                Writing.id.desc()
+            normalized_tag = (
+                normalize_tag_name(
+                    tag
+                )
             )
 
 
-        pagination = query.paginate(
-            page=page,
-            per_page=limit,
-            error_out=False,
+            if not normalized_tag:
+
+                return error_response(
+                    "Invalid hashtag.",
+                    400,
+                )
+
+
+            query = (
+
+                query
+
+                .join(
+                    Writing.tags
+                )
+
+                .filter(
+
+                    db.func.lower(
+                        Tag.name
+                    )
+                    ==
+                    normalized_tag.lower()
+
+                )
+
+                .distinct()
+
+            )
+
+
+        # =================================================
+        # ORDER
+        # =================================================
+
+        query = query.order_by(
+
+            Writing
+            .published_at
+            .desc(),
+
+            Writing
+            .created_at
+            .desc(),
+
+            Writing
+            .id
+            .desc(),
+
+        )
+
+
+        # =================================================
+        # PAGINATION
+        # =================================================
+
+        pagination = (
+            query.paginate(
+
+                page=
+                    page,
+
+                per_page=
+                    limit,
+
+                error_out=
+                    False,
+
+            )
         )
 
 
         writings = [
+
             serialize_writing(
                 writing,
                 current_user_id,
             )
+
             for writing
             in pagination.items
+
         ]
 
 
         return jsonify({
+
+            "success":
+                True,
+
             "writings":
                 writings,
 
@@ -808,6 +1817,7 @@ def get_writings():
 
             "has_prev":
                 pagination.has_prev,
+
         }), 200
 
 
@@ -821,6 +1831,214 @@ def get_writings():
 
         return error_response(
             "Unable to load writings.",
+            500,
+        )
+
+
+# =========================================================
+# GET WRITINGS BY HASHTAG
+#
+# GET /api/writings/tags/<tag_name>
+# =========================================================
+
+@writings_bp.route(
+    "/tags/<path:tag_name>",
+    methods=["GET"],
+)
+@jwt_required(
+    optional=True
+)
+def get_writings_by_tag(
+    tag_name,
+):
+
+    try:
+
+        current_user_id = (
+            get_optional_user_id()
+        )
+
+
+        normalized_tag = (
+            normalize_tag_name(
+                tag_name
+            )
+        )
+
+
+        if not normalized_tag:
+
+            return error_response(
+                "Invalid hashtag.",
+                400,
+            )
+
+
+        (
+            page,
+            limit,
+        ) = (
+            parse_page_and_limit()
+        )
+
+
+        query = (
+
+            Writing.query
+
+            .join(
+                Writing.tags
+            )
+
+            .filter(
+
+                Writing.status
+                ==
+                "published",
+
+                db.func.lower(
+                    Tag.name
+                )
+                ==
+                normalized_tag.lower(),
+
+            )
+
+            .order_by(
+
+                Writing
+                .published_at
+                .desc(),
+
+                Writing
+                .created_at
+                .desc(),
+
+                Writing
+                .id
+                .desc(),
+
+            )
+
+            .distinct()
+
+        )
+
+
+        pagination = (
+            query.paginate(
+
+                page=
+                    page,
+
+                per_page=
+                    limit,
+
+                error_out=
+                    False,
+
+            )
+        )
+
+
+        writings = [
+
+            serialize_writing(
+                writing,
+                current_user_id,
+            )
+
+            for writing
+            in pagination.items
+
+        ]
+
+
+        matched_tag = (
+
+            Tag.query
+
+            .filter(
+
+                db.func.lower(
+                    Tag.name
+                )
+                ==
+                normalized_tag.lower()
+
+            )
+
+            .first()
+
+        )
+
+
+        return jsonify({
+
+            "success":
+                True,
+
+            "tag":
+                (
+
+                    serialize_tag(
+                        matched_tag
+                    )
+
+                    if matched_tag
+
+                    else {
+
+                        "id":
+                            None,
+
+                        "name":
+                            normalized_tag,
+
+                        "hashtag":
+                            f"#{normalized_tag}",
+
+                    }
+
+                ),
+
+            "writings":
+                writings,
+
+            "items":
+                writings,
+
+            "page":
+                pagination.page,
+
+            "pages":
+                pagination.pages,
+
+            "total":
+                pagination.total,
+
+            "limit":
+                limit,
+
+            "has_next":
+                pagination.has_next,
+
+            "has_prev":
+                pagination.has_prev,
+
+        }), 200
+
+
+    except Exception as error:
+
+        print(
+            "Get writings by hashtag error:",
+            error,
+        )
+
+
+        return error_response(
+            "Unable to load writings for this hashtag.",
             500,
         )
 
@@ -851,76 +2069,57 @@ def get_my_writings():
             )
 
 
-        search = request.args.get(
-            "search",
-            "",
-        ).strip()
-
-
-        language = request.args.get(
-            "language",
-            "",
-        ).strip()
-
-
-        status = request.args.get(
-            "status",
-            "",
-        ).strip().lower()
-
-
-        try:
-
-            page = max(
-                int(
-                    request.args.get(
-                        "page",
-                        1,
-                    )
-                ),
-                1,
+        search = (
+            request.args.get(
+                "search",
+                "",
             )
-
-        except ValueError:
-
-            page = 1
-
-
-        try:
-
-            limit = int(
-                request.args.get(
-                    "limit",
-                    12,
-                )
-            )
-
-        except ValueError:
-
-            limit = 12
-
-
-        limit = min(
-            max(
-                limit,
-                1,
-            ),
-            50,
+            .strip()
         )
 
 
-        query = Writing.query.filter(
-            Writing.user_id
-            ==
-            user_id
+        language = (
+            request.args.get(
+                "language",
+                "",
+            )
+            .strip()
+            .lower()
         )
+
+
+        status = (
+            request.args.get(
+                "status",
+                "",
+            )
+            .strip()
+            .lower()
+        )
+
+
+        (
+            page,
+            limit,
+        ) = (
+            parse_page_and_limit()
+        )
+
+
+        query = (
+            Writing.query
+            .filter(
+                Writing.user_id
+                ==
+                user_id
+            )
+        )
+
+
         if (
-            hasattr(
-                Writing,
-                "status"
-            )
-            and
-            status != "deleted"
+            status
+            !=
+            "deleted"
         ):
 
             query = query.filter(
@@ -938,25 +2137,23 @@ def get_my_writings():
 
 
             query = query.filter(
+
                 db.or_(
+
                     Writing.title.ilike(
                         search_pattern
                     ),
+
                     Writing.content.ilike(
                         search_pattern
                     ),
+
                 )
+
             )
 
 
-        if (
-            language
-            and
-            hasattr(
-                Writing,
-                "language",
-            )
-        ):
+        if language:
 
             query = query.filter(
                 Writing.language
@@ -965,17 +2162,7 @@ def get_my_writings():
             )
 
 
-        # Only applies if the Writing model has a
-        # status / is_published column. Safe to ignore
-        # otherwise.
-        if (
-            status
-            and
-            hasattr(
-                Writing,
-                "status",
-            )
-        ):
+        if status:
 
             query = query.filter(
                 Writing.status
@@ -983,63 +2170,54 @@ def get_my_writings():
                 status
             )
 
-        elif (
-            status
-            and
-            hasattr(
-                Writing,
-                "is_published",
+
+        query = query.order_by(
+
+            Writing
+            .created_at
+            .desc(),
+
+            Writing
+            .id
+            .desc(),
+
+        )
+
+
+        pagination = (
+            query.paginate(
+
+                page=
+                    page,
+
+                per_page=
+                    limit,
+
+                error_out=
+                    False,
+
             )
-        ):
-
-            is_published = (
-                status
-                ==
-                "published"
-            )
-
-
-            query = query.filter(
-                Writing.is_published
-                ==
-                is_published
-            )
-
-
-        if hasattr(
-            Writing,
-            "created_at",
-        ):
-
-            query = query.order_by(
-                Writing.created_at.desc()
-            )
-
-        else:
-
-            query = query.order_by(
-                Writing.id.desc()
-            )
-
-
-        pagination = query.paginate(
-            page=page,
-            per_page=limit,
-            error_out=False,
         )
 
 
         writings = [
+
             serialize_writing(
                 writing,
                 user_id,
             )
+
             for writing
             in pagination.items
+
         ]
 
 
         return jsonify({
+
+            "success":
+                True,
+
             "writings":
                 writings,
 
@@ -1063,6 +2241,7 @@ def get_my_writings():
 
             "has_prev":
                 pagination.has_prev,
+
         }), 200
 
 
@@ -1081,14 +2260,16 @@ def get_my_writings():
 
 
 # =========================================================
-# GET ONE WRITING
+# GET ONE PUBLISHED WRITING
 # =========================================================
 
 @writings_bp.route(
     "/<int:writing_id>",
     methods=["GET"],
 )
-@jwt_required(optional=True)
+@jwt_required(
+    optional=True
+)
 def get_writing(
     writing_id,
 ):
@@ -1106,17 +2287,14 @@ def get_writing(
         )
 
 
-        if writing is None:
-
-            return error_response(
-                "Writing not found.",
-                404,
-            )
-        
         if (
-            hasattr(Writing, "status")
-            and writing.status != "published"
+            writing is None
+            or
+            writing.status
+            !=
+            "published"
         ):
+
             return error_response(
                 "Writing not found.",
                 404,
@@ -1140,25 +2318,36 @@ def get_writing(
 
         try:
 
-            writing_data["comments"] = [
+            writing_data[
+                "comments"
+            ] = [
+
                 serialize_comment(
                     comment
                 )
+
                 for comment
                 in sorted(
+
                     comments,
+
                     key=lambda item:
                         getattr(
                             item,
                             "created_at",
                             item.id,
                         ),
+
                 )
+
             ]
+
 
         except TypeError:
 
-            writing_data["comments"] = []
+            writing_data[
+                "comments"
+            ] = []
 
 
         return jsonify(
@@ -1181,7 +2370,9 @@ def get_writing(
 
 
 # =========================================================
-# CREATE WRITING
+# CREATE + PUBLISH WRITING
+#
+# POST /api/writings
 # =========================================================
 
 @writings_bp.route(
@@ -1210,41 +2401,52 @@ def create_writing():
             request.get_json(
                 silent=True
             )
-            or
-            {}
+            or {}
         )
 
 
         title = str(
+
             data.get(
                 "title",
                 "",
             )
+
         ).strip()
 
 
         content = str(
+
             data.get(
                 "content",
                 "",
             )
+
         ).strip()
 
 
         category = str(
+
             data.get(
                 "category",
                 "অন্যান্য",
             )
+
         ).strip()
 
 
-        language = str(
-            data.get(
-                "language",
-                "bn",
+        language = (
+            str(
+
+                data.get(
+                    "language",
+                    "bn",
+                )
+
             )
-        ).strip().lower()
+            .strip()
+            .lower()
+        )
 
 
         if not title:
@@ -1261,7 +2463,13 @@ def create_writing():
             )
 
 
-        if len(title) > 200:
+        if (
+            len(
+                title
+            )
+            >
+            200
+        ):
 
             return error_response(
                 "Title cannot exceed 200 characters."
@@ -1274,7 +2482,9 @@ def create_writing():
             ALLOWED_CATEGORIES
         ):
 
-            category = "অন্যান্য"
+            category = (
+                "অন্যান্য"
+            )
 
 
         if (
@@ -1286,39 +2496,31 @@ def create_writing():
             language = "bn"
 
 
-        writing_arguments = {
-            "title":
+        writing = Writing(
+
+            title=
                 title,
 
-            "content":
+            content=
                 content,
 
-            "category":
+            category=
                 category,
 
-            "user_id":
+            language=
+                language,
+
+            user_id=
                 user_id,
-             # This endpoint is POST /api/writings,
-            # so a new writing created here is published.
-            "status":
+
+            status=
                 "published",
-        }
 
+            published_at=
+                datetime.now(
+                    timezone.utc
+                ),
 
-        if hasattr(
-            Writing,
-            "published_at",
-        ):
-
-            writing_arguments[
-                "published_at"
-            ] = datetime.now(
-                timezone.utc
-            )
-
-
-        writing = Writing(
-            **writing_arguments
         )
 
 
@@ -1326,14 +2528,23 @@ def create_writing():
             writing
         )
 
+
+        # Automatically extract + attach hashtags.
+        sync_writing_tags(
+            writing
+        )
+
+
         db.session.commit()
 
 
         return jsonify(
+
             serialize_writing(
                 writing,
                 user_id,
             )
+
         ), 201
 
 
@@ -1356,6 +2567,8 @@ def create_writing():
 
 # =========================================================
 # CREATE DRAFT
+#
+# POST /api/writings/drafts
 # =========================================================
 
 @writings_bp.route(
@@ -1367,83 +2580,181 @@ def create_draft():
 
     try:
 
-        user_id = get_current_user_id()
+        user_id = (
+            get_current_user_id()
+        )
+
 
         if user_id is None:
+
             return error_response(
                 "Invalid authentication identity.",
                 401,
             )
 
-        data = request.get_json(
-            silent=True
-        ) or {}
+
+        data = (
+            request.get_json(
+                silent=True
+            )
+            or {}
+        )
+
 
         title = (
-            data.get("title")
-            or ""
-        ).strip()
+
+            str(
+                data.get(
+                    "title",
+                    "",
+                )
+                or ""
+            )
+
+            .strip()
+
+        )
+
 
         content = (
-            data.get("content")
-            or ""
-        ).strip()
+
+            str(
+                data.get(
+                    "content",
+                    "",
+                )
+                or ""
+            )
+
+            .strip()
+
+        )
+
 
         category = (
-            data.get("category")
-            or "অন্যান্য"
-        ).strip()
+
+            str(
+                data.get(
+                    "category",
+                    "অন্যান্য",
+                )
+                or
+                "অন্যান্য"
+            )
+
+            .strip()
+
+        )
+
 
         language = (
-            data.get("language")
-            or "bn"
-        ).strip()
+
+            str(
+                data.get(
+                    "language",
+                    "bn",
+                )
+                or
+                "bn"
+            )
+
+            .strip()
+            .lower()
+
+        )
+
 
         if (
             not title
-            and not content
+            and
+            not content
         ):
+
             return error_response(
                 "Draft must contain a title or content.",
                 400,
             )
 
-        writing_arguments = {
-            "title":
-                title or "Untitled Draft",
 
-            "content":
-                content,
-
-            "category":
-                category,
-
-            "user_id":
-                user_id,
-
-            "status":
-                "draft",
-        }
-
-        if hasattr(
-            Writing,
-            "language",
+        if (
+            len(
+                title
+            )
+            >
+            200
         ):
-            writing_arguments[
-                "language"
-            ] = language
+
+            return error_response(
+                "Title cannot exceed 200 characters.",
+                400,
+            )
+
+
+        if (
+            category
+            not in
+            ALLOWED_CATEGORIES
+        ):
+
+            category = (
+                "অন্যান্য"
+            )
+
+
+        if (
+            language
+            not in
+            ALLOWED_WRITING_LANGUAGES
+        ):
+
+            language = "bn"
+
 
         writing = Writing(
-            **writing_arguments
+
+            title=
+                (
+                    title
+                    or
+                    "Untitled Draft"
+                ),
+
+            content=
+                content,
+
+            category=
+                category,
+
+            language=
+                language,
+
+            user_id=
+                user_id,
+
+            status=
+                "draft",
+
         )
+
 
         db.session.add(
             writing
         )
 
+
+        sync_writing_tags(
+            writing
+        )
+
+
         db.session.commit()
 
+
         return jsonify({
+
+            "success":
+                True,
+
             "message":
                 "Draft saved successfully.",
 
@@ -1452,16 +2763,20 @@ def create_draft():
                     writing,
                     user_id,
                 ),
+
         }), 201
+
 
     except Exception as error:
 
         db.session.rollback()
 
+
         print(
             "Create draft error:",
             error,
         )
+
 
         return error_response(
             "Unable to save draft.",
@@ -1471,11 +2786,17 @@ def create_draft():
 
 # =========================================================
 # UPDATE WRITING
+#
+# PATCH /api/writings/<writing_id>
+# PUT   /api/writings/<writing_id>
 # =========================================================
 
 @writings_bp.route(
     "/<int:writing_id>",
-    methods=["PUT", "PATCH"],
+    methods=[
+        "PUT",
+        "PATCH",
+    ],
 )
 @jwt_required()
 def update_writing(
@@ -1487,6 +2808,14 @@ def update_writing(
         user_id = (
             get_current_user_id()
         )
+
+
+        if user_id is None:
+
+            return error_response(
+                "Invalid authentication identity.",
+                401,
+            )
 
 
         writing = get_model_item(
@@ -1515,22 +2844,44 @@ def update_writing(
             )
 
 
+        if (
+            writing.status
+            ==
+            "deleted"
+        ):
+
+            return error_response(
+                "Restore this writing before editing it.",
+                400,
+            )
+
+
         data = (
             request.get_json(
                 silent=True
             )
-            or
-            {}
+            or {}
         )
 
+
+        hashtags_need_sync = (
+            False
+        )
+
+
+        # =================================================
+        # TITLE
+        # =================================================
 
         if "title" in data:
 
             title = str(
+
                 data.get(
                     "title",
                     "",
                 )
+
             ).strip()
 
 
@@ -1541,23 +2892,42 @@ def update_writing(
                 )
 
 
-            if len(title) > 200:
+            if (
+                len(
+                    title
+                )
+                >
+                200
+            ):
 
                 return error_response(
                     "Title cannot exceed 200 characters."
                 )
 
 
-            writing.title = title
+            writing.title = (
+                title
+            )
 
+
+            hashtags_need_sync = (
+                True
+            )
+
+
+        # =================================================
+        # CONTENT
+        # =================================================
 
         if "content" in data:
 
             content = str(
+
                 data.get(
                     "content",
                     "",
                 )
+
             ).strip()
 
 
@@ -1568,16 +2938,29 @@ def update_writing(
                 )
 
 
-            writing.content = content
+            writing.content = (
+                content
+            )
 
+
+            hashtags_need_sync = (
+                True
+            )
+
+
+        # =================================================
+        # CATEGORY
+        # =================================================
 
         if "category" in data:
 
             category = str(
+
                 data.get(
                     "category",
                     "",
                 )
+
             ).strip()
 
 
@@ -1597,21 +2980,24 @@ def update_writing(
             )
 
 
-        if (
-            "language" in data
-            and
-            hasattr(
-                Writing,
-                "language",
-            )
-        ):
+        # =================================================
+        # LANGUAGE
+        # =================================================
 
-            language = str(
-                data.get(
-                    "language",
-                    "",
+        if "language" in data:
+
+            language = (
+                str(
+
+                    data.get(
+                        "language",
+                        "",
+                    )
+
                 )
-            ).strip().lower()
+                .strip()
+                .lower()
+            )
 
 
             if (
@@ -1630,14 +3016,27 @@ def update_writing(
             )
 
 
+        # =================================================
+        # RE-SYNC TAGS ONLY WHEN TITLE / CONTENT CHANGES
+        # =================================================
+
+        if hashtags_need_sync:
+
+            sync_writing_tags(
+                writing
+            )
+
+
         db.session.commit()
 
 
         return jsonify(
+
             serialize_writing(
                 writing,
                 user_id,
             )
+
         ), 200
 
 
@@ -1660,6 +3059,8 @@ def update_writing(
 
 # =========================================================
 # PUBLISH EXISTING DRAFT
+#
+# POST /api/writings/<writing_id>/publish
 # =========================================================
 
 @writings_bp.route(
@@ -1678,18 +3079,26 @@ def publish_writing(
         )
 
 
-        writing = db.session.get(
+        if user_id is None:
+
+            return error_response(
+                "Invalid authentication identity.",
+                401,
+            )
+
+
+        writing = get_model_item(
             Writing,
             writing_id,
         )
 
 
-        if not writing:
+        if writing is None:
 
-            return jsonify({
-                "message":
-                    "Writing not found."
-            }), 404
+            return error_response(
+                "Writing not found.",
+                404,
+            )
 
 
         if (
@@ -1698,26 +3107,60 @@ def publish_writing(
             user_id
         ):
 
-            return jsonify({
-                "message":
-                    "You are not allowed to publish this writing."
-            }), 403
+            return error_response(
+                "You are not allowed to publish this writing.",
+                403,
+            )
 
 
         if (
             writing.status
-            == "deleted"
+            ==
+            "deleted"
         ):
 
-            return jsonify({
-                "message":
-                    "Deleted writings cannot be published."
-            }), 400
+            return error_response(
+                "Deleted writings cannot be published.",
+                400,
+            )
+
+
+        if not str(
+            writing.title
+            or ""
+        ).strip():
+
+            return error_response(
+                "Title is required before publishing.",
+                400,
+            )
+
+
+        if not str(
+            writing.content
+            or ""
+        ).strip():
+
+            return error_response(
+                "Writing content is required before publishing.",
+                400,
+            )
 
 
         writing.status = (
             "published"
         )
+
+
+        writing.previous_status = (
+            None
+        )
+
+
+        writing.deleted_at = (
+            None
+        )
+
 
         writing.published_at = (
             datetime.now(
@@ -1726,10 +3169,18 @@ def publish_writing(
         )
 
 
+        sync_writing_tags(
+            writing
+        )
+
+
         db.session.commit()
 
 
         return jsonify({
+
+            "success":
+                True,
 
             "message":
                 "Writing published successfully.",
@@ -1747,18 +3198,23 @@ def publish_writing(
 
         db.session.rollback()
 
+
         print(
-            "PUBLISH WRITING ERROR:",
+            "Publish writing error:",
             error,
         )
 
-        return jsonify({
-            "message":
-                "Unable to publish writing."
-        }), 500
+
+        return error_response(
+            "Unable to publish writing.",
+            500,
+        )
+
 
 # =========================================================
 # UNPUBLISH WRITING
+#
+# POST /api/writings/<writing_id>/unpublish
 # =========================================================
 
 @writings_bp.route(
@@ -1766,67 +3222,108 @@ def publish_writing(
     methods=["POST"],
 )
 @jwt_required()
-def unpublish_writing(writing_id):
+def unpublish_writing(
+    writing_id,
+):
 
     try:
-        user_id = int(
-            get_jwt_identity()
+
+        user_id = (
+            get_current_user_id()
         )
 
-    except (TypeError, ValueError):
+
+        if user_id is None:
+
+            return error_response(
+                "Invalid authentication identity.",
+                401,
+            )
+
+
+        writing = get_model_item(
+            Writing,
+            writing_id,
+        )
+
+
+        if writing is None:
+
+            return error_response(
+                "Writing not found.",
+                404,
+            )
+
+
+        if (
+            writing.user_id
+            !=
+            user_id
+        ):
+
+            return error_response(
+                "You are not allowed to modify this writing.",
+                403,
+            )
+
+
+        if (
+            writing.status
+            ==
+            "deleted"
+        ):
+
+            return error_response(
+                "Restore this writing before unpublishing it.",
+                400,
+            )
+
+
+        writing.status = (
+            "draft"
+        )
+
+
+        writing.published_at = (
+            None
+        )
+
+
+        db.session.commit()
+
+
+        return jsonify({
+
+            "success":
+                True,
+
+            "message":
+                "Writing unpublished successfully.",
+
+            "writing":
+                serialize_writing(
+                    writing,
+                    user_id,
+                ),
+
+        }), 200
+
+
+    except Exception as error:
+
+        db.session.rollback()
+
+
+        print(
+            "Unpublish writing error:",
+            error,
+        )
+
+
         return error_response(
-            "Invalid user identity.",
-            401,
+            "Unable to unpublish writing.",
+            500,
         )
-
-
-    writing = db.session.get(
-        Writing,
-        writing_id,
-    )
-
-
-    if not writing:
-        return error_response(
-            "Writing not found.",
-            404,
-        )
-
-
-    if writing.user_id != user_id:
-        return error_response(
-            "You are not allowed to modify this writing.",
-            403,
-        )
-
-
-    writing.status = "draft"
-
-    if hasattr(
-        Writing,
-        "published_at",
-    ):
-        writing.published_at = None
-
-
-    db.session.commit()
-
-    db.session.refresh(
-        writing
-    )
-
-
-    return jsonify({
-        "message":
-            "Writing unpublished successfully.",
-
-        "writing":
-            serialize_writing(
-                writing,
-                user_id,
-            ),
-    }), 200
-
 
 
 # =========================================================
@@ -1847,6 +3344,14 @@ def delete_writing(
         user_id = (
             get_current_user_id()
         )
+
+
+        if user_id is None:
+
+            return error_response(
+                "Invalid authentication identity.",
+                401,
+            )
 
 
         writing = get_model_item(
@@ -1875,13 +3380,8 @@ def delete_writing(
             )
 
 
-        # Already in Trash
         if (
-            getattr(
-                writing,
-                "status",
-                None,
-            )
+            writing.status
             ==
             "deleted"
         ):
@@ -1892,22 +3392,31 @@ def delete_writing(
             )
 
 
-        # =================================================
-        # SOFT DELETE
-        # =================================================
+        writing.previous_status = (
+            writing.status
+        )
 
-        # Remember whether this was a draft or published writing
-        # before moving it to Trash.
-        writing.previous_status = writing.status
 
-        writing.status = "deleted"
-        writing.deleted_at = datetime.now(timezone.utc)
+        writing.status = (
+            "deleted"
+        )
+
+
+        writing.deleted_at = (
+            datetime.now(
+                timezone.utc
+            )
+        )
 
 
         db.session.commit()
 
 
         return jsonify({
+
+            "success":
+                True,
+
             "message":
                 "Writing moved to Trash successfully.",
 
@@ -1916,6 +3425,7 @@ def delete_writing(
                     writing,
                     user_id,
                 ),
+
         }), 200
 
 
@@ -1956,6 +3466,14 @@ def restore_writing(
         )
 
 
+        if user_id is None:
+
+            return error_response(
+                "Invalid authentication identity.",
+                401,
+            )
+
+
         writing = get_model_item(
             Writing,
             writing_id,
@@ -1983,11 +3501,7 @@ def restore_writing(
 
 
         if (
-            getattr(
-                writing,
-                "status",
-                None,
-            )
+            writing.status
             !=
             "deleted"
         ):
@@ -1999,25 +3513,73 @@ def restore_writing(
 
 
         restore_status = (
+
             writing.previous_status
-            if writing.previous_status in ("draft", "published")
+
+            if writing.previous_status
+            in (
+                "draft",
+                "published",
+            )
+
             else "draft"
+
         )
 
-        writing.status = restore_status
-        writing.deleted_at = None
-        writing.previous_status = None
 
-        if restore_status == "published":
-            if writing.published_at is None:
-                writing.published_at = datetime.now(timezone.utc)
+        writing.status = (
+            restore_status
+        )
+
+
+        writing.deleted_at = (
+            None
+        )
+
+
+        writing.previous_status = (
+            None
+        )
+
+
+        if (
+            restore_status
+            ==
+            "published"
+        ):
+
+            if (
+                writing.published_at
+                is None
+            ):
+
+                writing.published_at = (
+                    datetime.now(
+                        timezone.utc
+                    )
+                )
+
+
+            sync_writing_tags(
+                writing
+            )
+
+
         else:
-            writing.published_at = None
+
+            writing.published_at = (
+                None
+            )
+
 
         db.session.commit()
 
 
         return jsonify({
+
+            "success":
+                True,
+
             "message":
                 "Writing restored successfully.",
 
@@ -2026,6 +3588,7 @@ def restore_writing(
                     writing,
                     user_id,
                 ),
+
         }), 200
 
 
@@ -2066,6 +3629,14 @@ def permanently_delete_writing(
         )
 
 
+        if user_id is None:
+
+            return error_response(
+                "Invalid authentication identity.",
+                401,
+            )
+
+
         writing = get_model_item(
             Writing,
             writing_id,
@@ -2093,11 +3664,7 @@ def permanently_delete_writing(
 
 
         if (
-            getattr(
-                writing,
-                "status",
-                None,
-            )
+            writing.status
             !=
             "deleted"
         ):
@@ -2112,12 +3679,18 @@ def permanently_delete_writing(
             writing
         )
 
+
         db.session.commit()
 
 
         return jsonify({
+
+            "success":
+                True,
+
             "message":
-                "Writing permanently deleted."
+                "Writing permanently deleted.",
+
         }), 200
 
 
@@ -2125,19 +3698,27 @@ def permanently_delete_writing(
 
         db.session.rollback()
 
+
         print(
             "Permanent delete writing error:",
             error,
         )
+
 
         return error_response(
             "Unable to permanently delete the writing.",
             500,
         )
 
-    
+
 # =========================================================
-# LIKE OR UNLIKE WRITING
+# LEGACY LIKE TOGGLE
+#
+# Compatibility endpoint.
+#
+# New frontend:
+#
+# /api/likes/writing/<writing_id>
 # =========================================================
 
 @writings_bp.route(
@@ -2156,13 +3737,27 @@ def toggle_writing_like(
         )
 
 
+        if user_id is None:
+
+            return error_response(
+                "Invalid authentication identity.",
+                401,
+            )
+
+
         writing = get_model_item(
             Writing,
             writing_id,
         )
 
 
-        if writing is None:
+        if (
+            writing is None
+            or
+            writing.status
+            !=
+            "published"
+        ):
 
             return error_response(
                 "Writing not found.",
@@ -2171,10 +3766,21 @@ def toggle_writing_like(
 
 
         existing_like = (
-            Like.query.filter_by(
-                user_id=user_id,
-                writing_id=writing_id,
-            ).first()
+
+            Like.query
+
+            .filter_by(
+
+                user_id=
+                    user_id,
+
+                writing_id=
+                    writing_id,
+
+            )
+
+            .first()
+
         )
 
 
@@ -2184,17 +3790,25 @@ def toggle_writing_like(
                 existing_like
             )
 
+
             liked = False
+
 
             message = (
                 "Like removed successfully."
             )
 
+
         else:
 
             new_like = Like(
-                user_id=user_id,
-                writing_id=writing_id,
+
+                user_id=
+                    user_id,
+
+                writing_id=
+                    writing_id,
+
             )
 
 
@@ -2202,7 +3816,9 @@ def toggle_writing_like(
                 new_like
             )
 
+
             liked = True
+
 
             message = (
                 "Writing liked successfully."
@@ -2213,13 +3829,24 @@ def toggle_writing_like(
 
 
         likes_count = (
-            Like.query.filter_by(
-                writing_id=writing_id
-            ).count()
+
+            Like.query
+
+            .filter_by(
+                writing_id=
+                    writing_id
+            )
+
+            .count()
+
         )
 
 
         return jsonify({
+
+            "success":
+                True,
+
             "message":
                 message,
 
@@ -2234,6 +3861,7 @@ def toggle_writing_like(
 
             "likes_count":
                 likes_count,
+
         }), 200
 
 
@@ -2243,7 +3871,7 @@ def toggle_writing_like(
 
 
         print(
-            "Like writing error:",
+            "Legacy like writing error:",
             error,
         )
 
@@ -2255,7 +3883,7 @@ def toggle_writing_like(
 
 
 # =========================================================
-# GET COMMENTS
+# LEGACY GET COMMENTS
 # =========================================================
 
 @writings_bp.route(
@@ -2274,7 +3902,13 @@ def get_comments(
         )
 
 
-        if writing is None:
+        if (
+            writing is None
+            or
+            writing.status
+            !=
+            "published"
+        ):
 
             return error_response(
                 "Writing not found.",
@@ -2283,27 +3917,40 @@ def get_comments(
 
 
         comments = (
+
             Comment.query
+
             .filter_by(
-                writing_id=writing_id
+                writing_id=
+                    writing_id
             )
+
             .order_by(
                 Comment.created_at.asc()
             )
+
             .all()
+
         )
 
 
         serialized_comments = [
+
             serialize_comment(
                 comment
             )
+
             for comment
             in comments
+
         ]
 
 
         return jsonify({
+
+            "success":
+                True,
+
             "comments":
                 serialized_comments,
 
@@ -2311,6 +3958,7 @@ def get_comments(
                 len(
                     serialized_comments
                 ),
+
         }), 200
 
 
@@ -2329,7 +3977,7 @@ def get_comments(
 
 
 # =========================================================
-# CREATE COMMENT
+# LEGACY CREATE COMMENT
 # =========================================================
 
 @writings_bp.route(
@@ -2348,13 +3996,27 @@ def create_comment(
         )
 
 
+        if user_id is None:
+
+            return error_response(
+                "Invalid authentication identity.",
+                401,
+            )
+
+
         writing = get_model_item(
             Writing,
             writing_id,
         )
 
 
-        if writing is None:
+        if (
+            writing is None
+            or
+            writing.status
+            !=
+            "published"
+        ):
 
             return error_response(
                 "Writing not found.",
@@ -2366,17 +4028,21 @@ def create_comment(
             request.get_json(
                 silent=True
             )
-            or
-            {}
+            or {}
         )
 
 
-        content = str(
-            data.get(
-                "content",
-                "",
+        content = (
+            str(
+
+                data.get(
+                    "content",
+                    "",
+                )
+
             )
-        ).strip()
+            .strip()
+        )
 
 
         if not content:
@@ -2387,9 +4053,16 @@ def create_comment(
 
 
         comment = Comment(
-            content=content,
-            user_id=user_id,
-            writing_id=writing_id,
+
+            content=
+                content,
+
+            user_id=
+                user_id,
+
+            writing_id=
+                writing_id,
+
         )
 
 
@@ -2397,13 +4070,16 @@ def create_comment(
             comment
         )
 
+
         db.session.commit()
 
 
         return jsonify(
+
             serialize_comment(
                 comment
             )
+
         ), 201
 
 
@@ -2433,8 +4109,12 @@ def get_file_extension(
 ):
 
     return Path(
-        filename or ""
+        filename
+        or ""
     ).suffix.lower()
+
+
+# =========================================================
 
 
 def validate_ocr_file(
@@ -2457,15 +4137,19 @@ def validate_ocr_file(
         )
 
 
-    extension = get_file_extension(
-        uploaded_file.filename
+    extension = (
+        get_file_extension(
+            uploaded_file.filename
+        )
     )
 
 
     mime_type = (
+
         uploaded_file.mimetype
-        or
-        ""
+
+        or ""
+
     ).lower()
 
 
@@ -2476,8 +4160,14 @@ def validate_ocr_file(
     ):
 
         return (
+
             False,
-            "Only PDF, JPG, JPEG and PNG files are supported.",
+
+            (
+                "Only PDF, JPG, JPEG "
+                "and PNG files are supported."
+            ),
+
         )
 
 
@@ -2490,8 +4180,14 @@ def validate_ocr_file(
     ):
 
         return (
+
             False,
-            "The selected file type is not supported.",
+
+            (
+                "The selected file type "
+                "is not supported."
+            ),
+
         )
 
 
@@ -2501,12 +4197,17 @@ def validate_ocr_file(
     )
 
 
+# =========================================================
+
+
 def prepare_image_for_ocr(
     image,
 ):
 
-    image = ImageOps.exif_transpose(
-        image
+    image = (
+        ImageOps.exif_transpose(
+            image
+        )
     )
 
 
@@ -2520,25 +4221,36 @@ def prepare_image_for_ocr(
         )
 
 
-    # Enlarging small images can improve OCR accuracy
-    width, height = image.size
+    width, height = (
+        image.size
+    )
 
 
-    if max(
-        width,
-        height,
-    ) < 1600:
+    if (
+        max(
+            width,
+            height,
+        )
+        <
+        1600
+    ):
 
         image = image.resize(
+
             (
                 width * 2,
                 height * 2,
             ),
+
             Image.Resampling.LANCZOS,
+
         )
 
 
     return image
+
+
+# =========================================================
 
 
 def extract_text_from_image(
@@ -2547,9 +4259,11 @@ def extract_text_from_image(
 ):
 
     with Image.open(
+
         io.BytesIO(
             file_bytes
         )
+
     ) as image:
 
         prepared_image = (
@@ -2560,16 +4274,28 @@ def extract_text_from_image(
 
 
         text = (
+
             pytesseract
+
             .image_to_string(
+
                 prepared_image,
-                lang=tesseract_language,
-                config="--oem 3 --psm 6",
+
+                lang=
+                    tesseract_language,
+
+                config=
+                    "--oem 3 --psm 6",
+
             )
+
         )
 
 
     return text.strip()
+
+
+# =========================================================
 
 
 def extract_text_from_pdf(
@@ -2581,14 +4307,23 @@ def extract_text_from_pdf(
 
 
     document = pymupdf.open(
-        stream=file_bytes,
-        filetype="pdf",
+
+        stream=
+            file_bytes,
+
+        filetype=
+            "pdf",
+
     )
 
 
     try:
 
-        if document.page_count == 0:
+        if (
+            document.page_count
+            ==
+            0
+        ):
 
             return ""
 
@@ -2600,7 +4335,12 @@ def extract_text_from_pdf(
         ):
 
             raise ValueError(
-                f"PDF cannot contain more than {MAX_PDF_PAGES} pages."
+
+                (
+                    "PDF cannot contain more than "
+                    f"{MAX_PDF_PAGES} pages."
+                )
+
             )
 
 
@@ -2608,18 +4348,25 @@ def extract_text_from_pdf(
             document.page_count
         ):
 
-            page = document.load_page(
-                page_number
+            page = (
+                document.load_page(
+                    page_number
+                )
             )
 
 
-            # First try normal PDF text extraction
+            # ---------------------------------------------
+            # FIRST: NORMAL PDF TEXT
+            # ---------------------------------------------
+
             direct_text = (
+
                 page.get_text(
                     "text"
                 )
-                or
-                ""
+
+                or ""
+
             ).strip()
 
 
@@ -2632,28 +4379,39 @@ def extract_text_from_pdf(
                 continue
 
 
-            # If the page is scanned, render it as an image
-            zoom = 2.5
-
+            # ---------------------------------------------
+            # FALLBACK: OCR SCANNED PAGE
+            # ---------------------------------------------
 
             matrix = pymupdf.Matrix(
-                zoom,
-                zoom,
+                2.5,
+                2.5,
             )
 
 
-            pixmap = page.get_pixmap(
-                matrix=matrix,
-                alpha=False,
+            pixmap = (
+                page.get_pixmap(
+
+                    matrix=
+                        matrix,
+
+                    alpha=
+                        False,
+
+                )
             )
 
 
             image = Image.open(
+
                 io.BytesIO(
+
                     pixmap.tobytes(
                         "png"
                     )
+
                 )
+
             )
 
 
@@ -2667,12 +4425,21 @@ def extract_text_from_pdf(
 
 
                 page_text = (
+
                     pytesseract
+
                     .image_to_string(
+
                         prepared_image,
-                        lang=tesseract_language,
-                        config="--oem 3 --psm 6",
+
+                        lang=
+                            tesseract_language,
+
+                        config=
+                            "--oem 3 --psm 6",
+
                     )
+
                 ).strip()
 
 
@@ -2681,6 +4448,7 @@ def extract_text_from_pdf(
                     extracted_pages.append(
                         page_text
                     )
+
 
             finally:
 
@@ -2692,13 +4460,23 @@ def extract_text_from_pdf(
         document.close()
 
 
-    return "\n\n".join(
-        extracted_pages
-    ).strip()
+    return (
+
+        "\n\n"
+
+        .join(
+            extracted_pages
+        )
+
+        .strip()
+
+    )
 
 
 # =========================================================
 # OCR ENDPOINT
+#
+# POST /api/writings/ocr
 # =========================================================
 
 @writings_bp.route(
@@ -2718,19 +4496,28 @@ def extract_scanned_writing():
 
 
         language = (
+
             request.form.get(
                 "language",
                 "bn",
             )
+
             .strip()
+
             .lower()
+
         )
 
 
-        valid_file, validation_error = (
+        (
+            valid_file,
+            validation_error,
+        ) = (
+
             validate_ocr_file(
                 uploaded_file
             )
+
         )
 
 
@@ -2767,7 +4554,9 @@ def extract_scanned_writing():
 
 
         if (
-            len(file_bytes)
+            len(
+                file_bytes
+            )
             >
             MAX_FILE_SIZE
         ):
@@ -2778,8 +4567,10 @@ def extract_scanned_writing():
             )
 
 
-        extension = get_file_extension(
-            uploaded_file.filename
+        extension = (
+            get_file_extension(
+                uploaded_file.filename
+            )
         )
 
 
@@ -2794,17 +4585,24 @@ def extract_scanned_writing():
 
             extracted_text = (
                 extract_text_from_pdf(
+
                     file_bytes,
+
                     tesseract_language,
+
                 )
             )
+
 
         else:
 
             extracted_text = (
                 extract_text_from_image(
+
                     file_bytes,
+
                     tesseract_language,
+
                 )
             )
 
@@ -2812,12 +4610,22 @@ def extract_scanned_writing():
         if not extracted_text:
 
             return error_response(
-                "No readable text was found in the selected file.",
+
+                (
+                    "No readable text was found "
+                    "in the selected file."
+                ),
+
                 422,
+
             )
 
 
         return jsonify({
+
+            "success":
+                True,
+
             "message":
                 "Text extracted successfully.",
 
@@ -2838,6 +4646,7 @@ def extract_scanned_writing():
 
             "filename":
                 uploaded_file.filename,
+
         }), 200
 
 
@@ -2848,8 +4657,14 @@ def extract_scanned_writing():
     ):
 
         return error_response(
-            "Tesseract OCR is not installed or is not available in the Windows PATH.",
+
+            (
+                "Tesseract OCR is not installed "
+                "or is not available in the Windows PATH."
+            ),
+
             500,
+
         )
 
 
@@ -2866,31 +4681,51 @@ def extract_scanned_writing():
 
 
         return error_response(
-            "The selected OCR language data is missing. Check eng, ben and hin traineddata files.",
+
+            (
+                "The selected OCR language data is missing. "
+                "Check eng, ben and hin traineddata files."
+            ),
+
             500,
+
         )
 
 
     except UnidentifiedImageError:
 
         return error_response(
-            "The selected image is damaged or cannot be read.",
+
+            (
+                "The selected image is damaged "
+                "or cannot be read."
+            ),
+
             422,
+
         )
 
 
     except pymupdf.FileDataError:
 
         return error_response(
-            "The selected PDF is damaged or cannot be read.",
+
+            (
+                "The selected PDF is damaged "
+                "or cannot be read."
+            ),
+
             422,
+
         )
 
 
     except ValueError as error:
 
         return error_response(
-            str(error)
+            str(
+                error
+            )
         )
 
 
@@ -2903,8 +4738,14 @@ def extract_scanned_writing():
 
 
         return error_response(
-            "Unable to extract text from the selected file.",
+
+            (
+                "Unable to extract text "
+                "from the selected file."
+            ),
+
             500,
+
         )
 
 
@@ -2916,15 +4757,15 @@ def register_writing_routes(
     app,
 ):
     """
-    Compatibility helper for an App.py that calls:
+    Compatibility helper if App.py calls:
 
         register_writing_routes(app)
 
-    If App.py already uses:
+    If App.py already calls:
 
         app.register_blueprint(writings_bp)
 
-    this function is not needed.
+    this helper is not required.
     """
 
     app.register_blueprint(

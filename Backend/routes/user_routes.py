@@ -1,4 +1,5 @@
 import re
+
 from flask import (
     Blueprint,
     jsonify,
@@ -10,11 +11,14 @@ from flask_jwt_extended import (
     jwt_required,
 )
 
+from sqlalchemy import func
+
 from extensions import db
 
 from models.user import User
 from models.writing import Writing
 from models.follow import Follow
+
 from services.notification_service import (
     create_notification,
     delete_notification,
@@ -25,6 +29,7 @@ from services.profile_image_storage import (
     upload_profile_avatar,
     delete_profile_avatar,
 )
+
 
 # ============================================================
 # BLUEPRINT
@@ -38,42 +43,17 @@ user_bp = Blueprint(
 
 
 # ============================================================
-# HELPERS
+# GENERAL HELPERS
 # ============================================================
+
 
 def get_active_user(user_id):
     """
-    Return an active user or None.
+    Return an active User or None.
     """
 
     try:
         user_id = int(user_id)
-    except (TypeError, ValueError):
-        return None
-
-    user = db.session.get(
-        User,
-        user_id,
-    )
-
-    if not user:
-        return None
-
-    if not user.is_active:
-        return None
-
-    return user
-
-
-def get_current_user_id():
-    """
-    Safely convert JWT identity to integer.
-    """
-
-    try:
-        return int(
-            get_jwt_identity()
-        )
 
     except (
         TypeError,
@@ -82,42 +62,139 @@ def get_current_user_id():
         return None
 
 
+    user = db.session.get(
+        User,
+        user_id,
+    )
+
+
+    if not user:
+        return None
+
+
+    if not getattr(
+        user,
+        "is_active",
+        True,
+    ):
+        return None
+
+
+    return user
+
+
+# ============================================================
+
+
+def get_current_user_id():
+    """
+    Safely convert JWT identity into an integer ID.
+
+    Works with optional JWT routes too. If there is no JWT,
+    get_jwt_identity() returns None.
+    """
+
+    identity = get_jwt_identity()
+
+
+    if identity is None:
+        return None
+
+
+    try:
+
+        return int(
+            identity
+        )
+
+    except (
+        TypeError,
+        ValueError,
+    ):
+
+        return None
+
+
+# ============================================================
+
+
 def public_user_dict(user):
     """
-    Public-safe representation of a user.
+    Public-safe user serializer.
 
-    Private account information such as
-    email and password data is excluded.
+    Never expose:
+    - email
+    - password hash
+    - authentication information
     """
 
     return {
-        "id": user.id,
-        "name": user.name,
+        "id":
+            user.id,
 
-        "username": user.username,
+        "name":
+            user.name,
 
-        "bio": user.bio,
+        "username":
+            getattr(
+                user,
+                "username",
+                None,
+            ),
 
-        "avatar_url": user.avatar_url,
+        "bio":
+            getattr(
+                user,
+                "bio",
+                None,
+            ),
 
-        "location": user.location,
+        "avatar_url":
+            getattr(
+                user,
+                "avatar_url",
+                None,
+            ),
 
-        "website": user.website,
+        "location":
+            getattr(
+                user,
+                "location",
+                None,
+            ),
 
-        "created_at": (
-            user.created_at.isoformat()
-            if user.created_at
-            else None
-        ),
+        "website":
+            getattr(
+                user,
+                "website",
+                None,
+            ),
+
+        "created_at":
+            (
+                user.created_at.isoformat()
+                if getattr(
+                    user,
+                    "created_at",
+                    None,
+                )
+                else None
+            ),
     }
+
+
+# ============================================================
+
 
 def get_followers_count(user_id):
     """
-    Number of users following this user.
+    Number of users following this writer.
     """
 
     return (
-        db.session.query(Follow)
+        db.session.query(
+            Follow
+        )
         .filter(
             Follow.following_id
             == user_id
@@ -126,13 +203,18 @@ def get_followers_count(user_id):
     )
 
 
+# ============================================================
+
+
 def get_following_count(user_id):
     """
-    Number of users this user follows.
+    Number of users followed by this writer.
     """
 
     return (
-        db.session.query(Follow)
+        db.session.query(
+            Follow
+        )
         .filter(
             Follow.follower_id
             == user_id
@@ -141,10 +223,12 @@ def get_following_count(user_id):
     )
 
 
-def get_published_writings_query(user_id):
+# ============================================================
+
+
+def get_published_writings_count(user_id):
     """
-    Base query for one writer's
-    published writings.
+    Number of published writings created by a writer.
     """
 
     return (
@@ -152,6 +236,28 @@ def get_published_writings_query(user_id):
         .filter(
             Writing.user_id
             == user_id,
+
+            Writing.status
+            == "published",
+        )
+        .count()
+    )
+
+
+# ============================================================
+
+
+def get_published_writings_query(user_id):
+    """
+    Base query containing one writer's published writings.
+    """
+
+    return (
+        Writing.query
+        .filter(
+            Writing.user_id
+            == user_id,
+
             Writing.status
             == "published",
         )
@@ -162,9 +268,12 @@ def get_published_writings_query(user_id):
     )
 
 
+# ============================================================
+
+
 def get_writer_stats(user_id):
     """
-    Aggregate public profile statistics.
+    Public profile statistics.
     """
 
     writings = (
@@ -172,13 +281,16 @@ def get_writer_stats(user_id):
         .filter(
             Writing.user_id
             == user_id,
+
             Writing.status
             == "published",
         )
         .all()
     )
 
+
     likes_count = sum(
+
         int(
             getattr(
                 writing,
@@ -187,10 +299,15 @@ def get_writer_stats(user_id):
             )
             or 0
         )
-        for writing in writings
+
+        for writing
+        in writings
+
     )
 
+
     comments_count = sum(
+
         int(
             getattr(
                 writing,
@@ -199,8 +316,12 @@ def get_writer_stats(user_id):
             )
             or 0
         )
-        for writing in writings
+
+        for writing
+        in writings
+
     )
+
 
     return {
         "writings_count":
@@ -225,9 +346,116 @@ def get_writer_stats(user_id):
 
 
 # ============================================================
+
+
+def parse_pagination(
+    default_limit=20,
+    max_limit=50,
+):
+    """
+    Parse page + limit query parameters.
+
+    Returns:
+        (page, limit)
+
+    or:
+        None
+    """
+
+    try:
+
+        page = int(
+            request.args.get(
+                "page",
+                1,
+            )
+        )
+
+
+        limit = int(
+            request.args.get(
+                "limit",
+                default_limit,
+            )
+        )
+
+
+    except (
+        TypeError,
+        ValueError,
+    ):
+
+        return None
+
+
+    page = max(
+        page,
+        1,
+    )
+
+
+    limit = max(
+        1,
+        min(
+            limit,
+            max_limit,
+        ),
+    )
+
+
+    return (
+        page,
+        limit,
+    )
+
+
+# ============================================================
+
+
+def suggestion_user_dict(
+    user,
+    followers_count=0,
+    writings_count=0,
+):
+    """
+    User representation used by Who To Follow.
+    """
+
+    data = public_user_dict(
+        user
+    )
+
+
+    data.update({
+        "followers_count":
+            int(
+                followers_count
+                or 0
+            ),
+
+        "writings_count":
+            int(
+                writings_count
+                or 0
+            ),
+
+        "following":
+            False,
+
+        "is_self":
+            False,
+    })
+
+
+    return data
+
+
+# ============================================================
 # UPDATE OWN PROFILE
+#
 # PATCH /api/users/me/profile
 # ============================================================
+
 
 @user_bp.route(
     "/me/profile",
@@ -236,16 +464,17 @@ def get_writer_stats(user_id):
 @jwt_required()
 def update_my_profile():
 
-    # --------------------------------------------------------
-    # AUTHENTICATED USER
-    # --------------------------------------------------------
-
     current_user_id = (
         get_current_user_id()
     )
 
+
     if current_user_id is None:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Invalid authentication identity."
         }), 401
@@ -255,127 +484,212 @@ def update_my_profile():
         current_user_id
     )
 
+
     if not user:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Authenticated user not found."
         }), 404
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # REQUEST BODY
-    # --------------------------------------------------------
+    # ========================================================
 
     data = request.get_json(
         silent=True
     )
 
-    if not isinstance(data, dict):
+
+    if not isinstance(
+        data,
+        dict,
+    ):
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Invalid request body."
         }), 400
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # NAME
-    # --------------------------------------------------------
+    # ========================================================
 
     if "name" in data:
 
         name = str(
-            data.get("name") or ""
+            data.get(
+                "name"
+            )
+            or ""
         ).strip()
 
-        if len(name) < 2:
+
+        if len(
+            name
+        ) < 2:
+
             return jsonify({
+                "success":
+                    False,
+
                 "message":
                     "Name must contain at least 2 characters."
             }), 400
 
-        if len(name) > 120:
+
+        if len(
+            name
+        ) > 120:
+
             return jsonify({
+                "success":
+                    False,
+
                 "message":
                     "Name cannot exceed 120 characters."
             }), 400
 
+
         user.name = name
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # USERNAME
-    # --------------------------------------------------------
+    # ========================================================
 
     if "username" in data:
 
         username = str(
-            data.get("username") or ""
+            data.get(
+                "username"
+            )
+            or ""
         ).strip().lower()
 
-        # Allow users to type @username
-        if username.startswith("@"):
-            username = username[1:]
+
+        if username.startswith(
+            "@"
+        ):
+
+            username = username[
+                1:
+            ]
+
 
         if username:
 
-            if len(username) < 3:
+            if len(
+                username
+            ) < 3:
+
                 return jsonify({
+                    "success":
+                        False,
+
                     "message":
                         "Username must contain at least 3 characters."
                 }), 400
 
-            if len(username) > 30:
+
+            if len(
+                username
+            ) > 30:
+
                 return jsonify({
+                    "success":
+                        False,
+
                     "message":
                         "Username cannot exceed 30 characters."
                 }), 400
+
 
             if not re.fullmatch(
                 r"[a-z0-9][a-z0-9._]*",
                 username,
             ):
+
                 return jsonify({
+                    "success":
+                        False,
+
                     "message":
-                        "Username may contain lowercase letters, numbers, dots and underscores."
+                        (
+                            "Username may contain lowercase "
+                            "letters, numbers, dots and underscores."
+                        )
                 }), 400
 
 
             existing_user = (
                 User.query
                 .filter(
-                    User.username == username,
-                    User.id != user.id,
+                    User.username
+                    == username,
+
+                    User.id
+                    != user.id,
                 )
                 .first()
             )
 
+
             if existing_user:
+
                 return jsonify({
+                    "success":
+                        False,
+
                     "message":
                         "This username is already taken."
                 }), 409
 
-            user.username = username
+
+            user.username = (
+                username
+            )
+
 
         else:
+
             user.username = None
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # BIO
-    # --------------------------------------------------------
+    # ========================================================
 
     if "bio" in data:
 
         bio = str(
-            data.get("bio") or ""
+            data.get(
+                "bio"
+            )
+            or ""
         ).strip()
 
-        if len(bio) > 500:
+
+        if len(
+            bio
+        ) > 500:
+
             return jsonify({
+                "success":
+                    False,
+
                 "message":
                     "Bio cannot exceed 500 characters."
             }), 400
+
 
         user.bio = (
             bio
@@ -384,21 +698,32 @@ def update_my_profile():
         )
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # LOCATION
-    # --------------------------------------------------------
+    # ========================================================
 
     if "location" in data:
 
         location = str(
-            data.get("location") or ""
+            data.get(
+                "location"
+            )
+            or ""
         ).strip()
 
-        if len(location) > 100:
+
+        if len(
+            location
+        ) > 100:
+
             return jsonify({
+                "success":
+                    False,
+
                 "message":
                     "Location cannot exceed 100 characters."
             }), 400
+
 
         user.location = (
             location
@@ -407,33 +732,56 @@ def update_my_profile():
         )
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # WEBSITE
-    # --------------------------------------------------------
+    # ========================================================
 
     if "website" in data:
 
         website = str(
-            data.get("website") or ""
+            data.get(
+                "website"
+            )
+            or ""
         ).strip()
 
-        if len(website) > 255:
+
+        if len(
+            website
+        ) > 255:
+
             return jsonify({
+                "success":
+                    False,
+
                 "message":
                     "Website URL is too long."
             }), 400
 
+
         if (
             website
             and not (
-                website.startswith("https://")
-                or website.startswith("http://")
+                website.startswith(
+                    "https://"
+                )
+                or website.startswith(
+                    "http://"
+                )
             )
         ):
+
             return jsonify({
+                "success":
+                    False,
+
                 "message":
-                    "Website must start with http:// or https://."
+                    (
+                        "Website must start with "
+                        "http:// or https://."
+                    )
             }), 400
+
 
         user.website = (
             website
@@ -442,33 +790,56 @@ def update_my_profile():
         )
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # AVATAR URL
-    # --------------------------------------------------------
+    # ========================================================
 
     if "avatar_url" in data:
 
         avatar_url = str(
-            data.get("avatar_url") or ""
+            data.get(
+                "avatar_url"
+            )
+            or ""
         ).strip()
 
-        if len(avatar_url) > 500:
+
+        if len(
+            avatar_url
+        ) > 500:
+
             return jsonify({
+                "success":
+                    False,
+
                 "message":
                     "Avatar URL is too long."
             }), 400
 
+
         if (
             avatar_url
             and not (
-                avatar_url.startswith("https://")
-                or avatar_url.startswith("http://")
+                avatar_url.startswith(
+                    "https://"
+                )
+                or avatar_url.startswith(
+                    "http://"
+                )
             )
         ):
+
             return jsonify({
+                "success":
+                    False,
+
                 "message":
-                    "Avatar URL must start with http:// or https://."
+                    (
+                        "Avatar URL must start with "
+                        "http:// or https://."
+                    )
             }), 400
+
 
         user.avatar_url = (
             avatar_url
@@ -477,30 +848,39 @@ def update_my_profile():
         )
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # SAVE
-    # --------------------------------------------------------
+    # ========================================================
 
     try:
 
         db.session.commit()
 
+
     except Exception as error:
 
         db.session.rollback()
+
 
         print(
             "PROFILE UPDATE ERROR:",
             error,
         )
 
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Unable to update profile."
         }), 500
 
 
     return jsonify({
+        "success":
+            True,
+
         "message":
             "Profile updated successfully.",
 
@@ -512,13 +892,14 @@ def update_my_profile():
 
 
 # ============================================================
-# UPLOAD MY PROFILE IMAGE
+# UPLOAD PROFILE IMAGE
 #
 # POST /api/users/me/avatar
 #
 # multipart/form-data
-# field name: avatar
+# field: avatar
 # ============================================================
+
 
 @user_bp.route(
     "/me/avatar",
@@ -527,61 +908,63 @@ def update_my_profile():
 @jwt_required()
 def upload_my_avatar():
 
-    # --------------------------------------------------------
-    # AUTHENTICATED USER
-    # --------------------------------------------------------
-
     current_user_id = (
         get_current_user_id()
     )
 
+
     if current_user_id is None:
 
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Invalid authentication identity."
         }), 401
 
 
-    user = (
-        get_active_user(
-            current_user_id
-        )
+    user = get_active_user(
+        current_user_id
     )
+
 
     if not user:
 
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Authenticated user not found."
         }), 404
 
 
-    # --------------------------------------------------------
-    # UPLOADED FILE
-    # --------------------------------------------------------
-
-    avatar = (
-        request.files.get(
-            "avatar"
-        )
+    avatar = request.files.get(
+        "avatar"
     )
+
 
     if avatar is None:
 
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Profile image is required."
         }), 400
 
 
-    # Empty browser file selection.
     if not (
         avatar.filename
         or ""
     ).strip():
 
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Please select a profile image."
         }), 400
@@ -589,9 +972,8 @@ def upload_my_avatar():
 
     try:
 
-        file_bytes = (
-            avatar.read()
-        )
+        file_bytes = avatar.read()
+
 
     except Exception as error:
 
@@ -600,15 +982,19 @@ def upload_my_avatar():
             error,
         )
 
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Unable to read profile image."
         }), 400
 
 
-    # --------------------------------------------------------
-    # CLOUDINARY UPLOAD
-    # --------------------------------------------------------
+    # ========================================================
+    # STORAGE UPLOAD
+    # ========================================================
 
     try:
 
@@ -625,14 +1011,19 @@ def upload_my_avatar():
             )
         )
 
+
     except ValueError as error:
 
         return jsonify({
+            "success":
+                False,
+
             "message":
                 str(
                     error
                 )
         }), 400
+
 
     except RuntimeError as error:
 
@@ -641,10 +1032,15 @@ def upload_my_avatar():
             error,
         )
 
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Unable to upload profile image."
         }), 500
+
 
     except Exception as error:
 
@@ -655,7 +1051,11 @@ def upload_my_avatar():
             ),
         )
 
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Unable to upload profile image."
         }), 500
@@ -675,14 +1075,16 @@ def upload_my_avatar():
     if not avatar_url:
 
         return jsonify({
+            "success":
+                False,
+
             "message":
-                "Profile image upload returned no image URL."
+                (
+                    "Profile image upload "
+                    "returned no image URL."
+                )
         }), 500
 
-
-    # --------------------------------------------------------
-    # SAVE URL TO USER
-    # --------------------------------------------------------
 
     user.avatar_url = (
         avatar_url
@@ -693,26 +1095,35 @@ def upload_my_avatar():
 
         db.session.commit()
 
+
     except Exception as error:
 
         db.session.rollback()
+
 
         print(
             "AVATAR DATABASE ERROR:",
             error,
         )
 
+
         return jsonify({
+            "success":
+                False,
+
             "message":
-                "Profile image uploaded, but the profile could not be updated."
+                (
+                    "Profile image uploaded, "
+                    "but the profile could not "
+                    "be updated."
+                )
         }), 500
 
 
-    # --------------------------------------------------------
-    # RESPONSE
-    # --------------------------------------------------------
-
     return jsonify({
+        "success":
+            True,
+
         "message":
             "Profile image updated successfully.",
 
@@ -727,10 +1138,11 @@ def upload_my_avatar():
 
 
 # ============================================================
-# REMOVE MY PROFILE IMAGE
+# REMOVE PROFILE IMAGE
 #
 # DELETE /api/users/me/avatar
 # ============================================================
+
 
 @user_bp.route(
     "/me/avatar",
@@ -739,46 +1151,51 @@ def upload_my_avatar():
 @jwt_required()
 def remove_my_avatar():
 
-    # --------------------------------------------------------
-    # AUTHENTICATED USER
-    # --------------------------------------------------------
-
     current_user_id = (
         get_current_user_id()
     )
 
+
     if current_user_id is None:
 
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Invalid authentication identity."
         }), 401
 
 
-    user = (
-        get_active_user(
-            current_user_id
-        )
+    user = get_active_user(
+        current_user_id
     )
+
 
     if not user:
 
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Authenticated user not found."
         }), 404
 
 
-    # --------------------------------------------------------
-    # ALREADY EMPTY
-    # --------------------------------------------------------
-
     if not (
-        user.avatar_url
+        getattr(
+            user,
+            "avatar_url",
+            None,
+        )
         or ""
     ).strip():
 
         return jsonify({
+            "success":
+                True,
+
             "message":
                 "Profile image is already removed.",
 
@@ -792,21 +1209,9 @@ def remove_my_avatar():
         }), 200
 
 
-    # --------------------------------------------------------
-    # CLEAR DATABASE FIRST
-    # --------------------------------------------------------
-    #
-    # The database is the source of truth for the profile.
-    # Cloudinary cleanup happens immediately afterwards.
-    #
-    # If Cloudinary cleanup fails, the user still no longer
-    # exposes the old image URL. A later upload reuses the
-    # deterministic public ID and overwrites the old asset.
-    # --------------------------------------------------------
-
-    previous_avatar_url = (
-        user.avatar_url
-    )
+    # ========================================================
+    # DATABASE IS SOURCE OF TRUTH
+    # ========================================================
 
     user.avatar_url = None
 
@@ -815,24 +1220,30 @@ def remove_my_avatar():
 
         db.session.commit()
 
+
     except Exception as error:
 
         db.session.rollback()
+
 
         print(
             "REMOVE AVATAR DATABASE ERROR:",
             error,
         )
 
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Unable to update profile."
         }), 500
 
 
-    # --------------------------------------------------------
-    # CLOUDINARY CLEANUP
-    # --------------------------------------------------------
+    # ========================================================
+    # STORAGE CLEANUP
+    # ========================================================
 
     storage_cleanup_succeeded = True
 
@@ -843,9 +1254,13 @@ def remove_my_avatar():
             user.id
         )
 
+
     except Exception as error:
 
-        storage_cleanup_succeeded = False
+        storage_cleanup_succeeded = (
+            False
+        )
+
 
         print(
             "REMOVE AVATAR STORAGE ERROR:",
@@ -855,11 +1270,10 @@ def remove_my_avatar():
         )
 
 
-    # --------------------------------------------------------
-    # RESPONSE
-    # --------------------------------------------------------
-
     response = {
+        "success":
+            True,
+
         "message":
             "Profile image removed successfully.",
 
@@ -878,9 +1292,13 @@ def remove_my_avatar():
 
     if not storage_cleanup_succeeded:
 
-        response["message"] = (
-            "Profile image removed from your SHOBDO profile. "
-            "Storage cleanup will be retried by a later replacement."
+        response[
+            "message"
+        ] = (
+            "Profile image was removed "
+            "from your SHOBDO profile, "
+            "but storage cleanup did not "
+            "complete successfully."
         )
 
 
@@ -890,31 +1308,384 @@ def remove_my_avatar():
 
 
 # ============================================================
+# SUGGESTED WRITERS
+#
+# GET:
+# /api/users/suggestions?page=1&limit=5
+#
+# JWT is OPTIONAL.
+#
+# Logged-in:
+# - excludes current user
+# - excludes writers already followed
+#
+# Guest:
+# - returns popular active writers
+#
+# Ranking:
+# 1. Followers
+# 2. Published writings
+# 3. Newer account
+# ============================================================
+
+
+@user_bp.route(
+    "/suggestions",
+    methods=["GET"],
+)
+@jwt_required(
+    optional=True
+)
+def get_user_suggestions():
+
+    pagination = (
+        parse_pagination(
+            default_limit=5,
+            max_limit=20,
+        )
+    )
+
+
+    if pagination is None:
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Invalid pagination values."
+        }), 400
+
+
+    page, limit = (
+        pagination
+    )
+
+
+    # ========================================================
+    # OPTIONAL CURRENT USER
+    # ========================================================
+
+    current_user_id = (
+        get_current_user_id()
+    )
+
+
+    current_user = None
+
+
+    if current_user_id is not None:
+
+        current_user = (
+            get_active_user(
+                current_user_id
+            )
+        )
+
+
+        if not current_user:
+
+            return jsonify({
+                "success":
+                    False,
+
+                "message":
+                    "Authenticated user not found."
+            }), 404
+
+
+    # ========================================================
+    # FOLLOWER COUNT SUBQUERY
+    # ========================================================
+
+    follower_count_subquery = (
+
+        db.session.query(
+            Follow.following_id.label(
+                "user_id"
+            ),
+
+            func.count(
+                Follow.follower_id
+            ).label(
+                "followers_count"
+            ),
+        )
+
+        .group_by(
+            Follow.following_id
+        )
+
+        .subquery()
+    )
+
+
+    # ========================================================
+    # PUBLISHED WRITING COUNT SUBQUERY
+    # ========================================================
+
+    writing_count_subquery = (
+
+        db.session.query(
+            Writing.user_id.label(
+                "user_id"
+            ),
+
+            func.count(
+                Writing.id
+            ).label(
+                "writings_count"
+            ),
+        )
+
+        .filter(
+            Writing.status
+            == "published"
+        )
+
+        .group_by(
+            Writing.user_id
+        )
+
+        .subquery()
+    )
+
+
+    followers_score = (
+        func.coalesce(
+            follower_count_subquery
+            .c
+            .followers_count,
+            0,
+        )
+    )
+
+
+    writings_score = (
+        func.coalesce(
+            writing_count_subquery
+            .c
+            .writings_count,
+            0,
+        )
+    )
+
+
+    # ========================================================
+    # BASE QUERY
+    # ========================================================
+
+    query = (
+
+        db.session.query(
+            User,
+            followers_score.label(
+                "followers_count"
+            ),
+            writings_score.label(
+                "writings_count"
+            ),
+        )
+
+        .outerjoin(
+            follower_count_subquery,
+            follower_count_subquery
+            .c
+            .user_id
+            == User.id,
+        )
+
+        .outerjoin(
+            writing_count_subquery,
+            writing_count_subquery
+            .c
+            .user_id
+            == User.id,
+        )
+
+        .filter(
+            User.is_active.is_(
+                True
+            )
+        )
+    )
+
+
+    # ========================================================
+    # AUTHENTICATED FILTERS
+    # ========================================================
+
+    if current_user:
+
+        followed_user_ids = (
+
+            db.session.query(
+                Follow.following_id
+            )
+
+            .filter(
+                Follow.follower_id
+                == current_user.id
+            )
+        )
+
+
+        query = (
+            query
+            .filter(
+                User.id
+                != current_user.id,
+
+                ~User.id.in_(
+                    followed_user_ids
+                ),
+            )
+        )
+
+
+    # ========================================================
+    # ORDERING
+    # ========================================================
+
+    query = (
+        query
+        .order_by(
+            followers_score.desc(),
+            writings_score.desc(),
+            User.created_at.desc(),
+            User.id.desc(),
+        )
+    )
+
+
+    # ========================================================
+    # TOTAL
+    # ========================================================
+
+    total = query.count()
+
+
+    pages = (
+        (total + limit - 1)
+        // limit
+    )
+
+
+    offset = (
+        (page - 1)
+        * limit
+    )
+
+
+    rows = (
+        query
+        .offset(
+            offset
+        )
+        .limit(
+            limit
+        )
+        .all()
+    )
+
+
+    # ========================================================
+    # SERIALIZATION
+    # ========================================================
+
+    users = []
+
+
+    for (
+        suggested_user,
+        followers_count,
+        writings_count,
+    ) in rows:
+
+        users.append(
+            suggestion_user_dict(
+                suggested_user,
+
+                followers_count=
+                    followers_count,
+
+                writings_count=
+                    writings_count,
+            )
+        )
+
+
+    # ========================================================
+    # RESPONSE
+    # ========================================================
+
+    return jsonify({
+        "success":
+            True,
+
+        "page":
+            page,
+
+        "limit":
+            limit,
+
+        "total":
+            total,
+
+        "pages":
+            pages,
+
+        "has_next":
+            page < pages,
+
+        "has_prev":
+            page > 1,
+
+        "users":
+            users,
+    }), 200
+
+
+# ============================================================
 # PUBLIC WRITER PROFILE
+#
 # GET /api/users/<user_id>
 # ============================================================
+
 
 @user_bp.route(
     "/<int:user_id>",
     methods=["GET"],
 )
-def get_public_user(user_id):
+def get_public_user(
+    user_id
+):
 
     user = get_active_user(
         user_id
     )
 
+
     if not user:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Writer not found."
         }), 404
+
 
     stats = get_writer_stats(
         user.id
     )
 
+
     return jsonify({
+        "success":
+            True,
+
         "user":
             public_user_dict(
                 user
@@ -927,24 +1698,34 @@ def get_public_user(user_id):
 
 # ============================================================
 # PUBLIC WRITER WRITINGS
+#
 # GET /api/users/<user_id>/writings
 # ============================================================
+
 
 @user_bp.route(
     "/<int:user_id>/writings",
     methods=["GET"],
 )
-def get_public_user_writings(user_id):
+def get_public_user_writings(
+    user_id
+):
 
     user = get_active_user(
         user_id
     )
 
+
     if not user:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Writer not found."
         }), 404
+
 
     writings = (
         get_published_writings_query(
@@ -953,14 +1734,20 @@ def get_public_user_writings(user_id):
         .all()
     )
 
+
     return jsonify({
+        "success":
+            True,
+
         "user":
             public_user_dict(
                 user
             ),
 
         "count":
-            len(writings),
+            len(
+                writings
+            ),
 
         "writings": [
             writing.to_dict()
@@ -972,25 +1759,35 @@ def get_public_user_writings(user_id):
 
 # ============================================================
 # FOLLOW STATUS
+#
 # GET /api/users/<user_id>/follow-status
 # ============================================================
+
 
 @user_bp.route(
     "/<int:user_id>/follow-status",
     methods=["GET"],
 )
 @jwt_required()
-def get_follow_status(user_id):
+def get_follow_status(
+    user_id
+):
 
     current_user_id = (
         get_current_user_id()
     )
 
+
     if current_user_id is None:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Invalid authentication identity."
         }), 401
+
 
     current_user = (
         get_active_user(
@@ -998,11 +1795,17 @@ def get_follow_status(user_id):
         )
     )
 
+
     if not current_user:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Authenticated user not found."
         }), 404
+
 
     target_user = (
         get_active_user(
@@ -1010,21 +1813,31 @@ def get_follow_status(user_id):
         )
     )
 
+
     if not target_user:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Writer not found."
         }), 404
+
 
     is_self = (
         current_user.id
         == target_user.id
     )
 
+
     following = False
 
+
     if not is_self:
+
         following = (
+
             Follow.query
             .filter_by(
                 follower_id=
@@ -1034,10 +1847,15 @@ def get_follow_status(user_id):
                     target_user.id,
             )
             .first()
+
             is not None
         )
 
+
     return jsonify({
+        "success":
+            True,
+
         "following":
             following,
 
@@ -1058,23 +1876,31 @@ def get_follow_status(user_id):
 
 # ============================================================
 # FOLLOW WRITER
+#
 # POST /api/users/<user_id>/follow
 # ============================================================
+
 
 @user_bp.route(
     "/<int:user_id>/follow",
     methods=["POST"],
 )
 @jwt_required()
-def follow_user(user_id):
+def follow_user(
+    user_id
+):
 
     current_user_id = (
         get_current_user_id()
     )
 
+
     if current_user_id is None:
 
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Invalid authentication identity."
         }), 401
@@ -1086,9 +1912,13 @@ def follow_user(user_id):
         )
     )
 
+
     if not current_user:
 
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Authenticated user not found."
         }), 404
@@ -1100,17 +1930,21 @@ def follow_user(user_id):
         )
     )
 
+
     if not target_user:
 
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Writer not found."
         }), 404
 
 
-    # --------------------------------------------------------
-    # PREVENT SELF FOLLOW
-    # --------------------------------------------------------
+    # ========================================================
+    # PREVENT SELF-FOLLOW
+    # ========================================================
 
     if (
         current_user.id
@@ -1118,6 +1952,9 @@ def follow_user(user_id):
     ):
 
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "You cannot follow yourself.",
 
@@ -1136,11 +1973,12 @@ def follow_user(user_id):
         }), 400
 
 
-    # --------------------------------------------------------
-    # CHECK EXISTING FOLLOW
-    # --------------------------------------------------------
+    # ========================================================
+    # EXISTING FOLLOW
+    # ========================================================
 
     existing_follow = (
+
         Follow.query
         .filter_by(
             follower_id=
@@ -1150,18 +1988,21 @@ def follow_user(user_id):
                 target_user.id,
         )
         .first()
+
     )
 
-
-    # --------------------------------------------------------
-    # IDEMPOTENT
-    # --------------------------------------------------------
 
     if existing_follow:
 
         return jsonify({
+            "success":
+                True,
+
             "message":
-                "You are already following this writer.",
+                (
+                    "You are already "
+                    "following this writer."
+                ),
 
             "following":
                 True,
@@ -1178,9 +2019,9 @@ def follow_user(user_id):
         }), 200
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # CREATE FOLLOW
-    # --------------------------------------------------------
+    # ========================================================
 
     follow = Follow(
         follower_id=
@@ -1202,31 +2043,25 @@ def follow_user(user_id):
 
 
         # ----------------------------------------------------
-        # CREATE FOLLOW NOTIFICATION
-        # ----------------------------------------------------
+        # FOLLOW NOTIFICATION
         #
-        # recipient = user being followed
-        # actor     = user who followed
-        #
-        # create_notification() does NOT commit.
-        #
+        # notification_service intentionally does not commit.
+        # Follow + notification commit together.
         # ----------------------------------------------------
 
-        notification = create_notification(
-            recipient_id=
-                target_user.id,
+        notification = (
+            create_notification(
+                recipient_id=
+                    target_user.id,
 
-            actor_id=
-                current_user.id,
+                actor_id=
+                    current_user.id,
 
-            notification_type=
-                "follow",
+                notification_type=
+                    "follow",
+            )
         )
 
-
-        # ----------------------------------------------------
-        # COMMIT FOLLOW + NOTIFICATION TOGETHER
-        # ----------------------------------------------------
 
         db.session.commit()
 
@@ -1243,21 +2078,19 @@ def follow_user(user_id):
 
 
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Unable to follow this writer."
         }), 500
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # REAL-TIME NOTIFICATION
-    # --------------------------------------------------------
     #
-    # Emit only after the database commit succeeds.
-    #
-    # If Socket.IO temporarily fails, the follow action
-    # must still remain successful.
-    #
-    # --------------------------------------------------------
+    # Emit after successful database transaction.
+    # ========================================================
 
     if notification:
 
@@ -1266,6 +2099,7 @@ def follow_user(user_id):
             emit_notification(
                 notification
             )
+
 
         except Exception as error:
 
@@ -1276,11 +2110,10 @@ def follow_user(user_id):
             )
 
 
-    # --------------------------------------------------------
-    # SUCCESS RESPONSE
-    # --------------------------------------------------------
-
     return jsonify({
+        "success":
+            True,
+
         "message":
             "Writer followed successfully.",
 
@@ -1298,27 +2131,38 @@ def follow_user(user_id):
             ),
     }), 201
 
+
 # ============================================================
 # UNFOLLOW WRITER
+#
 # DELETE /api/users/<user_id>/follow
 # ============================================================
+
 
 @user_bp.route(
     "/<int:user_id>/follow",
     methods=["DELETE"],
 )
 @jwt_required()
-def unfollow_user(user_id):
+def unfollow_user(
+    user_id
+):
 
     current_user_id = (
         get_current_user_id()
     )
 
+
     if current_user_id is None:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Invalid authentication identity."
         }), 401
+
 
     current_user = (
         get_active_user(
@@ -1326,11 +2170,17 @@ def unfollow_user(user_id):
         )
     )
 
+
     if not current_user:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Authenticated user not found."
         }), 404
+
 
     target_user = (
         get_active_user(
@@ -1338,21 +2188,31 @@ def unfollow_user(user_id):
         )
     )
 
+
     if not target_user:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Writer not found."
         }), 404
 
-    # --------------------------------------------------------
-    # PREVENT SELF UNFOLLOW
-    # --------------------------------------------------------
+
+    # ========================================================
+    # SELF
+    # ========================================================
 
     if (
         current_user.id
         == target_user.id
     ):
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "You cannot unfollow yourself.",
 
@@ -1370,11 +2230,13 @@ def unfollow_user(user_id):
                 ),
         }), 400
 
-    # --------------------------------------------------------
-    # FIND FOLLOW RELATIONSHIP
-    # --------------------------------------------------------
+
+    # ========================================================
+    # FIND FOLLOW
+    # ========================================================
 
     follow = (
+
         Follow.query
         .filter_by(
             follower_id=
@@ -1384,16 +2246,25 @@ def unfollow_user(user_id):
                 target_user.id,
         )
         .first()
+
     )
 
-    # --------------------------------------------------------
-    # IDEMPOTENT
-    # --------------------------------------------------------
+
+    # ========================================================
+    # IDEMPOTENT UNFOLLOW
+    # ========================================================
 
     if not follow:
+
         return jsonify({
+            "success":
+                True,
+
             "message":
-                "You are not following this writer.",
+                (
+                    "You are not following "
+                    "this writer."
+                ),
 
             "following":
                 False,
@@ -1409,11 +2280,12 @@ def unfollow_user(user_id):
                 ),
         }), 200
 
-    try:
 
-        # ----------------------------------------------------
-        # DELETE FOLLOW NOTIFICATION
-        # ----------------------------------------------------
+    # ========================================================
+    # DELETE FOLLOW + MATCHING NOTIFICATION
+    # ========================================================
+
+    try:
 
         delete_notification(
             recipient_id=
@@ -1426,35 +2298,39 @@ def unfollow_user(user_id):
                 "follow",
         )
 
-        # ----------------------------------------------------
-        # DELETE FOLLOW RELATIONSHIP
-        # ----------------------------------------------------
 
         db.session.delete(
             follow
         )
 
-        # ----------------------------------------------------
-        # COMMIT BOTH TOGETHER
-        # ----------------------------------------------------
 
         db.session.commit()
+
 
     except Exception as error:
 
         db.session.rollback()
+
 
         print(
             "FOLLOW DELETE ERROR:",
             error,
         )
 
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Unable to unfollow this writer."
         }), 500
 
+
     return jsonify({
+        "success":
+            True,
+
         "message":
             "Writer unfollowed successfully.",
 
@@ -1478,9 +2354,8 @@ def unfollow_user(user_id):
 #
 # GET:
 # /api/users/me/following-feed?page=1&limit=20
-#
-# Requires JWT
 # ============================================================
+
 
 @user_bp.route(
     "/me/following-feed",
@@ -1489,19 +2364,21 @@ def unfollow_user(user_id):
 @jwt_required()
 def get_following_feed():
 
-    # --------------------------------------------------------
-    # AUTH USER
-    # --------------------------------------------------------
-
     current_user_id = (
         get_current_user_id()
     )
 
+
     if current_user_id is None:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Invalid authentication identity."
         }), 401
+
 
     current_user = (
         get_active_user(
@@ -1509,99 +2386,95 @@ def get_following_feed():
         )
     )
 
+
     if not current_user:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Authenticated user not found."
         }), 404
 
-    # --------------------------------------------------------
-    # PAGINATION
-    # --------------------------------------------------------
 
-    try:
-        page = int(
-            request.args.get(
-                "page",
-                1,
-            )
+    pagination_values = (
+        parse_pagination(
+            default_limit=20,
+            max_limit=50,
         )
+    )
 
-        limit = int(
-            request.args.get(
-                "limit",
-                20,
-            )
-        )
 
-    except (
-        TypeError,
-        ValueError,
-    ):
+    if pagination_values is None:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Invalid pagination values."
         }), 400
 
-    page = max(
-        page,
-        1,
+
+    page, limit = (
+        pagination_values
     )
 
-    # Prevent excessively large
-    # feed requests.
-    limit = max(
-        1,
-        min(
-            limit,
-            50,
-        ),
-    )
 
-    # --------------------------------------------------------
-    # FOLLOWING IDS SUBQUERY
-    # --------------------------------------------------------
+    # ========================================================
+    # WRITERS CURRENT USER FOLLOWS
+    # ========================================================
 
     following_ids = (
+
         db.session.query(
             Follow.following_id
         )
+
         .filter(
             Follow.follower_id
             == current_user.id
         )
     )
 
-    # --------------------------------------------------------
-    # FEED QUERY
-    # --------------------------------------------------------
+
+    # ========================================================
+    # FEED
+    # ========================================================
 
     query = (
+
         Writing.query
         .filter(
             Writing.user_id.in_(
                 following_ids
             ),
+
             Writing.status
             == "published",
         )
+
         .order_by(
             Writing.published_at.desc(),
             Writing.created_at.desc(),
         )
     )
 
-    # --------------------------------------------------------
-    # PAGINATION
-    # --------------------------------------------------------
 
     pagination = (
         query.paginate(
-            page=page,
-            per_page=limit,
-            error_out=False,
+            page=
+                page,
+
+            per_page=
+                limit,
+
+            error_out=
+                False,
         )
     )
+
 
     writings = [
         writing.to_dict()
@@ -1609,11 +2482,11 @@ def get_following_feed():
         in pagination.items
     ]
 
-    # --------------------------------------------------------
-    # RESPONSE
-    # --------------------------------------------------------
 
     return jsonify({
+        "success":
+            True,
+
         "page":
             pagination.page,
 
@@ -1636,98 +2509,83 @@ def get_following_feed():
             writings,
     }), 200
 
-    # ============================================================
+
+# ============================================================
 # FOLLOWERS LIST
 #
 # GET:
 # /api/users/<user_id>/followers?page=1&limit=20
 #
-# Public endpoint
+# Public
 # ============================================================
+
 
 @user_bp.route(
     "/<int:user_id>/followers",
     methods=["GET"],
 )
-def get_user_followers(user_id):
-
-    # --------------------------------------------------------
-    # TARGET USER
-    # --------------------------------------------------------
+def get_user_followers(
+    user_id
+):
 
     user = get_active_user(
         user_id
     )
 
+
     if not user:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Writer not found."
         }), 404
 
 
-    # --------------------------------------------------------
-    # PAGINATION
-    # --------------------------------------------------------
-
-    try:
-        page = int(
-            request.args.get(
-                "page",
-                1,
-            )
+    pagination_values = (
+        parse_pagination(
+            default_limit=20,
+            max_limit=50,
         )
+    )
 
-        limit = int(
-            request.args.get(
-                "limit",
-                20,
-            )
-        )
 
-    except (
-        TypeError,
-        ValueError,
-    ):
+    if pagination_values is None:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Invalid pagination values."
         }), 400
 
 
-    page = max(
-        page,
-        1,
+    page, limit = (
+        pagination_values
     )
 
-    limit = max(
-        1,
-        min(
-            limit,
-            50,
-        ),
-    )
-
-
-    # --------------------------------------------------------
-    # QUERY
-    #
-    # Follow.following_id = profile being followed
-    # Follow.follower_id  = user who follows profile
-    # --------------------------------------------------------
 
     query = (
+
         User.query
         .join(
             Follow,
             Follow.follower_id
             == User.id,
         )
+
         .filter(
             Follow.following_id
             == user.id,
-            User.is_active.is_(True),
+
+            User.is_active.is_(
+                True
+            ),
         )
+
         .order_by(
             Follow.created_at.desc(),
             User.id.desc(),
@@ -1735,22 +2593,19 @@ def get_user_followers(user_id):
     )
 
 
-    # --------------------------------------------------------
-    # PAGINATION
-    # --------------------------------------------------------
-
     pagination = (
         query.paginate(
-            page=page,
-            per_page=limit,
-            error_out=False,
+            page=
+                page,
+
+            per_page=
+                limit,
+
+            error_out=
+                False,
         )
     )
 
-
-    # --------------------------------------------------------
-    # PUBLIC-SAFE USERS
-    # --------------------------------------------------------
 
     users = [
         public_user_dict(
@@ -1761,11 +2616,10 @@ def get_user_followers(user_id):
     ]
 
 
-    # --------------------------------------------------------
-    # RESPONSE
-    # --------------------------------------------------------
-
     return jsonify({
+        "success":
+            True,
+
         "user":
             public_user_dict(
                 user
@@ -1800,92 +2654,76 @@ def get_user_followers(user_id):
 # GET:
 # /api/users/<user_id>/following?page=1&limit=20
 #
-# Public endpoint
+# Public
 # ============================================================
+
 
 @user_bp.route(
     "/<int:user_id>/following",
     methods=["GET"],
 )
-def get_user_following(user_id):
-
-    # --------------------------------------------------------
-    # TARGET USER
-    # --------------------------------------------------------
+def get_user_following(
+    user_id
+):
 
     user = get_active_user(
         user_id
     )
 
+
     if not user:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Writer not found."
         }), 404
 
 
-    # --------------------------------------------------------
-    # PAGINATION
-    # --------------------------------------------------------
-
-    try:
-        page = int(
-            request.args.get(
-                "page",
-                1,
-            )
+    pagination_values = (
+        parse_pagination(
+            default_limit=20,
+            max_limit=50,
         )
+    )
 
-        limit = int(
-            request.args.get(
-                "limit",
-                20,
-            )
-        )
 
-    except (
-        TypeError,
-        ValueError,
-    ):
+    if pagination_values is None:
+
         return jsonify({
+            "success":
+                False,
+
             "message":
                 "Invalid pagination values."
         }), 400
 
 
-    page = max(
-        page,
-        1,
+    page, limit = (
+        pagination_values
     )
 
-    limit = max(
-        1,
-        min(
-            limit,
-            50,
-        ),
-    )
-
-
-    # --------------------------------------------------------
-    # QUERY
-    #
-    # Follow.follower_id  = profile owner
-    # Follow.following_id = writer being followed
-    # --------------------------------------------------------
 
     query = (
+
         User.query
         .join(
             Follow,
             Follow.following_id
             == User.id,
         )
+
         .filter(
             Follow.follower_id
             == user.id,
-            User.is_active.is_(True),
+
+            User.is_active.is_(
+                True
+            ),
         )
+
         .order_by(
             Follow.created_at.desc(),
             User.id.desc(),
@@ -1893,22 +2731,19 @@ def get_user_following(user_id):
     )
 
 
-    # --------------------------------------------------------
-    # PAGINATION
-    # --------------------------------------------------------
-
     pagination = (
         query.paginate(
-            page=page,
-            per_page=limit,
-            error_out=False,
+            page=
+                page,
+
+            per_page=
+                limit,
+
+            error_out=
+                False,
         )
     )
 
-
-    # --------------------------------------------------------
-    # PUBLIC-SAFE USERS
-    # --------------------------------------------------------
 
     users = [
         public_user_dict(
@@ -1919,11 +2754,10 @@ def get_user_following(user_id):
     ]
 
 
-    # --------------------------------------------------------
-    # RESPONSE
-    # --------------------------------------------------------
-
     return jsonify({
+        "success":
+            True,
+
         "user":
             public_user_dict(
                 user
@@ -1941,9 +2775,9 @@ def get_user_following(user_id):
         "pages":
             pagination.pages,
 
-
         "has_next":
             pagination.has_next,
+
         "has_prev":
             pagination.has_prev,
 

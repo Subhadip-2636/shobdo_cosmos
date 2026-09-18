@@ -1,0 +1,759 @@
+/* =========================================================
+   SHOBDO WRITING CARD
+========================================================= */
+
+.writing-card {
+  position: relative;
+
+  width: 100%;
+
+  padding: 22px;
+
+  background: #ffffff;
+
+  border: 1px solid #e9e9ee;
+  border-radius: 18px;
+
+  box-shadow:
+    0 1px 2px rgba(20, 20, 30, 0.03);
+
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+
+.writing-card:hover {
+  border-color: rgba(100, 43, 143, 0.2);
+
+  box-shadow:
+    0 10px 30px rgba(27, 18, 38, 0.06);
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.writing-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 14px;
+
+  margin-bottom: 16px;
+}
+
+
+.writing-card-header-meta {
+  flex: 0 0 auto;
+}
+
+
+.writing-card-published-time {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 5px;
+
+  color: #85858e;
+
+  font-size: 0.78rem;
+  font-weight: 560;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   AUTHOR
+========================================================= */
+
+.writing-card-author {
+  min-width: 0;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 10px;
+
+  color: inherit;
+}
+
+
+.writing-card-author-link {
+  text-decoration: none;
+}
+
+
+.writing-card-author-link:hover
+.writing-author-info strong {
+  color: #642b8f;
+}
+
+
+.writing-author-avatar {
+  width: 42px;
+  height: 42px;
+
+  flex: 0 0 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  border: 1px solid rgba(100, 43, 143, 0.12);
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(100, 43, 143, 0.12),
+      rgba(100, 43, 143, 0.04)
+    );
+
+  color: #642b8f;
+
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+
+.writing-author-avatar img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+
+.writing-author-info {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+
+.writing-author-name-row {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+}
+
+
+.writing-author-info strong {
+  min-width: 0;
+
+  overflow: hidden;
+
+  color: #29292f;
+
+  font-size: 0.91rem;
+  font-weight: 720;
+
+  line-height: 1.25;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  transition: color 160ms ease;
+}
+
+
+.writing-author-username {
+  min-width: 0;
+
+  overflow: hidden;
+
+  color: #92929b;
+
+  font-size: 0.78rem;
+  font-weight: 500;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.writing-author-byline {
+  color: #9a9aa3;
+
+  font-size: 0.72rem;
+}
+
+
+/* =========================================================
+   BADGES
+========================================================= */
+
+.writing-card-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 7px;
+
+  margin-bottom: 13px;
+}
+
+
+.writing-language-badge,
+.writing-category-badge {
+  min-height: 27px;
+
+  padding: 5px 9px;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 5px;
+
+  border-radius: 999px;
+
+  font-size: 0.74rem;
+  font-weight: 650;
+
+  line-height: 1;
+}
+
+
+.writing-language-badge {
+  border: 1px solid rgba(100, 43, 143, 0.12);
+
+  background: rgba(100, 43, 143, 0.055);
+
+  color: #642b8f;
+}
+
+
+.writing-category-badge {
+  border: 1px solid #e8e8ed;
+
+  background: #f8f8fa;
+
+  color: #66666f;
+}
+
+
+/* =========================================================
+   TITLE
+========================================================= */
+
+.writing-card-title-link {
+  display: block;
+
+  margin-bottom: 10px;
+
+  color: inherit;
+
+  text-decoration: none;
+}
+
+
+.writing-card-title {
+  margin: 0;
+
+  color: #222228;
+
+  font-size: 1.18rem;
+  font-weight: 760;
+
+  line-height: 1.36;
+
+  letter-spacing: -0.01em;
+
+  transition: color 160ms ease;
+}
+
+
+.writing-card-title-link:hover
+.writing-card-title {
+  color: #642b8f;
+}
+
+
+/* =========================================================
+   PREVIEW
+========================================================= */
+
+.writing-card-preview {
+  margin: 0 0 15px;
+
+  overflow: hidden;
+
+  color: #5c5c66;
+
+  font-size: 0.92rem;
+  font-weight: 430;
+
+  line-height: 1.7;
+
+  white-space: pre-line;
+
+  display: -webkit-box;
+
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+
+/* =========================================================
+   HASHTAGS
+========================================================= */
+
+.writing-card-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 7px;
+
+  margin: 0 0 15px;
+}
+
+
+.writing-card-tag {
+  min-height: 28px;
+
+  padding: 5px 9px;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 3px;
+
+  border: 1px solid rgba(100, 43, 143, 0.12);
+  border-radius: 999px;
+
+  background: rgba(100, 43, 143, 0.05);
+
+  color: #642b8f;
+
+  font-size: 0.76rem;
+  font-weight: 650;
+
+  line-height: 1;
+
+  text-decoration: none;
+
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+
+
+.writing-card-tag:hover {
+  border-color: rgba(100, 43, 143, 0.26);
+
+  background: rgba(100, 43, 143, 0.1);
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   META
+========================================================= */
+
+.writing-card-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 13px;
+
+  margin-bottom: 17px;
+
+  color: #8a8a94;
+
+  font-size: 0.76rem;
+  font-weight: 520;
+}
+
+
+.writing-card-meta > span {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 5px;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.writing-card-footer {
+  padding-top: 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 14px;
+
+  border-top: 1px solid #eeeeF2;
+}
+
+
+.writing-card-social {
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+}
+
+
+/* =========================================================
+   SOCIAL ACTIONS
+========================================================= */
+
+.writing-like-button,
+.writing-comment-count,
+.writing-save-button {
+  min-height: 36px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: transparent;
+
+  color: #6d6d76;
+
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 620;
+
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+
+.writing-like-button,
+.writing-comment-count {
+  padding: 7px 10px;
+}
+
+
+.writing-save-button {
+  width: 36px;
+
+  padding: 0;
+}
+
+
+.writing-like-button:hover:not(:disabled),
+.writing-comment-count:hover,
+.writing-save-button:hover:not(:disabled) {
+  background: #f5f5f7;
+
+  color: #642b8f;
+}
+
+
+.writing-like-button:active:not(:disabled),
+.writing-comment-count:active,
+.writing-save-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+
+.writing-like-button.liked {
+  background: rgba(196, 52, 80, 0.07);
+
+  color: #b83250;
+}
+
+
+.writing-like-button.liked:hover:not(:disabled) {
+  background: rgba(196, 52, 80, 0.11);
+
+  color: #aa2947;
+}
+
+
+.writing-save-button.saved {
+  background: rgba(100, 43, 143, 0.08);
+
+  color: #642b8f;
+}
+
+
+.writing-like-button:disabled,
+.writing-save-button:disabled {
+  opacity: 0.55;
+
+  cursor: default;
+}
+
+
+/* =========================================================
+   READ LINK
+========================================================= */
+
+.writing-read-link {
+  min-height: 36px;
+
+  padding: 7px 11px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  border-radius: 10px;
+
+  color: #642b8f;
+
+  font-size: 0.82rem;
+  font-weight: 700;
+
+  text-decoration: none;
+
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+
+
+.writing-read-link:hover {
+  background: rgba(100, 43, 143, 0.07);
+}
+
+
+.writing-read-link:hover span {
+  transform: translateX(2px);
+}
+
+
+.writing-read-link span {
+  transition: transform 150ms ease;
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+========================================================= */
+
+.writing-card-author-link:focus-visible,
+.writing-card-title-link:focus-visible,
+.writing-card-tag:focus-visible,
+.writing-like-button:focus-visible,
+.writing-comment-count:focus-visible,
+.writing-save-button:focus-visible,
+.writing-read-link:focus-visible {
+  outline: 3px solid rgba(100, 43, 143, 0.18);
+  outline-offset: 2px;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (
+  max-width: 900px
+) {
+
+  .writing-card {
+    padding: 20px;
+  }
+
+
+  .writing-card-title {
+    font-size: 1.12rem;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+  max-width: 700px
+) {
+
+  .writing-card {
+    padding: 17px 15px;
+
+    border-left: 0;
+    border-right: 0;
+
+    border-radius: 0;
+
+    box-shadow: none;
+  }
+
+
+  .writing-card:hover {
+    transform: none;
+
+    box-shadow: none;
+  }
+
+
+  .writing-card-header {
+    gap: 10px;
+
+    margin-bottom: 14px;
+  }
+
+
+  .writing-author-avatar {
+    width: 39px;
+    height: 39px;
+
+    flex-basis: 39px;
+  }
+
+
+  .writing-author-username {
+    display: none;
+  }
+
+
+  .writing-card-published-time {
+    font-size: 0.72rem;
+  }
+
+
+  .writing-card-title {
+    font-size: 1.08rem;
+  }
+
+
+  .writing-card-preview {
+    font-size: 0.9rem;
+
+    line-height: 1.64;
+
+    -webkit-line-clamp: 5;
+  }
+
+
+  .writing-card-tags {
+    gap: 6px;
+  }
+
+
+  .writing-card-meta {
+    gap: 10px;
+
+    font-size: 0.72rem;
+  }
+
+
+  .writing-card-footer {
+    gap: 8px;
+  }
+
+
+  .writing-card-social {
+    gap: 1px;
+  }
+
+
+  .writing-like-button,
+  .writing-comment-count {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (
+  max-width: 420px
+) {
+
+  .writing-card {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+
+  .writing-card-header-meta {
+    max-width: 95px;
+
+    overflow: hidden;
+  }
+
+
+  .writing-card-published-time {
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+  }
+
+
+  .writing-card-meta > span:first-child {
+    display: none;
+  }
+
+
+  .writing-read-link {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (
+  prefers-reduced-motion: reduce
+) {
+
+  .writing-card,
+  .writing-card-author-link
+    .writing-author-info strong,
+  .writing-card-title,
+  .writing-card-tag,
+  .writing-like-button,
+  .writing-comment-count,
+  .writing-save-button,
+  .writing-read-link,
+  .writing-read-link span {
+    transition: none;
+  }
+
+}
