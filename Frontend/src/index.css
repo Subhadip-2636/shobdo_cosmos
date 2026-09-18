@@ -21457,3 +21457,30 @@ a.footer-contact-item:hover strong {
   }
 
 }
+
+/* =========================================================
+   GLOBAL SEARCH ACTIVE STATE
+========================================================= */
+
+.shobdo-navbar-search.active {
+  background: #eee9fc;
+  color: #6546c5;
+  border-color: #d7cdec;
+}
+
+
+/* =========================================================
+   MOBILE GLOBAL SEARCH
+========================================================= */
+
+.shobdo-mobile-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+
+.shobdo-mobile-search.active {
+  background: #f1edfb;
+  color: #6546c5;
+}

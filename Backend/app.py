@@ -597,6 +597,10 @@ def create_app():
         artwork_bp,
     )
 
+    from routes.search_routes import (
+        search_bp,
+    )
+
     # =====================================================
     # REGISTER AUTH BLUEPRINT
     # =====================================================
@@ -696,6 +700,14 @@ def create_app():
 
     app.register_blueprint(
         saved_bp
+    )
+
+    # =====================================================
+    # GLOBAL SEARCH
+    # =====================================================
+
+    app.register_blueprint(
+        search_bp
     )
 
     # =====================================================

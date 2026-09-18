@@ -32,6 +32,7 @@ import Write from "./pages/Write";
 import WritingDetails from "./pages/WritingDetails";
 import MyWritings from "./pages/MyWritings";
 import ConnectionsPage from "./pages/ConnectionsPage";
+import SearchPage from "./pages/SearchPage";
 
 
 // =========================================================
@@ -805,6 +806,13 @@ function App() {
                 <Explore />
               }
 
+            />
+
+            <Route
+              path="/search"
+              element={
+                <SearchPage />
+              }
             />
 
 

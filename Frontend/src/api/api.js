@@ -324,6 +324,105 @@ export async function getWritings(
   );
 }
 
+// =========================================================
+// GLOBAL SEARCH
+//
+// GET
+// /api/search
+//
+// Examples:
+//
+// globalSearch({
+//   query: "Subhadip",
+// })
+//
+// globalSearch({
+//   query: "কবিতা",
+//   type: "writings",
+//   page: 1,
+//   limit: 12,
+// })
+//
+// Supported types:
+// all
+// writers
+// writings
+// =========================================================
+
+export async function globalSearch({
+  query = "",
+  type = "all",
+  page = 1,
+  limit = 12,
+} = {}) {
+
+  const normalizedQuery =
+    String(
+      query || ""
+    ).trim();
+
+
+  const normalizedType =
+    [
+      "all",
+      "writers",
+      "writings",
+    ].includes(
+      String(
+        type || ""
+      ).toLowerCase()
+    )
+      ? String(
+          type
+        ).toLowerCase()
+      : "all";
+
+
+  const normalizedPage =
+    Math.max(
+      Number(
+        page
+      ) || 1,
+      1
+    );
+
+
+  const normalizedLimit =
+    Math.min(
+      Math.max(
+        Number(
+          limit
+        ) || 12,
+        1
+      ),
+      30
+    );
+
+
+  const queryString =
+    createQueryString({
+
+      q:
+        normalizedQuery,
+
+      type:
+        normalizedType,
+
+      page:
+        normalizedPage,
+
+      limit:
+        normalizedLimit,
+
+    });
+
+
+  return apiRequest(
+    `/api/search${queryString}`
+  );
+
+}
+
 
 // =========================================================
 // GET ONE WRITING
@@ -1712,6 +1811,12 @@ export async function toggleSavedWriting(
 // =========================================================
 
 const writingApi = {
+
+  // -------------------------------------------------------
+  // GLOBAL SEARCH
+  // -------------------------------------------------------
+
+  globalSearch,
 
   // -------------------------------------------------------
   // CONFIG / TOKEN
