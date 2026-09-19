@@ -36,6 +36,7 @@ from models.writing import Writing
 from models.comment import Comment
 from models.like import Like
 from models.tag import Tag
+from models.repost import Repost
 
 
 # =========================================================
@@ -1142,6 +1143,200 @@ def serialize_comment(
 
     }
 
+# =========================================================
+# REPOST METADATA
+# =========================================================
+
+def get_repost_metadata(
+    writings,
+    current_user_id=None,
+):
+
+    writings = list(
+        writings or []
+    )
+
+
+    writing_ids = [
+
+        int(
+            writing.id
+        )
+
+        for writing
+        in writings
+
+        if getattr(
+            writing,
+            "id",
+            None,
+        )
+    ]
+
+
+    if not writing_ids:
+
+        return (
+            {},
+            set(),
+        )
+
+
+    # =====================================================
+    # BATCH REPOST COUNTS
+    # =====================================================
+
+    count_rows = (
+
+        db.session.query(
+
+            Repost.writing_id,
+
+            db.func.count(
+                Repost.id
+            ).label(
+                "reposts_count"
+            ),
+
+        )
+
+        .filter(
+            Repost.writing_id.in_(
+                writing_ids
+            )
+        )
+
+        .group_by(
+            Repost.writing_id
+        )
+
+        .all()
+
+    )
+
+
+    repost_counts = {
+
+        int(
+            writing_id
+        ):
+            int(
+                reposts_count
+                or 0
+            )
+
+        for (
+            writing_id,
+            reposts_count,
+        )
+        in count_rows
+
+    }
+
+
+    # =====================================================
+    # CURRENT USER REPOST STATUS
+    # =====================================================
+
+    reposted_ids = set()
+
+
+    if current_user_id is not None:
+
+        repost_rows = (
+
+            db.session.query(
+                Repost.writing_id
+            )
+
+            .filter(
+
+                Repost.user_id
+                ==
+                current_user_id,
+
+                Repost.writing_id.in_(
+                    writing_ids
+                ),
+
+            )
+
+            .all()
+
+        )
+
+
+        reposted_ids = {
+
+            int(
+                row[0]
+            )
+
+            for row
+            in repost_rows
+
+        }
+
+
+    return (
+        repost_counts,
+        reposted_ids,
+    )
+
+
+# =========================================================
+# SERIALIZE MULTIPLE WRITINGS
+#
+# Important:
+# Repost information is loaded in two batch queries rather
+# than one query for every WritingCard.
+# =========================================================
+
+def serialize_writings(
+    writings,
+    current_user_id=None,
+):
+
+    writings = list(
+        writings or []
+    )
+
+
+    (
+        repost_counts,
+        reposted_ids,
+    ) = get_repost_metadata(
+        writings,
+        current_user_id,
+    )
+
+
+    return [
+
+        serialize_writing(
+
+            writing,
+
+            current_user_id,
+
+            reposts_count=
+                repost_counts.get(
+                    writing.id,
+                    0,
+                ),
+
+            reposted_by_current_user=
+                writing.id
+                in
+                reposted_ids,
+
+        )
+
+        for writing
+        in writings
+
+    ]
+
 
 # =========================================================
 # WRITING SERIALIZATION
@@ -1150,6 +1345,9 @@ def serialize_comment(
 def serialize_writing(
     writing,
     current_user_id=None,
+    *,
+    reposts_count=None,
+    reposted_by_current_user=None,
 ):
 
     author = getattr(
@@ -1189,17 +1387,24 @@ def serialize_writing(
     )
 
 
+    # =====================================================
+    # LIKES
+    # =====================================================
+
     try:
 
         likes_count = len(
             writing_likes
         )
 
-
     except TypeError:
 
         likes_count = 0
 
+
+    # =====================================================
+    # COMMENTS
+    # =====================================================
 
     try:
 
@@ -1207,11 +1412,14 @@ def serialize_writing(
             writing_comments
         )
 
-
     except TypeError:
 
         comments_count = 0
 
+
+    # =====================================================
+    # TAGS
+    # =====================================================
 
     try:
 
@@ -1226,11 +1434,14 @@ def serialize_writing(
 
         ]
 
-
     except TypeError:
 
         serialized_tags = []
 
+
+    # =====================================================
+    # LIKE STATUS
+    # =====================================================
 
     is_liked = False
 
@@ -1254,10 +1465,87 @@ def serialize_writing(
 
             )
 
-
         except TypeError:
 
             is_liked = False
+
+
+    # =====================================================
+    # REPOST COUNT
+    #
+    # List endpoints pass this value in batch.
+    #
+    # Single-writing endpoints may calculate it here.
+    # =====================================================
+
+    if reposts_count is None:
+
+        reposts_count = (
+
+            db.session.query(
+                db.func.count(
+                    Repost.id
+                )
+            )
+
+            .filter(
+                Repost.writing_id
+                ==
+                writing.id
+            )
+
+            .scalar()
+
+            or 0
+
+        )
+
+
+    # =====================================================
+    # CURRENT USER REPOST STATUS
+    # =====================================================
+
+    if reposted_by_current_user is None:
+
+        reposted_by_current_user = False
+
+
+        if current_user_id:
+
+            reposted_by_current_user = (
+
+                db.session.query(
+                    Repost.id
+                )
+
+                .filter(
+
+                    Repost.user_id
+                    ==
+                    current_user_id,
+
+                    Repost.writing_id
+                    ==
+                    writing.id,
+
+                )
+
+                .first()
+
+                is not None
+
+            )
+
+
+    reposts_count = int(
+        reposts_count
+        or 0
+    )
+
+
+    reposted_by_current_user = bool(
+        reposted_by_current_user
+    )
 
 
     return {
@@ -1395,7 +1683,7 @@ def serialize_writing(
         ],
 
         # -------------------------------------------------
-        # ENGAGEMENT
+        # LIKES / COMMENTS
         # -------------------------------------------------
 
         "likes":
@@ -1409,6 +1697,30 @@ def serialize_writing(
 
         "is_liked":
             is_liked,
+
+        "liked_by_current_user":
+            is_liked,
+
+        # -------------------------------------------------
+        # REPOSTS
+        # -------------------------------------------------
+
+        "reposts_count":
+            reposts_count,
+
+        "reposted_by_me":
+            reposted_by_current_user,
+
+        # Compatibility with existing repost endpoints.
+
+        "reposted_by_current_user":
+            reposted_by_current_user,
+
+        "is_reposted":
+            reposted_by_current_user,
+
+        "reposted":
+            reposted_by_current_user,
 
         # -------------------------------------------------
         # DATES
@@ -1473,7 +1785,6 @@ def serialize_writing(
             ),
 
     }
-
 
 # =========================================================
 # GET SUPPORTED LANGUAGES
@@ -1776,17 +2087,10 @@ def get_writings():
         )
 
 
-        writings = [
-
-            serialize_writing(
-                writing,
-                current_user_id,
-            )
-
-            for writing
-            in pagination.items
-
-        ]
+        writings = serialize_writings(
+            pagination.items,
+            current_user_id,
+        )
 
 
         return jsonify({
@@ -2200,17 +2504,10 @@ def get_my_writings():
         )
 
 
-        writings = [
-
-            serialize_writing(
-                writing,
-                user_id,
-            )
-
-            for writing
-            in pagination.items
-
-        ]
+        writings = serialize_writings(
+            pagination.items,
+            user_id,
+        )
 
 
         return jsonify({

@@ -18,6 +18,7 @@ from extensions import db
 from models.user import User
 from models.writing import Writing
 from models.follow import Follow
+from models.repost import Repost
 
 from services.notification_service import (
     create_notification,
@@ -450,6 +451,338 @@ def suggestion_user_dict(
     return data
 
 
+
+# ============================================================
+# SOCIAL WRITING SERIALIZATION
+#
+# Used by:
+# - public writer writings
+# - following feed
+#
+# Repost count and current-user repost state are loaded in
+# batches so feed cards do not make one repost query each.
+# ============================================================
+
+
+def serialize_social_writings(
+    writings,
+    current_user_id=None,
+):
+
+    writings = list(
+        writings or []
+    )
+
+
+    writing_ids = [
+
+        int(
+            writing.id
+        )
+
+        for writing
+        in writings
+
+        if getattr(
+            writing,
+            "id",
+            None,
+        )
+
+    ]
+
+
+    if not writing_ids:
+
+        return []
+
+
+    # ========================================================
+    # BATCH REPOST COUNTS
+    # ========================================================
+
+    repost_count_rows = (
+
+        db.session.query(
+
+            Repost.writing_id,
+
+            func.count(
+                Repost.id
+            ).label(
+                "reposts_count"
+            ),
+
+        )
+
+        .filter(
+            Repost.writing_id.in_(
+                writing_ids
+            )
+        )
+
+        .group_by(
+            Repost.writing_id
+        )
+
+        .all()
+
+    )
+
+
+    repost_counts = {
+
+        int(
+            writing_id
+        ):
+            int(
+                reposts_count
+                or 0
+            )
+
+        for (
+            writing_id,
+            reposts_count,
+        )
+        in repost_count_rows
+
+    }
+
+
+    # ========================================================
+    # CURRENT USER REPOST STATUS
+    # ========================================================
+
+    reposted_ids = set()
+
+
+    if current_user_id is not None:
+
+        reposted_rows = (
+
+            db.session.query(
+                Repost.writing_id
+            )
+
+            .filter(
+
+                Repost.user_id
+                == current_user_id,
+
+                Repost.writing_id.in_(
+                    writing_ids
+                ),
+
+            )
+
+            .all()
+
+        )
+
+
+        reposted_ids = {
+
+            int(
+                writing_id
+            )
+
+            for (
+                writing_id,
+            )
+            in reposted_rows
+
+        }
+
+
+    # ========================================================
+    # SERIALIZE
+    # ========================================================
+
+    serialized = []
+
+
+    for writing in writings:
+
+        data = writing.to_dict()
+
+
+        # ----------------------------------------------------
+        # FULL PUBLIC AUTHOR SHAPE
+        # ----------------------------------------------------
+
+        author = getattr(
+            writing,
+            "author",
+            None,
+        )
+
+
+        if author is not None:
+
+            author_data = {
+
+                "id":
+                    getattr(
+                        author,
+                        "id",
+                        None,
+                    ),
+
+                "name":
+                    getattr(
+                        author,
+                        "name",
+                        None,
+                    ),
+
+                "username":
+                    getattr(
+                        author,
+                        "username",
+                        None,
+                    ),
+
+                "avatar_url":
+                    getattr(
+                        author,
+                        "avatar_url",
+                        None,
+                    ),
+
+            }
+
+
+            data["author"] = (
+                author_data
+            )
+
+
+            data["author_id"] = (
+                author_data[
+                    "id"
+                ]
+            )
+
+
+            data["author_name"] = (
+                author_data[
+                    "name"
+                ]
+            )
+
+
+            data["author_username"] = (
+                author_data[
+                    "username"
+                ]
+            )
+
+
+            data["author_avatar_url"] = (
+                author_data[
+                    "avatar_url"
+                ]
+            )
+
+
+        # ----------------------------------------------------
+        # LIKE STATUS
+        # ----------------------------------------------------
+
+        is_liked = False
+
+
+        if current_user_id is not None:
+
+            try:
+
+                is_liked = any(
+
+                    getattr(
+                        like,
+                        "user_id",
+                        None,
+                    )
+                    == current_user_id
+
+                    for like
+                    in getattr(
+                        writing,
+                        "likes",
+                        [],
+                    )
+
+                )
+
+            except TypeError:
+
+                is_liked = False
+
+
+        data["is_liked"] = (
+            is_liked
+        )
+
+
+        data[
+            "liked_by_current_user"
+        ] = is_liked
+
+
+        # ----------------------------------------------------
+        # REPOST STATUS / COUNT
+        # ----------------------------------------------------
+
+        reposted = (
+            writing.id
+            in reposted_ids
+        )
+
+
+        reposts_count = (
+            repost_counts.get(
+                writing.id,
+                0,
+            )
+        )
+
+
+        data["reposts_count"] = (
+            reposts_count
+        )
+
+
+        data["reposted_by_me"] = (
+            reposted
+        )
+
+
+        # Compatibility aliases while older frontend code is
+        # still being upgraded.
+        data[
+            "reposted_by_current_user"
+        ] = reposted
+
+
+        data["is_reposted"] = (
+            reposted
+        )
+
+
+        data["reposted"] = (
+            reposted
+        )
+
+
+        serialized.append(
+            data
+        )
+
+
+    return serialized
+
+
+# ============================================================
 # ============================================================
 # UPDATE OWN PROFILE
 #
@@ -1707,9 +2040,17 @@ def get_public_user(
     "/<int:user_id>/writings",
     methods=["GET"],
 )
+@jwt_required(
+    optional=True
+)
 def get_public_user_writings(
     user_id
 ):
+
+    current_user_id = (
+        get_current_user_id()
+    )
+
 
     user = get_active_user(
         user_id
@@ -1735,6 +2076,14 @@ def get_public_user_writings(
     )
 
 
+    serialized_writings = (
+        serialize_social_writings(
+            writings,
+            current_user_id,
+        )
+    )
+
+
     return jsonify({
         "success":
             True,
@@ -1746,14 +2095,14 @@ def get_public_user_writings(
 
         "count":
             len(
-                writings
+                serialized_writings
             ),
 
-        "writings": [
-            writing.to_dict()
-            for writing
-            in writings
-        ],
+        "writings":
+            serialized_writings,
+
+        "items":
+            serialized_writings,
     }), 200
 
 
@@ -2476,11 +2825,12 @@ def get_following_feed():
     )
 
 
-    writings = [
-        writing.to_dict()
-        for writing
-        in pagination.items
-    ]
+    writings = (
+        serialize_social_writings(
+            pagination.items,
+            current_user.id,
+        )
+    )
 
 
     return jsonify({

@@ -26,6 +26,7 @@ import {
 } from "react-router-dom";
 
 import WritingCard from "../components/WritingCard";
+import WritingCardSkeleton from "../components/WritingCardSkeleton";
 
 import {
   getFollowingFeed,
@@ -2488,19 +2489,17 @@ function Home({
             !followingRequiresLogin && (
 
               <div
-                className="home-feed-state home-feed-loading-motion"
+                className="home-feed-skeleton-list"
+                aria-label={
+                  labels.loadingFeed
+                }
+                aria-busy="true"
               >
 
-                <Loader2
-                  size={30}
-                  className="home-feed-spin"
-                />
-
-                <span>
-                  {
-                    labels.loadingFeed
-                  }
-                </span>
+                <WritingCardSkeleton />
+                <WritingCardSkeleton />
+                <WritingCardSkeleton />
+                <WritingCardSkeleton />
 
               </div>
             )}

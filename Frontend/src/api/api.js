@@ -2151,6 +2151,183 @@ export const getTagWritings =
   getWritingsByTag;
 
 
+// =========================================================
+// REPOSTS
+// =========================================================
+
+
+// =========================================================
+// CREATE REPOST
+//
+// POST /api/reposts/writing/<writing_id>
+// =========================================================
+
+export async function repostWriting(
+  writingId
+) {
+
+  if (!writingId) {
+
+    throw new Error(
+      "Writing ID is required."
+    );
+  }
+
+
+  return apiRequest(
+    `/api/reposts/writing/${writingId}`,
+    {
+      method:
+        "POST",
+    }
+  );
+}
+
+
+// =========================================================
+// REMOVE REPOST
+//
+// DELETE /api/reposts/writing/<writing_id>
+// =========================================================
+
+export async function unrepostWriting(
+  writingId
+) {
+
+  if (!writingId) {
+
+    throw new Error(
+      "Writing ID is required."
+    );
+  }
+
+
+  return apiRequest(
+    `/api/reposts/writing/${writingId}`,
+    {
+      method:
+        "DELETE",
+    }
+  );
+}
+
+
+// =========================================================
+// GET CURRENT USER REPOST STATUS
+//
+// GET /api/reposts/writing/<writing_id>/me
+// =========================================================
+
+export async function getMyRepostStatus(
+  writingId
+) {
+
+  if (!writingId) {
+
+    throw new Error(
+      "Writing ID is required."
+    );
+  }
+
+
+  return apiRequest(
+    `/api/reposts/writing/${writingId}/me`
+  );
+}
+
+
+// =========================================================
+// GET USERS WHO REPOSTED A WRITING
+//
+// GET /api/reposts/writing/<writing_id>
+// =========================================================
+
+export async function getWritingReposts(
+  writingId,
+  {
+    page = 1,
+    limit = 20,
+  } = {}
+) {
+
+  if (!writingId) {
+
+    throw new Error(
+      "Writing ID is required."
+    );
+  }
+
+
+  const queryString =
+    createQueryString({
+      page,
+      limit,
+    });
+
+
+  return apiRequest(
+    `/api/reposts/writing/${writingId}${queryString}`
+  );
+}
+
+
+// =========================================================
+// GET USER REPOSTS
+//
+// GET /api/users/<user_id>/reposts
+// =========================================================
+
+export async function getUserReposts(
+  userId,
+  {
+    page = 1,
+    limit = 20,
+  } = {}
+) {
+
+  const id =
+    validateUserId(
+      userId
+    );
+
+
+  const queryString =
+    createQueryString({
+      page,
+      limit,
+    });
+
+
+  return apiRequest(
+    `/api/users/${id}/reposts${queryString}`
+  );
+}
+
+
+// =========================================================
+// TOGGLE REPOST
+// =========================================================
+
+export async function toggleRepost(
+  writingId,
+  currentlyReposted = false
+) {
+
+  if (
+    currentlyReposted
+  ) {
+
+    return unrepostWriting(
+      writingId
+    );
+  }
+
+
+  return repostWriting(
+    writingId
+  );
+}
+
 
 // =========================================================
 // DEFAULT EXPORT
@@ -2299,6 +2476,22 @@ const writingApi = {
   getWritingsByTag,
 
   getTagWritings,
+
+  // -------------------------------------------------------
+  // REPOSTS
+  // -------------------------------------------------------
+
+  repostWriting,
+
+  unrepostWriting,
+
+  toggleRepost,
+
+  getMyRepostStatus,
+
+  getWritingReposts,
+
+  getUserReposts,
 
 
   // HEALTH

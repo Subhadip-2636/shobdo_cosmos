@@ -1,9 +1,9 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
-
 
 import {
   Link,
@@ -12,24 +12,25 @@ import {
   useSearchParams,
 } from "react-router-dom";
 
-
 import {
   ArrowRight,
   BookOpen,
   ChevronLeft,
   ChevronRight,
+  FileText,
   Globe2,
+  Hash,
   Heart,
   Loader2,
   MapPin,
   MessageCircle,
   Search,
+  Sparkles,
   UserCheck,
   UserPlus,
   Users,
   X,
 } from "lucide-react";
-
 
 import {
   followUser,
@@ -38,24 +39,32 @@ import {
   unfollowUser,
 } from "../api/api";
 
-
 import {
   useLanguage,
 } from "../Language/LanguageContext";
 
-
 import "./SearchPage.css";
 
 
+// =========================================================
+// CONSTANTS
+// =========================================================
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE =
+  12;
 
+const VALID_TYPES =
+  [
+    "all",
+    "writings",
+    "writers",
+    "tags",
+  ];
 
 
 // =========================================================
 // MULTILINGUAL COPY
 // =========================================================
-
 
 const COPY = {
 
@@ -68,10 +77,10 @@ const COPY = {
       "Search",
 
     description:
-      "Discover writers, stories, poems and ideas from the SHOBDO community.",
+      "Discover writers, writings and topics from the multilingual SHOBDO community.",
 
     placeholder:
-      "Search writers, usernames or writings...",
+      "Search writings, writers, topics or hashtags...",
 
     search:
       "Search",
@@ -82,17 +91,23 @@ const COPY = {
     all:
       "All",
 
+    writings:
+      "Writings",
+
     writers:
       "Writers",
 
-    writings:
-      "Writings",
+    tags:
+      "Tags",
 
     writersFound:
       "Writers",
 
     writingsFound:
       "Writings",
+
+    topicsFound:
+      "Topics",
 
     result:
       "result",
@@ -118,17 +133,38 @@ const COPY = {
     readWriting:
       "Read writing",
 
+    exploreTag:
+      "Explore topic",
+
+    matchedWritings:
+      "matched writings",
+
     noResults:
       "No results found",
 
     noResultsDescription:
-      "Try another name, username, title or keyword.",
+      "Try another writer name, username, title, keyword or hashtag.",
+
+    noTags:
+      "No matching topics found",
+
+    noTagsDescription:
+      "Try a different hashtag or search term.",
 
     startSearching:
       "Discover the SHOBDO community",
 
     startSearchingDescription:
-      "Search for writers, poems, stories, essays and other creative works.",
+      "Search for writers, poems, stories, essays, ideas and hashtags across SHOBDO.",
+
+    initialWritings:
+      "Writings",
+
+    initialWriters:
+      "Writers",
+
+    initialTopics:
+      "Topics",
 
     loading:
       "Searching SHOBDO...",
@@ -160,6 +196,9 @@ const COPY = {
     noBio:
       "SHOBDO writer",
 
+    searchAgain:
+      "Search again",
+
   },
 
 
@@ -172,10 +211,10 @@ const COPY = {
       "অনুসন্ধান",
 
     description:
-      "SHOBDO সম্প্রদায়ের লেখক, গল্প, কবিতা ও ভাবনা খুঁজে নিন।",
+      "বহুভাষিক SHOBDO সম্প্রদায়ের লেখক, লেখা ও বিষয় আবিষ্কার করুন।",
 
     placeholder:
-      "লেখক, ইউজারনেম বা লেখা খুঁজুন...",
+      "লেখা, লেখক, বিষয় বা হ্যাশট্যাগ খুঁজুন...",
 
     search:
       "খুঁজুন",
@@ -186,17 +225,23 @@ const COPY = {
     all:
       "সব",
 
+    writings:
+      "লেখা",
+
     writers:
       "লেখক",
 
-    writings:
-      "লেখা",
+    tags:
+      "ট্যাগ",
 
     writersFound:
       "লেখক",
 
     writingsFound:
       "লেখা",
+
+    topicsFound:
+      "বিষয়",
 
     result:
       "ফলাফল",
@@ -222,17 +267,38 @@ const COPY = {
     readWriting:
       "লেখাটি পড়ুন",
 
+    exploreTag:
+      "বিষয়টি দেখুন",
+
+    matchedWritings:
+      "মিলে যাওয়া লেখা",
+
     noResults:
       "কোনো ফলাফল পাওয়া যায়নি",
 
     noResultsDescription:
-      "অন্য নাম, ইউজারনেম, শিরোনাম বা শব্দ দিয়ে চেষ্টা করুন।",
+      "অন্য লেখকের নাম, ইউজারনেম, শিরোনাম, শব্দ বা হ্যাশট্যাগ দিয়ে চেষ্টা করুন।",
+
+    noTags:
+      "মিলে যাওয়া কোনো বিষয় পাওয়া যায়নি",
+
+    noTagsDescription:
+      "অন্য হ্যাশট্যাগ বা শব্দ দিয়ে চেষ্টা করুন।",
 
     startSearching:
       "SHOBDO সম্প্রদায়কে আবিষ্কার করুন",
 
     startSearchingDescription:
-      "লেখক, কবিতা, গল্প, প্রবন্ধ ও অন্যান্য সৃজনশীল লেখা খুঁজুন।",
+      "লেখক, কবিতা, গল্প, প্রবন্ধ, ভাবনা ও হ্যাশট্যাগ খুঁজে নিন।",
+
+    initialWritings:
+      "লেখা",
+
+    initialWriters:
+      "লেখক",
+
+    initialTopics:
+      "বিষয়",
 
     loading:
       "SHOBDO-তে খোঁজা হচ্ছে...",
@@ -264,6 +330,9 @@ const COPY = {
     noBio:
       "SHOBDO লেখক",
 
+    searchAgain:
+      "আবার খুঁজুন",
+
   },
 
 
@@ -276,10 +345,10 @@ const COPY = {
       "खोज",
 
     description:
-      "SHOBDO समुदाय के लेखकों, कहानियों, कविताओं और विचारों को खोजें।",
+      "बहुभाषी SHOBDO समुदाय के लेखकों, रचनाओं और विषयों को खोजें।",
 
     placeholder:
-      "लेखक, यूज़रनेम या रचनाएँ खोजें...",
+      "रचनाएँ, लेखक, विषय या हैशटैग खोजें...",
 
     search:
       "खोजें",
@@ -290,17 +359,23 @@ const COPY = {
     all:
       "सभी",
 
+    writings:
+      "रचनाएँ",
+
     writers:
       "लेखक",
 
-    writings:
-      "रचनाएँ",
+    tags:
+      "टैग",
 
     writersFound:
       "लेखक",
 
     writingsFound:
       "रचनाएँ",
+
+    topicsFound:
+      "विषय",
 
     result:
       "परिणाम",
@@ -326,17 +401,38 @@ const COPY = {
     readWriting:
       "रचना पढ़ें",
 
+    exploreTag:
+      "विषय देखें",
+
+    matchedWritings:
+      "मिलती रचनाएँ",
+
     noResults:
       "कोई परिणाम नहीं मिला",
 
     noResultsDescription:
-      "किसी दूसरे नाम, यूज़रनेम, शीर्षक या शब्द से खोजें।",
+      "किसी दूसरे लेखक, यूज़रनेम, शीर्षक, शब्द या हैशटैग से खोजें।",
+
+    noTags:
+      "कोई मिलता विषय नहीं मिला",
+
+    noTagsDescription:
+      "किसी दूसरे हैशटैग या शब्द से खोजें।",
 
     startSearching:
       "SHOBDO समुदाय खोजें",
 
     startSearchingDescription:
-      "लेखक, कविताएँ, कहानियाँ, निबंध और अन्य रचनाएँ खोजें।",
+      "लेखक, कविताएँ, कहानियाँ, निबंध, विचार और हैशटैग खोजें।",
+
+    initialWritings:
+      "रचनाएँ",
+
+    initialWriters:
+      "लेखक",
+
+    initialTopics:
+      "विषय",
 
     loading:
       "SHOBDO में खोजा जा रहा है...",
@@ -368,15 +464,34 @@ const COPY = {
     noBio:
       "SHOBDO लेखक",
 
+    searchAgain:
+      "फिर खोजें",
+
   },
 
 };
 
 
-
 // =========================================================
 // HELPERS
 // =========================================================
+
+function safeNumber(
+  value
+) {
+
+  const number =
+    Number(
+      value
+    );
+
+
+  return Number.isFinite(
+    number
+  )
+    ? number
+    : 0;
+}
 
 
 function getInitials(
@@ -390,7 +505,10 @@ function getInitials(
       .trim();
 
 
-  if (!value) {
+  if (
+    !value
+  ) {
+
     return "?";
   }
 
@@ -411,37 +529,13 @@ function getInitials(
         2
       )
       .toUpperCase();
-
   }
 
 
   return (
     `${pieces[0][0]}${pieces[pieces.length - 1][0]}`
-      .toUpperCase()
-  );
-
+  ).toUpperCase();
 }
-
-
-
-function safeNumber(
-  value
-) {
-
-  const number =
-    Number(
-      value
-    );
-
-
-  return Number.isFinite(
-    number
-  )
-    ? number
-    : 0;
-
-}
-
 
 
 function stripHtml(
@@ -460,9 +554,7 @@ function stripHtml(
       " "
     )
     .trim();
-
 }
-
 
 
 function getLocale(
@@ -472,6 +564,7 @@ function getLocale(
   if (
     language === "bn"
   ) {
+
     return "bn-BD";
   }
 
@@ -479,14 +572,13 @@ function getLocale(
   if (
     language === "hi"
   ) {
+
     return "hi-IN";
   }
 
 
   return "en-IN";
-
 }
-
 
 
 function formatDate(
@@ -494,7 +586,10 @@ function formatDate(
   language
 ) {
 
-  if (!value) {
+  if (
+    !value
+  ) {
+
     return "";
   }
 
@@ -510,47 +605,146 @@ function formatDate(
       date.getTime()
     )
   ) {
+
     return "";
   }
 
 
   try {
 
-    return (
-      new Intl.DateTimeFormat(
-        getLocale(
-          language
-        ),
-        {
-          day:
-            "numeric",
+    return new Intl.DateTimeFormat(
+      getLocale(
+        language
+      ),
+      {
+        day:
+          "numeric",
 
-          month:
-            "short",
+        month:
+          "short",
 
-          year:
-            "numeric",
-        }
-      ).format(
-        date
-      )
+        year:
+          "numeric",
+      }
+    ).format(
+      date
     );
-
 
   } catch {
 
     return "";
-
   }
-
 }
 
 
+function normalizeTagName(
+  value
+) {
+
+  return String(
+    value || ""
+  )
+    .trim()
+    .replace(
+      /^#+/,
+      ""
+    )
+    .trim();
+}
+
+
+function getWritingTags(
+  writing
+) {
+
+  const rawTags =
+    [];
+
+
+  if (
+    Array.isArray(
+      writing?.tags
+    )
+  ) {
+
+    rawTags.push(
+      ...writing.tags
+    );
+  }
+
+
+  if (
+    Array.isArray(
+      writing?.hashtags
+    )
+  ) {
+
+    rawTags.push(
+      ...writing.hashtags
+    );
+  }
+
+
+  const unique =
+    new Map();
+
+
+  rawTags.forEach(
+    (
+      item
+    ) => {
+
+      const value =
+        typeof item ===
+        "string"
+          ? item
+          : item?.name;
+
+
+      const normalized =
+        normalizeTagName(
+          value
+        );
+
+
+      if (
+        !normalized
+      ) {
+
+        return;
+      }
+
+
+      const key =
+        normalized
+          .toLocaleLowerCase();
+
+
+      if (
+        !unique.has(
+          key
+        )
+      ) {
+
+        unique.set(
+          key,
+          normalized
+        );
+      }
+
+    }
+  );
+
+
+  return Array.from(
+    unique.values()
+  );
+}
+
 
 // =========================================================
-// AVATAR
+// WRITER AVATAR
 // =========================================================
-
 
 function WriterAvatar({
   writer,
@@ -558,59 +752,189 @@ function WriterAvatar({
 
   return (
 
-    <div className="search-writer-avatar">
+    <div
+      className="search-writer-avatar"
+    >
 
       <span>
         {
           getInitials(
-            writer?.name
+            writer?.name ||
+            writer?.username
           )
         }
       </span>
 
 
-      {
-        writer?.avatar_url && (
+      {writer?.avatar_url && (
 
-          <img
-            src={
-              writer.avatar_url
+        <img
+          src={
+            writer.avatar_url
+          }
+          alt=""
+          loading="lazy"
+          onError={
+            (
+              event
+            ) => {
+
+              event.currentTarget
+                .style
+                .display =
+                "none";
+
             }
-            alt={
-              writer?.name ||
-              "Writer"
-            }
-            loading="lazy"
-            onError={
-              (
-                event
-              ) => {
+          }
+        />
 
-                event
-                  .currentTarget
-                  .style
-                  .display =
-                  "none";
-
-              }
-            }
-          />
-
-        )
-      }
+      )}
 
     </div>
-
   );
-
 }
 
+
+// =========================================================
+// SEARCH SKELETON
+// =========================================================
+
+function SearchSkeleton({
+  type,
+}) {
+
+  return (
+
+    <section
+      className="search-skeleton"
+      aria-hidden="true"
+    >
+
+      {(type === "all" ||
+        type === "writers") && (
+
+        <div
+          className="search-skeleton-writers"
+        >
+
+          {Array.from(
+            {
+              length: 3,
+            }
+          ).map(
+            (
+              _,
+              index
+            ) => (
+
+              <div
+                key={
+                  `writer-skeleton-${index}`
+                }
+                className="search-writer-skeleton"
+              >
+
+                <div
+                  className="search-skeleton-avatar"
+                />
+
+                <div
+                  className="search-skeleton-writer-copy"
+                >
+
+                  <span />
+
+                  <span />
+
+                  <span />
+
+                </div>
+
+              </div>
+
+            )
+          )}
+
+        </div>
+
+      )}
+
+
+      {(type === "all" ||
+        type === "writings" ||
+        type === "tags") && (
+
+        <div
+          className="search-skeleton-writing-list"
+        >
+
+          {Array.from(
+            {
+              length: 3,
+            }
+          ).map(
+            (
+              _,
+              index
+            ) => (
+
+              <div
+                key={
+                  `writing-skeleton-${index}`
+                }
+                className="search-writing-skeleton"
+              >
+
+                <div
+                  className="search-skeleton-writing-author"
+                >
+
+                  <div
+                    className="search-skeleton-mini-avatar"
+                  />
+
+                  <div>
+                    <span />
+                    <span />
+                  </div>
+
+                </div>
+
+
+                <div
+                  className="search-skeleton-title"
+                />
+
+
+                <div
+                  className="search-skeleton-copy"
+                >
+
+                  <span />
+
+                  <span />
+
+                  <span />
+
+                </div>
+
+              </div>
+
+            )
+          )}
+
+        </div>
+
+      )}
+
+    </section>
+  );
+}
 
 
 // =========================================================
 // SEARCH PAGE
 // =========================================================
-
 
 function SearchPage() {
 
@@ -642,11 +966,21 @@ function SearchPage() {
     COPY.en;
 
 
+  const searchInputRef =
+    useRef(
+      null
+    );
+
+
+  const resultsRef =
+    useRef(
+      null
+    );
+
 
   // =======================================================
   // URL STATE
   // =======================================================
-
 
   const query =
     String(
@@ -654,7 +988,8 @@ function SearchPage() {
         "q"
       ) ||
       ""
-    ).trim();
+    )
+      .trim();
 
 
   const rawType =
@@ -669,11 +1004,7 @@ function SearchPage() {
 
 
   const type =
-    [
-      "all",
-      "writers",
-      "writings",
-    ].includes(
+    VALID_TYPES.includes(
       rawType
     )
       ? rawType
@@ -692,11 +1023,9 @@ function SearchPage() {
     );
 
 
-
   // =======================================================
   // STATE
   // =======================================================
-
 
   const [
     input,
@@ -741,11 +1070,18 @@ function SearchPage() {
     useState({});
 
 
+  const [
+    retryKey,
+    setRetryKey,
+  ] =
+    useState(
+      0
+    );
+
 
   // =======================================================
-  // SYNC INPUT WITH URL
+  // SYNC INPUT
   // =======================================================
-
 
   useEffect(
     () => {
@@ -761,11 +1097,40 @@ function SearchPage() {
   );
 
 
+  // =======================================================
+  // PAGE TITLE
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      const previousTitle =
+        document.title;
+
+
+      document.title =
+        query
+          ? `${query} — ${copy.title} | SHOBDO`
+          : `${copy.title} | SHOBDO`;
+
+
+      return () => {
+
+        document.title =
+          previousTitle;
+      };
+
+    },
+    [
+      query,
+      copy.title,
+    ]
+  );
+
 
   // =======================================================
-  // LOAD SEARCH
+  // LOAD SEARCH RESULTS
   // =======================================================
-
 
   useEffect(
     () => {
@@ -776,7 +1141,9 @@ function SearchPage() {
 
       async function loadSearch() {
 
-        if (!query) {
+        if (
+          !query
+        ) {
 
           setData(
             null
@@ -791,7 +1158,6 @@ function SearchPage() {
           );
 
           return;
-
         }
 
 
@@ -806,12 +1172,30 @@ function SearchPage() {
           );
 
 
+          /*
+           * Backend currently supports:
+           *
+           * all
+           * writers
+           * writings
+           *
+           * Tags are derived from writing results,
+           * so the tags tab requests writings.
+           */
+
+          const apiType =
+            type === "tags"
+              ? "writings"
+              : type;
+
+
           const response =
             await globalSearch({
 
               query,
 
-              type,
+              type:
+                apiType,
 
               page,
 
@@ -821,7 +1205,10 @@ function SearchPage() {
             });
 
 
-          if (!active) {
+          if (
+            !active
+          ) {
+
             return;
           }
 
@@ -830,7 +1217,6 @@ function SearchPage() {
             response ||
             null
           );
-
 
         } catch (
           searchError
@@ -842,7 +1228,10 @@ function SearchPage() {
           );
 
 
-          if (!active) {
+          if (
+            !active
+          ) {
+
             return;
           }
 
@@ -851,7 +1240,6 @@ function SearchPage() {
             searchError?.message ||
             copy.error
           );
-
 
         } finally {
 
@@ -862,11 +1250,8 @@ function SearchPage() {
             setLoading(
               false
             );
-
           }
-
         }
-
       }
 
 
@@ -877,7 +1262,6 @@ function SearchPage() {
 
         active =
           false;
-
       };
 
     },
@@ -885,16 +1269,15 @@ function SearchPage() {
       query,
       type,
       page,
+      retryKey,
       copy.error,
     ]
   );
 
 
-
   // =======================================================
-  // DERIVED RESULTS
+  // RAW RESULTS
   // =======================================================
-
 
   const writers =
     Array.isArray(
@@ -966,27 +1349,163 @@ function SearchPage() {
     );
 
 
+  // =======================================================
+  // DERIVED TAG RESULTS
+  // =======================================================
+
+  const tags =
+    useMemo(
+      () => {
+
+        const map =
+          new Map();
+
+
+        const cleanQuery =
+          normalizeTagName(
+            query
+          )
+            .toLocaleLowerCase();
+
+
+        writings.forEach(
+          (
+            writing
+          ) => {
+
+            getWritingTags(
+              writing
+            ).forEach(
+              (
+                name
+              ) => {
+
+                const key =
+                  name
+                    .toLocaleLowerCase();
+
+
+                if (
+                  cleanQuery &&
+                  !key.includes(
+                    cleanQuery
+                  )
+                ) {
+
+                  return;
+                }
+
+
+                if (
+                  !map.has(
+                    key
+                  )
+                ) {
+
+                  map.set(
+                    key,
+                    {
+                      name,
+                      count:
+                        0,
+                    }
+                  );
+                }
+
+
+                map.get(
+                  key
+                ).count +=
+                  1;
+
+              }
+            );
+
+          }
+        );
+
+
+        return Array.from(
+          map.values()
+        )
+          .sort(
+            (
+              a,
+              b
+            ) => {
+
+              if (
+                b.count !==
+                a.count
+              ) {
+
+                return (
+                  b.count -
+                  a.count
+                );
+              }
+
+
+              return a.name.localeCompare(
+                b.name
+              );
+            }
+          )
+          .slice(
+            0,
+            24
+          );
+
+      },
+      [
+        writings,
+        query,
+      ]
+    );
+
+
+  const tagsTotal =
+    tags.length;
+
+
+  // =======================================================
+  // TOTAL PAGES
+  // =======================================================
+
   const totalPages =
     type === "writers"
       ? writerPages
-      : type === "writings"
+      : type === "writings" ||
+          type === "tags"
         ? writingPages
         : Math.max(
             writerPages,
             writingPages,
+            1
           );
 
 
-  const hasResults =
-    writers.length > 0 ||
-    writings.length > 0;
+  // =======================================================
+  // RESULT PRESENCE
+  // =======================================================
 
+  const hasVisibleResults =
+    type === "writers"
+      ? writers.length > 0
+      : type === "writings"
+        ? writings.length > 0
+        : type === "tags"
+          ? tags.length > 0
+          : (
+              writers.length > 0 ||
+              writings.length > 0 ||
+              tags.length > 0
+            );
 
 
   // =======================================================
-  // SUBMIT SEARCH
+  // SEARCH SUBMIT
   // =======================================================
-
 
   function handleSubmit(
     event
@@ -999,12 +1518,13 @@ function SearchPage() {
       input.trim();
 
 
-    if (!nextQuery) {
+    if (
+      !nextQuery
+    ) {
 
       setSearchParams({});
 
       return;
-
     }
 
 
@@ -1017,27 +1537,24 @@ function SearchPage() {
 
 
     if (
-      type !== "all"
+      type !==
+      "all"
     ) {
 
       nextParams.type =
         type;
-
     }
 
 
     setSearchParams(
       nextParams
     );
-
   }
 
 
-
   // =======================================================
-  // CLEAR SEARCH
+  // CLEAR
   // =======================================================
-
 
   function handleClear() {
 
@@ -1051,22 +1568,36 @@ function SearchPage() {
     );
 
 
+    setError(
+      ""
+    );
+
+
     setSearchParams({});
 
-  }
 
+    requestAnimationFrame(
+      () => {
+
+        searchInputRef
+          .current
+          ?.focus();
+
+      }
+    );
+  }
 
 
   // =======================================================
   // TAB
   // =======================================================
 
-
   function handleTypeChange(
     nextType
   ) {
 
-    const params = {};
+    const params =
+      {};
 
 
     if (
@@ -1075,7 +1606,6 @@ function SearchPage() {
 
       params.q =
         query;
-
     }
 
 
@@ -1086,22 +1616,18 @@ function SearchPage() {
 
       params.type =
         nextType;
-
     }
 
 
     setSearchParams(
       params
     );
-
   }
-
 
 
   // =======================================================
   // PAGE
   // =======================================================
-
 
   function changePage(
     nextPage
@@ -1126,12 +1652,12 @@ function SearchPage() {
 
 
     if (
-      type !== "all"
+      type !==
+      "all"
     ) {
 
       params.type =
         type;
-
     }
 
 
@@ -1144,7 +1670,6 @@ function SearchPage() {
         String(
           normalizedPage
         );
-
     }
 
 
@@ -1153,22 +1678,27 @@ function SearchPage() {
     );
 
 
-    window.scrollTo({
-      top:
-        0,
+    requestAnimationFrame(
+      () => {
 
-      behavior:
-        "smooth",
-    });
+        resultsRef
+          .current
+          ?.scrollIntoView({
+            behavior:
+              "smooth",
 
+            block:
+              "start",
+          });
+
+      }
+    );
   }
 
 
-
   // =======================================================
-  // FOLLOW / UNFOLLOW
+  // FOLLOW
   // =======================================================
-
 
   async function handleFollowToggle(
     writer
@@ -1178,6 +1708,7 @@ function SearchPage() {
       !writer?.id ||
       writer?.is_self
     ) {
+
       return;
     }
 
@@ -1190,14 +1721,15 @@ function SearchPage() {
         "/login",
         {
           state: {
+
             from:
               `${location.pathname}${location.search}`,
+
           },
         }
       );
 
       return;
-
     }
 
 
@@ -1212,6 +1744,7 @@ function SearchPage() {
         writerId
       ]
     ) {
+
       return;
     }
 
@@ -1240,14 +1773,19 @@ function SearchPage() {
     );
 
 
-    // optimistic update
+    // -----------------------------------------------------
+    // OPTIMISTIC UPDATE
+    // -----------------------------------------------------
 
     setData(
       (
         current
       ) => {
 
-        if (!current) {
+        if (
+          !current
+        ) {
+
           return current;
         }
 
@@ -1271,15 +1809,18 @@ function SearchPage() {
                   (
                     item
                   ) =>
+
                     Number(
                       item.id
                     ) ===
                     writerId
                       ? {
+
                           ...item,
 
                           following:
                             nextFollowing,
+
                         }
                       : item
                 ),
@@ -1309,7 +1850,10 @@ function SearchPage() {
           current
         ) => {
 
-          if (!current) {
+          if (
+            !current
+          ) {
+
             return current;
           }
 
@@ -1333,11 +1877,13 @@ function SearchPage() {
                     (
                       item
                     ) =>
+
                       Number(
                         item.id
                       ) ===
                       writerId
                         ? {
+
                             ...item,
 
                             following:
@@ -1347,6 +1893,7 @@ function SearchPage() {
                                 ? response
                                     .following
                                 : nextFollowing,
+
                           }
                         : item
                   ),
@@ -1357,7 +1904,6 @@ function SearchPage() {
 
         }
       );
-
 
     } catch (
       followError
@@ -1369,14 +1915,19 @@ function SearchPage() {
       );
 
 
-      // rollback
+      // ---------------------------------------------------
+      // ROLLBACK
+      // ---------------------------------------------------
 
       setData(
         (
           current
         ) => {
 
-          if (!current) {
+          if (
+            !current
+          ) {
+
             return current;
           }
 
@@ -1400,15 +1951,18 @@ function SearchPage() {
                     (
                       item
                     ) =>
+
                       Number(
                         item.id
                       ) ===
                       writerId
                         ? {
+
                             ...item,
 
                             following:
                               previousFollowing,
+
                           }
                         : item
                   ),
@@ -1419,7 +1973,6 @@ function SearchPage() {
 
         }
       );
-
 
     } finally {
 
@@ -1435,17 +1988,13 @@ function SearchPage() {
 
         })
       );
-
     }
-
   }
-
 
 
   // =======================================================
   // RESULT LABEL
   // =======================================================
-
 
   const resultLabel =
     useMemo(
@@ -1458,7 +2007,10 @@ function SearchPage() {
             : type ===
               "writings"
               ? writingsTotal
-              : total;
+              : type ===
+                "tags"
+                ? tagsTotal
+                : total;
 
 
         return (
@@ -1474,6 +2026,7 @@ function SearchPage() {
         type,
         writersTotal,
         writingsTotal,
+        tagsTotal,
         total,
         copy.result,
         copy.results,
@@ -1481,47 +2034,139 @@ function SearchPage() {
     );
 
 
+  // =======================================================
+  // TABS
+  // =======================================================
+
+  const tabs =
+    [
+      {
+        id:
+          "all",
+
+        label:
+          copy.all,
+
+        icon:
+          Search,
+
+        count:
+          total,
+      },
+
+      {
+        id:
+          "writings",
+
+        label:
+          copy.writings,
+
+        icon:
+          BookOpen,
+
+        count:
+          writingsTotal,
+      },
+
+      {
+        id:
+          "writers",
+
+        label:
+          copy.writers,
+
+        icon:
+          Users,
+
+        count:
+          writersTotal,
+      },
+
+      {
+        id:
+          "tags",
+
+        label:
+          copy.tags,
+
+        icon:
+          Hash,
+
+        count:
+          tagsTotal,
+      },
+    ];
+
 
   // =======================================================
   // UI
   // =======================================================
 
-
   return (
 
-    <main className="search-page">
+    <main
+      className="search-page"
+    >
 
-      <div className="search-page-shell">
-
+      <div
+        className="search-page-shell"
+      >
 
         {/* =================================================
             HERO
         ================================================== */}
 
-        <section className="search-hero">
+        <section
+          className="search-hero"
+        >
 
-          <div className="search-hero-copy">
+          <div
+            className="search-hero-glow"
+            aria-hidden="true"
+          />
 
-            <p className="search-eyebrow">
-              {copy.eyebrow}
-            </p>
+
+          <div
+            className="search-hero-copy"
+          >
+
+            <div
+              className="search-eyebrow"
+            >
+
+              <Sparkles
+                size={15}
+              />
+
+              <span>
+                {
+                  copy.eyebrow
+                }
+              </span>
+
+            </div>
 
 
             <h1>
-              {copy.title}
+              {
+                copy.title
+              }
             </h1>
 
 
-            <p className="search-description">
-              {copy.description}
+            <p
+              className="search-description"
+            >
+              {
+                copy.description
+              }
             </p>
 
           </div>
 
 
-
           {/* ===============================================
-              SEARCH BAR
+              SEARCH FORM
           ================================================ */}
 
           <form
@@ -1529,16 +2174,23 @@ function SearchPage() {
             onSubmit={
               handleSubmit
             }
+            role="search"
           >
 
-            <div className="global-search-input-wrap">
+            <div
+              className="global-search-input-wrap"
+            >
 
               <Search
                 size={20}
+                aria-hidden="true"
               />
 
 
               <input
+                ref={
+                  searchInputRef
+                }
                 type="search"
                 value={
                   input
@@ -1547,44 +2199,49 @@ function SearchPage() {
                   (
                     event
                   ) =>
+
                     setInput(
-                      event.target
-                        .value
+                      event.target.value
                     )
                 }
                 placeholder={
                   copy.placeholder
                 }
-                maxLength={120}
+                maxLength={
+                  120
+                }
                 autoComplete="off"
+                enterKeyHint="search"
+                spellCheck="false"
                 aria-label={
                   copy.placeholder
                 }
               />
 
 
-              {
-                input && (
+              {input && (
 
-                  <button
-                    type="button"
-                    className="global-search-clear"
-                    onClick={
-                      handleClear
-                    }
-                    aria-label={
-                      copy.clear
-                    }
-                  >
+                <button
+                  type="button"
+                  className="global-search-clear"
+                  onClick={
+                    handleClear
+                  }
+                  aria-label={
+                    copy.clear
+                  }
+                  title={
+                    copy.clear
+                  }
+                >
 
-                    <X
-                      size={17}
-                    />
+                  <X
+                    size={17}
+                  />
 
-                  </button>
+                </button>
 
-                )
-              }
+              )}
 
             </div>
 
@@ -1602,7 +2259,9 @@ function SearchPage() {
               />
 
               <span>
-                {copy.search}
+                {
+                  copy.search
+                }
               </span>
 
             </button>
@@ -1612,273 +2271,335 @@ function SearchPage() {
         </section>
 
 
-
         {/* =================================================
             TABS
         ================================================== */}
 
-        {
-          query && (
+        {query && (
 
-            <section className="search-tabs-bar">
+          <section
+            className="search-tabs-bar"
+          >
 
-              <div className="search-tabs">
-
-                <button
-                  type="button"
-                  className={
-                    type === "all"
-                      ? "active"
-                      : ""
-                  }
-                  onClick={
-                    () =>
-                      handleTypeChange(
-                        "all"
-                      )
-                  }
-                >
-
-                  <Search
-                    size={16}
-                  />
-
-                  {copy.all}
-
-                  {
-                    data && (
-
-                      <span>
-                        {total}
-                      </span>
-
-                    )
-                  }
-
-                </button>
-
-
-                <button
-                  type="button"
-                  className={
-                    type ===
-                    "writers"
-                      ? "active"
-                      : ""
-                  }
-                  onClick={
-                    () =>
-                      handleTypeChange(
-                        "writers"
-                      )
-                  }
-                >
-
-                  <Users
-                    size={16}
-                  />
-
-                  {copy.writers}
-
-                  {
-                    data && (
-
-                      <span>
-                        {writersTotal}
-                      </span>
-
-                    )
-                  }
-
-                </button>
-
-
-                <button
-                  type="button"
-                  className={
-                    type ===
-                    "writings"
-                      ? "active"
-                      : ""
-                  }
-                  onClick={
-                    () =>
-                      handleTypeChange(
-                        "writings"
-                      )
-                  }
-                >
-
-                  <BookOpen
-                    size={16}
-                  />
-
-                  {copy.writings}
-
-                  {
-                    data && (
-
-                      <span>
-                        {writingsTotal}
-                      </span>
-
-                    )
-                  }
-
-                </button>
-
-              </div>
-
-
-              {
-                data &&
-                !loading && (
-
-                  <p className="search-result-count">
-                    {resultLabel}
-                  </p>
-
-                )
+            <div
+              className="search-tabs"
+              role="tablist"
+              aria-label={
+                copy.title
               }
+            >
 
-            </section>
+              {tabs.map(
+                (
+                  tab
+                ) => {
 
-          )
-        }
+                  const Icon =
+                    tab.icon;
 
+
+                  return (
+
+                    <button
+                      key={
+                        tab.id
+                      }
+                      type="button"
+                      role="tab"
+                      aria-selected={
+                        type ===
+                        tab.id
+                      }
+                      className={
+                        type ===
+                        tab.id
+                          ? "search-tab active"
+                          : "search-tab"
+                      }
+                      onClick={
+                        () =>
+                          handleTypeChange(
+                            tab.id
+                          )
+                      }
+                    >
+
+                      <Icon
+                        size={16}
+                      />
+
+
+                      <span
+                        className="search-tab-label"
+                      >
+                        {
+                          tab.label
+                        }
+                      </span>
+
+
+                      {data &&
+                        !loading && (
+
+                          <span
+                            className="search-tab-count"
+                          >
+                            {
+                              tab.count
+                            }
+                          </span>
+
+                        )}
+
+                    </button>
+
+                  );
+
+                }
+              )}
+
+            </div>
+
+
+            {data &&
+              !loading && (
+
+                <p
+                  className="search-result-count"
+                >
+                  {
+                    resultLabel
+                  }
+                </p>
+
+              )}
+
+          </section>
+
+        )}
 
 
         {/* =================================================
-            INITIAL
+            INITIAL STATE
         ================================================== */}
 
-        {
-          !query && (
+        {!query && (
 
-            <section className="search-initial-state">
+          <section
+            className="search-initial-state"
+          >
 
-              <div className="search-state-icon">
+            <div
+              className="search-state-icon"
+            >
 
-                <Search
-                  size={31}
+              <Search
+                size={29}
+              />
+
+            </div>
+
+
+            <h2>
+              {
+                copy.startSearching
+              }
+            </h2>
+
+
+            <p>
+              {
+                copy.startSearchingDescription
+              }
+            </p>
+
+
+            <div
+              className="search-discovery-types"
+            >
+
+              <div>
+
+                <BookOpen
+                  size={19}
                 />
+
+                <span>
+                  {
+                    copy.initialWritings
+                  }
+                </span>
 
               </div>
 
 
-              <h2>
-                {copy.startSearching}
-              </h2>
+              <div>
+
+                <Users
+                  size={19}
+                />
+
+                <span>
+                  {
+                    copy.initialWriters
+                  }
+                </span>
+
+              </div>
 
 
-              <p>
-                {copy.startSearchingDescription}
-              </p>
+              <div>
 
-            </section>
+                <Hash
+                  size={19}
+                />
 
-          )
-        }
+                <span>
+                  {
+                    copy.initialTopics
+                  }
+                </span>
 
+              </div>
+
+            </div>
+
+          </section>
+
+        )}
 
 
         {/* =================================================
             LOADING
         ================================================== */}
 
-        {
-          query &&
+        {query &&
           loading && (
 
-            <section className="search-loading-state">
+            <div
+              className="search-loading-wrap"
+              aria-live="polite"
+              aria-busy="true"
+            >
 
-              <Loader2
-                size={32}
-                className="search-spin"
+              <div
+                className="search-loading-heading"
+              >
+
+                <Loader2
+                  size={18}
+                  className="search-spin"
+                />
+
+                <span>
+                  {
+                    copy.loading
+                  }
+                </span>
+
+              </div>
+
+
+              <SearchSkeleton
+                type={
+                  type
+                }
               />
 
-              <p>
-                {copy.loading}
-              </p>
+            </div>
 
-            </section>
-
-          )
-        }
-
+          )}
 
 
         {/* =================================================
             ERROR
         ================================================== */}
 
-        {
-          query &&
+        {query &&
           error &&
           !loading && (
 
-            <section className="search-error-state">
+            <section
+              className="search-error-state"
+            >
 
-              <Search
-                size={32}
-              />
+              <div
+                className="search-state-icon error"
+              >
+
+                <Search
+                  size={29}
+                />
+
+              </div>
 
 
               <h2>
-                {copy.error}
+                {
+                  copy.error
+                }
               </h2>
 
 
               <p>
-                {error}
+                {
+                  error
+                }
               </p>
 
 
               <button
                 type="button"
                 onClick={
-                  () => {
-
-                    setSearchParams(
-                      new URLSearchParams(
-                        searchParams
-                      )
-                    );
-
-                  }
+                  () =>
+                    setRetryKey(
+                      (
+                        current
+                      ) =>
+                        current + 1
+                    )
                 }
               >
-                {copy.retry}
+
+                {
+                  copy.retry
+                }
+
               </button>
 
             </section>
 
-          )
-        }
-
+          )}
 
 
         {/* =================================================
             RESULTS
         ================================================== */}
 
-        {
-          query &&
+        {query &&
           !loading &&
           !error &&
           data && (
 
-            <div className="search-results">
-
+            <div
+              className="search-results"
+              ref={
+                resultsRef
+              }
+            >
 
               {/* ===========================================
                   QUERY HEADER
               ============================================ */}
 
-              <header className="search-results-header">
+              <header
+                className="search-results-header"
+              >
 
                 <p>
-                  {copy.resultsFor}
+                  {
+                    copy.resultsFor
+                  }
                 </p>
 
 
@@ -1889,657 +2610,905 @@ function SearchPage() {
               </header>
 
 
-
               {/* ===========================================
-                  WRITERS
+                  TAG RESULTS
               ============================================ */}
 
-              {
-                (
-                  type === "all" ||
-                  type ===
-                    "writers"
-                ) &&
-                writers.length >
-                  0 && (
+              {(type === "all" ||
+                type === "tags") &&
+                tags.length > 0 && (
 
-                  <section className="search-result-section">
+                  <section
+                    className="search-result-section"
+                  >
 
-
-                    <div className="search-section-heading">
+                    <div
+                      className="search-section-heading"
+                    >
 
                       <div>
 
-                        <p className="search-section-kicker">
-                          {copy.writersFound}
+                        <p
+                          className="search-section-kicker"
+                        >
+                          {
+                            copy.topicsFound
+                          }
                         </p>
 
+
                         <h3>
-                          {copy.writers}
+                          {
+                            copy.tags
+                          }
                         </h3>
 
                       </div>
 
 
                       <span>
-                        {writersTotal}
+                        {
+                          tags.length
+                        }
                       </span>
 
                     </div>
 
 
+                    <div
+                      className="search-tag-grid"
+                    >
 
-                    <div className="search-writer-grid">
+                      {tags.map(
+                        (
+                          tag
+                        ) => (
 
-                      {
-                        writers.map(
-                          (
-                            writer
-                          ) => {
+                          <Link
+                            key={
+                              tag.name
+                            }
+                            to={
+                              `/tag/${encodeURIComponent(
+                                tag.name
+                              )}`
+                            }
+                            className="search-tag-card"
+                          >
 
-                            const writerId =
-                              Number(
-                                writer.id
-                              );
+                            <span
+                              className="search-tag-icon"
+                            >
+
+                              <Hash
+                                size={19}
+                              />
+
+                            </span>
 
 
-                            const busy =
-                              Boolean(
-                                followLoading[
-                                  writerId
-                                ]
-                              );
+                            <span
+                              className="search-tag-copy"
+                            >
+
+                              <strong>
+                                #{tag.name}
+                              </strong>
 
 
-                            return (
-
-                              <article
-                                key={
-                                  writer.id
+                              <small>
+                                {tag.count}{" "}
+                                {
+                                  copy.matchedWritings
                                 }
-                                className="search-writer-card"
-                              >
+                              </small>
+
+                            </span>
 
 
-                                <Link
-                                  to={`/users/${writer.id}`}
-                                  className="search-writer-main"
-                                >
+                            <ArrowRight
+                              size={16}
+                              className="search-tag-arrow"
+                            />
 
-                                  <WriterAvatar
-                                    writer={
-                                      writer
-                                    }
-                                  />
+                          </Link>
 
-
-                                  <div className="search-writer-info">
-
-                                    <h4>
-                                      {
-                                        writer.name ||
-                                        copy.noBio
-                                      }
-                                    </h4>
-
-
-                                    {
-                                      writer.username && (
-
-                                        <p className="search-writer-username">
-                                          @{writer.username}
-                                        </p>
-
-                                      )
-                                    }
-
-
-                                    <p className="search-writer-bio">
-
-                                      {
-                                        writer.bio ||
-                                        copy.noBio
-                                      }
-
-                                    </p>
-
-
-                                    <div className="search-writer-meta">
-
-                                      {
-                                        writer.location && (
-
-                                          <span>
-
-                                            <MapPin
-                                              size={13}
-                                            />
-
-                                            {
-                                              writer.location
-                                            }
-
-                                          </span>
-
-                                        )
-                                      }
-
-
-                                      {
-                                        writer.website && (
-
-                                          <span>
-
-                                            <Globe2
-                                              size={13}
-                                            />
-
-                                            {
-                                              copy.viewProfile
-                                            }
-
-                                          </span>
-
-                                        )
-                                      }
-
-                                    </div>
-
-                                  </div>
-
-                                </Link>
-
-
-
-                                <div className="search-writer-actions">
-
-
-                                  {
-                                    writer.is_self
-                                      ? (
-
-                                          <span className="search-you-badge">
-                                            {copy.you}
-                                          </span>
-
-                                        )
-                                      : (
-
-                                          <button
-                                            type="button"
-                                            className={
-                                              writer.following
-                                                ? "search-follow-button following"
-                                                : "search-follow-button"
-                                            }
-                                            onClick={
-                                              () =>
-                                                handleFollowToggle(
-                                                  writer
-                                                )
-                                            }
-                                            disabled={
-                                              busy
-                                            }
-                                          >
-
-                                            {
-                                              busy
-                                                ? (
-
-                                                    <Loader2
-                                                      size={15}
-                                                      className="search-spin"
-                                                    />
-
-                                                  )
-                                                : writer.following
-                                                  ? (
-
-                                                      <UserCheck
-                                                        size={15}
-                                                      />
-
-                                                    )
-                                                  : (
-
-                                                      <UserPlus
-                                                        size={15}
-                                                      />
-
-                                                    )
-                                            }
-
-
-                                            <span>
-
-                                              {
-                                                writer.following
-                                                  ? copy.following
-                                                  : copy.follow
-                                              }
-
-                                            </span>
-
-                                          </button>
-
-                                        )
-                                  }
-
-
-                                  <Link
-                                    to={`/users/${writer.id}`}
-                                    className="search-profile-link"
-                                  >
-
-                                    <ArrowRight
-                                      size={16}
-                                    />
-
-                                  </Link>
-
-                                </div>
-
-                              </article>
-
-                            );
-
-                          }
                         )
-                      }
+                      )}
 
                     </div>
 
                   </section>
 
-                )
-              }
+                )}
 
+
+              {/* ===========================================
+                  WRITERS
+              ============================================ */}
+
+              {(type === "all" ||
+                type === "writers") &&
+                writers.length > 0 && (
+
+                  <section
+                    className="search-result-section"
+                  >
+
+                    <div
+                      className="search-section-heading"
+                    >
+
+                      <div>
+
+                        <p
+                          className="search-section-kicker"
+                        >
+                          {
+                            copy.writersFound
+                          }
+                        </p>
+
+
+                        <h3>
+                          {
+                            copy.writers
+                          }
+                        </h3>
+
+                      </div>
+
+
+                      <span>
+                        {
+                          writersTotal
+                        }
+                      </span>
+
+                    </div>
+
+
+                    <div
+                      className="search-writer-grid"
+                    >
+
+                      {writers.map(
+                        (
+                          writer
+                        ) => {
+
+                          const writerId =
+                            Number(
+                              writer.id
+                            );
+
+
+                          const busy =
+                            Boolean(
+                              followLoading[
+                                writerId
+                              ]
+                            );
+
+
+                          return (
+
+                            <article
+                              key={
+                                writer.id
+                              }
+                              className="search-writer-card"
+                            >
+
+                              <Link
+                                to={
+                                  `/users/${writer.id}`
+                                }
+                                className="search-writer-main"
+                              >
+
+                                <WriterAvatar
+                                  writer={
+                                    writer
+                                  }
+                                />
+
+
+                                <div
+                                  className="search-writer-info"
+                                >
+
+                                  <h4>
+                                    {
+                                      writer.name ||
+                                      copy.noBio
+                                    }
+                                  </h4>
+
+
+                                  {writer.username && (
+
+                                    <p
+                                      className="search-writer-username"
+                                    >
+                                      @{writer.username}
+                                    </p>
+
+                                  )}
+
+
+                                  <p
+                                    className="search-writer-bio"
+                                  >
+                                    {
+                                      writer.bio ||
+                                      copy.noBio
+                                    }
+                                  </p>
+
+
+                                  <div
+                                    className="search-writer-meta"
+                                  >
+
+                                    {writer.location && (
+
+                                      <span>
+
+                                        <MapPin
+                                          size={13}
+                                        />
+
+                                        <span>
+                                          {
+                                            writer.location
+                                          }
+                                        </span>
+
+                                      </span>
+
+                                    )}
+
+
+                                    {writer.website && (
+
+                                      <span>
+
+                                        <Globe2
+                                          size={13}
+                                        />
+
+                                        <span>
+                                          {
+                                            copy.viewProfile
+                                          }
+                                        </span>
+
+                                      </span>
+
+                                    )}
+
+                                  </div>
+
+                                </div>
+
+                              </Link>
+
+
+                              <div
+                                className="search-writer-actions"
+                              >
+
+                                {writer.is_self
+                                  ? (
+
+                                      <span
+                                        className="search-you-badge"
+                                      >
+                                        {
+                                          copy.you
+                                        }
+                                      </span>
+
+                                    )
+                                  : (
+
+                                      <button
+                                        type="button"
+                                        className={
+                                          writer.following
+                                            ? "search-follow-button following"
+                                            : "search-follow-button"
+                                        }
+                                        onClick={
+                                          () =>
+                                            handleFollowToggle(
+                                              writer
+                                            )
+                                        }
+                                        disabled={
+                                          busy
+                                        }
+                                      >
+
+                                        {busy
+                                          ? (
+
+                                              <Loader2
+                                                size={15}
+                                                className="search-spin"
+                                              />
+
+                                            )
+                                          : writer.following
+                                            ? (
+
+                                                <UserCheck
+                                                  size={15}
+                                                />
+
+                                              )
+                                            : (
+
+                                                <UserPlus
+                                                  size={15}
+                                                />
+
+                                              )}
+
+
+                                        <span>
+                                          {
+                                            writer.following
+                                              ? copy.following
+                                              : copy.follow
+                                          }
+                                        </span>
+
+                                      </button>
+
+                                    )}
+
+
+                                <Link
+                                  to={
+                                    `/users/${writer.id}`
+                                  }
+                                  className="search-profile-link"
+                                  aria-label={
+                                    copy.viewProfile
+                                  }
+                                  title={
+                                    copy.viewProfile
+                                  }
+                                >
+
+                                  <ArrowRight
+                                    size={16}
+                                  />
+
+                                </Link>
+
+                              </div>
+
+                            </article>
+
+                          );
+
+                        }
+                      )}
+
+                    </div>
+
+                  </section>
+
+                )}
 
 
               {/* ===========================================
                   WRITINGS
               ============================================ */}
 
-              {
-                (
-                  type === "all" ||
-                  type ===
-                    "writings"
-                ) &&
-                writings.length >
-                  0 && (
+              {(type === "all" ||
+                type === "writings") &&
+                writings.length > 0 && (
 
-                  <section className="search-result-section">
+                  <section
+                    className="search-result-section"
+                  >
 
-
-                    <div className="search-section-heading">
+                    <div
+                      className="search-section-heading"
+                    >
 
                       <div>
 
-                        <p className="search-section-kicker">
-                          {copy.writingsFound}
+                        <p
+                          className="search-section-kicker"
+                        >
+                          {
+                            copy.writingsFound
+                          }
                         </p>
 
+
                         <h3>
-                          {copy.writings}
+                          {
+                            copy.writings
+                          }
                         </h3>
 
                       </div>
 
 
                       <span>
-                        {writingsTotal}
+                        {
+                          writingsTotal
+                        }
                       </span>
 
                     </div>
 
 
+                    <div
+                      className="search-writing-list"
+                    >
 
-                    <div className="search-writing-list">
+                      {writings.map(
+                        (
+                          writing
+                        ) => {
 
-                      {
-                        writings.map(
-                          (
-                            writing
-                          ) => {
-
-                            const author =
-                              writing.author ||
-                              {};
+                          const author =
+                            writing.author ||
+                            {};
 
 
-                            const text =
-                              stripHtml(
-                                writing.content
+                          const text =
+                            stripHtml(
+                              writing.content
+                            );
+
+
+                          const date =
+                            formatDate(
+                              writing.published_at ||
+                              writing.created_at,
+                              language
+                            );
+
+
+                          const writingTags =
+                            getWritingTags(
+                              writing
+                            )
+                              .slice(
+                                0,
+                                3
                               );
 
 
-                            const date =
-                              formatDate(
-                                writing.published_at ||
-                                writing.created_at,
-                                language
-                              );
+                          return (
 
+                            <article
+                              key={
+                                writing.id
+                              }
+                              className="search-writing-card"
+                            >
 
-                            return (
+                              {/* =========================
+                                  AUTHOR
+                              ========================== */}
 
-                              <article
-                                key={
-                                  writing.id
-                                }
-                                className="search-writing-card"
+                              <div
+                                className="search-writing-author"
                               >
 
+                                {author.id
+                                  ? (
 
-                                {/* =========================
-                                    AUTHOR
-                                ========================== */}
+                                      <Link
+                                        to={
+                                          `/users/${author.id}`
+                                        }
+                                        className="search-writing-author-avatar"
+                                      >
 
-                                <div className="search-writing-author">
+                                        <span>
+                                          {
+                                            getInitials(
+                                              author.name
+                                            )
+                                          }
+                                        </span>
 
-                                  {
-                                    author.id
-                                      ? (
 
-                                          <Link
-                                            to={`/users/${author.id}`}
-                                            className="search-writing-author-avatar"
-                                          >
+                                        {author.avatar_url && (
 
-                                            {
+                                          <img
+                                            src={
                                               author.avatar_url
-                                                ? (
-
-                                                    <img
-                                                      src={
-                                                        author.avatar_url
-                                                      }
-                                                      alt={
-                                                        author.name ||
-                                                        ""
-                                                      }
-                                                      onError={
-                                                        (
-                                                          event
-                                                        ) => {
-
-                                                          event
-                                                            .currentTarget
-                                                            .style
-                                                            .display =
-                                                            "none";
-
-                                                        }
-                                                      }
-                                                    />
-
-                                                  )
-                                                : getInitials(
-                                                    author.name
-                                                  )
                                             }
+                                            alt=""
+                                            loading="lazy"
+                                            onError={
+                                              (
+                                                event
+                                              ) => {
 
-                                          </Link>
+                                                event
+                                                  .currentTarget
+                                                  .style
+                                                  .display =
+                                                  "none";
 
-                                        )
-                                      : (
-
-                                          <div className="search-writing-author-avatar">
-                                            ?
-                                          </div>
-
-                                        )
-                                  }
-
-
-                                  <div>
-
-                                    {
-                                      author.id
-                                        ? (
-
-                                            <Link
-                                              to={`/users/${author.id}`}
-                                            >
-                                              {
-                                                author.name ||
-                                                copy.noBio
                                               }
-                                            </Link>
+                                            }
+                                          />
 
-                                          )
-                                        : (
+                                        )}
 
-                                            <strong>
-                                              {copy.noBio}
-                                            </strong>
+                                      </Link>
 
-                                          )
-                                    }
+                                    )
+                                  : (
 
+                                      <div
+                                        className="search-writing-author-avatar"
+                                      >
+                                        ?
+                                      </div>
 
-                                    <div>
-
-                                      {
-                                        author.username && (
-
-                                          <span>
-                                            @{author.username}
-                                          </span>
-
-                                        )
-                                      }
+                                    )}
 
 
-                                      {
-                                        date && (
+                                <div
+                                  className="search-writing-author-copy"
+                                >
 
-                                          <span>
-                                            {date}
-                                          </span>
+                                  {author.id
+                                    ? (
 
-                                        )
-                                      }
+                                        <Link
+                                          to={
+                                            `/users/${author.id}`
+                                          }
+                                          className="search-writing-author-name"
+                                        >
+                                          {
+                                            author.name ||
+                                            copy.noBio
+                                          }
+                                        </Link>
 
-                                    </div>
+                                      )
+                                    : (
+
+                                        <strong>
+                                          {
+                                            copy.noBio
+                                          }
+                                        </strong>
+
+                                      )}
+
+
+                                  <div
+                                    className="search-writing-author-meta"
+                                  >
+
+                                    {author.username && (
+
+                                      <span>
+                                        @{author.username}
+                                      </span>
+
+                                    )}
+
+
+                                    {date && (
+
+                                      <span>
+                                        {
+                                          date
+                                        }
+                                      </span>
+
+                                    )}
 
                                   </div>
 
                                 </div>
 
+                              </div>
 
 
-                                {/* =========================
-                                    CONTENT
-                                ========================== */}
+                              {/* =========================
+                                  CONTENT
+                              ========================== */}
 
-                                <Link
-                                  to={`/writings/${writing.id}`}
-                                  className="search-writing-content"
+                              <Link
+                                to={
+                                  `/writings/${writing.id}`
+                                }
+                                className="search-writing-content"
+                              >
+
+                                <div
+                                  className="search-writing-badges"
                                 >
 
-                                  <div className="search-writing-tags">
+                                  <span>
+                                    {
+                                      writing.category ||
+                                      copy.writing
+                                    }
+                                  </span>
 
-                                    <span>
+
+                                  {writing.language && (
+
+                                    <small>
                                       {
-                                        writing.category ||
-                                        copy.writing
+                                        String(
+                                          writing.language
+                                        )
+                                          .toUpperCase()
                                       }
-                                    </span>
+                                    </small>
 
+                                  )}
+
+                                </div>
+
+
+                                <h4>
+                                  {
+                                    writing.title ||
+                                    copy.untitled
+                                  }
+                                </h4>
+
+
+                                {text && (
+
+                                  <p>
 
                                     {
-                                      writing.language && (
-
-                                        <small>
-                                          {
-                                            String(
-                                              writing.language
-                                            )
-                                              .toUpperCase()
-                                          }
-                                        </small>
-
+                                      text.slice(
+                                        0,
+                                        260
                                       )
                                     }
 
-                                  </div>
-
-
-                                  <h4>
                                     {
-                                      writing.title ||
-                                      copy.untitled
+                                      text.length >
+                                      260
+                                        ? "…"
+                                        : ""
                                     }
-                                  </h4>
+
+                                  </p>
+
+                                )}
+
+                              </Link>
 
 
-                                  {
-                                    text && (
+                              {/* =========================
+                                  TAGS
+                              ========================== */}
 
-                                      <p>
+                              {writingTags.length >
+                                0 && (
 
-                                        {
-                                          text.slice(
-                                            0,
-                                            260
-                                          )
+                                <div
+                                  className="search-writing-tags"
+                                >
+
+                                  {writingTags.map(
+                                    (
+                                      tag
+                                    ) => (
+
+                                      <Link
+                                        key={
+                                          tag
                                         }
-
-                                        {
-                                          text.length >
-                                          260
-                                            ? "..."
-                                            : ""
+                                        to={
+                                          `/tag/${encodeURIComponent(
+                                            tag
+                                          )}`
                                         }
-
-                                      </p>
+                                      >
+                                        #{tag}
+                                      </Link>
 
                                     )
-                                  }
-
-                                </Link>
-
-
-
-                                {/* =========================
-                                    FOOTER
-                                ========================== */}
-
-                                <div className="search-writing-footer">
-
-                                  <div className="search-writing-engagement">
-
-                                    <span>
-
-                                      <Heart
-                                        size={15}
-                                      />
-
-                                      {
-                                        safeNumber(
-                                          writing.likes_count
-                                        )
-                                      }
-
-                                    </span>
-
-
-                                    <span>
-
-                                      <MessageCircle
-                                        size={15}
-                                      />
-
-                                      {
-                                        safeNumber(
-                                          writing.comments_count
-                                        )
-                                      }
-
-                                    </span>
-
-                                  </div>
-
-
-                                  <Link
-                                    to={`/writings/${writing.id}`}
-                                    className="search-read-link"
-                                  >
-
-                                    {copy.readWriting}
-
-                                    <ArrowRight
-                                      size={15}
-                                    />
-
-                                  </Link>
+                                  )}
 
                                 </div>
 
-                              </article>
+                              )}
 
-                            );
 
-                          }
-                        )
-                      }
+                              {/* =========================
+                                  FOOTER
+                              ========================== */}
+
+                              <div
+                                className="search-writing-footer"
+                              >
+
+                                <div
+                                  className="search-writing-engagement"
+                                >
+
+                                  <span>
+
+                                    <Heart
+                                      size={15}
+                                    />
+
+                                    {
+                                      safeNumber(
+                                        writing.likes_count
+                                      )
+                                    }
+
+                                  </span>
+
+
+                                  <span>
+
+                                    <MessageCircle
+                                      size={15}
+                                    />
+
+                                    {
+                                      safeNumber(
+                                        writing.comments_count
+                                      )
+                                    }
+
+                                  </span>
+
+                                </div>
+
+
+                                <Link
+                                  to={
+                                    `/writings/${writing.id}`
+                                  }
+                                  className="search-read-link"
+                                >
+
+                                  {
+                                    copy.readWriting
+                                  }
+
+                                  <ArrowRight
+                                    size={15}
+                                  />
+
+                                </Link>
+
+                              </div>
+
+                            </article>
+
+                          );
+
+                        }
+                      )}
 
                     </div>
 
                   </section>
 
-                )
-              }
-
+                )}
 
 
               {/* ===========================================
                   EMPTY
               ============================================ */}
 
-              {
-                !hasResults && (
+              {!hasVisibleResults && (
 
-                  <section className="search-empty-state">
+                <section
+                  className="search-empty-state"
+                >
 
-                    <div className="search-state-icon">
+                  <div
+                    className="search-state-icon"
+                  >
 
-                      <Search
-                        size={30}
-                      />
+                    {type === "tags"
+                      ? (
 
-                    </div>
+                          <Hash
+                            size={29}
+                          />
+
+                        )
+                      : (
+
+                          <Search
+                            size={29}
+                          />
+
+                        )}
+
+                  </div>
 
 
-                    <h3>
-                      {copy.noResults}
-                    </h3>
+                  <h3>
+                    {
+                      type === "tags"
+                        ? copy.noTags
+                        : copy.noResults
+                    }
+                  </h3>
 
 
-                    <p>
-                      {copy.noResultsDescription}
-                    </p>
+                  <p>
+                    {
+                      type === "tags"
+                        ? copy.noTagsDescription
+                        : copy.noResultsDescription
+                    }
+                  </p>
 
-                  </section>
 
-                )
-              }
+                  <button
+                    type="button"
+                    onClick={
+                      () => {
 
+                        setInput(
+                          ""
+                        );
+
+                        setSearchParams({});
+
+
+                        requestAnimationFrame(
+                          () => {
+
+                            searchInputRef
+                              .current
+                              ?.focus();
+
+                          }
+                        );
+
+                      }
+                    }
+                  >
+
+                    {
+                      copy.searchAgain
+                    }
+
+                  </button>
+
+                </section>
+
+              )}
 
 
               {/* ===========================================
                   PAGINATION
               ============================================ */}
 
-              {
-                hasResults &&
-                totalPages >
-                1 && (
+              {hasVisibleResults &&
+                totalPages > 1 && (
 
-                  <nav className="search-pagination">
+                  <nav
+                    className="search-pagination"
+                    aria-label="Search pagination"
+                  >
 
                     <button
                       type="button"
@@ -2558,26 +3527,44 @@ function SearchPage() {
                         size={16}
                       />
 
-                      {copy.previous}
+                      <span>
+                        {
+                          copy.previous
+                        }
+                      </span>
 
                     </button>
 
 
-                    <span>
+                    <div
+                      className="search-pagination-current"
+                    >
 
-                      {copy.page}
+                      <span>
+                        {
+                          copy.page
+                        }
+                      </span>
 
                       <strong>
-                        {page}
+                        {
+                          page
+                        }
                       </strong>
 
-                      {copy.of}
+                      <span>
+                        {
+                          copy.of
+                        }
+                      </span>
 
                       <strong>
-                        {totalPages}
+                        {
+                          totalPages
+                        }
                       </strong>
 
-                    </span>
+                    </div>
 
 
                     <button
@@ -2594,7 +3581,11 @@ function SearchPage() {
                       }
                     >
 
-                      {copy.next}
+                      <span>
+                        {
+                          copy.next
+                        }
+                      </span>
 
                       <ChevronRight
                         size={16}
@@ -2604,20 +3595,16 @@ function SearchPage() {
 
                   </nav>
 
-                )
-              }
+                )}
 
             </div>
 
-          )
-        }
+          )}
 
       </div>
 
     </main>
-
   );
-
 }
 
 

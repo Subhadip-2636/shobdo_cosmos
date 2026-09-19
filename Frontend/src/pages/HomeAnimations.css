@@ -1,15 +1,11 @@
 /* =========================================================
-   SHOBDO — HOME ANIMATION SYSTEM
-   ---------------------------------------------------------
-   Lightweight:
-   - CSS animations
-   - IntersectionObserver
-   - No animation package
+   SHOBDO — PROFESSIONAL HOME EXPERIENCE
+   Animation + Responsive Public Website System
 ========================================================= */
 
 
 /* =========================================================
-   ANIMATION TOKENS
+   MOTION TOKENS
 ========================================================= */
 
 .animated-home {
@@ -32,6 +28,12 @@
       0.3,
       1
     );
+
+  width: 100%;
+
+  min-width: 0;
+
+  overflow-x: clip;
 }
 
 
@@ -85,13 +87,37 @@
 
 
 /* =========================================================
-   HERO BACKGROUND
+   HERO
 ========================================================= */
 
 .animated-literary-hero {
+  position: relative;
+
   isolation: isolate;
+
+  overflow: hidden;
 }
 
+
+.animated-literary-hero
+.literary-hero-inner {
+  position: relative;
+
+  z-index: 2;
+
+  min-width: 0;
+}
+
+
+.animated-literary-hero
+.literary-hero-copy {
+  min-width: 0;
+}
+
+
+/* =========================================================
+   HERO GLOW
+========================================================= */
 
 .home-hero-glow {
   position: absolute;
@@ -152,17 +178,19 @@
       scale(0.95);
   }
 
+
   50% {
     opacity: 1;
 
     transform:
       scale(1.08);
   }
+
 }
 
 
 /* =========================================================
-   DECORATIVE HERO ORBITS
+   HERO ORBITS
 ========================================================= */
 
 .home-hero-orbit {
@@ -262,6 +290,7 @@
     transform:
       rotate(360deg);
   }
+
 }
 
 
@@ -271,11 +300,12 @@
     transform:
       rotate(-360deg);
   }
+
 }
 
 
 /* =========================================================
-   HERO TEXT ENTRANCE
+   HERO ENTRANCE
 ========================================================= */
 
 .home-hero-copy-animated
@@ -356,6 +386,7 @@
       blur(3px);
   }
 
+
   to {
     opacity: 1;
 
@@ -369,6 +400,7 @@
     filter:
       blur(0);
   }
+
 }
 
 
@@ -410,6 +442,7 @@
       rotate(3deg);
   }
 
+
   to {
     opacity: 1;
 
@@ -421,11 +454,12 @@
       )
       rotate(0);
   }
+
 }
 
 
 /* =========================================================
-   MANUSCRIPT HOVER
+   MANUSCRIPT MOTION
 ========================================================= */
 
 .home-manuscript-card {
@@ -435,17 +469,21 @@
 }
 
 
-.home-manuscript-entrance:hover
-.home-manuscript-card {
-  transform:
-    translateY(-7px)
-    rotate(-0.6deg);
+@media (
+  hover: hover
+) and (
+  pointer: fine
+) {
+
+  .home-manuscript-entrance:hover
+  .home-manuscript-card {
+    transform:
+      translateY(-7px)
+      rotate(-0.6deg);
+  }
+
 }
 
-
-/* =========================================================
-   MANUSCRIPT SHADOW
-========================================================= */
 
 .home-manuscript-shadow-motion {
   animation:
@@ -468,6 +506,7 @@
       scale(1);
   }
 
+
   50% {
     opacity: 0.45;
 
@@ -475,11 +514,12 @@
       translateY(7px)
       scale(0.97);
   }
+
 }
 
 
 /* =========================================================
-   FEATHER
+   FEATHER MOTION
 ========================================================= */
 
 .home-feather-motion {
@@ -503,16 +543,18 @@
       translateY(0);
   }
 
+
   50% {
     transform:
       rotate(4deg)
       translateY(-3px);
   }
+
 }
 
 
 /* =========================================================
-   MANUSCRIPT RULE
+   MANUSCRIPT DRAWING
 ========================================================= */
 
 .home-rule-animation {
@@ -537,18 +579,16 @@
     opacity: 0;
   }
 
+
   to {
     transform:
       scaleX(1);
 
     opacity: 1;
   }
+
 }
 
-
-/* =========================================================
-   MANUSCRIPT LINES
-========================================================= */
 
 .home-manuscript-lines span {
   transform-origin:
@@ -562,31 +602,36 @@
 }
 
 
-.home-manuscript-lines span:nth-child(1) {
+.home-manuscript-lines
+span:nth-child(1) {
   animation-delay:
     900ms;
 }
 
 
-.home-manuscript-lines span:nth-child(2) {
+.home-manuscript-lines
+span:nth-child(2) {
   animation-delay:
     1010ms;
 }
 
 
-.home-manuscript-lines span:nth-child(3) {
+.home-manuscript-lines
+span:nth-child(3) {
   animation-delay:
     1120ms;
 }
 
 
-.home-manuscript-lines span:nth-child(4) {
+.home-manuscript-lines
+span:nth-child(4) {
   animation-delay:
     1230ms;
 }
 
 
-.home-manuscript-lines span:nth-child(5) {
+.home-manuscript-lines
+span:nth-child(5) {
   animation-delay:
     1340ms;
 }
@@ -601,17 +646,19 @@
     opacity: 0;
   }
 
+
   to {
     transform:
       scaleX(1);
 
     opacity: 1;
   }
+
 }
 
 
 /* =========================================================
-   PRIMARY BUTTON MICRO MOTION
+   BUTTON MOTION
 ========================================================= */
 
 .home-motion-button {
@@ -656,15 +703,21 @@
 }
 
 
-.home-motion-button:hover {
-  transform:
-    translateY(-2px);
-}
+@media (
+  hover: hover
+) {
+
+  .home-motion-button:hover {
+    transform:
+      translateY(-2px);
+  }
 
 
-.home-motion-button:hover::after {
-  transform:
-    translateX(125%);
+  .home-motion-button:hover::after {
+    transform:
+      translateX(125%);
+  }
+
 }
 
 
@@ -676,7 +729,7 @@
 
 
 /* =========================================================
-   TEXT LINK MICRO MOTION
+   TEXT LINK MOTION
 ========================================================= */
 
 .home-motion-text-link svg {
@@ -686,14 +739,20 @@
 }
 
 
-.home-motion-text-link:hover svg {
-  transform:
-    translateX(4px);
+@media (
+  hover: hover
+) {
+
+  .home-motion-text-link:hover svg {
+    transform:
+      translateX(4px);
+  }
+
 }
 
 
 /* =========================================================
-   QUOTE ICON
+   QUOTE MOTION
 ========================================================= */
 
 .home-quote-icon-motion {
@@ -714,17 +773,15 @@
       rotate(0deg);
   }
 
+
   50% {
     transform:
       translateY(-5px)
       rotate(-3deg);
   }
+
 }
 
-
-/* =========================================================
-   QUOTE CHANGE
-========================================================= */
 
 .home-quote-content-motion {
   animation:
@@ -751,6 +808,7 @@
       blur(2px);
   }
 
+
   to {
     opacity: 1;
 
@@ -764,11 +822,12 @@
     filter:
       blur(0);
   }
+
 }
 
 
 /* =========================================================
-   ROUND QUOTE BUTTONS
+   QUOTE CONTROLS
 ========================================================= */
 
 .home-round-motion-button {
@@ -779,9 +838,15 @@
 }
 
 
-.home-round-motion-button:hover {
-  transform:
-    scale(1.08);
+@media (
+  hover: hover
+) {
+
+  .home-round-motion-button:hover {
+    transform:
+      scale(1.08);
+  }
+
 }
 
 
@@ -790,10 +855,6 @@
     scale(0.94);
 }
 
-
-/* =========================================================
-   QUOTE DOTS
-========================================================= */
 
 .quote-dots button {
   transition:
@@ -811,7 +872,7 @@
 
 
 /* =========================================================
-   PROMPT
+   PROMPT CARD
 ========================================================= */
 
 .home-prompt-card-motion {
@@ -822,9 +883,15 @@
 }
 
 
-.home-prompt-card-motion:hover {
-  transform:
-    translateY(-4px);
+@media (
+  hover: hover
+) {
+
+  .home-prompt-card-motion:hover {
+    transform:
+      translateY(-4px);
+  }
+
 }
 
 
@@ -854,6 +921,7 @@
       );
   }
 
+
   50% {
     transform:
       scale(1.06);
@@ -867,11 +935,12 @@
         0.16
       );
   }
+
 }
 
 
 /* =========================================================
-   CATEGORY REVEAL WRAPPER
+   CATEGORY ANIMATIONS
 ========================================================= */
 
 .home-category-reveal {
@@ -884,10 +953,6 @@
   height: 100%;
 }
 
-
-/* =========================================================
-   CATEGORY MICRO MOTION
-========================================================= */
 
 .home-category-card-motion {
   position: relative;
@@ -927,9 +992,23 @@
 }
 
 
-.home-category-card-motion:hover::after {
-  transform:
-    scaleX(1);
+@media (
+  hover: hover
+) {
+
+  .home-category-card-motion:hover::after {
+    transform:
+      scaleX(1);
+  }
+
+
+  .home-category-card-motion:hover
+  .category-symbol {
+    transform:
+      rotate(12deg)
+      scale(1.08);
+  }
+
 }
 
 
@@ -939,14 +1018,6 @@
     transform
     420ms
     var(--home-ease);
-}
-
-
-.home-category-card-motion:hover
-.category-symbol {
-  transform:
-    rotate(12deg)
-    scale(1.08);
 }
 
 
@@ -961,9 +1032,15 @@
 }
 
 
-.home-featured-motion:hover {
-  transform:
-    translateY(-3px);
+@media (
+  hover: hover
+) {
+
+  .home-featured-motion:hover {
+    transform:
+      translateY(-3px);
+  }
+
 }
 
 
@@ -987,6 +1064,7 @@
     opacity: 0.75;
   }
 
+
   50% {
     transform:
       rotate(-4deg)
@@ -994,14 +1072,17 @@
 
     opacity: 1;
   }
+
 }
 
 
 /* =========================================================
-   FEED CONTENT SWITCH
+   FEED CONTENT
 ========================================================= */
 
 .home-feed-content-swap {
+  min-width: 0;
+
   animation:
     homeFeedSwap
     430ms
@@ -1023,6 +1104,7 @@
       );
   }
 
+
   to {
     opacity: 1;
 
@@ -1033,15 +1115,18 @@
         0
       );
   }
+
 }
 
 
 /* =========================================================
-   FEED CARDS
+   FEED CARD MOTION
 ========================================================= */
 
 .home-feed-card-motion {
   width: 100%;
+
+  min-width: 0;
 
   opacity: 0;
 
@@ -1090,11 +1175,12 @@
         0
       );
   }
+
 }
 
 
 /* =========================================================
-   WRITING CARD MOTION
+   WRITING CARD HOVER INSIDE HOME
 ========================================================= */
 
 .home-feed-card-motion
@@ -1106,21 +1192,36 @@
 }
 
 
-.home-feed-card-motion
-.writing-card:hover {
-  transform:
-    translateY(-3px);
+@media (
+  hover: hover
+) and (
+  pointer: fine
+) {
+
+  .home-feed-card-motion
+  .writing-card:hover {
+    transform:
+      translateY(-3px);
+  }
+
 }
 
 
 /* =========================================================
-   FEED TAB
+   FEED TABS
 ========================================================= */
 
-.home-feed-tab {
-  overflow: hidden;
+.home-feed-tabs {
+  min-width: 0;
+}
 
+
+.home-feed-tab {
   position: relative;
+
+  min-width: 0;
+
+  overflow: hidden;
 }
 
 
@@ -1158,12 +1259,13 @@
 
 
 .home-feed-tab-active::before {
-  left: 115%;
+  left:
+    115%;
 }
 
 
 /* =========================================================
-   FEED LOADING STATE
+   FEED LOADING
 ========================================================= */
 
 .home-feed-loading-motion {
@@ -1189,6 +1291,7 @@
       );
   }
 
+
   50% {
     box-shadow:
       0 10px 35px
@@ -1199,6 +1302,7 @@
         0.055
       );
   }
+
 }
 
 
@@ -1221,9 +1325,11 @@
     opacity: 0;
   }
 
+
   to {
     opacity: 1;
   }
+
 }
 
 
@@ -1246,11 +1352,12 @@
     transform:
       rotate(360deg);
   }
+
 }
 
 
 /* =========================================================
-   FINAL CTA BACKGROUND WORD
+   FINAL CTA
 ========================================================= */
 
 .home-background-word-motion {
@@ -1270,22 +1377,22 @@
       translateX(-1%)
       scale(1);
 
-    opacity: 0.035;
+    opacity:
+      0.035;
   }
+
 
   50% {
     transform:
       translateX(1%)
       scale(1.025);
 
-    opacity: 0.06;
+    opacity:
+      0.06;
   }
+
 }
 
-
-/* =========================================================
-   FINAL LANGUAGE TRANSITION
-========================================================= */
 
 .home-final-content-motion {
   animation:
@@ -1305,17 +1412,19 @@
       translateY(12px);
   }
 
+
   to {
     opacity: 1;
 
     transform:
       translateY(0);
   }
+
 }
 
 
 /* =========================================================
-   BUTTON / LINK FOCUS
+   FOCUS
 ========================================================= */
 
 .animated-home
@@ -1337,7 +1446,8 @@ button:focus-visible {
 
 
 /* =========================================================
-   DESKTOP LARGE
+   DESKTOP
+   1100px+
 ========================================================= */
 
 @media (
@@ -1356,41 +1466,378 @@ button:focus-visible {
       opacity,
       transform;
   }
+
 }
 
 
 /* =========================================================
    TABLET
+   901px - 1100px
+========================================================= */
+
+@media (
+  max-width: 1100px
+) {
+
+  .animated-literary-hero
+  .literary-hero-inner {
+    gap:
+      clamp(
+        28px,
+        4vw,
+        48px
+      );
+  }
+
+
+  .home-hero-orbit-one {
+    width:
+      340px;
+
+    height:
+      340px;
+
+    right:
+      -130px;
+  }
+
+
+  .home-hero-orbit-two {
+    width:
+      220px;
+
+    height:
+      220px;
+
+    right:
+      -10px;
+  }
+
+
+  .home-hero-glow {
+    right:
+      -250px;
+  }
+
+
+  .literary-category-grid {
+    gap:
+      14px;
+  }
+
+}
+
+
+/* =========================================================
+   TABLET
+   900px AND BELOW
 ========================================================= */
 
 @media (
   max-width: 900px
 ) {
 
-  .home-hero-orbit-one {
-    width: 320px;
-    height: 320px;
+  .home-manuscript-entrance {
+    animation-duration:
+      750ms;
+  }
 
-    right: -140px;
+
+  .animated-literary-hero
+  .literary-hero-inner {
+    grid-template-columns:
+      minmax(
+        0,
+        1fr
+      )
+      minmax(
+        260px,
+        0.78fr
+      );
+
+    gap:
+      30px;
+  }
+
+
+  .literary-manuscript-wrap {
+    width:
+      min(
+        100%,
+        360px
+      );
+
+    justify-self:
+      center;
+  }
+
+
+  .literary-quotes-shell {
+    gap:
+      28px;
+  }
+
+
+  .literary-category-grid {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(
+          0,
+          1fr
+        )
+      );
+  }
+
+
+  .literary-featured-shell {
+    gap:
+      22px;
+  }
+
+
+  .home-feed-heading {
+    align-items:
+      flex-end;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL TABLET
+   768px AND BELOW
+========================================================= */
+
+@media (
+  max-width: 768px
+) {
+
+  .animated-home {
+    overflow-x:
+      hidden;
+  }
+
+
+  /* -----------------------------------------------------
+     HERO
+  ------------------------------------------------------ */
+
+  .animated-literary-hero
+  .literary-hero-inner {
+    display:
+      grid;
+
+    grid-template-columns:
+      1fr;
+
+    gap:
+      34px;
+  }
+
+
+  .literary-hero-copy {
+    width:
+      100%;
+
+    max-width:
+      680px;
+  }
+
+
+  .literary-hero-copy h1 {
+    max-width:
+      680px;
+
+    font-size:
+      clamp(
+        2.2rem,
+        7vw,
+        3.8rem
+      );
+
+    line-height:
+      1.04;
+
+    overflow-wrap:
+      anywhere;
+  }
+
+
+  .literary-hero-description {
+    max-width:
+      620px;
+  }
+
+
+  .literary-manuscript-wrap {
+    width:
+      min(
+        100%,
+        430px
+      );
+
+    justify-self:
+      center;
+  }
+
+
+  .home-hero-orbit-one {
+    width:
+      300px;
+
+    height:
+      300px;
+
+    right:
+      -170px;
+
+    top:
+      60px;
   }
 
 
   .home-hero-orbit-two {
-    width: 210px;
-    height: 210px;
-
-    right: -20px;
+    display:
+      none;
   }
 
 
   .home-hero-glow {
-    right: -260px;
+    width:
+      430px;
+
+    height:
+      430px;
+
+    right:
+      -280px;
+
+    top:
+      80px;
+
+    opacity:
+      0.7;
   }
 
 
-  .home-manuscript-entrance {
-    animation-duration:
-      750ms;
+  /* -----------------------------------------------------
+     QUOTES
+  ------------------------------------------------------ */
+
+  .literary-quotes-shell {
+    display:
+      grid;
+
+    grid-template-columns:
+      1fr;
+
+    gap:
+      22px;
+  }
+
+
+  .quote-section-side {
+    width:
+      100%;
+  }
+
+
+  .quote-stage {
+    width:
+      100%;
+  }
+
+
+  /* -----------------------------------------------------
+     PROMPT
+  ------------------------------------------------------ */
+
+  .literary-prompt-card {
+    display:
+      grid;
+
+    grid-template-columns:
+      auto
+      minmax(
+        0,
+        1fr
+      );
+
+    gap:
+      16px;
+
+    align-items:
+      start;
+  }
+
+
+  .prompt-write-button {
+    grid-column:
+      1 / -1;
+
+    justify-self:
+      start;
+  }
+
+
+  /* -----------------------------------------------------
+     SECTION HEADER
+  ------------------------------------------------------ */
+
+  .literary-section-header {
+    align-items:
+      flex-start;
+
+    gap:
+      18px;
+  }
+
+
+  /* -----------------------------------------------------
+     FEATURED
+  ------------------------------------------------------ */
+
+  .literary-featured-shell {
+    grid-template-columns:
+      1fr;
+
+    gap:
+      18px;
+  }
+
+
+  .featured-side-label {
+    display:
+      flex;
+
+    align-items:
+      center;
+
+    gap:
+      10px;
+  }
+
+
+  .featured-quote-mark {
+    display:
+      none;
+  }
+
+
+  /* -----------------------------------------------------
+     FEED HEADER
+  ------------------------------------------------------ */
+
+  .home-feed-heading {
+    align-items:
+      flex-start;
+  }
+
+
+  .home-feed-refresh {
+    flex:
+      0 0 auto;
   }
 
 }
@@ -1398,31 +1845,16 @@ button:focus-visible {
 
 /* =========================================================
    MOBILE
+   700px AND BELOW
 ========================================================= */
 
 @media (
   max-width: 700px
 ) {
 
-  .home-hero-orbit,
-  .home-hero-glow {
-    opacity: 0.55;
-  }
-
-
-  .home-hero-orbit-one {
-    width: 250px;
-    height: 250px;
-
-    right: -160px;
-    top: 50px;
-  }
-
-
-  .home-hero-orbit-two {
-    display: none;
-  }
-
+  /* =====================================================
+     GENERAL ANIMATION REDUCTION
+  ====================================================== */
 
   .home-reveal {
     transform:
@@ -1431,6 +1863,12 @@ button:focus-visible {
         18px,
         0
       );
+
+    filter:
+      blur(1.5px);
+
+    transition-duration:
+      560ms;
   }
 
 
@@ -1480,20 +1918,988 @@ button:focus-visible {
 
 
   .home-featured-motion:hover,
-  .home-prompt-card-motion:hover {
-    transform: none;
+  .home-prompt-card-motion:hover,
+  .home-feed-card-motion
+  .writing-card:hover {
+    transform:
+      none;
+  }
+
+
+  /* =====================================================
+     HERO
+  ====================================================== */
+
+  .literary-hero {
+    overflow:
+      hidden;
+  }
+
+
+  .literary-hero-inner {
+    width:
+      100%;
+
+    min-width:
+      0;
+  }
+
+
+  .literary-hero-copy {
+    width:
+      100%;
+
+    min-width:
+      0;
+  }
+
+
+  .literary-kicker {
+    max-width:
+      100%;
+
+    flex-wrap:
+      wrap;
+  }
+
+
+  .literary-hero-copy h1 {
+    margin-top:
+      16px;
+
+    font-size:
+      clamp(
+        2rem,
+        10vw,
+        3.15rem
+      );
+
+    line-height:
+      1.02;
+
+    letter-spacing:
+      -0.035em;
+  }
+
+
+  .literary-hero-description {
+    max-width:
+      100%;
+
+    font-size:
+      0.98rem;
+
+    line-height:
+      1.7;
+  }
+
+
+  .literary-hero-buttons {
+    width:
+      100%;
+
+    display:
+      flex;
+
+    align-items:
+      center;
+
+    flex-wrap:
+      wrap;
+
+    gap:
+      10px;
+  }
+
+
+  .literary-primary-button {
+    min-height:
+      44px;
+  }
+
+
+  .literary-text-button {
+    min-height:
+      44px;
+  }
+
+
+  .literary-hero-footnote {
+    max-width:
+      100%;
+  }
+
+
+  /* =====================================================
+     MANUSCRIPT
+  ====================================================== */
+
+  .literary-manuscript-wrap {
+    width:
+      min(
+        100%,
+        390px
+      );
+
+    margin:
+      0 auto;
+  }
+
+
+  .literary-manuscript {
+    width:
+      100%;
+
+    min-width:
+      0;
+  }
+
+
+  .literary-manuscript h2 {
+    overflow-wrap:
+      anywhere;
+
+    font-size:
+      clamp(
+        1.45rem,
+        6vw,
+        2rem
+      );
+  }
+
+
+  /* =====================================================
+     QUOTE
+  ====================================================== */
+
+  .literary-quotes-shell {
+    min-width:
+      0;
+  }
+
+
+  .quote-section-side {
+    min-width:
+      0;
+  }
+
+
+  .quote-section-side h2 {
+    font-size:
+      clamp(
+        1.65rem,
+        7vw,
+        2.35rem
+      );
+
+    overflow-wrap:
+      anywhere;
+  }
+
+
+  .quote-stage {
+    min-width:
+      0;
+
+    overflow:
+      hidden;
+  }
+
+
+  .quote-stage blockquote {
+    overflow-wrap:
+      anywhere;
+
+    font-size:
+      clamp(
+        1.25rem,
+        5.5vw,
+        1.85rem
+      );
+
+    line-height:
+      1.5;
+  }
+
+
+  .quote-navigation {
+    width:
+      100%;
+
+    min-width:
+      0;
+
+    justify-content:
+      space-between;
+  }
+
+
+  /* =====================================================
+     PROMPT
+  ====================================================== */
+
+  .literary-prompt-card {
+    grid-template-columns:
+      1fr;
+
+    gap:
+      14px;
+  }
+
+
+  .prompt-light {
+    width:
+      46px;
+
+    height:
+      46px;
+  }
+
+
+  .prompt-content {
+    min-width:
+      0;
+  }
+
+
+  .prompt-content h2 {
+    overflow-wrap:
+      anywhere;
+
+    font-size:
+      clamp(
+        1.4rem,
+        6vw,
+        1.9rem
+      );
+  }
+
+
+  .prompt-write-button {
+    grid-column:
+      auto;
+
+    width:
+      auto;
+
+    justify-self:
+      start;
+  }
+
+
+  /* =====================================================
+     SECTION HEADERS
+  ====================================================== */
+
+  .literary-section-header {
+    display:
+      flex;
+
+    flex-direction:
+      column;
+
+    align-items:
+      flex-start;
+
+    gap:
+      14px;
+  }
+
+
+  .literary-section-header
+  > div {
+    width:
+      100%;
+  }
+
+
+  .literary-section-header h2 {
+    overflow-wrap:
+      anywhere;
+
+    font-size:
+      clamp(
+        1.7rem,
+        7vw,
+        2.25rem
+      );
+  }
+
+
+  .literary-view-all {
+    align-self:
+      flex-start;
+  }
+
+
+  /* =====================================================
+     CATEGORIES
+  ====================================================== */
+
+  .literary-category-grid {
+    display:
+      grid;
+
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(
+          0,
+          1fr
+        )
+      );
+
+    gap:
+      10px;
+  }
+
+
+  .literary-category-card {
+    min-width:
+      0;
+
+    padding:
+      16px;
+  }
+
+
+  .category-card-top {
+    gap:
+      8px;
+  }
+
+
+  .category-card-bottom {
+    min-width:
+      0;
+
+    gap:
+      8px;
+  }
+
+
+  .category-card-bottom
+  > div {
+    min-width:
+      0;
+  }
+
+
+  .category-card-bottom h3 {
+    overflow:
+      hidden;
+
+    text-overflow:
+      ellipsis;
+
+    white-space:
+      nowrap;
+
+    font-size:
+      1rem;
+  }
+
+
+  .category-card-bottom p {
+    font-size:
+      0.78rem;
+  }
+
+
+  /* =====================================================
+     FEATURED WRITING
+  ====================================================== */
+
+  .literary-featured-shell {
+    min-width:
+      0;
+  }
+
+
+  .featured-side-label {
+    min-width:
+      0;
+
+    flex-wrap:
+      wrap;
+  }
+
+
+  .literary-featured-article {
+    min-width:
+      0;
+  }
+
+
+  .featured-article-meta {
+    flex-wrap:
+      wrap;
+
+    gap:
+      7px;
+  }
+
+
+  .literary-featured-article h2 {
+    overflow-wrap:
+      anywhere;
+
+    font-size:
+      clamp(
+        1.55rem,
+        7vw,
+        2.1rem
+      );
+  }
+
+
+  .literary-featured-article p {
+    overflow-wrap:
+      anywhere;
+  }
+
+
+  /* =====================================================
+     FEED HEADER
+  ====================================================== */
+
+  .home-feed-heading {
+    display:
+      flex;
+
+    flex-direction:
+      column;
+
+    align-items:
+      flex-start;
+
+    gap:
+      14px;
+  }
+
+
+  .home-feed-heading
+  > div {
+    width:
+      100%;
+  }
+
+
+  .home-feed-refresh {
+    align-self:
+      flex-start;
+  }
+
+
+  /* =====================================================
+     FEED TABS
+  ====================================================== */
+
+  .home-feed-tabs {
+    width:
+      100%;
+
+    display:
+      grid;
+
+    grid-template-columns:
+      repeat(
+        3,
+        minmax(
+          0,
+          1fr
+        )
+      );
+
+    gap:
+      6px;
+  }
+
+
+  .home-feed-tab {
+    min-width:
+      0;
+
+    min-height:
+      44px;
+
+    padding:
+      8px 8px;
+
+    justify-content:
+      center;
+
+    gap:
+      5px;
+
+    white-space:
+      nowrap;
+  }
+
+
+  .home-feed-tab span {
+    min-width:
+      0;
+
+    overflow:
+      hidden;
+
+    text-overflow:
+      ellipsis;
+
+    white-space:
+      nowrap;
+  }
+
+
+  .home-feed-tab svg {
+    flex:
+      0 0 auto;
+  }
+
+
+  /* =====================================================
+     FEED
+  ====================================================== */
+
+  .home-feed-list {
+    width:
+      100%;
+
+    min-width:
+      0;
+  }
+
+
+  .home-feed-card-motion {
+    min-width:
+      0;
+  }
+
+
+  .home-feed-state {
+    width:
+      100%;
+
+    min-width:
+      0;
+
+    text-align:
+      center;
+  }
+
+
+  .home-feed-load-more-wrap {
+    width:
+      100%;
+  }
+
+
+  .home-feed-load-more {
+    max-width:
+      100%;
+  }
+
+
+  /* =====================================================
+     FINAL SECTION
+  ====================================================== */
+
+  .literary-final-section {
+    overflow:
+      hidden;
+  }
+
+
+  .literary-final-inner {
+    width:
+      100%;
+
+    min-width:
+      0;
+  }
+
+
+  .literary-final-inner h2 {
+    overflow-wrap:
+      anywhere;
+
+    font-size:
+      clamp(
+        1.8rem,
+        8vw,
+        2.7rem
+      );
+  }
+
+
+  .literary-final-inner p {
+    max-width:
+      100%;
+  }
+
+
+  .final-background-word {
+    white-space:
+      nowrap;
+
+    font-size:
+      clamp(
+        5rem,
+        24vw,
+        10rem
+      );
   }
 
 }
 
 
 /* =========================================================
-   SMALL MOBILE
+   LARGE PHONE
+   520px AND BELOW
 ========================================================= */
 
 @media (
-  max-width: 420px
+  max-width: 520px
 ) {
+
+  /* =====================================================
+     HERO
+  ====================================================== */
+
+  .literary-hero-copy h1 {
+    font-size:
+      clamp(
+        1.95rem,
+        10vw,
+        2.85rem
+      );
+  }
+
+
+  .literary-hero-buttons {
+    flex-direction:
+      column;
+
+    align-items:
+      stretch;
+  }
+
+
+  .literary-primary-button,
+  .literary-text-button {
+    width:
+      100%;
+
+    justify-content:
+      center;
+  }
+
+
+  .literary-hero-footnote {
+    align-items:
+      flex-start;
+  }
+
+
+  /* =====================================================
+     MANUSCRIPT
+  ====================================================== */
+
+  .literary-manuscript-wrap {
+    width:
+      min(
+        100%,
+        350px
+      );
+  }
+
+
+  .literary-manuscript {
+    padding:
+      24px 20px;
+  }
+
+
+  .manuscript-top {
+    gap:
+      8px;
+  }
+
+
+  .literary-manuscript h2 {
+    font-size:
+      1.55rem;
+  }
+
+
+  /* =====================================================
+     QUOTE
+  ====================================================== */
+
+  .quote-side-number {
+    font-size:
+      0.72rem;
+  }
+
+
+  .quote-stage {
+    padding:
+      24px 18px;
+  }
+
+
+  .quote-stage-icon {
+    width:
+      38px;
+
+    height:
+      38px;
+  }
+
+
+  .quote-stage blockquote {
+    font-size:
+      1.25rem;
+  }
+
+
+  .quote-author {
+    min-width:
+      0;
+  }
+
+
+  .quote-author
+  > div {
+    min-width:
+      0;
+  }
+
+
+  .quote-author strong,
+  .quote-author small {
+    overflow:
+      hidden;
+
+    text-overflow:
+      ellipsis;
+
+    white-space:
+      nowrap;
+  }
+
+
+  /* =====================================================
+     PROMPT
+  ====================================================== */
+
+  .literary-prompt-card {
+    padding:
+      20px 17px;
+  }
+
+
+  .prompt-write-button {
+    width:
+      100%;
+
+    justify-content:
+      center;
+  }
+
+
+  /* =====================================================
+     CATEGORIES
+  ====================================================== */
+
+  .literary-category-card {
+    padding:
+      15px 13px;
+  }
+
+
+  .category-number {
+    font-size:
+      0.7rem;
+  }
+
+
+  .category-symbol {
+    font-size:
+      1rem;
+  }
+
+
+  /* =====================================================
+     FEED HEADER
+  ====================================================== */
+
+  .home-feed-refresh {
+    min-height:
+      40px;
+  }
+
+
+  /* =====================================================
+     FEED TABS
+  ====================================================== */
+
+  .home-feed-tabs {
+    gap:
+      5px;
+  }
+
+
+  .home-feed-tab {
+    min-height:
+      42px;
+
+    padding:
+      7px 5px;
+
+    font-size:
+      0.78rem;
+  }
+
+
+  .home-feed-tab svg {
+    width:
+      15px;
+
+    height:
+      15px;
+  }
+
+
+  /* =====================================================
+     FINAL CTA
+  ====================================================== */
+
+  .literary-final-inner {
+    text-align:
+      center;
+
+    align-items:
+      center;
+  }
+
+
+  .literary-final-button {
+    width:
+      100%;
+
+    justify-content:
+      center;
+  }
+
+}
+
+
+/* =========================================================
+   430px PHONE
+========================================================= */
+
+@media (
+  max-width: 430px
+) {
+
+  .home-hero-orbit-one {
+    width:
+      235px;
+
+    height:
+      235px;
+
+    right:
+      -165px;
+
+    top:
+      40px;
+  }
+
+
+  .home-hero-glow {
+    width:
+      360px;
+
+    height:
+      360px;
+
+    right:
+      -275px;
+
+    top:
+      40px;
+  }
+
+
+  .literary-hero-copy h1 {
+    font-size:
+      clamp(
+        1.85rem,
+        10.8vw,
+        2.55rem
+      );
+  }
+
+
+  .literary-hero-description {
+    font-size:
+      0.91rem;
+
+    line-height:
+      1.68;
+  }
+
+
+  .literary-manuscript {
+    padding:
+      22px 18px;
+  }
+
+
+  .literary-manuscript h2 {
+    font-size:
+      1.43rem;
+  }
+
+
+  .literary-category-grid {
+    gap:
+      8px;
+  }
+
+
+  .literary-category-card {
+    padding:
+      14px 12px;
+  }
+
+
+  .category-card-bottom {
+    align-items:
+      flex-end;
+  }
+
+
+  .category-card-bottom h3 {
+    font-size:
+      0.95rem;
+  }
+
+
+  .category-card-bottom p {
+    font-size:
+      0.72rem;
+  }
+
+
+  .home-feed-tab {
+    font-size:
+      0.74rem;
+  }
+
 
   .home-feed-card-motion {
     animation-duration:
@@ -1539,7 +2945,437 @@ button:focus-visible {
 
 
 /* =========================================================
-   REDUCED MOTION / ACCESSIBILITY
+   390px PHONE
+========================================================= */
+
+@media (
+  max-width: 390px
+) {
+
+  .literary-kicker {
+    font-size:
+      0.72rem;
+  }
+
+
+  .literary-hero-copy h1 {
+    font-size:
+      clamp(
+        1.78rem,
+        10.5vw,
+        2.4rem
+      );
+  }
+
+
+  .literary-hero-footnote p {
+    font-size:
+      0.76rem;
+  }
+
+
+  .literary-manuscript-wrap {
+    width:
+      min(
+        100%,
+        330px
+      );
+  }
+
+
+  .literary-manuscript {
+    padding:
+      21px 17px;
+  }
+
+
+  .manuscript-small {
+    font-size:
+      0.68rem;
+  }
+
+
+  .literary-manuscript h2 {
+    font-size:
+      1.37rem;
+  }
+
+
+  .quote-section-side h2 {
+    font-size:
+      1.55rem;
+  }
+
+
+  .quote-stage {
+    padding:
+      22px 16px;
+  }
+
+
+  .quote-stage blockquote {
+    font-size:
+      1.16rem;
+
+    line-height:
+      1.55;
+  }
+
+
+  .literary-prompt-card {
+    padding:
+      18px 15px;
+  }
+
+
+  .prompt-content h2 {
+    font-size:
+      1.35rem;
+  }
+
+
+  .literary-section-header h2 {
+    font-size:
+      1.6rem;
+  }
+
+
+  .literary-category-card {
+    min-height:
+      132px;
+  }
+
+
+  .home-feed-tab {
+    min-height:
+      41px;
+
+    padding:
+      7px 4px;
+
+    gap:
+      4px;
+
+    font-size:
+      0.71rem;
+  }
+
+
+  .home-feed-tab svg {
+    width:
+      14px;
+
+    height:
+      14px;
+  }
+
+
+  .literary-featured-article h2 {
+    font-size:
+      1.45rem;
+  }
+
+
+  .literary-final-inner h2 {
+    font-size:
+      1.72rem;
+  }
+
+}
+
+
+/* =========================================================
+   360px PHONE
+========================================================= */
+
+@media (
+  max-width: 360px
+) {
+
+  .literary-hero-copy h1 {
+    font-size:
+      1.95rem;
+
+    letter-spacing:
+      -0.03em;
+  }
+
+
+  .literary-hero-description {
+    font-size:
+      0.88rem;
+  }
+
+
+  .literary-primary-button,
+  .literary-text-button {
+    min-height:
+      42px;
+
+    font-size:
+      0.83rem;
+  }
+
+
+  .literary-manuscript {
+    padding:
+      20px 16px;
+  }
+
+
+  .literary-manuscript h2 {
+    font-size:
+      1.3rem;
+  }
+
+
+  .literary-category-card {
+    padding:
+      13px 10px;
+  }
+
+
+  .category-card-bottom h3 {
+    font-size:
+      0.9rem;
+  }
+
+
+  .category-card-bottom p {
+    display:
+      none;
+  }
+
+
+  .home-feed-tab {
+    font-size:
+      0.68rem;
+  }
+
+
+  .home-feed-tab svg {
+    width:
+      13px;
+
+    height:
+      13px;
+  }
+
+
+  .home-feed-refresh span {
+    font-size:
+      0.76rem;
+  }
+
+}
+
+
+/* =========================================================
+   ULTRA SMALL
+   320px
+========================================================= */
+
+@media (
+  max-width: 320px
+) {
+
+  .home-hero-orbit-one,
+  .home-hero-glow {
+    display:
+      none;
+  }
+
+
+  .literary-kicker {
+    font-size:
+      0.67rem;
+  }
+
+
+  .literary-hero-copy h1 {
+    font-size:
+      1.72rem;
+
+    line-height:
+      1.08;
+  }
+
+
+  .literary-hero-description {
+    font-size:
+      0.84rem;
+  }
+
+
+  .literary-manuscript {
+    padding:
+      18px 14px;
+  }
+
+
+  .literary-manuscript h2 {
+    font-size:
+      1.2rem;
+  }
+
+
+  .manuscript-write-link {
+    font-size:
+      0.78rem;
+  }
+
+
+  .quote-stage {
+    padding:
+      20px 14px;
+  }
+
+
+  .quote-stage blockquote {
+    font-size:
+      1.07rem;
+  }
+
+
+  .literary-prompt-card {
+    padding:
+      17px 13px;
+  }
+
+
+  .prompt-content h2 {
+    font-size:
+      1.25rem;
+  }
+
+
+  .literary-section-header h2 {
+    font-size:
+      1.48rem;
+  }
+
+
+  .literary-category-grid {
+    grid-template-columns:
+      1fr;
+  }
+
+
+  .literary-category-card {
+    min-height:
+      auto;
+  }
+
+
+  .category-card-bottom p {
+    display:
+      block;
+  }
+
+
+  .home-feed-tabs {
+    gap:
+      3px;
+  }
+
+
+  .home-feed-tab {
+    min-height:
+      40px;
+
+    padding:
+      6px 3px;
+
+    font-size:
+      0.64rem;
+  }
+
+
+  .home-feed-tab svg {
+    display:
+      none;
+  }
+
+
+  .literary-final-inner h2 {
+    font-size:
+      1.55rem;
+  }
+
+}
+
+
+/* =========================================================
+   TOUCH DEVICES
+========================================================= */
+
+@media (
+  hover: none
+) and (
+  pointer: coarse
+) {
+
+  .home-manuscript-entrance:hover
+  .home-manuscript-card,
+
+  .home-motion-button:hover,
+
+  .home-category-card-motion:hover,
+
+  .home-featured-motion:hover,
+
+  .home-prompt-card-motion:hover,
+
+  .home-feed-card-motion
+  .writing-card:hover {
+    transform:
+      none;
+  }
+
+
+  .animated-home a,
+  .animated-home button {
+    -webkit-tap-highlight-color:
+      transparent;
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED DATA / PERFORMANCE
+========================================================= */
+
+@media (
+  max-width: 520px
+) {
+
+  .home-hero-orbit {
+    animation-duration:
+      40s;
+  }
+
+
+  .home-hero-glow {
+    animation-duration:
+      12s;
+  }
+
+
+  .home-manuscript-shadow-motion,
+  .home-feather-motion,
+  .home-quote-icon-motion,
+  .home-featured-quote-motion,
+  .home-background-word-motion {
+    animation-duration:
+      8s;
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
 ========================================================= */
 
 @media (
@@ -1549,7 +3385,8 @@ button:focus-visible {
   .animated-home *,
   .animated-home *::before,
   .animated-home *::after {
-    scroll-behavior: auto !important;
+    scroll-behavior:
+      auto !important;
 
     animation-duration:
       0.001ms !important;
@@ -1566,7 +3403,8 @@ button:focus-visible {
 
 
   .home-reveal {
-    opacity: 1 !important;
+    opacity:
+      1 !important;
 
     transform:
       none !important;
@@ -1588,13 +3426,45 @@ button:focus-visible {
   .home-hero-actions-motion,
   .home-hero-copy-animated
   .home-hero-footnote-motion {
-    opacity: 1 !important;
+    opacity:
+      1 !important;
 
     transform:
       none !important;
 
     filter:
       none !important;
+  }
+
+
+  .home-motion-button::after {
+    display:
+      none;
+  }
+
+}
+
+
+/* =========================================================
+   FORCED COLORS / HIGH CONTRAST
+========================================================= */
+
+@media (
+  forced-colors: active
+) {
+
+  .home-hero-orbit,
+  .home-hero-glow {
+    display:
+      none;
+  }
+
+
+  .home-motion-button,
+  .home-feed-tab,
+  .literary-category-card {
+    forced-color-adjust:
+      auto;
   }
 
 }

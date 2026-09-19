@@ -1,29 +1,442 @@
 <!doctype html>
+
 <html lang="bn">
+
   <head>
+
+    <!-- =====================================================
+         CHARACTER ENCODING
+    ====================================================== -->
+
     <meta charset="UTF-8" />
+
+
+    <!-- =====================================================
+         RESPONSIVE / MOBILE
+    ====================================================== -->
 
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
 
     <meta
-      name="description"
-      content="SHOBDO — তোমার শব্দ, তোমার গল্প।"
+      name="format-detection"
+      content="telephone=no"
     />
 
+
+    <!-- =====================================================
+         PRIMARY SEO
+    ====================================================== -->
+
     <title>
-      SHOBDO — তোমার শব্দ, তোমার গল্প।
+      SHOBDO — তোমার শব্দ, তোমার গল্প
     </title>
+
+    <meta
+      name="description"
+      content="SHOBDO is a multilingual social writing platform where writers and readers can discover, write and share poems, stories, essays, thoughts and experiences in Bengali, English and Hindi."
+    />
+
+    <meta
+      name="keywords"
+      content="SHOBDO, Bengali writing, বাংলা লেখা, Bengali poems, Bengali stories, social writing platform, multilingual writing, Hindi writing, English writing, writers community, literature community"
+    />
+
+    <meta
+      name="author"
+      content="SHOBDO"
+    />
+
+    <meta
+      name="application-name"
+      content="SHOBDO"
+    />
+
+    <meta
+      name="generator"
+      content="SHOBDO"
+    />
+
+
+    <!-- =====================================================
+         SEARCH ENGINE INDEXING
+    ====================================================== -->
+
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+
+    <meta
+      name="googlebot"
+      content="index, follow, max-image-preview:large"
+    />
+
+    <meta
+      name="bingbot"
+      content="index, follow"
+    />
+
+
+    <!-- =====================================================
+         CANONICAL URL
+         
+         Set VITE_SITE_URL later in .env.production
+         
+         Example:
+         VITE_SITE_URL=https://shobdo.com
+    ====================================================== -->
+
+    <link
+      rel="canonical"
+      href="%VITE_SITE_URL%"
+    />
+
+
+    <!-- =====================================================
+         LANGUAGE
+    ====================================================== -->
+
+    <meta
+      http-equiv="content-language"
+      content="bn"
+    />
+
+    <link
+      rel="alternate"
+      hreflang="bn"
+      href="%VITE_SITE_URL%"
+    />
+
+    <link
+      rel="alternate"
+      hreflang="en"
+      href="%VITE_SITE_URL%"
+    />
+
+    <link
+      rel="alternate"
+      hreflang="hi"
+      href="%VITE_SITE_URL%"
+    />
+
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href="%VITE_SITE_URL%"
+    />
+
+
+    <!-- =====================================================
+         THEME / BROWSER
+    ====================================================== -->
+
+    <meta
+      name="theme-color"
+      content="#642b8f"
+    />
+
+    <meta
+      name="msapplication-TileColor"
+      content="#642b8f"
+    />
+
+    <meta
+      name="color-scheme"
+      content="light"
+    />
+
+    <meta
+      name="referrer"
+      content="strict-origin-when-cross-origin"
+    />
+
+
+    <!-- =====================================================
+         OPEN GRAPH
+         
+         Used by:
+         Facebook
+         WhatsApp
+         LinkedIn
+         Discord
+         Messenger
+         Telegram
+         etc.
+    ====================================================== -->
+
+    <meta
+      property="og:type"
+      content="website"
+    />
+
+    <meta
+      property="og:site_name"
+      content="SHOBDO"
+    />
+
+    <meta
+      property="og:title"
+      content="SHOBDO — তোমার শব্দ, তোমার গল্প"
+    />
+
+    <meta
+      property="og:description"
+      content="Discover, write and share poems, stories, essays, thoughts and experiences with a multilingual community of writers and readers."
+    />
+
+    <meta
+      property="og:url"
+      content="%VITE_SITE_URL%"
+    />
+
+    <meta
+      property="og:image"
+      content="%VITE_SOCIAL_IMAGE_URL%"
+    />
+
+    <meta
+      property="og:image:secure_url"
+      content="%VITE_SOCIAL_IMAGE_URL%"
+    />
+
+    <meta
+      property="og:image:type"
+      content="image/png"
+    />
+
+    <meta
+      property="og:image:width"
+      content="1200"
+    />
+
+    <meta
+      property="og:image:height"
+      content="630"
+    />
+
+    <meta
+      property="og:image:alt"
+      content="SHOBDO — Multilingual Social Writing Platform"
+    />
+
+    <meta
+      property="og:locale"
+      content="bn_IN"
+    />
+
+    <meta
+      property="og:locale:alternate"
+      content="en_US"
+    />
+
+    <meta
+      property="og:locale:alternate"
+      content="hi_IN"
+    />
+
+
+    <!-- =====================================================
+         X / TWITTER
+    ====================================================== -->
+
+    <meta
+      name="twitter:card"
+      content="summary_large_image"
+    />
+
+    <meta
+      name="twitter:title"
+      content="SHOBDO — তোমার শব্দ, তোমার গল্প"
+    />
+
+    <meta
+      name="twitter:description"
+      content="Discover and share poems, stories, essays and thoughts on SHOBDO."
+    />
+
+    <meta
+      name="twitter:image"
+      content="%VITE_SOCIAL_IMAGE_URL%"
+    />
+
+    <meta
+      name="twitter:image:alt"
+      content="SHOBDO — Multilingual Social Writing Platform"
+    />
+
+
+    <!-- =====================================================
+         MOBILE WEB APP
+    ====================================================== -->
+
+    <meta
+      name="mobile-web-app-capable"
+      content="yes"
+    />
+
+    <meta
+      name="apple-mobile-web-app-capable"
+      content="yes"
+    />
+
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="default"
+    />
+
+    <meta
+      name="apple-mobile-web-app-title"
+      content="SHOBDO"
+    />
+
+
+    <!-- =====================================================
+         FAVICON
+         
+         Temporary professional SHOBDO favicon.
+         No external favicon file is required.
+    ====================================================== -->
+
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23642b8f'/%3E%3Cpath d='M39.8 17.2c-2.2-1.6-5.1-2.4-8.4-2.4-6.2 0-10.3 3.1-10.3 7.8 0 4.6 3.3 6.5 9.5 8.3 5.2 1.5 6.6 2.5 6.6 4.8 0 2.5-2.3 4.1-6.2 4.1-3.6 0-6.8-1.2-9.5-3.6l-3.2 4c3.3 3 7.6 4.6 12.4 4.6 7 0 11.5-3.7 11.5-9.3 0-4.8-3.1-7.1-9.8-9-4.8-1.4-6.3-2.2-6.3-4.2 0-1.8 1.8-3.1 5-3.1 2.9 0 5.4.8 7.6 2.4z' fill='white'/%3E%3C/svg%3E"
+    />
+
+
+    <!-- =====================================================
+         FALLBACK ICON
+    ====================================================== -->
+
+    <link
+      rel="shortcut icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23642b8f'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='38' font-weight='700' fill='white'%3ES%3C/text%3E%3C/svg%3E"
+    />
+
+
+    <!-- =====================================================
+         STRUCTURED DATA — WEBSITE
+    ====================================================== -->
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "SHOBDO",
+        "alternateName": "SHOBDO Social Writing Platform",
+        "url": "%VITE_SITE_URL%",
+        "description": "SHOBDO is a multilingual social writing platform for writers and readers.",
+        "inLanguage": [
+          "bn",
+          "en",
+          "hi"
+        ],
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "%VITE_SITE_URL%/search?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
+
+
+    <!-- =====================================================
+         STRUCTURED DATA — ORGANIZATION
+    ====================================================== -->
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "SHOBDO",
+        "url": "%VITE_SITE_URL%",
+        "description": "A multilingual social platform for writers and readers."
+      }
+    </script>
+
+
+    <!-- =====================================================
+         STRUCTURED DATA — WEB APPLICATION
+    ====================================================== -->
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "SHOBDO",
+        "url": "%VITE_SITE_URL%",
+        "applicationCategory": "SocialNetworkingApplication",
+        "operatingSystem": "Web",
+        "description": "A multilingual social writing platform for discovering, publishing and sharing creative writing.",
+        "inLanguage": [
+          "bn",
+          "en",
+          "hi"
+        ]
+      }
+    </script>
+
   </head>
 
+
   <body>
+
+    <!-- =====================================================
+         JAVASCRIPT DISABLED FALLBACK
+    ====================================================== -->
+
+    <noscript>
+
+      <div
+        style="
+          max-width: 720px;
+          margin: 80px auto;
+          padding: 32px;
+          font-family:
+            Arial,
+            sans-serif;
+          text-align: center;
+          line-height: 1.6;
+        "
+      >
+
+        <h1>
+          SHOBDO
+        </h1>
+
+        <p>
+          SHOBDO requires JavaScript to run.
+          Please enable JavaScript in your browser.
+        </p>
+
+      </div>
+
+    </noscript>
+
+
+    <!-- =====================================================
+         REACT APPLICATION
+    ====================================================== -->
+
     <div id="root"></div>
+
+
+    <!-- =====================================================
+         VITE ENTRY
+    ====================================================== -->
 
     <script
       type="module"
       src="/src/main.jsx"
     ></script>
+
   </body>
+
 </html>

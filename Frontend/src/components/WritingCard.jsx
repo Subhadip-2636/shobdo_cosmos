@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -8,11 +9,14 @@ import {
   BookOpen,
   Bookmark,
   CalendarDays,
+  Check,
   Clock3,
   Globe2,
   Hash,
   Heart,
   MessageCircle,
+  Repeat2,
+  Share2,
   User,
 } from "lucide-react";
 
@@ -24,8 +28,10 @@ import {
 import {
   getSavedWritingStatus,
   getToken,
+  repostWriting,
   saveWriting,
   toggleLike,
+  unrepostWriting,
   unsaveWriting,
 } from "../api/api";
 
@@ -39,6 +45,7 @@ import {
 
 import "./WritingCard.css";
 
+
 // =========================================================
 // HELPERS
 // =========================================================
@@ -51,7 +58,6 @@ function safeNumber(
     Number(
       value
     );
-
 
   return Number.isFinite(
     number
@@ -77,32 +83,160 @@ function getInitials(
       value || ""
     ).trim();
 
-
   if (!text) {
     return "";
   }
-
 
   const parts =
     text
       .split(/\s+/)
       .filter(Boolean);
 
-
   if (
     parts.length === 1
   ) {
 
     return parts[0]
-      .slice(0, 2)
+      .slice(
+        0,
+        2
+      )
       .toUpperCase();
-
   }
-
 
   return (
     `${parts[0][0]}${parts[1][0]}`
   ).toUpperCase();
+}
+
+
+// =========================================================
+// SHARE URL
+// =========================================================
+
+function getWritingShareUrl(
+  writingId
+) {
+
+  const path =
+    `/writings/${writingId}`;
+
+  if (
+    typeof window ===
+    "undefined"
+  ) {
+    return path;
+  }
+
+  try {
+
+    return new URL(
+      path,
+      window.location.origin
+    ).toString();
+
+  } catch {
+
+    return (
+      `${window.location.origin}${path}`
+    );
+  }
+}
+
+
+// =========================================================
+// COPY TEXT
+// =========================================================
+
+async function copyText(
+  text
+) {
+
+  if (
+    typeof navigator !==
+      "undefined"
+    &&
+    navigator.clipboard
+    &&
+    typeof navigator.clipboard
+      .writeText === "function"
+  ) {
+
+    await navigator.clipboard.writeText(
+      text
+    );
+
+    return true;
+  }
+
+
+  if (
+    typeof document ===
+    "undefined"
+  ) {
+    return false;
+  }
+
+
+  const textarea =
+    document.createElement(
+      "textarea"
+    );
+
+  textarea.value =
+    text;
+
+  textarea.setAttribute(
+    "readonly",
+    ""
+  );
+
+  textarea.style.position =
+    "fixed";
+
+  textarea.style.opacity =
+    "0";
+
+  textarea.style.pointerEvents =
+    "none";
+
+  textarea.style.left =
+    "-9999px";
+
+  document.body.appendChild(
+    textarea
+  );
+
+  textarea.select();
+
+  textarea.setSelectionRange(
+    0,
+    textarea.value.length
+  );
+
+
+  let success =
+    false;
+
+  try {
+
+    success =
+      document.execCommand(
+        "copy"
+      );
+
+  } catch {
+
+    success =
+      false;
+  }
+
+
+  document.body.removeChild(
+    textarea
+  );
+
+  return success;
 }
 
 
@@ -124,6 +258,12 @@ function WritingCard({
     useNavigate();
 
 
+  const shareResetTimerRef =
+    useRef(
+      null
+    );
+
+
   // =======================================================
   // TRANSLATION FALLBACK
   // =======================================================
@@ -142,20 +282,17 @@ function WritingCard({
           key
         );
 
-
       if (
         translated &&
         translated !== key
       ) {
 
         return translated;
-
       }
 
     } catch {
 
-      // Use local fallback.
-
+      // Use fallback below.
     }
 
 
@@ -164,7 +301,6 @@ function WritingCard({
     ) {
 
       return fallbackBn;
-
     }
 
 
@@ -176,12 +312,10 @@ function WritingCard({
         fallbackHi ||
         fallbackEn
       );
-
     }
 
 
     return fallbackEn;
-
   }
 
 
@@ -268,6 +402,27 @@ function WritingCard({
           ? "टिप्पणियाँ"
           : "Comments",
 
+    repost:
+      language === "bn"
+        ? "পুনরায় শেয়ার করুন"
+        : language === "hi"
+          ? "रीपोस्ट करें"
+          : "Repost",
+
+    unrepost:
+      language === "bn"
+        ? "রিপোস্ট সরান"
+        : language === "hi"
+          ? "रीपोस्ट हटाएँ"
+          : "Remove repost",
+
+    reposted:
+      language === "bn"
+        ? "রিপোস্ট হয়েছে"
+        : language === "hi"
+          ? "रीपोस्ट किया गया"
+          : "Reposted",
+
     save:
       language === "bn"
         ? "সংরক্ষণ করুন"
@@ -289,6 +444,34 @@ function WritingCard({
           ? "सहेजी गई सूची से हटाएँ"
           : "Remove from saved writings",
 
+    share:
+      language === "bn"
+        ? "শেয়ার করুন"
+        : language === "hi"
+          ? "शेयर करें"
+          : "Share",
+
+    shared:
+      language === "bn"
+        ? "শেয়ার হয়েছে"
+        : language === "hi"
+          ? "शेयर किया गया"
+          : "Shared",
+
+    copied:
+      language === "bn"
+        ? "লিংক কপি হয়েছে"
+        : language === "hi"
+          ? "लिंक कॉपी हो गया"
+          : "Link copied",
+
+    shareFailed:
+      language === "bn"
+        ? "লিংক শেয়ার করা যায়নি"
+        : language === "hi"
+          ? "लिंक शेयर नहीं हो सका"
+          : "Unable to share",
+
   };
 
 
@@ -305,7 +488,8 @@ function WritingCard({
   const hasWritingId =
     Number.isInteger(
       writingId
-    ) &&
+    )
+    &&
     writingId > 0;
 
 
@@ -345,8 +529,9 @@ function WritingCard({
   );
 
 
-  // Keep local interaction state synchronized if this card
-  // receives another writing or refreshed server data.
+  // =======================================================
+  // SYNC LIKE STATE
+  // =======================================================
 
   useEffect(
     () => {
@@ -396,6 +581,81 @@ function WritingCard({
       )
     );
 
+  // =======================================================
+  // REPOST STATE
+  // =======================================================
+
+  const [
+    repostsCount,
+    setRepostsCount,
+  ] = useState(
+    safeNumber(
+      writing?.reposts_count ??
+      writing?.repost_count ??
+      0
+    )
+  );
+
+  const [
+    reposted,
+    setReposted,
+  ] = useState(
+    Boolean(
+      writing?.reposted_by_me ??
+      writing?.reposted_by_current_user ??
+      writing?.is_reposted ??
+      writing?.reposted ??
+      false
+    )
+  );
+
+  const [
+    reposting,
+    setReposting,
+  ] = useState(
+    false
+  );
+
+  // =======================================================
+  // SYNC REPOST STATE
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      setRepostsCount(
+        safeNumber(
+          writing?.reposts_count ??
+          writing?.repost_count ??
+          0
+        )
+      );
+      
+      setReposted(
+        Boolean(
+          writing?.reposted_by_me ??
+          writing?.reposted_by_current_user ??
+          writing?.is_reposted ??
+          writing?.reposted ??
+          false
+        )
+      );
+      
+      setReposting(
+        false
+      );
+
+    },
+    [
+      writing?.id,
+      writing?.reposts_count,
+      writing?.repost_count,
+      writing?.reposted_by_me,
+      writing?.reposted_by_current_user,
+      writing?.is_reposted,
+      writing?.reposted,
+    ]
+  );
 
   // =======================================================
   // SAVE STATE
@@ -431,7 +691,19 @@ function WritingCard({
 
 
   // =======================================================
-  // RESET SAVE STATE WHEN WRITING CHANGES
+  // SHARE STATE
+  // =======================================================
+
+  const [
+    shareState,
+    setShareState,
+  ] = useState(
+    "idle"
+  );
+
+
+  // =======================================================
+  // RESET SAVE STATE
   // =======================================================
 
   useEffect(
@@ -462,6 +734,62 @@ function WritingCard({
 
 
   // =======================================================
+  // RESET SHARE STATE WHEN WRITING CHANGES
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      setShareState(
+        "idle"
+      );
+
+
+      if (
+        shareResetTimerRef.current
+      ) {
+
+        window.clearTimeout(
+          shareResetTimerRef.current
+        );
+
+        shareResetTimerRef.current =
+          null;
+      }
+
+    },
+    [
+      writing?.id,
+    ]
+  );
+
+
+  // =======================================================
+  // CLEAN SHARE TIMER
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      return () => {
+
+        if (
+          shareResetTimerRef.current
+        ) {
+
+          window.clearTimeout(
+            shareResetTimerRef.current
+          );
+        }
+
+      };
+
+    },
+    []
+  );
+
+
+  // =======================================================
   // LOAD SAVED STATUS
   // =======================================================
 
@@ -485,12 +813,9 @@ function WritingCard({
             setSaveStatusLoaded(
               true
             );
-
           }
 
-
           return;
-
         }
 
 
@@ -509,12 +834,9 @@ function WritingCard({
             setSaveStatusLoaded(
               true
             );
-
           }
 
-
           return;
-
         }
 
 
@@ -529,9 +851,7 @@ function WritingCard({
           if (
             cancelled
           ) {
-
             return;
-
           }
 
 
@@ -555,7 +875,6 @@ function WritingCard({
               "GET SAVED WRITING STATUS ERROR:",
               error
             );
-
           }
 
         } finally {
@@ -567,11 +886,8 @@ function WritingCard({
             setSaveStatusLoaded(
               true
             );
-
           }
-
         }
-
       }
 
 
@@ -582,7 +898,6 @@ function WritingCard({
 
         cancelled =
           true;
-
       };
 
     },
@@ -651,7 +966,6 @@ function WritingCard({
       value ||
       map["অন্যান্য"]
     );
-
   }
 
 
@@ -672,7 +986,8 @@ function WritingCard({
   const hasAuthorId =
     Number.isInteger(
       authorId
-    ) &&
+    )
+    &&
     authorId > 0;
 
 
@@ -729,7 +1044,7 @@ function WritingCard({
 
 
   // =======================================================
-  // TAGS / HASHTAGS
+  // TAGS
   // =======================================================
 
   const tags =
@@ -751,7 +1066,8 @@ function WritingCard({
             ) => {
 
               if (
-                typeof tag === "string"
+                typeof tag ===
+                "string"
               ) {
 
                 source.push({
@@ -760,13 +1076,13 @@ function WritingCard({
                 });
 
                 return;
-
               }
 
 
               if (
                 tag &&
-                typeof tag === "object"
+                typeof tag ===
+                "object"
               ) {
 
                 source.push({
@@ -778,12 +1094,9 @@ function WritingCard({
                     tag.hashtag ||
                     "",
                 });
-
               }
-
             }
           );
-
         }
 
 
@@ -803,10 +1116,8 @@ function WritingCard({
                 name:
                   hashtag,
               });
-
             }
           );
-
         }
 
 
@@ -822,7 +1133,8 @@ function WritingCard({
 
               const name =
                 String(
-                  tag?.name || ""
+                  tag?.name ||
+                  ""
                 )
                   .trim()
                   .replace(
@@ -832,10 +1144,10 @@ function WritingCard({
                   .trim();
 
 
-              if (!name) {
-
+              if (
+                !name
+              ) {
                 return null;
-
               }
 
 
@@ -848,9 +1160,7 @@ function WritingCard({
                   key
                 )
               ) {
-
                 return null;
-
               }
 
 
@@ -869,9 +1179,7 @@ function WritingCard({
 
                 hashtag:
                   `#${name}`,
-
               };
-
             }
           )
           .filter(Boolean)
@@ -879,7 +1187,6 @@ function WritingCard({
             0,
             20
           );
-
       },
       [
         writing?.tags,
@@ -903,12 +1210,13 @@ function WritingCard({
           ).trim();
 
 
-        if (!text) {
+        if (
+          !text
+        ) {
 
           return (
             labels.previewUnavailable
           );
-
         }
 
 
@@ -917,17 +1225,17 @@ function WritingCard({
         ) {
 
           return text;
-
         }
 
 
         return (
-          `${text.slice(
-            0,
-            240
-          ).trim()}…`
+          `${text
+            .slice(
+              0,
+              240
+            )
+            .trim()}…`
         );
-
       },
       [
         writing?.content,
@@ -951,10 +1259,11 @@ function WritingCard({
           ).trim();
 
 
-        if (!content) {
+        if (
+          !content
+        ) {
 
           return 0;
-
         }
 
 
@@ -964,7 +1273,6 @@ function WritingCard({
           )
           .filter(Boolean)
           .length;
-
       },
       [
         writing?.content,
@@ -980,7 +1288,8 @@ function WritingCard({
     Math.max(
       1,
       Math.ceil(
-        wordCount / 180
+        wordCount /
+        180
       )
     );
 
@@ -993,10 +1302,11 @@ function WritingCard({
     value
   ) {
 
-    if (!value) {
+    if (
+      !value
+    ) {
 
       return "";
-
     }
 
 
@@ -1013,7 +1323,6 @@ function WritingCard({
     ) {
 
       return "";
-
     }
 
 
@@ -1044,9 +1353,7 @@ function WritingCard({
       return (
         date.toLocaleDateString()
       );
-
     }
-
   }
 
 
@@ -1058,10 +1365,10 @@ function WritingCard({
     value
   ) {
 
-    if (!value) {
-
+    if (
+      !value
+    ) {
       return "";
-
     }
 
 
@@ -1076,9 +1383,7 @@ function WritingCard({
         date.getTime()
       )
     ) {
-
       return "";
-
     }
 
 
@@ -1154,7 +1459,6 @@ function WritingCard({
       return formatDate(
         value
       );
-
     }
 
 
@@ -1165,23 +1469,18 @@ function WritingCard({
       if (
         language === "bn"
       ) {
-
         return "এইমাত্র";
-
       }
 
 
       if (
         language === "hi"
       ) {
-
         return "अभी";
-
       }
 
 
       return "just now";
-
     }
 
 
@@ -1211,9 +1510,7 @@ function WritingCard({
       return formatDate(
         value
       );
-
     }
-
   }
 
 
@@ -1251,9 +1548,7 @@ function WritingCard({
       liking ||
       !hasWritingId
     ) {
-
       return;
-
     }
 
 
@@ -1266,7 +1561,6 @@ function WritingCard({
       );
 
       return;
-
     }
 
 
@@ -1278,9 +1572,7 @@ function WritingCard({
       likesCount;
 
 
-    // -----------------------------------------------------
-    // OPTIMISTIC UI
-    // -----------------------------------------------------
+    // Optimistic UI.
 
     setLiked(
       !previousLiked
@@ -1331,7 +1623,6 @@ function WritingCard({
         setLiked(
           data.is_liked
         );
-
       }
 
 
@@ -1378,14 +1669,11 @@ function WritingCard({
             data.likes
           )
         );
-
       }
 
     } catch (
       error
     ) {
-
-      // Restore optimistic state.
 
       setLiked(
         previousLiked
@@ -1407,9 +1695,7 @@ function WritingCard({
       setLiking(
         false
       );
-
     }
-
   }
 
 
@@ -1432,7 +1718,6 @@ function WritingCard({
     ) {
 
       return;
-
     }
 
 
@@ -1445,17 +1730,12 @@ function WritingCard({
       );
 
       return;
-
     }
 
 
     const previousSaved =
       saved;
 
-
-    // -----------------------------------------------------
-    // OPTIMISTIC UI
-    // -----------------------------------------------------
 
     setSaved(
       !previousSaved
@@ -1496,7 +1776,6 @@ function WritingCard({
         setSaved(
           data.is_saved
         );
-
       }
 
     } catch (
@@ -1518,10 +1797,453 @@ function WritingCard({
       setSaving(
         false
       );
+    }
+  }
 
+  // =======================================================
+  // REPOST / UNREPOST
+  // =======================================================
+
+  async function handleRepost(
+    event
+  ) {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+
+    if (
+      reposting ||
+      !hasWritingId
+    ) {
+
+      return;
     }
 
+
+    if (
+      !getToken()
+    ) {
+
+      navigate(
+        "/login"
+      );
+
+      return;
+    }
+
+
+    const previousReposted =
+      reposted;
+
+
+    const previousCount =
+      repostsCount;
+
+
+    const nextReposted =
+      !previousReposted;
+
+
+    // =====================================================
+    // OPTIMISTIC UI
+    // =====================================================
+
+    setReposted(
+      nextReposted
+    );
+
+
+    setRepostsCount(
+
+      Math.max(
+
+        0,
+
+        previousCount +
+        (
+          previousReposted
+            ? -1
+            : 1
+        )
+
+      )
+
+    );
+
+
+    setReposting(
+      true
+    );
+
+
+    try {
+
+      const data =
+        previousReposted
+          ? await unrepostWriting(
+              writingId
+            )
+          : await repostWriting(
+              writingId
+            );
+
+
+      // ===================================================
+      // SERVER STATUS
+      // ===================================================
+
+      const serverReposted =
+        data?.reposted ??
+        data?.reposted_by_me ??
+        data?.reposted_by_current_user ??
+        data?.is_reposted;
+
+
+      if (
+        typeof serverReposted ===
+        "boolean"
+      ) {
+
+        setReposted(
+          serverReposted
+        );
+      }
+
+
+      // ===================================================
+      // SERVER COUNT
+      // ===================================================
+
+      if (
+        Number.isFinite(
+          Number(
+            data?.reposts_count
+          )
+        )
+      ) {
+
+        setRepostsCount(
+          safeNumber(
+            data.reposts_count
+          )
+        );
+      }
+
+
+      // ===================================================
+      // GLOBAL EVENT
+      //
+      // Other pages can later listen to this event if they
+      // need to refresh repost/profile statistics.
+      // ===================================================
+
+      if (
+        typeof window !==
+        "undefined"
+      ) {
+
+        window.dispatchEvent(
+
+          new CustomEvent(
+            "shobdo:repost-changed",
+            {
+              detail: {
+
+                writingId,
+
+                reposted:
+                  typeof serverReposted ===
+                  "boolean"
+                    ? serverReposted
+                    : nextReposted,
+
+                repostsCount:
+                  Number.isFinite(
+                    Number(
+                      data?.reposts_count
+                    )
+                  )
+                    ? safeNumber(
+                        data.reposts_count
+                      )
+                    : (
+                        previousCount +
+                        (
+                          previousReposted
+                            ? -1
+                            : 1
+                        )
+                      ),
+
+              },
+            }
+          )
+
+        );
+      }
+
+    } catch (
+      error
+    ) {
+
+      // ===================================================
+      // ROLLBACK OPTIMISTIC STATE
+      // ===================================================
+
+      setReposted(
+        previousReposted
+      );
+
+
+      setRepostsCount(
+        previousCount
+      );
+
+
+      console.error(
+        "REPOST WRITING ERROR:",
+        error
+      );
+
+    } finally {
+
+      setReposting(
+        false
+      );
+    }
   }
+
+  // =======================================================
+  // SHARE FEEDBACK RESET
+  // =======================================================
+
+  function resetShareStateLater() {
+
+    if (
+      shareResetTimerRef.current
+    ) {
+
+      window.clearTimeout(
+        shareResetTimerRef.current
+      );
+    }
+
+
+    shareResetTimerRef.current =
+      window.setTimeout(
+        () => {
+
+          setShareState(
+            "idle"
+          );
+
+          shareResetTimerRef.current =
+            null;
+
+        },
+        2200
+      );
+  }
+
+
+  // =======================================================
+  // COPY SHARE URL
+  // =======================================================
+
+  async function copyShareUrl(
+    url
+  ) {
+
+    const copied =
+      await copyText(
+        url
+      );
+
+
+    if (
+      !copied
+    ) {
+
+      throw new Error(
+        "Unable to copy share link."
+      );
+    }
+
+
+    setShareState(
+      "copied"
+    );
+
+
+    resetShareStateLater();
+  }
+
+
+  // =======================================================
+  // SHARE WRITING
+  // =======================================================
+
+  async function handleShare(
+    event
+  ) {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+
+    if (
+      !hasWritingId ||
+      shareState === "sharing"
+    ) {
+
+      return;
+    }
+
+
+    const shareUrl =
+      getWritingShareUrl(
+        writingId
+      );
+
+
+    const shareTitle =
+      String(
+        writing?.title ||
+        labels.untitled
+      ).trim();
+
+
+    const shareText =
+      language === "bn"
+        ? `${authorName}-এর "${shareTitle}" লেখাটি SHOBDO-তে পড়ুন।`
+        : language === "hi"
+          ? `${authorName} की "${shareTitle}" रचना SHOBDO पर पढ़ें।`
+          : `Read "${shareTitle}" by ${authorName} on SHOBDO.`;
+
+
+    setShareState(
+      "sharing"
+    );
+
+
+    // -----------------------------------------------------
+    // NATIVE WEB SHARE
+    //
+    // Supported by many mobile browsers and some desktop
+    // browsers. It can share directly to WhatsApp, Facebook,
+    // Messages, Telegram, email, etc.
+    // -----------------------------------------------------
+
+    if (
+      typeof navigator !==
+        "undefined"
+      &&
+      typeof navigator.share ===
+        "function"
+    ) {
+
+      try {
+
+        await navigator.share({
+          title:
+            `${shareTitle} — SHOBDO`,
+
+          text:
+            shareText,
+
+          url:
+            shareUrl,
+        });
+
+
+        setShareState(
+          "shared"
+        );
+
+
+        resetShareStateLater();
+
+
+        return;
+
+      } catch (
+        error
+      ) {
+
+        // User closed/cancelled native share sheet.
+        if (
+          error?.name ===
+            "AbortError"
+        ) {
+
+          setShareState(
+            "idle"
+          );
+
+          return;
+        }
+
+
+        // Native share failed.
+        // Continue to clipboard fallback.
+        console.warn(
+          "NATIVE SHARE FAILED, USING COPY FALLBACK:",
+          error
+        );
+      }
+    }
+
+
+    // -----------------------------------------------------
+    // DESKTOP / FALLBACK
+    // -----------------------------------------------------
+
+    try {
+
+      await copyShareUrl(
+        shareUrl
+      );
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        "SHARE WRITING ERROR:",
+        error
+      );
+
+
+      setShareState(
+        "error"
+      );
+
+
+      resetShareStateLater();
+    }
+  }
+
+
+  // =======================================================
+  // SHARE PRESENTATION
+  // =======================================================
+
+  const shareSuccessful =
+    shareState === "copied" ||
+    shareState === "shared";
+
+
+  const shareLabel =
+    shareState === "copied"
+      ? labels.copied
+      : shareState === "shared"
+        ? labels.shared
+        : shareState === "error"
+          ? labels.shareFailed
+          : labels.share;
 
 
   // =======================================================
@@ -1539,32 +2261,32 @@ function WritingCard({
     authorAvatar
       ? (
 
-        <img
-          src={
-            authorAvatar
-          }
-          alt=""
-          loading="lazy"
-        />
+          <img
+            src={
+              authorAvatar
+            }
+            alt=""
+            loading="lazy"
+          />
 
-      )
+        )
       : authorInitials
         ? (
 
-          <span>
-            {
-              authorInitials
-            }
-          </span>
+            <span>
+              {
+                authorInitials
+              }
+            </span>
 
-        )
+          )
         : (
 
-          <User
-            size={17}
-          />
+            <User
+              size={17}
+            />
 
-        );
+          );
 
 
   // =======================================================
@@ -1578,11 +2300,9 @@ function WritingCard({
       <div
         className="writing-author-avatar"
       >
-
         {
           authorAvatarContent
         }
-
       </div>
 
 
@@ -1617,17 +2337,14 @@ function WritingCard({
         <span
           className="writing-author-byline"
         >
-
           {
             labels.by
           }
-
         </span>
 
       </div>
 
     </>
-
   );
 
 
@@ -1641,7 +2358,6 @@ function WritingCard({
   ) {
 
     return null;
-
   }
 
 
@@ -1655,9 +2371,9 @@ function WritingCard({
       className="writing-card"
     >
 
-      {/* ===============================================
+      {/* =================================================
           HEADER / AUTHOR
-      ================================================ */}
+      ================================================== */}
 
       <div
         className="writing-card-header"
@@ -1666,36 +2382,32 @@ function WritingCard({
         {hasAuthorId
           ? (
 
-            <Link
-              to={
-                `/users/${authorId}`
-              }
-              className="writing-card-author writing-card-author-link"
-              aria-label={
-                `${authorName} profile`
-              }
-            >
+              <Link
+                to={
+                  `/users/${authorId}`
+                }
+                className="writing-card-author writing-card-author-link"
+                aria-label={
+                  `${authorName} profile`
+                }
+              >
+                {
+                  authorContent
+                }
+              </Link>
 
-              {
-                authorContent
-              }
-
-            </Link>
-
-          )
+            )
           : (
 
-            <div
-              className="writing-card-author"
-            >
+              <div
+                className="writing-card-author"
+              >
+                {
+                  authorContent
+                }
+              </div>
 
-              {
-                authorContent
-              }
-
-            </div>
-
-          )}
+            )}
 
 
         <div
@@ -1728,9 +2440,9 @@ function WritingCard({
       </div>
 
 
-      {/* ===============================================
+      {/* =================================================
           BADGES
-      ================================================ */}
+      ================================================== */}
 
       <div
         className="writing-card-badges"
@@ -1756,19 +2468,17 @@ function WritingCard({
         <span
           className="writing-category-badge"
         >
-
           {
             category
           }
-
         </span>
 
       </div>
 
 
-      {/* ===============================================
+      {/* =================================================
           TITLE
-      ================================================ */}
+      ================================================== */}
 
       <Link
         to={
@@ -1780,35 +2490,31 @@ function WritingCard({
         <h2
           className="writing-card-title"
         >
-
           {
             writing?.title ||
             labels.untitled
           }
-
         </h2>
 
       </Link>
 
 
-      {/* ===============================================
+      {/* =================================================
           CONTENT PREVIEW
-      ================================================ */}
+      ================================================== */}
 
       <p
         className="writing-card-preview"
       >
-
         {
           preview
         }
-
       </p>
 
 
-      {/* ===============================================
+      {/* =================================================
           CLICKABLE HASHTAGS
-      ================================================ */}
+      ================================================== */}
 
       {tags.length > 0 && (
 
@@ -1859,9 +2565,9 @@ function WritingCard({
       )}
 
 
-      {/* ===============================================
+      {/* =================================================
           READING META
-      ================================================ */}
+      ================================================== */}
 
       <div
         className="writing-card-meta"
@@ -1928,9 +2634,9 @@ function WritingCard({
       </div>
 
 
-      {/* ===============================================
+      {/* =================================================
           FOOTER ACTIONS
-      ================================================ */}
+      ================================================== */}
 
       <div
         className="writing-card-footer"
@@ -1940,9 +2646,9 @@ function WritingCard({
           className="writing-card-social"
         >
 
-          {/* ===========================================
+          {/* ===============================================
               LIKE
-          ============================================ */}
+          ================================================ */}
 
           <button
             type="button"
@@ -1981,7 +2687,6 @@ function WritingCard({
               }
             />
 
-
             <span>
               {
                 likesCount
@@ -1991,9 +2696,9 @@ function WritingCard({
           </button>
 
 
-          {/* ===========================================
+          {/* ===============================================
               COMMENTS
-          ============================================ */}
+          ================================================ */}
 
           <Link
             to={
@@ -2012,7 +2717,6 @@ function WritingCard({
               size={16}
             />
 
-
             <span>
               {
                 commentsCount
@@ -2021,10 +2725,108 @@ function WritingCard({
 
           </Link>
 
+          {/* ===============================================
+              REPOST
+          ================================================ */}
 
-          {/* ===========================================
+          <button
+            type="button"
+            className={
+              reposted
+                ? "writing-repost-button reposted"
+                : "writing-repost-button"
+            }
+            onClick={
+              handleRepost
+            }
+            disabled={
+              reposting
+            }
+            aria-pressed={
+              reposted
+            }
+            aria-label={
+              reposted
+                ? labels.unrepost
+                : labels.repost
+            }
+            title={
+              reposted
+                ? labels.reposted
+                : labels.repost
+            }
+          >
+
+            <Repeat2
+              size={16}
+            />
+
+            <span>
+              {
+                repostsCount
+              }
+            </span>
+
+          </button>
+
+          {/* ===============================================
+              SHARE
+          ================================================ */}
+
+          <button
+            type="button"
+            className={
+              shareSuccessful
+                ? "writing-share-button success"
+                : shareState === "error"
+                  ? "writing-share-button error"
+                  : "writing-share-button"
+            }
+            onClick={
+              handleShare
+            }
+            disabled={
+              shareState === "sharing"
+            }
+            aria-label={
+              shareLabel
+            }
+            title={
+              shareLabel
+            }
+          >
+
+            {shareSuccessful
+              ? (
+
+                  <Check
+                    size={16}
+                  />
+
+                )
+              : (
+
+                  <Share2
+                    size={16}
+                  />
+
+                )}
+
+
+            <span
+              className="writing-share-label"
+            >
+              {
+                shareLabel
+              }
+            </span>
+
+          </button>
+
+
+          {/* ===============================================
               SAVE
-          ============================================ */}
+          ================================================ */}
 
           <button
             type="button"
@@ -2069,9 +2871,9 @@ function WritingCard({
         </div>
 
 
-        {/* =============================================
+        {/* ===============================================
             READ
-        ============================================== */}
+        ================================================ */}
 
         <Link
           to={
@@ -2096,9 +2898,7 @@ function WritingCard({
       </div>
 
     </article>
-
   );
-
 }
 
 
