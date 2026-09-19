@@ -1,6 +1,6 @@
 /* =========================================================
-   SHOBDO WRITING CARD
-   Professional Responsive Social Card
+   SHOBDO
+   PROFESSIONAL SOCIAL POST CARD
 ========================================================= */
 
 
@@ -14,70 +14,60 @@
   width: 100%;
   min-width: 0;
 
-  padding: 22px;
+  padding:
+    20px
+    21px
+    0;
 
-  overflow: hidden;
-
-  background:
-    #ffffff;
+  overflow: visible;
 
   border:
     1px solid
-    #e9e9ee;
+    #e7ddd2;
 
-  border-radius:
-    18px;
+  border-radius: 19px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #fffefa 0%,
+      #fffdf9 100%
+    );
+
+  color:
+    #2e2924;
 
   box-shadow:
-    0 1px 2px
+    0 5px 22px
     rgba(
-      20,
-      20,
+      67,
+      50,
       30,
-      0.03
+      0.045
     );
 
   transition:
-    border-color 180ms ease,
-    box-shadow 220ms ease,
-    transform 220ms
-    cubic-bezier(
-      0.22,
-      1,
-      0.36,
-      1
-    );
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
 }
 
 
-@media (
-  hover: hover
-) and (
-  pointer: fine
-) {
+.writing-card:hover {
+  border-color:
+    #dfd0bd;
 
-  .writing-card:hover {
-    border-color:
-      rgba(
-        100,
-        43,
-        143,
-        0.2
-      );
+  box-shadow:
+    0 10px 30px
+    rgba(
+      71,
+      51,
+      28,
+      0.07
+    );
 
-    box-shadow:
-      0 12px 32px
-      rgba(
-        27,
-        18,
-        38,
-        0.065
-      );
-
-    transform:
-      translateY(-2px);
-  }
-
+  transform:
+    translateY(-1px);
 }
 
 
@@ -86,147 +76,110 @@
 ========================================================= */
 
 .writing-card-header {
+  position: relative;
+  z-index: 5;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 16px;
+}
+
+
+.writing-author-section {
   min-width: 0;
 
   display: flex;
   align-items: center;
-  justify-content: space-between;
 
-  gap: 14px;
-
-  margin-bottom: 16px;
-}
-
-
-.writing-card-header-meta {
-  min-width: 0;
-
-  flex:
-    0 1 auto;
-}
-
-
-.writing-card-published-time {
-  max-width: 150px;
-
-  display: inline-flex;
-  align-items: center;
-
-  gap: 5px;
-
-  overflow: hidden;
-
-  color:
-    #85858e;
-
-  font-size:
-    0.78rem;
-
-  font-weight:
-    560;
-
-  line-height:
-    1.25;
-
-  text-overflow:
-    ellipsis;
-
-  white-space:
-    nowrap;
-}
-
-
-.writing-card-published-time svg {
-  flex:
-    0 0 auto;
+  gap: 11px;
 }
 
 
 /* =========================================================
-   AUTHOR
+   AVATAR
 ========================================================= */
 
-.writing-card-author {
-  min-width: 0;
-
-  display: inline-flex;
-  align-items: center;
-
-  gap: 10px;
-
-  color: inherit;
-}
-
-
-.writing-card-author-link {
-  min-width: 0;
-
-  flex:
-    1 1 auto;
-
-  text-decoration:
-    none;
-
-  border-radius:
-    10px;
-}
-
-
 .writing-author-avatar {
-  position: relative;
+  width: 43px;
+  height: 43px;
 
-  width: 42px;
-  height: 42px;
+  flex: 0 0 43px;
 
-  flex:
-    0 0 42px;
+  overflow: hidden;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  overflow: hidden;
-
-  border:
-    1px solid
-    rgba(
-      100,
-      43,
-      143,
-      0.12
-    );
-
-  border-radius:
-    50%;
+  border-radius: 50%;
 
   background:
     linear-gradient(
       145deg,
-      rgba(
-        100,
-        43,
-        143,
-        0.13
-      ),
-      rgba(
-        100,
-        43,
-        143,
-        0.035
-      )
+      #3a332d,
+      #171412
     );
 
   color:
-    #642b8f;
+    #ffffff;
 
-  font-size:
-    0.82rem;
+  text-decoration: none;
 
-  font-weight:
-    750;
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
 
-  user-select:
-    none;
+  font-size: 12px;
+
+  font-weight: 700;
+
+  letter-spacing:
+    0.03em;
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(
+      255,
+      255,
+      255,
+      0.09
+    ),
+    0 3px 10px
+    rgba(
+      45,
+      33,
+      22,
+      0.08
+    );
+
+  transition:
+    transform 0.17s ease,
+    box-shadow 0.17s ease;
+}
+
+
+a.writing-author-avatar:hover {
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(
+      255,
+      255,
+      255,
+      0.09
+    ),
+    0 5px 13px
+    rgba(
+      45,
+      33,
+      22,
+      0.13
+    );
 }
 
 
@@ -236,25 +189,20 @@
 
   display: block;
 
-  object-fit:
-    cover;
-
-  object-position:
-    center;
+  object-fit: cover;
 }
 
 
-.writing-author-info {
+/* =========================================================
+   AUTHOR INFO
+========================================================= */
+
+.writing-author-content {
   min-width: 0;
-
-  display: flex;
-  flex-direction: column;
-
-  gap: 2px;
 }
 
 
-.writing-author-name-row {
+.writing-author-primary {
   min-width: 0;
 
   display: flex;
@@ -264,80 +212,210 @@
 }
 
 
-.writing-author-info strong {
+.writing-author-name {
   min-width: 0;
 
   overflow: hidden;
 
   color:
-    #29292f;
+    #302923;
 
-  font-size:
-    0.91rem;
+  font-size: 13px;
 
-  font-weight:
-    720;
+  font-weight: 800;
 
-  line-height:
-    1.25;
+  line-height: 1.35;
 
-  text-overflow:
-    ellipsis;
+  text-decoration: none;
 
-  white-space:
-    nowrap;
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
 
   transition:
-    color 160ms ease;
+    color 0.16s ease;
+}
+
+
+a.writing-author-name:hover {
+  color:
+    #8b6223;
 }
 
 
 .writing-author-username {
   min-width: 0;
 
-  max-width: 140px;
-
   overflow: hidden;
 
   color:
-    #92929b;
+    #9a9188;
 
-  font-size:
-    0.78rem;
+  font-size: 11px;
 
-  font-weight:
-    500;
+  white-space: nowrap;
 
-  text-overflow:
-    ellipsis;
-
-  white-space:
-    nowrap;
+  text-overflow: ellipsis;
 }
 
 
-.writing-author-byline {
+.writing-author-secondary {
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+
+  margin-top: 3px;
+
   color:
-    #9a9aa3;
+    #91877e;
 
-  font-size:
-    0.72rem;
+  font-size: 11px;
 
-  line-height:
-    1.25;
+  line-height: 1.35;
 }
 
 
-@media (
-  hover: hover
-) {
+.writing-meta-dot {
+  color:
+    #c1b8af;
+}
 
-  .writing-card-author-link:hover
-  .writing-author-info strong {
-    color:
-      #642b8f;
-  }
 
+/* =========================================================
+   MORE MENU
+========================================================= */
+
+.writing-more-menu {
+  position: relative;
+
+  flex: 0 0 auto;
+}
+
+
+.writing-more-button {
+  width: 36px;
+  height: 36px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: none;
+
+  border-radius: 50%;
+
+  background:
+    transparent;
+
+  color:
+    #8d8379;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
+}
+
+
+.writing-more-button:hover,
+.writing-more-button.active {
+  background:
+    #f6efe5;
+
+  color:
+    #73501d;
+}
+
+
+.writing-more-dropdown {
+  position: absolute;
+
+  top: calc(100% + 7px);
+  right: 0;
+
+  z-index: 80;
+
+  width: 190px;
+
+  overflow: hidden;
+
+  padding: 6px;
+
+  border:
+    1px solid
+    #e5d9ca;
+
+  border-radius: 12px;
+
+  background:
+    #fffefa;
+
+  box-shadow:
+    0 16px 42px
+    rgba(
+      54,
+      39,
+      22,
+      0.15
+    );
+
+  animation:
+    writingMenuIn
+    0.14s
+    ease-out;
+}
+
+
+.writing-more-dropdown button {
+  width: 100%;
+
+  min-height: 39px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  padding:
+    0
+    10px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background:
+    transparent;
+
+  color:
+    #5d554d;
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  font-weight: 650;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+
+.writing-more-dropdown button:hover {
+  background:
+    #f8f2e9;
+
+  color:
+    #80591e;
 }
 
 
@@ -352,87 +430,60 @@
 
   gap: 7px;
 
-  margin-bottom:
-    13px;
+  margin-top: 17px;
 }
 
 
 .writing-language-badge,
 .writing-category-badge {
-  min-width: 0;
-  min-height: 27px;
-
-  padding:
-    5px 9px;
+  min-height: 25px;
 
   display: inline-flex;
   align-items: center;
+  justify-content: center;
 
   gap: 5px;
+
+  padding:
+    0
+    9px;
 
   border-radius:
     999px;
 
   font-size:
-    0.74rem;
+    10px;
 
   font-weight:
-    650;
+    750;
 
-  line-height:
-    1;
-
-  white-space:
-    nowrap;
+  line-height: 1;
 }
 
 
 .writing-language-badge {
   border:
     1px solid
-    rgba(
-      100,
-      43,
-      143,
-      0.12
-    );
+    #dfd2c2;
 
   background:
-    rgba(
-      100,
-      43,
-      143,
-      0.055
-    );
+    #fbf6ef;
 
   color:
-    #642b8f;
-}
-
-
-.writing-language-badge svg {
-  flex:
-    0 0 auto;
+    #745d3a;
 }
 
 
 .writing-category-badge {
-  max-width: 180px;
-
-  overflow: hidden;
-
   border:
     1px solid
-    #e8e8ed;
+    #eadfce;
 
   background:
-    #f8f8fa;
+    #f8f3eb;
 
   color:
-    #66666f;
-
-  text-overflow:
-    ellipsis;
+    #7b6b58;
 }
 
 
@@ -443,59 +494,46 @@
 .writing-card-title-link {
   display: block;
 
-  margin-bottom:
-    10px;
+  margin-top: 14px;
 
-  color: inherit;
-
-  text-decoration:
-    none;
-
-  border-radius:
-    7px;
+  text-decoration: none;
 }
 
 
 .writing-card-title {
   margin: 0;
 
-  overflow-wrap:
-    anywhere;
-
   color:
-    #222228;
+    #28221e;
+
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
 
   font-size:
     clamp(
-      1.05rem,
-      1.4vw,
-      1.18rem
+      20px,
+      2vw,
+      25px
     );
 
-  font-weight:
-    760;
+  font-weight: 700;
 
-  line-height:
-    1.36;
+  line-height: 1.3;
 
   letter-spacing:
-    -0.01em;
+    -0.02em;
 
   transition:
-    color 160ms ease;
+    color 0.17s ease;
 }
 
 
-@media (
-  hover: hover
-) {
-
-  .writing-card-title-link:hover
-  .writing-card-title {
-    color:
-      #642b8f;
-  }
-
+.writing-card-title-link:hover
+.writing-card-title {
+  color:
+    #7c571f;
 }
 
 
@@ -505,163 +543,87 @@
 
 .writing-card-preview {
   margin:
-    0 0 15px;
+    11px
+    0
+    0;
 
-  overflow: hidden;
+  color:
+    #625a52;
+
+  font-size:
+    13.5px;
+
+  line-height:
+    1.76;
 
   overflow-wrap:
     anywhere;
 
-  color:
-    #5c5c66;
-
-  font-size:
-    0.92rem;
-
-  font-weight:
-    430;
-
-  line-height:
-    1.7;
-
   white-space:
     pre-line;
-
-  display:
-    -webkit-box;
-
-  -webkit-box-orient:
-    vertical;
-
-  -webkit-line-clamp:
-    4;
-
-  line-clamp:
-    4;
 }
 
 
 /* =========================================================
-   HASHTAGS
+   TAGS
 ========================================================= */
 
 .writing-card-tags {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
 
-  gap: 7px;
+  gap: 6px;
 
-  margin:
-    0 0 15px;
+  margin-top: 14px;
 }
 
 
 .writing-card-tag {
-  max-width: 190px;
-  min-height: 28px;
-
-  padding:
-    5px 9px;
+  min-height: 27px;
 
   display: inline-flex;
   align-items: center;
 
-  gap: 3px;
+  gap: 2px;
 
-  overflow: hidden;
-
-  border:
-    1px solid
-    rgba(
-      100,
-      43,
-      143,
-      0.12
-    );
+  padding:
+    0
+    8px;
 
   border-radius:
     999px;
 
   background:
-    rgba(
-      100,
-      43,
-      143,
-      0.05
-    );
+    #faf6f0;
 
   color:
-    #642b8f;
+    #8a6a3d;
 
   font-size:
-    0.76rem;
+    10.5px;
 
   font-weight:
     650;
 
-  line-height:
-    1;
-
-  text-decoration:
-    none;
+  text-decoration: none;
 
   transition:
-    background-color 150ms ease,
-    border-color 150ms ease,
-    transform 150ms ease;
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 
-.writing-card-tag svg {
-  flex:
-    0 0 auto;
-}
+.writing-card-tag:hover {
+  background:
+    #f0e2cc;
 
-
-.writing-card-tag span {
-  min-width: 0;
-
-  overflow: hidden;
-
-  text-overflow:
-    ellipsis;
-
-  white-space:
-    nowrap;
-}
-
-
-@media (
-  hover: hover
-) {
-
-  .writing-card-tag:hover {
-    border-color:
-      rgba(
-        100,
-        43,
-        143,
-        0.26
-      );
-
-    background:
-      rgba(
-        100,
-        43,
-        143,
-        0.1
-      );
-
-    transform:
-      translateY(-1px);
-  }
-
+  color:
+    #76501a;
 }
 
 
 /* =========================================================
-   META
+   READING META
 ========================================================= */
 
 .writing-card-meta {
@@ -670,29 +632,28 @@
   flex-wrap: wrap;
 
   gap:
-    9px 13px;
+    8px
+    18px;
 
-  margin-bottom:
+  margin-top:
+    17px;
+
+  padding-bottom:
     17px;
 
   color:
-    #8a8a94;
+    #938a82;
 
   font-size:
-    0.76rem;
+    10.5px;
 
-  font-weight:
-    520;
-
-  line-height:
-    1.35;
+  border-bottom:
+    1px solid
+    #eee7df;
 }
 
 
-.writing-card-meta
-> span {
-  min-width: 0;
-
+.writing-card-meta > span {
   display: inline-flex;
   align-items: center;
 
@@ -701,8 +662,8 @@
 
 
 .writing-card-meta svg {
-  flex:
-    0 0 auto;
+  color:
+    #a18152;
 }
 
 
@@ -711,8 +672,7 @@
 ========================================================= */
 
 .writing-card-footer {
-  padding-top:
-    14px;
+  min-height: 59px;
 
   display: flex;
   align-items: center;
@@ -720,145 +680,120 @@
 
   gap: 12px;
 
-  border-top:
-    1px solid
-    #eeeef2;
-}
+  margin:
+    0
+    -21px;
 
+  padding:
+    7px
+    14px
+    7px
+    15px;
 
-.writing-card-social {
-  min-width: 0;
+  border-radius:
+    0
+    0
+    18px
+    18px;
 
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-
-  gap: 4px;
+  background:
+    rgba(
+      253,
+      250,
+      246,
+      0.64
+    );
 }
 
 
 /* =========================================================
-   COMMON SOCIAL ACTIONS
+   SOCIAL ACTIONS
 ========================================================= */
 
-.writing-like-button,
-.writing-comment-count,
-.writing-share-button,
-.writing-save-button {
-  appearance:
-    none;
+.writing-card-actions {
+  min-width: 0;
 
-  flex:
-    0 0 auto;
+  display: flex;
+  align-items: center;
 
-  min-height:
-    36px;
+  gap: 2px;
+}
+
+
+.writing-action-button {
+  min-width: 40px;
+  min-height: 38px;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  gap: 6px;
+  gap: 5px;
 
-  border:
-    0;
+  padding:
+    0
+    9px;
 
-  border-radius:
-    10px;
+  border: none;
 
-  outline:
-    none;
+  border-radius: 9px;
 
   background:
     transparent;
 
   color:
-    #6d6d76;
+    #81776e;
 
-  font:
-    inherit;
+  font-family: inherit;
 
   font-size:
-    0.82rem;
+    11px;
 
   font-weight:
-    620;
+    650;
 
-  line-height:
-    1;
+  line-height: 1;
 
-  text-decoration:
-    none;
+  text-decoration: none;
 
-  cursor:
-    pointer;
+  cursor: pointer;
+
+  white-space: nowrap;
 
   transition:
-    background-color 160ms ease,
-    color 160ms ease,
-    transform 160ms ease,
-    box-shadow 160ms ease;
+    background-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
 }
 
 
-.writing-like-button,
-.writing-comment-count,
-.writing-share-button {
-  padding:
-    7px 10px;
+.writing-action-button:hover:not(:disabled) {
+  background:
+    #f3ece3;
+
+  color:
+    #685944;
 }
 
 
-.writing-save-button {
-  width: 36px;
-
-  padding: 0;
-}
-
-
-.writing-like-button svg,
-.writing-comment-count svg,
-.writing-share-button svg,
-.writing-save-button svg {
-  flex:
-    0 0 auto;
-}
-
-
-/* =========================================================
-   SOCIAL HOVER
-========================================================= */
-
-@media (
-  hover: hover
-) and (
-  pointer: fine
-) {
-
-  .writing-like-button:hover:not(:disabled),
-  .writing-comment-count:hover,
-  .writing-share-button:hover:not(:disabled),
-  .writing-save-button:hover:not(:disabled) {
-    background:
-      #f5f5f7;
-
-    color:
-      #642b8f;
-  }
-
-}
-
-
-/* =========================================================
-   SOCIAL ACTIVE
-========================================================= */
-
-.writing-like-button:active:not(:disabled),
-.writing-comment-count:active,
-.writing-share-button:active:not(:disabled),
-.writing-save-button:active:not(:disabled) {
+.writing-action-button:active:not(:disabled) {
   transform:
-    scale(0.94);
+    scale(0.97);
+}
+
+
+.writing-action-button:disabled {
+  opacity: 0.5;
+
+  cursor: default;
+}
+
+
+.writing-action-count {
+  min-width: 8px;
+
+  font-variant-numeric:
+    tabular-nums;
 }
 
 
@@ -866,55 +801,52 @@
    LIKE
 ========================================================= */
 
-.writing-like-button.liked {
+.writing-like-button:hover:not(:disabled),
+.writing-like-button.active {
   background:
-    rgba(
-      196,
-      52,
-      80,
-      0.07
-    );
+    #fff0f0;
 
   color:
-    #b83250;
+    #b24d52;
 }
 
 
-@media (
-  hover: hover
-) {
-
-  .writing-like-button.liked:hover:not(:disabled) {
-    background:
-      rgba(
-        196,
-        52,
-        80,
-        0.115
-      );
-
-    color:
-      #aa2947;
-  }
-
+.writing-like-button.active {
+  font-weight:
+    800;
 }
 
 
 /* =========================================================
-   SAVE
+   COMMENT
 ========================================================= */
 
-.writing-save-button.saved {
+.writing-comment-button:hover {
   background:
-    rgba(
-      100,
-      43,
-      143,
-      0.085
-    );
+    #eef5fa;
 
   color:
-    #642b8f;
+    #477b9e;
+}
+
+
+/* =========================================================
+   REPOST
+========================================================= */
+
+.writing-repost-button:hover:not(:disabled),
+.writing-repost-button.active {
+  background:
+    #eef8f2;
+
+  color:
+    #347954;
+}
+
+
+.writing-repost-button.active {
+  font-weight:
+    800;
 }
 
 
@@ -922,138 +854,61 @@
    SHARE
 ========================================================= */
 
-.writing-share-button {
-  position: relative;
+.writing-share-button:hover:not(:disabled) {
+  background:
+    #f1f2fb;
 
-  overflow: hidden;
+  color:
+    #625e9a;
 }
 
-
-.writing-share-label {
-  max-width:
-    110px;
-
-  overflow:
-    hidden;
-
-  text-overflow:
-    ellipsis;
-
-  white-space:
-    nowrap;
-
-  transition:
-    max-width 220ms ease,
-    opacity 180ms ease;
-}
-
-
-/* =========================================================
-   SHARE SUCCESS
-========================================================= */
 
 .writing-share-button.success {
   background:
-    rgba(
-      40,
-      122,
-      86,
-      0.09
-    );
+    #eef8f2;
 
   color:
-    #287a56;
+    #347954;
 }
 
-
-.writing-share-button.success svg {
-  animation:
-    writingShareSuccess
-    320ms
-    cubic-bezier(
-      0.22,
-      1,
-      0.36,
-      1
-    );
-}
-
-
-@keyframes writingShareSuccess {
-
-  0% {
-    opacity: 0;
-
-    transform:
-      scale(0.55);
-  }
-
-
-  60% {
-    transform:
-      scale(1.16);
-  }
-
-
-  100% {
-    opacity: 1;
-
-    transform:
-      scale(1);
-  }
-
-}
-
-
-/* =========================================================
-   SHARE ERROR
-========================================================= */
 
 .writing-share-button.error {
   background:
-    rgba(
-      166,
-      83,
-      83,
-      0.08
-    );
+    #fff0ef;
 
   color:
-    #a65353;
+    #a24a42;
 }
 
 
 /* =========================================================
-   DISABLED ACTIONS
+   SAVE
 ========================================================= */
 
-.writing-like-button:disabled,
-.writing-share-button:disabled,
-.writing-save-button:disabled {
-  opacity:
-    0.52;
+.writing-save-button:hover:not(:disabled),
+.writing-save-button.active {
+  background:
+    #fbf2df;
 
-  cursor:
-    default;
+  color:
+    #946720;
+}
 
-  transform:
-    none;
+
+.writing-save-button.active {
+  font-weight:
+    800;
 }
 
 
 /* =========================================================
-   READ LINK
+   READ MORE
 ========================================================= */
 
 .writing-read-link {
-  min-height:
-    36px;
+  min-height: 38px;
 
-  flex:
-    0 0 auto;
-
-  padding:
-    7px 11px;
+  flex: 0 0 auto;
 
   display: inline-flex;
   align-items: center;
@@ -1061,20 +916,21 @@
 
   gap: 6px;
 
+  padding:
+    0
+    12px;
+
   border-radius:
-    10px;
+    9px;
 
   color:
-    #642b8f;
+    #825b20;
 
   font-size:
-    0.82rem;
+    11px;
 
   font-weight:
-    700;
-
-  line-height:
-    1;
+    800;
 
   text-decoration:
     none;
@@ -1083,65 +939,42 @@
     nowrap;
 
   transition:
-    background-color 150ms ease,
-    transform 150ms ease;
+    background-color 0.16s ease,
+    gap 0.16s ease,
+    color 0.16s ease;
 }
 
 
-.writing-read-link span {
-  transition:
-    transform 150ms ease;
-}
+.writing-read-link:hover {
+  gap: 9px;
 
+  background:
+    #f2e6d3;
 
-@media (
-  hover: hover
-) {
-
-  .writing-read-link:hover {
-    background:
-      rgba(
-        100,
-        43,
-        143,
-        0.07
-      );
-  }
-
-
-  .writing-read-link:hover span {
-    transform:
-      translateX(3px);
-  }
-
-}
-
-
-.writing-read-link:active {
-  transform:
-    scale(0.96);
+  color:
+    #654313;
 }
 
 
 /* =========================================================
-   KEYBOARD ACCESSIBILITY
+   FOCUS ACCESSIBILITY
 ========================================================= */
 
-.writing-card-author-link:focus-visible,
+.writing-more-button:focus-visible,
+.writing-more-dropdown button:focus-visible,
+.writing-action-button:focus-visible,
+.writing-read-link:focus-visible,
+.writing-author-avatar:focus-visible,
+.writing-author-name:focus-visible,
 .writing-card-title-link:focus-visible,
-.writing-card-tag:focus-visible,
-.writing-like-button:focus-visible,
-.writing-comment-count:focus-visible,
-.writing-share-button:focus-visible,
-.writing-save-button:focus-visible,
-.writing-read-link:focus-visible {
+.writing-card-tag:focus-visible {
   outline:
     3px solid
     rgba(
-      100,
-      43,
-      143,
-      0.18
+      150,
+      104,
+      34,
+      0.19
     );
 
   outline-offset:
@@ -1150,22 +983,47 @@
 
 
 /* =========================================================
-   LARGE DESKTOP
+   ANIMATION
+========================================================= */
+
+@keyframes writingMenuIn {
+
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(-5px)
+      scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+
+}
+
+
+/* =========================================================
+   MEDIUM DESKTOP
 ========================================================= */
 
 @media (
-  min-width: 1280px
+  max-width: 1150px
 ) {
 
-  .writing-card {
-    padding:
-      23px 24px;
+  .writing-action-label {
+    display: none;
   }
 
 
-  .writing-card-title {
-    font-size:
-      1.2rem;
+  .writing-action-button {
+    padding:
+      0
+      10px;
   }
 
 }
@@ -1176,302 +1034,63 @@
 ========================================================= */
 
 @media (
-  max-width: 900px
+  max-width: 760px
 ) {
 
   .writing-card {
     padding:
-      20px;
+      18px
+      18px
+      0;
 
     border-radius:
+      17px;
+  }
+
+
+  .writing-card-footer {
+    margin:
+      0
+      -18px;
+
+    padding:
+      7px
+      11px
+      7px
+      12px;
+
+    border-radius:
+      0
+      0
+      16px
       16px;
   }
 
 
-  .writing-card-title {
-    font-size:
-      1.12rem;
-  }
-
-
   .writing-author-username {
-    max-width:
-      110px;
+    display: none;
   }
 
 
-  .writing-card-footer {
-    gap:
-      9px;
+  .writing-action-label {
+    display: none;
   }
 
 
-  .writing-card-social {
-    gap:
-      2px;
-  }
-
-
-  .writing-like-button,
-  .writing-comment-count,
-  .writing-share-button {
-    padding-left:
-      9px;
-
-    padding-right:
-      9px;
-  }
-
-}
-
-
-/* =========================================================
-   SMALL TABLET / LARGE PHONE
-========================================================= */
-
-@media (
-  max-width: 700px
-) {
-
-  .writing-card {
-    padding:
-      17px;
-
-    border-radius:
-      15px;
-
-    box-shadow:
-      0 1px 2px
-      rgba(
-        20,
-        20,
-        30,
-        0.025
-      );
-  }
-
-
-  .writing-card:hover {
-    transform:
-      none;
-  }
-
-
-  .writing-card-header {
-    gap:
-      10px;
-
-    margin-bottom:
-      14px;
-  }
-
-
-  .writing-author-avatar {
-    width:
-      40px;
-
-    height:
-      40px;
-
-    flex-basis:
-      40px;
-  }
-
-
-  .writing-author-info strong {
-    font-size:
-      0.89rem;
-  }
-
-
-  .writing-author-username {
-    max-width:
-      85px;
-
-    font-size:
-      0.74rem;
-  }
-
-
-  .writing-card-published-time {
-    max-width:
-      100px;
-
-    font-size:
-      0.71rem;
-  }
-
-
-  .writing-card-badges {
-    gap:
-      6px;
-
-    margin-bottom:
-      12px;
-  }
-
-
-  .writing-language-badge,
-  .writing-category-badge {
-    min-height:
-      26px;
+  .writing-action-button {
+    min-width:
+      37px;
 
     padding:
-      5px 8px;
-
-    font-size:
-      0.71rem;
-  }
-
-
-  .writing-card-title {
-    font-size:
-      1.07rem;
-
-    line-height:
-      1.4;
-  }
-
-
-  .writing-card-preview {
-    margin-bottom:
-      14px;
-
-    font-size:
-      0.89rem;
-
-    line-height:
-      1.64;
-
-    -webkit-line-clamp:
-      5;
-
-    line-clamp:
-      5;
-  }
-
-
-  .writing-card-tags {
-    gap:
-      6px;
-  }
-
-
-  .writing-card-tag {
-    max-width:
-      160px;
-
-    min-height:
-      27px;
-
-    padding:
-      5px 8px;
-
-    font-size:
-      0.73rem;
-  }
-
-
-  .writing-card-meta {
-    gap:
-      8px 10px;
-
-    margin-bottom:
-      15px;
-
-    font-size:
-      0.71rem;
-  }
-
-
-  .writing-card-footer {
-    gap:
-      6px;
-  }
-
-
-  .writing-card-social {
-    gap:
-      1px;
-  }
-
-
-  .writing-like-button,
-  .writing-comment-count {
-    min-height:
-      38px;
-
-    padding-left:
+      0
       8px;
-
-    padding-right:
-      8px;
-  }
-
-
-  .writing-share-button,
-  .writing-save-button {
-    width:
-      38px;
-
-    height:
-      38px;
-
-    min-height:
-      38px;
-
-    padding:
-      0;
-  }
-
-
-  .writing-share-label {
-    position:
-      absolute;
-
-    width:
-      1px;
-
-    height:
-      1px;
-
-    margin:
-      -1px;
-
-    padding:
-      0;
-
-    overflow:
-      hidden;
-
-    clip:
-      rect(
-        0,
-        0,
-        0,
-        0
-      );
-
-    clip-path:
-      inset(50%);
-
-    white-space:
-      nowrap;
-
-    border:
-      0;
   }
 
 
   .writing-read-link {
-    min-height:
-      38px;
-
     padding:
-      8px 9px;
-
-    font-size:
-      0.79rem;
+      0
+      10px;
   }
 
 }
@@ -1479,338 +1098,200 @@
 
 /* =========================================================
    MOBILE
-   520px and below
 ========================================================= */
 
 @media (
-  max-width: 520px
+  max-width: 560px
 ) {
 
   .writing-card {
     padding:
-      16px 15px;
+      16px
+      14px
+      0;
 
     border-radius:
-      14px;
+      15px;
   }
 
 
-  .writing-card-header {
-    align-items:
-      flex-start;
+  .writing-card:hover {
+    transform: none;
   }
 
 
-  .writing-card-author {
-    gap:
-      9px;
-  }
-
+  /* HEADER */
 
   .writing-author-avatar {
-    width:
-      38px;
-
-    height:
-      38px;
+    width: 40px;
+    height: 40px;
 
     flex-basis:
-      38px;
-  }
-
-
-  .writing-author-name-row {
-    gap:
-      5px;
-  }
-
-
-  .writing-author-username {
-    display:
-      none;
-  }
-
-
-  .writing-card-header-meta {
-    max-width:
-      92px;
-
-    padding-top:
-      3px;
-  }
-
-
-  .writing-card-published-time {
-    max-width:
-      92px;
-
-    overflow:
-      hidden;
-
-    text-overflow:
-      ellipsis;
-
-    white-space:
-      nowrap;
-  }
-
-
-  .writing-card-title-link {
-    margin-bottom:
-      9px;
-  }
-
-
-  .writing-card-title {
-    font-size:
-      1.04rem;
-  }
-
-
-  .writing-card-preview {
-    font-size:
-      0.88rem;
-
-    line-height:
-      1.62;
-  }
-
-
-  .writing-card-tag {
-    max-width:
-      145px;
-  }
-
-
-  .writing-card-meta
-  > span:first-child {
-    display:
-      none;
-  }
-
-
-  .writing-card-footer {
-    align-items:
-      stretch;
-
-    flex-direction:
-      column;
-
-    gap:
-      8px;
-  }
-
-
-  .writing-card-social {
-    width:
-      100%;
-
-    justify-content:
-      flex-start;
-
-    gap:
-      4px;
-  }
-
-
-  .writing-like-button,
-  .writing-comment-count,
-  .writing-share-button,
-  .writing-save-button {
-    min-height:
-      40px;
-
-    border-radius:
-      10px;
-  }
-
-
-  .writing-like-button,
-  .writing-comment-count {
-    flex:
-      0 1 auto;
-
-    padding:
-      8px 10px;
-  }
-
-
-  .writing-share-button,
-  .writing-save-button {
-    width:
-      40px;
-
-    height:
       40px;
   }
 
 
-  .writing-read-link {
-    align-self:
-      flex-end;
-
-    min-height:
-      38px;
-
-    margin-top:
-      -2px;
-  }
-
-}
-
-
-/* =========================================================
-   SMALL MOBILE
-   420px and below
-========================================================= */
-
-@media (
-  max-width: 420px
-) {
-
-  .writing-card {
-    padding:
-      15px 13px;
-  }
-
-
-  .writing-card-header {
-    margin-bottom:
-      13px;
-  }
-
-
-  .writing-author-avatar {
-    width:
-      37px;
-
-    height:
-      37px;
-
-    flex-basis:
-      37px;
-  }
-
-
-  .writing-author-info strong {
+  .writing-author-name {
     max-width:
-      175px;
+      180px;
 
     font-size:
-      0.87rem;
-  }
-
-
-  .writing-card-header-meta {
-    max-width:
-      76px;
-  }
-
-
-  .writing-card-published-time {
-    max-width:
-      76px;
-
-    font-size:
-      0.68rem;
-  }
-
-
-  .writing-card-published-time svg {
-    display:
-      none;
-  }
-
-
-  .writing-card-badges {
-    margin-bottom:
-      11px;
-  }
-
-
-  .writing-category-badge {
-    max-width:
-      130px;
-  }
-
-
-  .writing-card-title {
-    font-size:
-      1.01rem;
-  }
-
-
-  .writing-card-preview {
-    margin-bottom:
-      13px;
-
-    font-size:
-      0.865rem;
-
-    line-height:
-      1.6;
-  }
-
-
-  .writing-card-tags {
-    margin-bottom:
-      13px;
-  }
-
-
-  .writing-card-tag {
-    max-width:
-      130px;
-
-    font-size:
-      0.7rem;
-  }
-
-
-  .writing-card-meta {
-    margin-bottom:
-      13px;
-
-    font-size:
-      0.69rem;
-  }
-
-
-  .writing-card-footer {
-    padding-top:
       12px;
   }
 
 
-  .writing-card-social {
+  .writing-author-secondary {
+    font-size:
+      10px;
+  }
+
+
+  .writing-more-button {
+    width: 34px;
+    height: 34px;
+  }
+
+
+  /* TITLE */
+
+  .writing-card-title {
+    font-size:
+      19px;
+
+    line-height:
+      1.32;
+  }
+
+
+  /* PREVIEW */
+
+  .writing-card-preview {
+    font-size:
+      12.5px;
+
+    line-height:
+      1.7;
+  }
+
+
+  /* META */
+
+  .writing-card-meta {
+    gap:
+      7px
+      13px;
+
+    margin-top:
+      15px;
+
+    padding-bottom:
+      15px;
+
+    font-size:
+      9.5px;
+  }
+
+
+  /* FOOTER */
+
+  .writing-card-footer {
+    min-height:
+      57px;
+
+    margin:
+      0
+      -14px;
+
+    padding:
+      6px
+      8px;
+
+    gap: 5px;
+
+    border-radius:
+      0
+      0
+      14px
+      14px;
+  }
+
+
+  .writing-card-actions {
+    flex:
+      1 1 auto;
+
     justify-content:
       space-between;
+
+    gap: 0;
   }
 
 
-  .writing-like-button,
-  .writing-comment-count {
-    padding:
-      8px 9px;
-  }
-
-
-  .writing-share-button,
-  .writing-save-button {
-    width:
-      39px;
-
-    height:
-      39px;
+  .writing-action-button {
+    min-width:
+      35px;
 
     min-height:
-      39px;
+      37px;
+
+    padding:
+      0
+      6px;
+
+    gap: 4px;
+  }
+
+
+  .writing-action-button svg {
+    width:
+      17px;
+
+    height:
+      17px;
+  }
+
+
+  .writing-action-count {
+    font-size:
+      10px;
+  }
+
+
+  .writing-action-label {
+    display: none;
   }
 
 
   .writing-read-link {
+    min-height:
+      37px;
+
     padding:
-      7px 9px;
+      0
+      9px;
+
+    font-size:
+      10px;
+  }
+
+
+  .writing-read-link span {
+    display: none;
+  }
+
+
+  .writing-read-link svg {
+    width:
+      18px;
+
+    height:
+      18px;
+  }
+
+
+  .writing-more-dropdown {
+    width:
+      180px;
   }
 
 }
@@ -1818,481 +1299,74 @@
 
 /* =========================================================
    VERY SMALL MOBILE
-   360px and below
 ========================================================= */
 
 @media (
-  max-width: 360px
+  max-width: 390px
 ) {
 
   .writing-card {
     padding:
-      14px 12px;
+      15px
+      12px
+      0;
   }
 
 
-  .writing-author-avatar {
-    width:
-      36px;
-
-    height:
-      36px;
-
-    flex-basis:
-      36px;
+  .writing-card-footer {
+    margin:
+      0
+      -12px;
   }
 
 
-  .writing-author-info strong {
+  .writing-author-name {
     max-width:
       145px;
   }
 
 
-  .writing-author-byline {
-    font-size:
-      0.68rem;
-  }
-
-
-  .writing-card-header-meta {
-    max-width:
-      62px;
-  }
-
-
-  .writing-card-published-time {
-    max-width:
-      62px;
-
-    font-size:
-      0.65rem;
+  .writing-card-badges {
+    margin-top:
+      14px;
   }
 
 
   .writing-language-badge,
   .writing-category-badge {
+    min-height:
+      23px;
+
     padding:
-      5px 7px;
+      0
+      7px;
+
+    font-size:
+      9px;
   }
 
 
   .writing-card-title {
     font-size:
-      0.99rem;
+      18px;
   }
 
 
-  .writing-card-preview {
-    font-size:
-      0.84rem;
-  }
-
-
-  .writing-card-tag {
-    max-width:
-      118px;
-  }
-
-
-  .writing-card-social {
-    gap:
-      2px;
-  }
-
-
-  .writing-like-button,
-  .writing-comment-count {
+  .writing-action-button {
     min-width:
-      0;
-
-    padding-left:
-      7px;
-
-    padding-right:
-      7px;
-
-    font-size:
-      0.77rem;
-  }
-
-
-  .writing-share-button,
-  .writing-save-button {
-    width:
-      38px;
-
-    height:
-      38px;
-
-    min-height:
-      38px;
-  }
-
-
-  .writing-read-link {
-    font-size:
-      0.77rem;
-  }
-
-}
-
-
-/* =========================================================
-   ULTRA SMALL
-   320px and below
-========================================================= */
-
-@media (
-  max-width: 320px
-) {
-
-  .writing-card {
-    padding:
-      13px 11px;
-  }
-
-
-  .writing-author-info strong {
-    max-width:
-      125px;
-  }
-
-
-  .writing-card-header-meta {
-    display:
-      none;
-  }
-
-
-  .writing-card-title {
-    font-size:
-      0.97rem;
-  }
-
-
-  .writing-card-social {
-    justify-content:
-      space-between;
-  }
-
-
-  .writing-like-button,
-  .writing-comment-count {
-    min-height:
-      38px;
-
-    padding:
-      7px;
-
-    font-size:
-      0.74rem;
-  }
-
-
-  .writing-share-button,
-  .writing-save-button {
-    width:
-      37px;
-
-    height:
-      37px;
-
-    min-height:
-      37px;
-  }
-
-}
-
-
-/* =========================================================
-   TOUCH DEVICES
-========================================================= */
-
-@media (
-  hover: none
-) and (
-  pointer: coarse
-) {
-
-  .writing-card:hover,
-  .writing-card-tag:hover,
-  .writing-like-button:hover,
-  .writing-comment-count:hover,
-  .writing-share-button:hover,
-  .writing-save-button:hover,
-  .writing-read-link:hover {
-    transform:
-      none;
-  }
-
-
-  .writing-like-button,
-  .writing-comment-count,
-  .writing-share-button,
-  .writing-save-button,
-  .writing-read-link {
-    -webkit-tap-highlight-color:
-      transparent;
-  }
-
-}
-
-
-/* =========================================================
-   HIGH CONTRAST / FORCED COLORS
-========================================================= */
-
-@media (
-  forced-colors: active
-) {
-
-  .writing-card,
-  .writing-language-badge,
-  .writing-category-badge,
-  .writing-card-tag {
-    border:
-      1px solid
-      CanvasText;
-  }
-
-
-  .writing-like-button,
-  .writing-comment-count,
-  .writing-share-button,
-  .writing-save-button,
-  .writing-read-link {
-    forced-color-adjust:
-      auto;
-  }
-
-}
-
-
-/* =========================================================
-   REDUCED MOTION
-========================================================= */
-
-@media (
-  prefers-reduced-motion: reduce
-) {
-
-  .writing-card,
-  .writing-card-author-link
-  .writing-author-info strong,
-  .writing-card-title,
-  .writing-card-tag,
-  .writing-like-button,
-  .writing-comment-count,
-  .writing-share-button,
-  .writing-share-button svg,
-  .writing-share-label,
-  .writing-save-button,
-  .writing-read-link,
-  .writing-read-link span {
-    transition:
-      none !important;
-
-    animation:
-      none !important;
-  }
-
-
-  .writing-card:hover,
-  .writing-card-tag:hover,
-  .writing-like-button:active,
-  .writing-comment-count:active,
-  .writing-share-button:active,
-  .writing-save-button:active,
-  .writing-read-link:active {
-    transform:
-      none !important;
-  }
-
-}
-
-/* =========================================================
-   REPOST ACTION
-========================================================= */
-
-.writing-repost-button {
-  min-width: 0;
-
-  min-height: 38px;
-
-  display: inline-flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 6px;
-
-  padding:
-    0
-    9px;
-
-  border: 0;
-
-  border-radius: 10px;
-
-  background: transparent;
-
-  color: #777079;
-
-  font: inherit;
-
-  font-size: 12px;
-
-  font-weight: 650;
-
-  line-height: 1;
-
-  cursor: pointer;
-
-  -webkit-tap-highlight-color:
-    transparent;
-
-  transition:
-    background-color 150ms ease,
-    color 150ms ease,
-    transform 150ms ease;
-}
-
-
-.writing-repost-button svg {
-  flex: 0 0 auto;
-
-  transition:
-    transform 180ms
-    cubic-bezier(
-      0.22,
-      1,
-      0.36,
-      1
-    );
-}
-
-
-@media (
-  hover: hover
-) and (
-  pointer: fine
-) {
-
-  .writing-repost-button:hover:not(:disabled) {
-    background:
-      #eef8f1;
-
-    color:
-      #23834c;
-  }
-
-
-  .writing-repost-button:hover:not(:disabled)
-  svg {
-    transform:
-      rotate(-12deg);
-  }
-
-}
-
-
-.writing-repost-button.reposted {
-  background:
-    #edf8f1;
-
-  color:
-    #23834c;
-}
-
-
-.writing-repost-button.reposted svg {
-  stroke-width: 2.3;
-}
-
-
-.writing-repost-button:active:not(:disabled) {
-  transform:
-    scale(0.94);
-}
-
-
-.writing-repost-button:disabled {
-  opacity: 0.52;
-
-  cursor: wait;
-}
-
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (
-  max-width: 700px
-) {
-
-  .writing-repost-button {
-    min-width: 38px;
-
-    min-height: 38px;
-
-    padding:
-      0
-      7px;
-  }
-
-}
-
-
-@media (
-  max-width: 420px
-) {
-
-  .writing-repost-button {
-    gap: 4px;
-
-    padding:
-      0
-      5px;
-
-    font-size: 11px;
-  }
-
-}
-
-
-@media (
-  max-width: 360px
-) {
-
-  .writing-repost-button {
-    min-width: 34px;
+      32px;
 
     padding:
       0
       4px;
   }
 
-}
 
+  .writing-action-count {
+    font-size:
+      9px;
+  }
 
-/* =========================================================
-   FOCUS
-========================================================= */
-
-.writing-repost-button:focus-visible {
-  outline:
-    3px solid
-    rgba(
-      35,
-      131,
-      76,
-      0.18
-    );
-
-  outline-offset: 2px;
 }
 
 
@@ -2301,18 +1375,23 @@
 ========================================================= */
 
 @media (
-  prefers-reduced-motion: reduce
+  prefers-reduced-motion:
+  reduce
 ) {
 
-  .writing-repost-button,
-  .writing-repost-button svg {
-    transition: none !important;
+  .writing-card,
+  .writing-author-avatar,
+  .writing-author-name,
+  .writing-more-button,
+  .writing-action-button,
+  .writing-read-link,
+  .writing-card-title {
+    transition: none;
   }
 
 
-  .writing-repost-button:hover
-  svg {
-    transform: none !important;
+  .writing-more-dropdown {
+    animation: none;
   }
 
 }

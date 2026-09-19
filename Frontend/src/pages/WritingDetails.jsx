@@ -4,6 +4,7 @@ import {
   useState,
 } from "react";
 
+
 import {
   AlertCircle,
   ArrowLeft,
@@ -25,11 +26,14 @@ import {
   X,
 } from "lucide-react";
 
+
 import {
   Link,
+  useLocation,
   useNavigate,
   useParams,
 } from "react-router-dom";
+
 
 import {
   addComment,
@@ -45,21 +49,29 @@ import {
   updateComment,
 } from "../api/api";
 
+
 import {
   getCurrentUser,
 } from "../api/auth";
 
+
 import {
   getLanguageLabel,
 } from "../config/languages";
+
 
 import {
   useLanguage,
 } from "../Language/LanguageContext";
 
 
+import SEO from "../components/SEO";
+
+import "./WritingDetails.css";
+
+
 // =========================================================
-// COMMENT TREE HELPERS
+// GENERAL HELPERS
 // =========================================================
 
 function countCommentTree(
@@ -198,8 +210,7 @@ function updateCommentInTree(
             updatedComment
               ?.replies
               ?.length
-              ? updatedComment
-                  .replies
+              ? updatedComment.replies
               : item.replies ||
                 [],
 
@@ -300,6 +311,119 @@ function removeCommentFromTree(
 
       }
     );
+
+}
+
+
+// =========================================================
+// SEO HELPERS
+// =========================================================
+
+function stripHtml(
+  value
+) {
+
+  return String(
+    value ||
+    ""
+  )
+    .replace(
+      /<script[\s\S]*?>[\s\S]*?<\/script>/gi,
+      " "
+    )
+    .replace(
+      /<style[\s\S]*?>[\s\S]*?<\/style>/gi,
+      " "
+    )
+    .replace(
+      /<[^>]*>/g,
+      " "
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim();
+
+}
+
+
+function makeSeoDescription(
+  content,
+  title = ""
+) {
+
+  const cleanContent =
+    stripHtml(
+      content
+    );
+
+
+  const cleanTitle =
+    stripHtml(
+      title
+    );
+
+
+  const source =
+    cleanContent ||
+    cleanTitle ||
+    "Read this writing on SHOBDO.";
+
+
+  if (
+    source.length <=
+      158
+  ) {
+
+    return source;
+
+  }
+
+
+  return (
+    `${source
+      .slice(
+        0,
+        155
+      )
+      .trim()}…`
+  );
+
+}
+
+
+function toIsoDate(
+  value
+) {
+
+  if (
+    !value
+  ) {
+
+    return undefined;
+
+  }
+
+
+  const date =
+    new Date(
+      value
+    );
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return undefined;
+
+  }
+
+
+  return date.toISOString();
 
 }
 
@@ -447,7 +571,6 @@ function CommentThreadItem({
       : [];
 
 
-  // Limit the visible thread depth.
   const canNestMore =
     depth < 4;
 
@@ -518,6 +641,7 @@ function CommentThreadItem({
 
                   <User
                     size={17}
+                    aria-hidden="true"
                   />
 
                 )
@@ -711,8 +835,6 @@ function CommentThreadItem({
                         className="writing-comment-inline-actions"
                       >
 
-                        {/* CANCEL EDIT */}
-
                         <button
                           type="button"
 
@@ -737,6 +859,7 @@ function CommentThreadItem({
 
                           <X
                             size={14}
+                            aria-hidden="true"
                           />
 
                           {
@@ -748,8 +871,6 @@ function CommentThreadItem({
 
                         </button>
 
-
-                        {/* SAVE EDIT */}
 
                         <button
                           type="submit"
@@ -792,6 +913,7 @@ function CommentThreadItem({
 
                                   <Check
                                     size={14}
+                                    aria-hidden="true"
                                   />
 
                                 )
@@ -854,8 +976,6 @@ function CommentThreadItem({
                 className="writing-comment-actions-row"
               >
 
-                {/* REPLY */}
-
                 {
                   canNestMore && (
 
@@ -874,6 +994,7 @@ function CommentThreadItem({
 
                       <Reply
                         size={14}
+                        aria-hidden="true"
                       />
 
                       {
@@ -888,8 +1009,6 @@ function CommentThreadItem({
                   )
                 }
 
-
-                {/* EDIT */}
 
                 {
                   isOwner && (
@@ -909,6 +1028,7 @@ function CommentThreadItem({
 
                       <Edit3
                         size={14}
+                        aria-hidden="true"
                       />
 
                       {
@@ -923,8 +1043,6 @@ function CommentThreadItem({
                   )
                 }
 
-
-                {/* DELETE */}
 
                 {
                   isOwner && (
@@ -974,6 +1092,7 @@ function CommentThreadItem({
 
                               <Trash2
                                 size={14}
+                                aria-hidden="true"
                               />
 
                             )
@@ -993,8 +1112,6 @@ function CommentThreadItem({
                 }
 
 
-                {/* REPLY COUNT */}
-
                 {
                   replies.length >
                     0 && (
@@ -1005,6 +1122,7 @@ function CommentThreadItem({
 
                       <MessageCircle
                         size={13}
+                        aria-hidden="true"
                       />
 
                       {
@@ -1117,8 +1235,6 @@ function CommentThreadItem({
                     className="writing-comment-inline-actions"
                   >
 
-                    {/* CANCEL */}
-
                     <button
                       type="button"
 
@@ -1143,6 +1259,7 @@ function CommentThreadItem({
 
                       <X
                         size={14}
+                        aria-hidden="true"
                       />
 
                       {
@@ -1154,8 +1271,6 @@ function CommentThreadItem({
 
                     </button>
 
-
-                    {/* SEND REPLY */}
 
                     <button
                       type="submit"
@@ -1198,6 +1313,7 @@ function CommentThreadItem({
 
                               <Send
                                 size={14}
+                                aria-hidden="true"
                               />
 
                             )
@@ -1376,6 +1492,10 @@ function WritingDetails() {
 
   const navigate =
     useNavigate();
+
+
+  const location =
+    useLocation();
 
 
   const {
@@ -1580,7 +1700,7 @@ function WritingDetails() {
 
 
   // =====================================================
-  // SHARE
+  // SHARE STATE
   // =====================================================
 
   const [
@@ -1794,7 +1914,8 @@ function WritingDetails() {
               writingId
             )
             ||
-            writingId <= 0
+            writingId <=
+              0
           ) {
 
             throw new Error(
@@ -1894,6 +2015,11 @@ function WritingDetails() {
           if (
             mounted
           ) {
+
+            setWriting(
+              null
+            );
+
 
             setError(
 
@@ -2329,7 +2455,7 @@ function WritingDetails() {
 
 
   // =====================================================
-  // TOTAL COMMENTS INCLUDING REPLIES
+  // TOTAL COMMENTS
   // =====================================================
 
   const totalComments =
@@ -2473,12 +2599,11 @@ function WritingDetails() {
       hour;
 
 
-    // JUST NOW
-
     if (
-      difference >= 0 &&
+      difference >=
+        0 &&
       difference <
-      minute
+        minute
     ) {
 
       return t(
@@ -2489,13 +2614,11 @@ function WritingDetails() {
     }
 
 
-    // MINUTES AGO
-
     if (
       difference >=
-      minute &&
+        minute &&
       difference <
-      hour
+        hour
     ) {
 
       const minutes =
@@ -2528,13 +2651,11 @@ function WritingDetails() {
     }
 
 
-    // HOURS AGO
-
     if (
       difference >=
-      hour &&
+        hour &&
       difference <
-      day
+        day
     ) {
 
       const hours =
@@ -2575,8 +2696,12 @@ function WritingDetails() {
 
 
   // =====================================================
-  // REQUIRE LOGIN
+  // LOGIN RETURN PATH
   // =====================================================
+
+  const currentPagePath =
+    `${location.pathname}${location.search}${location.hash}`;
+
 
   function requireLogin() {
 
@@ -2590,7 +2715,13 @@ function WritingDetails() {
 
 
     navigate(
-      "/login"
+      "/login",
+      {
+        state: {
+          from:
+            currentPagePath,
+        },
+      }
     );
 
 
@@ -2774,7 +2905,7 @@ function WritingDetails() {
 
     if (
       content.length >
-      2000
+        2000
     ) {
 
       setCommentError(
@@ -2932,10 +3063,6 @@ function WritingDetails() {
   }
 
 
-  // =====================================================
-  // CANCEL REPLY
-  // =====================================================
-
   function handleCancelReply() {
 
     setReplyingToId(
@@ -2998,7 +3125,7 @@ function WritingDetails() {
 
     if (
       content.length >
-      2000
+        2000
     ) {
 
       setCommentError(
@@ -3185,10 +3312,6 @@ function WritingDetails() {
   }
 
 
-  // =====================================================
-  // CANCEL EDIT
-  // =====================================================
-
   function handleCancelEdit() {
 
     setEditingCommentId(
@@ -3241,7 +3364,7 @@ function WritingDetails() {
 
     if (
       content.length >
-      2000
+        2000
     ) {
 
       setCommentError(
@@ -3480,15 +3603,30 @@ function WritingDetails() {
 
   async function handleShare() {
 
+    if (
+      !writing
+    ) {
+
+      return;
+
+    }
+
+
+    const description =
+      makeSeoDescription(
+        writing.content,
+        writing.title
+      );
+
+
     const shareData = {
 
       title:
-        writing?.title ||
+        writing.title ||
         "SHOBDO",
 
       text:
-        writing?.title ||
-        "SHOBDO",
+        description,
 
       url:
         window.location.href,
@@ -3543,7 +3681,7 @@ function WritingDetails() {
 
       if (
         err?.name !==
-        "AbortError"
+          "AbortError"
       ) {
 
         console.error(
@@ -3568,41 +3706,54 @@ function WritingDetails() {
 
     return (
 
-      <main
-        className="writing-details-page"
-      >
+      <>
 
-        <div
-          className="writing-details-container"
+        <SEO
+          title="Loading Writing"
+          description="Loading a writing from the SHOBDO community."
+          noIndex
+        />
+
+
+        <main
+          className="writing-details-page"
         >
 
           <div
-            className="writing-details-loading"
+            className="writing-details-container"
           >
 
-            <Loader2
-              size={30}
+            <div
+              className="writing-details-loading"
+              role="status"
+              aria-live="polite"
+            >
 
-              className="spin"
-            />
+              <Loader2
+                size={30}
+
+                className="spin"
+              />
 
 
-            <p>
+              <p>
 
-              {
-                t(
-                  "writingDetails.loading",
-                  "Loading writing..."
-                )
-              }
+                {
+                  t(
+                    "writingDetails.loading",
+                    "Loading writing..."
+                  )
+                }
 
-            </p>
+              </p>
+
+            </div>
 
           </div>
 
-        </div>
+        </main>
 
-      </main>
+      </>
 
     );
 
@@ -3610,7 +3761,7 @@ function WritingDetails() {
 
 
   // =====================================================
-  // ERROR
+  // ERROR / UNAVAILABLE
   // =====================================================
 
   if (
@@ -3620,112 +3771,123 @@ function WritingDetails() {
 
     return (
 
-      <main
-        className="writing-details-page"
-      >
+      <>
 
-        <div
-          className="writing-details-container"
+        <SEO
+          title="Writing Not Found"
+          description="This SHOBDO writing could not be found or is currently unavailable."
+          noIndex
+        />
+
+
+        <main
+          className="writing-details-page"
         >
 
-          <section
-            className="writing-details-error"
+          <div
+            className="writing-details-container"
           >
 
-            <div
-              className="details-error-icon"
+            <section
+              className="writing-details-error"
             >
 
-              <AlertCircle
-                size={30}
-              />
-
-            </div>
-
-
-            <h1>
-
-              {
-                t(
-                  "writingDetails.notFound",
-                  "Writing not found"
-                )
-              }
-
-            </h1>
-
-
-            <p>
-
-              {
-                error ||
-
-                t(
-                  "writingDetails.unavailable",
-                  "This writing is currently unavailable."
-                )
-              }
-
-            </p>
-
-
-            <div
-              className="details-error-actions"
-            >
-
-              <button
-                type="button"
-
-                className="primary-button"
-
-                onClick={
-                  () =>
-                    window
-                      .location
-                      .reload()
-                }
+              <div
+                className="details-error-icon"
               >
 
-                <RefreshCw
-                  size={17}
+                <AlertCircle
+                  size={30}
                 />
+
+              </div>
+
+
+              <h1>
 
                 {
                   t(
-                    "writingDetails.retry",
-                    "Try again"
+                    "writingDetails.notFound",
+                    "Writing not found"
                   )
                 }
 
-              </button>
+              </h1>
 
 
-              <Link
-                to="/explore"
-
-                className="details-secondary-link"
-              >
-
-                <ArrowLeft
-                  size={17}
-                />
+              <p>
 
                 {
+                  error ||
+
                   t(
-                    "writingDetails.backToExplore",
-                    "Back to Explore"
+                    "writingDetails.unavailable",
+                    "This writing is currently unavailable."
                   )
                 }
 
-              </Link>
+              </p>
 
-            </div>
 
-          </section>
+              <div
+                className="details-error-actions"
+              >
 
-        </div>
+                <button
+                  type="button"
 
-      </main>
+                  className="primary-button"
+
+                  onClick={
+                    () =>
+                      window
+                        .location
+                        .reload()
+                  }
+                >
+
+                  <RefreshCw
+                    size={17}
+                  />
+
+                  {
+                    t(
+                      "writingDetails.retry",
+                      "Try again"
+                    )
+                  }
+
+                </button>
+
+
+                <Link
+                  to="/explore"
+
+                  className="details-secondary-link"
+                >
+
+                  <ArrowLeft
+                    size={17}
+                  />
+
+                  {
+                    t(
+                      "writingDetails.backToExplore",
+                      "Back to Explore"
+                    )
+                  }
+
+                </Link>
+
+              </div>
+
+            </section>
+
+          </div>
+
+        </main>
+
+      </>
 
     );
 
@@ -3736,12 +3898,18 @@ function WritingDetails() {
   // WRITING DATA
   // =====================================================
 
+  const author =
+
+    writing.author ||
+
+    writing.user ||
+
+    {};
+
+
   const authorName =
 
-    writing.author
-      ?.name ||
-
-    writing.user
+    author
       ?.name ||
 
     writing.author_name ||
@@ -3769,13 +3937,16 @@ function WritingDetails() {
     );
 
 
+  const publishedValue =
+
+    writing.published_at ||
+
+    writing.created_at;
+
+
   const publishedDate =
     formatDate(
-
-      writing.published_at ||
-
-      writing.created_at
-
+      publishedValue
     );
 
 
@@ -3792,149 +3963,1166 @@ function WritingDetails() {
 
 
   // =====================================================
+  // DYNAMIC SEO
+  // =====================================================
+
+  const seoTitle =
+
+    stripHtml(
+      writing.title
+    )
+
+    ||
+
+    t(
+      "common.untitled",
+      "Untitled"
+    );
+
+
+  const seoDescription =
+    makeSeoDescription(
+      writing.content,
+      seoTitle
+    );
+
+
+  const seoPublishedTime =
+    toIsoDate(
+      publishedValue
+    );
+
+
+  const canonicalPath =
+    `/writings/${writing.id}`;
+
+
+  // =====================================================
   // UI
   // =====================================================
 
   return (
 
-    <main
-      className="writing-details-page"
-    >
+    <>
 
-      <div
-        className="writing-details-container"
+      {/* ===================================================
+          DYNAMIC ARTICLE SEO
+      ==================================================== */}
+
+      <SEO
+        title={
+          seoTitle
+        }
+        description={
+          seoDescription
+        }
+        path={
+          canonicalPath
+        }
+        type="article"
+        author={
+          authorName
+        }
+        publishedTime={
+          seoPublishedTime
+        }
+      />
+
+
+      <main
+        className="writing-details-page"
       >
 
-        {/* =================================================
-            BACK
-        ================================================== */}
-
-        <button
-          type="button"
-
-          className="writing-details-back"
-
-          onClick={
-            () =>
-              navigate(
-                -1
-              )
-          }
+        <div
+          className="writing-details-container"
         >
 
-          <ArrowLeft
-            size={17}
-          />
+          {/* =================================================
+              BACK
+          ================================================== */}
 
-          {
-            t(
-              "writingDetails.back",
-              "Back"
-            )
-          }
+          <button
+            type="button"
 
-        </button>
+            className="writing-details-back"
 
-
-        {/* =================================================
-            ARTICLE
-        ================================================== */}
-
-        <article
-          className="writing-details-article"
-        >
-
-          {/* ===============================================
-              HEADER
-          ================================================ */}
-
-          <header
-            className="writing-details-header"
+            onClick={
+              () =>
+                navigate(
+                  -1
+                )
+            }
           >
 
-            {/* LANGUAGE + CATEGORY */}
+            <ArrowLeft
+              size={17}
+            />
 
-            <div
-              className="writing-details-badges"
+            {
+              t(
+                "writingDetails.back",
+                "Back"
+              )
+            }
+
+          </button>
+
+
+          {/* =================================================
+              ARTICLE
+          ================================================== */}
+
+          <article
+            className="writing-details-article"
+          >
+
+            {/* ===============================================
+                HEADER
+            ================================================ */}
+
+            <header
+              className="writing-details-header"
             >
 
-              <span
-                className="writing-details-language"
+              {/* LANGUAGE + CATEGORY */}
+
+              <div
+                className="writing-details-badges"
               >
 
-                <Globe2
-                  size={13}
-                />
+                <span
+                  className="writing-details-language"
+                >
+
+                  <Globe2
+                    size={13}
+                  />
+
+                  {
+                    languageLabel
+                  }
+
+                </span>
+
+
+                <span
+                  className="writing-details-category"
+                >
+
+                  {
+                    category
+                  }
+
+                </span>
+
+              </div>
+
+
+              {/* TITLE */}
+
+              <h1>
+
+                {
+                  writing.title ||
+
+                  t(
+                    "common.untitled",
+                    "Untitled"
+                  )
+                }
+
+              </h1>
+
+
+              {/* AUTHOR */}
+
+              <div
+                className="writing-details-author"
+              >
+
+                <div
+                  className="details-author-avatar"
+                >
+
+                  {
+                    authorName
+                      ?.trim()
+                      ?.charAt(
+                        0
+                      )
+                      ?.toUpperCase()
+
+                    ||
+
+                    <User
+                      size={18}
+                    />
+                  }
+
+                </div>
+
+
+                <div>
+
+                  <span
+                    className="writing-details-author-label"
+                  >
+
+                    {
+                      t(
+                        "writingDetails.by",
+                        "By"
+                      )
+                    }
+
+                  </span>
+
+
+                  {
+                    author?.id
+                      ? (
+
+                          <Link
+                            to={
+                              `/users/${author.id}`
+                            }
+                          >
+
+                            <strong>
+                              {
+                                authorName
+                              }
+                            </strong>
+
+                          </Link>
+
+                        )
+                      : (
+
+                          <strong>
+                            {
+                              authorName
+                            }
+                          </strong>
+
+                        )
+                  }
+
+
+                  <div
+                    className="writing-details-meta"
+                  >
+
+                    <span>
+
+                      <CalendarDays
+                        size={14}
+                      />
+
+                      {
+                        publishedDate
+                      }
+
+                    </span>
+
+
+                    <span>
+
+                      <Clock3
+                        size={14}
+                      />
+
+                      {
+                        readingTime
+                      }
+
+                      {" "}
+
+                      {
+                        t(
+                          "writingDetails.readingTime",
+                          "min read"
+                        )
+                      }
+
+                    </span>
+
+
+                    <span>
+
+                      <BookOpen
+                        size={14}
+                      />
+
+                      {
+                        wordCount
+                      }
+
+                      {" "}
+
+                      {
+                        t(
+                          "writingDetails.words",
+                          "words"
+                        )
+                      }
+
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              {/* =============================================
+                  ACTION BAR
+              ============================================== */}
+
+              <div
+                className="writing-details-actions"
+              >
+
+                {/* LIKE */}
+
+                <button
+                  type="button"
+
+                  className={
+                    liked
+                      ? "writing-details-action liked"
+                      : "writing-details-action"
+                  }
+
+                  onClick={
+                    handleLike
+                  }
+
+                  disabled={
+                    liking ||
+                    authLoading
+                  }
+                >
+
+                  {
+                    liking
+                      ? (
+
+                          <Loader2
+                            size={16}
+
+                            className="spin"
+                          />
+
+                        )
+                      : (
+
+                          <Heart
+                            size={16}
+
+                            fill={
+                              liked
+                                ? "currentColor"
+                                : "none"
+                            }
+                          />
+
+                        )
+                  }
+
+
+                  <span>
+
+                    {
+                      liked
+                        ? t(
+                            "writingDetails.liked",
+                            "Liked"
+                          )
+                        : t(
+                            "writingDetails.like",
+                            "Like"
+                          )
+                    }
+
+                  </span>
+
+
+                  <strong>
+
+                    {
+                      likesCount
+                    }
+
+                  </strong>
+
+                </button>
+
+
+                {/* COMMENTS */}
+
+                <a
+                  href="#comments"
+
+                  className="writing-details-action"
+                >
+
+                  <MessageCircle
+                    size={16}
+                  />
+
+
+                  <span>
+
+                    {
+                      t(
+                        "writingDetails.comments",
+                        "Comments"
+                      )
+                    }
+
+                  </span>
+
+
+                  <strong>
+
+                    {
+                      totalComments
+                    }
+
+                  </strong>
+
+                </a>
+
+
+                {/* SHARE */}
+
+                <button
+                  type="button"
+
+                  className="writing-details-action"
+
+                  onClick={
+                    handleShare
+                  }
+                >
+
+                  <Share2
+                    size={16}
+                  />
+
+
+                  <span>
+
+                    {
+                      shareSuccess
+
+                        ? t(
+                            "common.saved",
+                            "Copied"
+                          )
+
+                        : t(
+                            "writingDetails.share",
+                            "Share"
+                          )
+                    }
+
+                  </span>
+
+                </button>
+
+              </div>
+
+            </header>
+
+
+            {/* ===============================================
+                DIVIDER
+            ================================================ */}
+
+            <div
+              className="writing-details-divider"
+            />
+
+
+            {/* ===============================================
+                ORIGINAL LANGUAGE
+            ================================================ */}
+
+            <div
+              className="writing-original-language"
+            >
+
+              <Globe2
+                size={14}
+              />
+
+
+              <span>
+
+                {
+                  t(
+                    "writingDetails.originalLanguage",
+                    "Original language"
+                  )
+                }
+
+                :
+
+              </span>
+
+
+              <strong>
 
                 {
                   languageLabel
                 }
 
-              </span>
-
-
-              <span
-                className="writing-details-category"
-              >
-
-                {
-                  category
-                }
-
-              </span>
+              </strong>
 
             </div>
 
 
-            {/* TITLE */}
+            {/* ===============================================
+                WRITING CONTENT
+            ================================================ */}
 
-            <h1>
+            <section
+              className="writing-details-content"
+            >
 
               {
-                writing.title ||
+                paragraphs.map(
+                  (
+                    paragraph,
+                    index
+                  ) => {
 
-                t(
-                  "common.untitled",
-                  "Untitled"
+                    if (
+                      !paragraph
+                        .trim()
+                    ) {
+
+                      return (
+
+                        <div
+                          key={
+                            `empty-${index}`
+                          }
+
+                          className="writing-empty-line"
+                        />
+
+                      );
+
+                    }
+
+
+                    return (
+
+                      <p
+                        key={
+                          `paragraph-${index}`
+                        }
+                      >
+
+                        {
+                          paragraph
+                        }
+
+                      </p>
+
+                    );
+
+                  }
                 )
               }
 
-            </h1>
+            </section>
 
 
-            {/* AUTHOR */}
+            {/* =================================================
+                COMMENTS
+            ================================================== */}
 
-            <div
-              className="writing-details-author"
+            <section
+              id="comments"
+
+              className="writing-comments-section"
             >
 
+              {/* =============================================
+                  HEADING
+              ============================================== */}
+
               <div
-                className="details-author-avatar"
+                className="writing-comments-heading"
               >
 
-                {
-                  authorName
-                    ?.trim()
-                    ?.charAt(
-                      0
-                    )
-                    ?.toUpperCase()
+                <div>
 
-                  ||
+                  <span
+                    className="writing-comments-eyebrow"
+                  >
 
-                  <User
-                    size={18}
-                  />
-                }
+                    {
+                      t(
+                        "writingDetails.commentSection.community",
+                        "Community"
+                      )
+                    }
+
+                  </span>
+
+
+                  <h2>
+
+                    <MessageCircle
+                      size={22}
+                    />
+
+                    {
+                      t(
+                        "writingDetails.commentSection.title",
+                        "Discussion"
+                      )
+                    }
+
+                  </h2>
+
+                </div>
+
+
+                <span
+                  className="writing-comments-total"
+                >
+
+                  {
+                    totalComments
+                  }
+
+                </span>
 
               </div>
 
 
-              <div>
+              {/* =============================================
+                  LOGGED-IN COMMENT FORM
+              ============================================== */}
 
-                <span
-                  className="writing-details-author-label"
-                >
+              {
+                !authLoading &&
+                currentUser?.id
+                  ? (
+
+                      <form
+                        className="writing-comment-form"
+
+                        onSubmit={
+                          handleCommentSubmit
+                        }
+                      >
+
+                        <div
+                          className="writing-comment-input-wrap"
+                        >
+
+                          <div
+                            className="
+                              writing-comment-avatar
+                              writing-comment-avatar-me
+                            "
+                          >
+
+                            {
+                              currentUser
+                                ?.avatar_url
+                                ? (
+
+                                    <img
+                                      src={
+                                        currentUser
+                                          .avatar_url
+                                      }
+
+                                      alt={
+                                        currentUser
+                                          ?.name ||
+                                        "User"
+                                      }
+                                    />
+
+                                  )
+                                : (
+
+                                    currentUser
+                                      ?.name
+                                      ?.trim()
+                                      ?.charAt(
+                                        0
+                                      )
+                                      ?.toUpperCase()
+
+                                    ||
+
+                                    <User
+                                      size={18}
+                                    />
+
+                                  )
+                            }
+
+                          </div>
+
+
+                          <textarea
+                            value={
+                              commentText
+                            }
+
+                            onChange={
+                              (
+                                event
+                              ) => {
+
+                                setCommentText(
+                                  event
+                                    .target
+                                    .value
+                                );
+
+
+                                if (
+                                  commentError
+                                ) {
+
+                                  setCommentError(
+                                    ""
+                                  );
+
+                                }
+
+                              }
+                            }
+
+                            placeholder={
+                              t(
+                                "writingDetails.commentSection.placeholder",
+                                "Share your thoughts..."
+                              )
+                            }
+
+                            rows={4}
+
+                            maxLength={2000}
+                          />
+
+                        </div>
+
+
+                        <div
+                          className="writing-comment-form-footer"
+                        >
+
+                          <span
+                            className="writing-comment-limit"
+                          >
+
+                            {
+                              commentText
+                                .length
+                            }/2000
+
+                          </span>
+
+
+                          <button
+                            type="submit"
+
+                            className="writing-comment-submit"
+
+                            disabled={
+                              submittingComment
+                              ||
+                              !commentText
+                                .trim()
+                            }
+                          >
+
+                            {
+                              submittingComment
+                                ? (
+
+                                    <Loader2
+                                      size={17}
+
+                                      className="spin"
+                                    />
+
+                                  )
+                                : (
+
+                                    <Send
+                                      size={17}
+                                    />
+
+                                  )
+                            }
+
+
+                            <span>
+
+                              {
+                                submittingComment
+
+                                  ? t(
+                                      "writingDetails.commentSection.posting",
+                                      "Posting..."
+                                    )
+
+                                  : t(
+                                      "writingDetails.commentSection.post",
+                                      "Post comment"
+                                    )
+                              }
+
+                            </span>
+
+                          </button>
+
+                        </div>
+
+                      </form>
+
+                    )
+
+                  : authLoading
+                    ? (
+
+                        <div
+                          className="writing-comments-auth-loading"
+                        >
+
+                          <Loader2
+                            size={18}
+
+                            className="spin"
+                          />
+
+                        </div>
+
+                      )
+                    : (
+
+                        <div
+                          className="writing-comments-login-card"
+                        >
+
+                          <div
+                            className="writing-comments-login-icon"
+                          >
+
+                            <MessageCircle
+                              size={21}
+                            />
+
+                          </div>
+
+
+                          <div>
+
+                            <strong>
+
+                              {
+                                t(
+                                  "writingDetails.commentSection.signInTitle",
+                                  "Join the discussion"
+                                )
+                              }
+
+                            </strong>
+
+
+                            <p>
+
+                              {
+                                t(
+                                  "writingDetails.commentSection.signInDescription",
+                                  "Sign in to comment and reply to other readers."
+                                )
+                              }
+
+                            </p>
+
+                          </div>
+
+
+                          <button
+                            type="button"
+
+                            onClick={
+                              () =>
+                                navigate(
+                                  "/login",
+                                  {
+                                    state: {
+                                      from:
+                                        currentPagePath,
+                                    },
+                                  }
+                                )
+                            }
+                          >
+
+                            {
+                              t(
+                                "writingDetails.commentSection.signIn",
+                                "Sign in"
+                              )
+                            }
+
+                          </button>
+
+                        </div>
+
+                      )
+              }
+
+
+              {/* =============================================
+                  COMMENT ERROR
+              ============================================== */}
+
+              {
+                commentError && (
+
+                  <div
+                    className="writing-comment-error"
+                    role="alert"
+                  >
+
+                    <AlertCircle
+                      size={17}
+                    />
+
+
+                    <span>
+
+                      {
+                        commentError
+                      }
+
+                    </span>
+
+                  </div>
+
+                )
+              }
+
+
+              {/* =============================================
+                  COMMENTS
+              ============================================== */}
+
+              <div
+                className="writing-comments-list"
+              >
+
+                {
+                  commentsLoading
+                    ? (
+
+                        <div
+                          className="writing-comments-loading"
+                        >
+
+                          <Loader2
+                            size={23}
+
+                            className="spin"
+                          />
+
+
+                          <span>
+
+                            {
+                              t(
+                                "writingDetails.commentSection.loading",
+                                "Loading comments..."
+                              )
+                            }
+
+                          </span>
+
+                        </div>
+
+                      )
+
+                    : comments.length ===
+                      0
+                      ? (
+
+                          <div
+                            className="writing-comments-empty"
+                          >
+
+                            <div
+                              className="writing-comments-empty-icon"
+                            >
+
+                              <MessageCircle
+                                size={27}
+                              />
+
+                            </div>
+
+
+                            <strong>
+
+                              {
+                                t(
+                                  "writingDetails.commentSection.emptyTitle",
+                                  "No comments yet"
+                                )
+                              }
+
+                            </strong>
+
+
+                            <p>
+
+                              {
+                                t(
+                                  "writingDetails.commentSection.emptyDescription",
+                                  "Start the conversation by sharing your thoughts."
+                                )
+                              }
+
+                            </p>
+
+                          </div>
+
+                        )
+
+                      : (
+
+                          comments.map(
+                            (
+                              comment
+                            ) => (
+
+                              <CommentThreadItem
+                                key={
+                                  comment.id
+                                }
+
+                                comment={
+                                  comment
+                                }
+
+                                currentUser={
+                                  currentUser
+                                }
+
+                                t={
+                                  t
+                                }
+
+                                formatCommentDate={
+                                  formatCommentDate
+                                }
+
+                                replyingToId={
+                                  replyingToId
+                                }
+
+                                replyText={
+                                  replyText
+                                }
+
+                                submittingReplyId={
+                                  submittingReplyId
+                                }
+
+                                editingCommentId={
+                                  editingCommentId
+                                }
+
+                                editText={
+                                  editText
+                                }
+
+                                updatingCommentId={
+                                  updatingCommentId
+                                }
+
+                                deletingCommentId={
+                                  deletingCommentId
+                                }
+
+                                onStartReply={
+                                  handleStartReply
+                                }
+
+                                onCancelReply={
+                                  handleCancelReply
+                                }
+
+                                onReplyTextChange={
+                                  setReplyText
+                                }
+
+                                onSubmitReply={
+                                  handleReplySubmit
+                                }
+
+                                onStartEdit={
+                                  handleStartEdit
+                                }
+
+                                onCancelEdit={
+                                  handleCancelEdit
+                                }
+
+                                onEditTextChange={
+                                  setEditText
+                                }
+
+                                onSubmitEdit={
+                                  handleEditSubmit
+                                }
+
+                                onDelete={
+                                  handleDeleteComment
+                                }
+                              />
+
+                            )
+                          )
+
+                        )
+                }
+
+              </div>
+
+            </section>
+
+
+            {/* ===============================================
+                FOOTER
+            ================================================ */}
+
+            <footer
+              className="writing-details-footer"
+            >
+
+              <div
+                className="writing-details-footer-author"
+              >
+
+                <span>
 
                   {
                     t(
@@ -3946,989 +5134,82 @@ function WritingDetails() {
                 </span>
 
 
-                <strong>
-
-                  {
-                    authorName
-                  }
-
-                </strong>
-
-
-                <div
-                  className="writing-details-meta"
-                >
-
-                  <span>
-
-                    <CalendarDays
-                      size={14}
-                    />
-
-                    {
-                      publishedDate
-                    }
-
-                  </span>
-
-
-                  <span>
-
-                    <Clock3
-                      size={14}
-                    />
-
-                    {
-                      readingTime
-                    }
-
-                    {" "}
-
-                    {
-                      t(
-                        "writingDetails.readingTime",
-                        "min read"
-                      )
-                    }
-
-                  </span>
-
-
-                  <span>
-
-                    <BookOpen
-                      size={14}
-                    />
-
-                    {
-                      wordCount
-                    }
-
-                    {" "}
-
-                    {
-                      t(
-                        "writingDetails.words",
-                        "words"
-                      )
-                    }
-
-                  </span>
-
-                </div>
-
-              </div>
-
-            </div>
-
-
-            {/* =============================================
-                ACTION BAR
-            ============================================== */}
-
-            <div
-              className="writing-details-actions"
-            >
-
-              {/* LIKE */}
-
-              <button
-                type="button"
-
-                className={
-                  liked
-                    ? "writing-details-action liked"
-                    : "writing-details-action"
-                }
-
-                onClick={
-                  handleLike
-                }
-
-                disabled={
-                  liking ||
-                  authLoading
-                }
-              >
-
                 {
-                  liking
+                  author?.id
                     ? (
 
-                        <Loader2
-                          size={16}
+                        <Link
+                          to={
+                            `/users/${author.id}`
+                          }
+                        >
 
-                          className="spin"
-                        />
+                          <strong>
+                            {
+                              authorName
+                            }
+                          </strong>
+
+                        </Link>
 
                       )
                     : (
 
-                        <Heart
-                          size={16}
-
-                          fill={
-                            liked
-                              ? "currentColor"
-                              : "none"
+                        <strong>
+                          {
+                            authorName
                           }
-                        />
+                        </strong>
 
                       )
                 }
 
-
-                <span>
-
-                  {
-                    liked
-                      ? t(
-                          "writingDetails.liked",
-                          "Liked"
-                        )
-                      : t(
-                          "writingDetails.like",
-                          "Like"
-                        )
-                  }
-
-                </span>
+              </div>
 
 
-                <strong>
-
-                  {
-                    likesCount
-                  }
-
-                </strong>
-
-              </button>
-
-
-              {/* COMMENTS */}
-
-              <a
-                href="#comments"
-
-                className="writing-details-action"
+              <div
+                className="writing-details-footer-links"
               >
-
-                <MessageCircle
-                  size={16}
-                />
-
-
-                <span>
-
-                  {
-                    t(
-                      "writingDetails.comments",
-                      "Comments"
-                    )
-                  }
-
-                </span>
-
-
-                <strong>
-
-                  {
-                    totalComments
-                  }
-
-                </strong>
-
-              </a>
-
-
-              {/* SHARE */}
-
-              <button
-                type="button"
-
-                className="writing-details-action"
-
-                onClick={
-                  handleShare
-                }
-              >
-
-                <Share2
-                  size={16}
-                />
-
-
-                <span>
-
-                  {
-                    shareSuccess
-
-                      ? t(
-                          "common.saved",
-                          "Copied"
-                        )
-
-                      : t(
-                          "writingDetails.share",
-                          "Share"
-                        )
-                  }
-
-                </span>
-
-              </button>
-
-            </div>
-
-          </header>
-
-
-          {/* ===============================================
-              DIVIDER
-          ================================================ */}
-
-          <div
-            className="writing-details-divider"
-          />
-
-
-          {/* ===============================================
-              ORIGINAL LANGUAGE
-          ================================================ */}
-
-          <div
-            className="writing-original-language"
-          >
-
-            <Globe2
-              size={14}
-            />
-
-
-            <span>
-
-              {
-                t(
-                  "writingDetails.originalLanguage",
-                  "Original language"
-                )
-              }
-
-              :
-
-            </span>
-
-
-            <strong>
-
-              {
-                languageLabel
-              }
-
-            </strong>
-
-          </div>
-
-
-          {/* ===============================================
-              WRITING CONTENT
-          ================================================ */}
-
-          <section
-            className="writing-details-content"
-          >
-
-            {
-              paragraphs.map(
-                (
-                  paragraph,
-                  index
-                ) => {
-
-                  if (
-                    !paragraph
-                      .trim()
-                  ) {
-
-                    return (
-
-                      <div
-                        key={
-                          `empty-${index}`
-                        }
-
-                        className="writing-empty-line"
-                      />
-
-                    );
-
-                  }
-
-
-                  return (
-
-                    <p
-                      key={
-                        `paragraph-${index}`
-                      }
-                    >
-
-                      {
-                        paragraph
-                      }
-
-                    </p>
-
-                  );
-
-                }
-              )
-            }
-
-          </section>
-
-
-          {/* =================================================
-              COMMENTS
-          ================================================== */}
-
-          <section
-            id="comments"
-
-            className="writing-comments-section"
-          >
-
-            {/* =============================================
-                HEADING
-            ============================================== */}
-
-            <div
-              className="writing-comments-heading"
-            >
-
-              <div>
 
                 <span
-                  className="writing-comments-eyebrow"
+                  className="writing-details-footer-language"
                 >
 
+                  <Globe2
+                    size={15}
+                  />
+
                   {
-                    t(
-                      "writingDetails.commentSection.community",
-                      "Community"
-                    )
+                    languageLabel
                   }
 
                 </span>
 
 
-                <h2>
-
-                  <MessageCircle
-                    size={22}
-                  />
+                <Link
+                  to="/explore"
+                >
 
                   {
                     t(
-                      "writingDetails.commentSection.title",
-                      "Discussion"
+                      "writingDetails.moreWritings",
+                      "Explore more writings"
                     )
                   }
 
-                </h2>
+                </Link>
 
               </div>
 
+            </footer>
 
-              <span
-                className="writing-comments-total"
-              >
+          </article>
 
-                {
-                  totalComments
-                }
+        </div>
 
-              </span>
+      </main>
 
-            </div>
-
-
-            {/* =============================================
-                LOGGED-IN COMMENT FORM
-            ============================================== */}
-
-            {
-              !authLoading &&
-              currentUser?.id
-                ? (
-
-                    <form
-                      className="writing-comment-form"
-
-                      onSubmit={
-                        handleCommentSubmit
-                      }
-                    >
-
-                      <div
-                        className="writing-comment-input-wrap"
-                      >
-
-                        <div
-                          className="
-                            writing-comment-avatar
-                            writing-comment-avatar-me
-                          "
-                        >
-
-                          {
-                            currentUser
-                              ?.avatar_url
-                              ? (
-
-                                  <img
-                                    src={
-                                      currentUser
-                                        .avatar_url
-                                    }
-
-                                    alt={
-                                      currentUser
-                                        ?.name ||
-                                      "User"
-                                    }
-                                  />
-
-                                )
-                              : (
-
-                                  currentUser
-                                    ?.name
-                                    ?.trim()
-                                    ?.charAt(
-                                      0
-                                    )
-                                    ?.toUpperCase()
-
-                                  ||
-
-                                  <User
-                                    size={18}
-                                  />
-
-                                )
-                          }
-
-                        </div>
-
-
-                        <textarea
-                          value={
-                            commentText
-                          }
-
-                          onChange={
-                            (
-                              event
-                            ) => {
-
-                              setCommentText(
-                                event
-                                  .target
-                                  .value
-                              );
-
-
-                              if (
-                                commentError
-                              ) {
-
-                                setCommentError(
-                                  ""
-                                );
-
-                              }
-
-                            }
-                          }
-
-                          placeholder={
-                            t(
-                              "writingDetails.commentSection.placeholder",
-                              "Share your thoughts..."
-                            )
-                          }
-
-                          rows={4}
-
-                          maxLength={2000}
-                        />
-
-                      </div>
-
-
-                      <div
-                        className="writing-comment-form-footer"
-                      >
-
-                        <span
-                          className="writing-comment-limit"
-                        >
-
-                          {
-                            commentText
-                              .length
-                          }/2000
-
-                        </span>
-
-
-                        <button
-                          type="submit"
-
-                          className="writing-comment-submit"
-
-                          disabled={
-                            submittingComment
-                            ||
-                            !commentText
-                              .trim()
-                          }
-                        >
-
-                          {
-                            submittingComment
-                              ? (
-
-                                  <Loader2
-                                    size={17}
-
-                                    className="spin"
-                                  />
-
-                                )
-                              : (
-
-                                  <Send
-                                    size={17}
-                                  />
-
-                                )
-                          }
-
-
-                          <span>
-
-                            {
-                              submittingComment
-
-                                ? t(
-                                    "writingDetails.commentSection.posting",
-                                    "Posting..."
-                                  )
-
-                                : t(
-                                    "writingDetails.commentSection.post",
-                                    "Post comment"
-                                  )
-                            }
-
-                          </span>
-
-                        </button>
-
-                      </div>
-
-                    </form>
-
-                  )
-
-                : authLoading
-                  ? (
-
-                      <div
-                        className="writing-comments-auth-loading"
-                      >
-
-                        <Loader2
-                          size={18}
-
-                          className="spin"
-                        />
-
-                      </div>
-
-                    )
-                  : (
-
-                      /* =====================================
-                         LOGGED OUT
-                      ====================================== */
-
-                      <div
-                        className="writing-comments-login-card"
-                      >
-
-                        <div
-                          className="writing-comments-login-icon"
-                        >
-
-                          <MessageCircle
-                            size={21}
-                          />
-
-                        </div>
-
-
-                        <div>
-
-                          <strong>
-
-                            {
-                              t(
-                                "writingDetails.commentSection.signInTitle",
-                                "Join the discussion"
-                              )
-                            }
-
-                          </strong>
-
-
-                          <p>
-
-                            {
-                              t(
-                                "writingDetails.commentSection.signInDescription",
-                                "Sign in to comment and reply to other readers."
-                              )
-                            }
-
-                          </p>
-
-                        </div>
-
-
-                        <button
-                          type="button"
-
-                          onClick={
-                            () =>
-                              navigate(
-                                "/login"
-                              )
-                          }
-                        >
-
-                          {
-                            t(
-                              "writingDetails.commentSection.signIn",
-                              "Sign in"
-                            )
-                          }
-
-                        </button>
-
-                      </div>
-
-                    )
-            }
-
-
-            {/* =============================================
-                COMMENT ERROR
-            ============================================== */}
-
-            {
-              commentError && (
-
-                <div
-                  className="writing-comment-error"
-                >
-
-                  <AlertCircle
-                    size={17}
-                  />
-
-
-                  <span>
-
-                    {
-                      commentError
-                    }
-
-                  </span>
-
-                </div>
-
-              )
-            }
-
-
-            {/* =============================================
-                COMMENTS
-            ============================================== */}
-
-            <div
-              className="writing-comments-list"
-            >
-
-              {
-                commentsLoading
-                  ? (
-
-                      <div
-                        className="writing-comments-loading"
-                      >
-
-                        <Loader2
-                          size={23}
-
-                          className="spin"
-                        />
-
-
-                        <span>
-
-                          {
-                            t(
-                              "writingDetails.commentSection.loading",
-                              "Loading comments..."
-                            )
-                          }
-
-                        </span>
-
-                      </div>
-
-                    )
-
-                  : comments.length ===
-                    0
-                    ? (
-
-                        <div
-                          className="writing-comments-empty"
-                        >
-
-                          <div
-                            className="writing-comments-empty-icon"
-                          >
-
-                            <MessageCircle
-                              size={27}
-                            />
-
-                          </div>
-
-
-                          <strong>
-
-                            {
-                              t(
-                                "writingDetails.commentSection.emptyTitle",
-                                "No comments yet"
-                              )
-                            }
-
-                          </strong>
-
-
-                          <p>
-
-                            {
-                              t(
-                                "writingDetails.commentSection.emptyDescription",
-                                "Start the conversation by sharing your thoughts."
-                              )
-                            }
-
-                          </p>
-
-                        </div>
-
-                      )
-
-                    : (
-
-                        comments.map(
-                          (
-                            comment
-                          ) => (
-
-                            <CommentThreadItem
-                              key={
-                                comment.id
-                              }
-
-                              comment={
-                                comment
-                              }
-
-                              currentUser={
-                                currentUser
-                              }
-
-                              t={
-                                t
-                              }
-
-                              formatCommentDate={
-                                formatCommentDate
-                              }
-
-                              replyingToId={
-                                replyingToId
-                              }
-
-                              replyText={
-                                replyText
-                              }
-
-                              submittingReplyId={
-                                submittingReplyId
-                              }
-
-                              editingCommentId={
-                                editingCommentId
-                              }
-
-                              editText={
-                                editText
-                              }
-
-                              updatingCommentId={
-                                updatingCommentId
-                              }
-
-                              deletingCommentId={
-                                deletingCommentId
-                              }
-
-                              onStartReply={
-                                handleStartReply
-                              }
-
-                              onCancelReply={
-                                handleCancelReply
-                              }
-
-                              onReplyTextChange={
-                                setReplyText
-                              }
-
-                              onSubmitReply={
-                                handleReplySubmit
-                              }
-
-                              onStartEdit={
-                                handleStartEdit
-                              }
-
-                              onCancelEdit={
-                                handleCancelEdit
-                              }
-
-                              onEditTextChange={
-                                setEditText
-                              }
-
-                              onSubmitEdit={
-                                handleEditSubmit
-                              }
-
-                              onDelete={
-                                handleDeleteComment
-                              }
-                            />
-
-                          )
-                        )
-
-                      )
-              }
-
-            </div>
-
-          </section>
-
-
-          {/* ===============================================
-              FOOTER
-          ================================================ */}
-
-          <footer
-            className="writing-details-footer"
-          >
-
-            <div
-              className="writing-details-footer-author"
-            >
-
-              <span>
-
-                {
-                  t(
-                    "writingDetails.by",
-                    "By"
-                  )
-                }
-
-              </span>
-
-
-              <strong>
-
-                {
-                  authorName
-                }
-
-              </strong>
-
-            </div>
-
-
-            <div
-              className="writing-details-footer-links"
-            >
-
-              <span
-                className="writing-details-footer-language"
-              >
-
-                <Globe2
-                  size={15}
-                />
-
-                {
-                  languageLabel
-                }
-
-              </span>
-
-
-              <Link
-                to="/explore"
-              >
-
-                {
-                  t(
-                    "writingDetails.moreWritings",
-                    "Explore more writings"
-                  )
-                }
-
-              </Link>
-
-            </div>
-
-          </footer>
-
-        </article>
-
-      </div>
-
-    </main>
+    </>
 
   );
 

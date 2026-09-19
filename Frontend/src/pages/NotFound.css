@@ -1,0 +1,510 @@
+/* =========================================================
+   SHOBDO
+   PUBLIC 404 PAGE
+========================================================= */
+
+.not-found-page {
+  width: 100%;
+
+  min-height:
+    calc(
+      100vh - 70px
+    );
+
+  display: grid;
+
+  place-items: center;
+
+  padding:
+    60px
+    20px
+    80px;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 80% 10%,
+      rgba(
+        174,
+        123,
+        52,
+        0.1
+      ),
+      transparent 30%
+    ),
+    linear-gradient(
+      180deg,
+      #faf7f2,
+      #f8f5ef
+    );
+
+  color: #2d2722;
+}
+
+
+.not-found-page *,
+.not-found-page *::before,
+.not-found-page *::after {
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   SHELL
+========================================================= */
+
+.not-found-shell {
+  position: relative;
+
+  width:
+    min(
+      100%,
+      850px
+    );
+
+  padding:
+    56px
+    50px;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    #e3d6c7;
+
+  border-radius: 27px;
+
+  background:
+    rgba(
+      255,
+      253,
+      250,
+      0.97
+    );
+
+  text-align: center;
+
+  box-shadow:
+    0
+    20px
+    55px
+    rgba(
+      57,
+      42,
+      27,
+      0.06
+    );
+}
+
+
+/* =========================================================
+   BRAND
+========================================================= */
+
+.not-found-brand {
+  position: relative;
+
+  z-index: 2;
+
+  width: fit-content;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  color: #312a24;
+
+  text-decoration: none;
+}
+
+
+.not-found-brand-icon {
+  width: 39px;
+  height: 39px;
+
+  display: grid;
+
+  place-items: center;
+
+  border:
+    1px solid
+    #e0cdb3;
+
+  border-radius: 11px;
+
+  background: #f7ecdd;
+
+  color: #8c6224;
+}
+
+
+.not-found-brand > span:last-child {
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: flex-start;
+}
+
+
+.not-found-brand strong {
+  font-family:
+    Georgia,
+    serif;
+
+  font-size: 15px;
+
+  letter-spacing: 0.08em;
+}
+
+
+.not-found-brand small {
+  margin-top: 2px;
+
+  color: #9b7b53;
+
+  font-size: 8px;
+}
+
+
+/* =========================================================
+   404
+========================================================= */
+
+.not-found-number {
+  position: absolute;
+
+  top: 15px;
+  left: 50%;
+
+  transform:
+    translateX(-50%);
+
+  color:
+    rgba(
+      139,
+      97,
+      36,
+      0.045
+    );
+
+  font-family:
+    Georgia,
+    serif;
+
+  font-size:
+    clamp(
+      150px,
+      28vw,
+      260px
+    );
+
+  font-weight: 700;
+
+  line-height: 1;
+
+  pointer-events: none;
+
+  user-select: none;
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.not-found-content {
+  position: relative;
+
+  z-index: 2;
+
+  max-width: 590px;
+
+  margin:
+    70px
+    auto
+    0;
+}
+
+
+.not-found-eyebrow {
+  color: #93682e;
+
+  font-size: 8px;
+
+  font-weight: 900;
+
+  letter-spacing: 0.14em;
+
+  text-transform: uppercase;
+}
+
+
+.not-found-content h1 {
+  margin:
+    12px
+    0
+    0;
+
+  color: #302823;
+
+  font-family:
+    "Noto Serif Bengali",
+    "Noto Serif Devanagari",
+    Georgia,
+    "Times New Roman",
+    serif;
+
+  font-size:
+    clamp(
+      30px,
+      5vw,
+      46px
+    );
+
+  font-weight: 700;
+
+  line-height: 1.16;
+
+  letter-spacing: -0.035em;
+}
+
+
+.not-found-content > p {
+  max-width: 520px;
+
+  margin:
+    16px
+    auto
+    0;
+
+  color: #786d63;
+
+  font-size: 10.5px;
+
+  line-height: 1.78;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.not-found-actions {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-wrap: wrap;
+
+  gap: 8px;
+
+  margin-top: 25px;
+}
+
+
+.not-found-primary,
+.not-found-secondary {
+  min-height: 42px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 7px;
+
+  padding:
+    0
+    15px;
+
+  border-radius: 10px;
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+  text-decoration: none;
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+
+.not-found-primary {
+  border:
+    1px solid
+    #8b6125;
+
+  background:
+    linear-gradient(
+      135deg,
+      #8c6224,
+      #a77938
+    );
+
+  color: #ffffff;
+
+  box-shadow:
+    0
+    6px
+    16px
+    rgba(
+      126,
+      84,
+      27,
+      0.14
+    );
+}
+
+
+.not-found-secondary {
+  border:
+    1px solid
+    #dbcbb8;
+
+  background: #fffaf4;
+
+  color: #74501d;
+}
+
+
+.not-found-primary:hover,
+.not-found-secondary:hover {
+  transform:
+    translateY(-1px);
+}
+
+
+/* =========================================================
+   SECONDARY LINKS
+========================================================= */
+
+.not-found-links {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-wrap: wrap;
+
+  gap: 16px;
+
+  margin-top: 22px;
+}
+
+
+.not-found-links a {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  color: #94887d;
+
+  font-size: 8px;
+
+  font-weight: 700;
+
+  text-decoration: none;
+}
+
+
+.not-found-links a:hover {
+  color: #76501c;
+}
+
+
+/* =========================================================
+   FOCUS
+========================================================= */
+
+.not-found-page a:focus-visible {
+  outline:
+    3px solid
+    rgba(
+      141,
+      98,
+      35,
+      0.18
+    );
+
+  outline-offset: 3px;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+  max-width: 650px
+) {
+
+  .not-found-page {
+    min-height:
+      calc(
+        100vh - 61px
+      );
+
+    padding:
+      35px
+      13px
+      50px;
+  }
+
+
+  .not-found-shell {
+    padding:
+      38px
+      19px;
+
+    border-radius: 20px;
+  }
+
+
+  .not-found-content {
+    margin-top: 62px;
+  }
+
+
+  .not-found-actions {
+    align-items: stretch;
+
+    flex-direction: column;
+  }
+
+
+  .not-found-primary,
+  .not-found-secondary {
+    width: 100%;
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+
+  .not-found-primary,
+  .not-found-secondary {
+    transition: none;
+  }
+
+}

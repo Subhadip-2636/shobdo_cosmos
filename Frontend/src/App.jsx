@@ -1,9 +1,11 @@
 import {
   BrowserRouter,
   Navigate,
+  Outlet,
   Route,
   Routes,
 } from "react-router-dom";
+
 
 import {
   useCallback,
@@ -30,6 +32,13 @@ import NotificationToast from "./components/NotificationToast";
 
 
 // =========================================================
+// PUBLIC HOME
+// =========================================================
+
+import PublicHome from "./pages/PublicHome";
+
+
+// =========================================================
 // MAIN PAGES
 // =========================================================
 
@@ -40,13 +49,8 @@ import WritingDetails from "./pages/WritingDetails";
 import MyWritings from "./pages/MyWritings";
 import ConnectionsPage from "./pages/ConnectionsPage";
 import SearchPage from "./pages/SearchPage";
-
-
-// =========================================================
-// NEW: HASHTAG / TAG PAGE
-// =========================================================
-
 import TagPage from "./pages/TagPage";
+import NotFound from "./pages/NotFound";
 
 
 // =========================================================
@@ -99,14 +103,37 @@ import {
   getWritings,
 } from "./api/api";
 
+
 import {
   getCurrentUser,
 } from "./api/auth";
+
 
 import {
   connectSocket,
   disconnectSocket,
 } from "./api/socket";
+
+
+// =========================================================
+// ROUTE LOADING
+// =========================================================
+
+function RouteLoading() {
+
+  return (
+
+    <div
+      className="app-route-loading"
+      role="status"
+      aria-live="polite"
+    >
+      Loading...
+    </div>
+
+  );
+
+}
 
 
 // =========================================================
@@ -120,15 +147,13 @@ function PrivateRoute({
 }) {
 
   // -------------------------------------------------------
-  // WAIT FOR AUTHENTICATION CHECK
+  // WAIT FOR AUTH CHECK
   // -------------------------------------------------------
 
   if (authLoading) {
 
     return (
-      <div className="app-route-loading">
-        Loading...
-      </div>
+      <RouteLoading />
     );
 
   }
@@ -141,21 +166,33 @@ function PrivateRoute({
   if (!user) {
 
     return (
+
       <Navigate
         to="/login"
         replace
       />
+
     );
 
   }
 
 
+  // -------------------------------------------------------
+  // AUTHENTICATED
+  // -------------------------------------------------------
+
   return children;
+
 }
 
 
 // =========================================================
 // PUBLIC-ONLY ROUTE
+// =========================================================
+//
+// Login/register/password pages should not be shown after
+// authentication succeeds.
+//
 // =========================================================
 
 function PublicOnlyRoute({
@@ -167,9 +204,7 @@ function PublicOnlyRoute({
   if (authLoading) {
 
     return (
-      <div className="app-route-loading">
-        Loading...
-      </div>
+      <RouteLoading />
     );
 
   }
@@ -178,24 +213,34 @@ function PublicOnlyRoute({
   if (user) {
 
     return (
+
       <Navigate
         to="/"
         replace
       />
+
     );
 
   }
 
 
   return children;
+
 }
 
 
 // =========================================================
 // STANDALONE PAGE
+// =========================================================
 //
-// Used by authentication, About and legal pages.
-// Social pages are rendered inside SocialLayout.
+// Authentication / About / legal pages.
+//
+// Navbar remains global.
+// Footer is rendered here.
+//
+// Use DIV instead of another MAIN because many page
+// components already contain their own <main> element.
+//
 // =========================================================
 
 function StandalonePage({
@@ -204,19 +249,175 @@ function StandalonePage({
 }) {
 
   return (
+
     <>
 
-      <main className="app-standalone-content">
+      <div className="app-standalone-content">
+
         {children}
-      </main>
+
+      </div>
 
 
-      {showFooter && (
-        <Footer />
-      )}
+      {
+        showFooter && (
+          <Footer />
+        )
+      }
 
     </>
+
   );
+
+}
+
+
+// =========================================================
+// HOME ROUTE
+// =========================================================
+//
+// Guest:
+//   PublicHome + public footer
+//
+// Logged in:
+//   SocialLayout
+//      └── Home through <Outlet />
+//
+// This prevents the old duplicate SocialLayout problem.
+//
+// =========================================================
+
+function HomeRoute({
+  user,
+  authLoading,
+}) {
+
+  // -------------------------------------------------------
+  // AUTH STATE IS STILL BEING RESOLVED
+  // -------------------------------------------------------
+
+  if (authLoading) {
+
+    return (
+      <RouteLoading />
+    );
+
+  }
+
+
+  // -------------------------------------------------------
+  // LOGGED-IN SOCIAL HOME
+  // -------------------------------------------------------
+
+  if (user) {
+
+    return (
+
+      <SocialLayout
+        user={user}
+      />
+
+    );
+
+  }
+
+
+  // -------------------------------------------------------
+  // PUBLIC WEBSITE HOME
+  // -------------------------------------------------------
+
+  return (
+
+    <>
+
+      <PublicHome />
+
+      <Footer />
+
+    </>
+
+  );
+
+}
+
+
+// =========================================================
+// PUBLIC BROWSING LAYOUT
+// =========================================================
+//
+// These routes are public:
+//
+//   /explore
+//   /search
+//   /tag/:tagName
+//   /writings/:id
+//   /users/:id
+//   /users/:id/followers
+//   /users/:id/following
+//
+// Guest:
+//   Clean public page + Footer
+//
+// Logged in:
+//   Same page inside SocialLayout
+//
+// Therefore the URL stays identical while the shell adapts
+// automatically to authentication.
+//
+// =========================================================
+
+function BrowseLayout({
+  user,
+  authLoading,
+}) {
+
+  if (authLoading) {
+
+    return (
+      <RouteLoading />
+    );
+
+  }
+
+
+  // -------------------------------------------------------
+  // LOGGED-IN SOCIAL EXPERIENCE
+  // -------------------------------------------------------
+
+  if (user) {
+
+    return (
+
+      <SocialLayout
+        user={user}
+      />
+
+    );
+
+  }
+
+
+  // -------------------------------------------------------
+  // PUBLIC WEBSITE EXPERIENCE
+  // -------------------------------------------------------
+
+  return (
+
+    <>
+
+      <div className="app-public-browse-content">
+
+        <Outlet />
+
+      </div>
+
+
+      <Footer />
+
+    </>
+
+  );
+
 }
 
 
@@ -421,10 +622,12 @@ function App() {
     () => {
 
       // ---------------------------------------------------
-      // WAIT UNTIL AUTH CHECK IS FINISHED
+      // WAIT UNTIL AUTH CHECK IS COMPLETE
       // ---------------------------------------------------
 
-      if (authLoading) {
+      if (
+        authLoading
+      ) {
 
         return undefined;
 
@@ -435,7 +638,9 @@ function App() {
       // LOGGED OUT
       // ---------------------------------------------------
 
-      if (!user) {
+      if (
+        !user
+      ) {
 
         disconnectSocket();
 
@@ -458,11 +663,14 @@ function App() {
         connectSocket();
 
 
-      if (!socket) {
+      if (
+        !socket
+      ) {
 
         console.warn(
           "SHOBDO SOCKET: No socket created."
         );
+
 
         return undefined;
 
@@ -556,7 +764,7 @@ function App() {
 
 
         // -------------------------------------------------
-        // INFORM NAVBAR / SIDEBAR / NOTIFICATION PAGE
+        // UPDATE NAVBAR / SIDEBAR / NOTIFICATION PAGE
         // -------------------------------------------------
 
         window.dispatchEvent(
@@ -591,7 +799,7 @@ function App() {
 
 
       // ===================================================
-      // REGISTER SOCKET EVENTS
+      // REGISTER EVENTS
       // ===================================================
 
       socket.on(
@@ -643,7 +851,7 @@ function App() {
 
 
       // ===================================================
-      // CLEANUP
+      // CLEANUP SOCKET LISTENERS
       // ===================================================
 
       return () => {
@@ -767,6 +975,7 @@ function App() {
 
     <BrowserRouter>
 
+
       {/* ===================================================
           SCROLL TO TOP
       ==================================================== */}
@@ -775,7 +984,7 @@ function App() {
 
 
       {/* ===================================================
-          GLOBAL REAL-TIME NOTIFICATION TOAST
+          REAL-TIME NOTIFICATION TOAST
       ==================================================== */}
 
       <NotificationToast
@@ -800,6 +1009,7 @@ function App() {
 
       <div className="app-shell">
 
+
         {/* ===============================================
             GLOBAL NAVBAR
         ================================================ */}
@@ -820,26 +1030,38 @@ function App() {
 
         <Routes>
 
+
           {/* =================================================
-              SOCIAL APPLICATION
+              HOME
+
+              Guest:
+                Public landing website
+
+              Logged in:
+                Social feed
           ================================================== */}
 
           <Route
+            path="/"
             element={
-              <SocialLayout
-                user={user}
+              <HomeRoute
+                user={
+                  user
+                }
+                authLoading={
+                  authLoading
+                }
               />
             }
           >
 
-            {/* =============================================
-                HOME
-            ============================================== */}
-
             <Route
-              path="/"
+              index
               element={
                 <Home
+                  user={
+                    user
+                  }
                   writings={
                     writings
                   }
@@ -849,6 +1071,32 @@ function App() {
                 />
               }
             />
+
+          </Route>
+
+
+          {/* =================================================
+              PUBLIC BROWSING ROUTES
+
+              Guests:
+                clean public website
+
+              Logged-in:
+                SocialLayout
+          ================================================== */}
+
+          <Route
+            element={
+              <BrowseLayout
+                user={
+                  user
+                }
+                authLoading={
+                  authLoading
+                }
+              />
+            }
+          >
 
 
             {/* =============================================
@@ -876,13 +1124,12 @@ function App() {
 
 
             {/* =============================================
-                HASHTAG PAGE
+                HASHTAG / TAG
 
-                Example:
-
-                /tag/কবিতা
-                /tag/Poetry
-                /tag/प्रकृति
+                Examples:
+                  /tag/কবিতা
+                  /tag/Poetry
+                  /tag/प्रकृति
             ============================================== */}
 
             <Route
@@ -894,7 +1141,7 @@ function App() {
 
 
             {/* =============================================
-                WRITING DETAILS
+                PUBLIC WRITING DETAILS
             ============================================== */}
 
             <Route
@@ -945,6 +1192,37 @@ function App() {
             />
 
 
+          </Route>
+
+
+          {/* =================================================
+              AUTHENTICATED SOCIAL APPLICATION
+          ================================================== */}
+
+          <Route
+            element={
+
+              <PrivateRoute
+                user={
+                  user
+                }
+                authLoading={
+                  authLoading
+                }
+              >
+
+                <SocialLayout
+                  user={
+                    user
+                  }
+                />
+
+              </PrivateRoute>
+
+            }
+          >
+
+
             {/* =============================================
                 WRITE
             ============================================== */}
@@ -952,27 +1230,14 @@ function App() {
             <Route
               path="/write"
               element={
-
-                <PrivateRoute
+                <Write
                   user={
                     user
                   }
-                  authLoading={
-                    authLoading
+                  onWritingCreated={
+                    handleWritingChanged
                   }
-                >
-
-                  <Write
-                    user={
-                      user
-                    }
-                    onWritingCreated={
-                      handleWritingChanged
-                    }
-                  />
-
-                </PrivateRoute>
-
+                />
               }
             />
 
@@ -984,27 +1249,14 @@ function App() {
             <Route
               path="/write/:id"
               element={
-
-                <PrivateRoute
+                <Write
                   user={
                     user
                   }
-                  authLoading={
-                    authLoading
+                  onWritingCreated={
+                    handleWritingChanged
                   }
-                >
-
-                  <Write
-                    user={
-                      user
-                    }
-                    onWritingCreated={
-                      handleWritingChanged
-                    }
-                  />
-
-                </PrivateRoute>
-
+                />
               }
             />
 
@@ -1016,20 +1268,7 @@ function App() {
             <Route
               path="/my-writings"
               element={
-
-                <PrivateRoute
-                  user={
-                    user
-                  }
-                  authLoading={
-                    authLoading
-                  }
-                >
-
-                  <MyWritings />
-
-                </PrivateRoute>
-
+                <MyWritings />
               }
             />
 
@@ -1041,20 +1280,7 @@ function App() {
             <Route
               path="/saved"
               element={
-
-                <PrivateRoute
-                  user={
-                    user
-                  }
-                  authLoading={
-                    authLoading
-                  }
-                >
-
-                  <Saved />
-
-                </PrivateRoute>
-
+                <Saved />
               }
             />
 
@@ -1066,20 +1292,7 @@ function App() {
             <Route
               path="/notifications"
               element={
-
-                <PrivateRoute
-                  user={
-                    user
-                  }
-                  authLoading={
-                    authLoading
-                  }
-                >
-
-                  <Notifications />
-
-                </PrivateRoute>
-
+                <Notifications />
               }
             />
 
@@ -1091,35 +1304,23 @@ function App() {
             <Route
               path="/profile/edit"
               element={
-
-                <PrivateRoute
+                <EditProfile
                   user={
                     user
                   }
-                  authLoading={
-                    authLoading
+                  onProfileUpdated={
+                    loadCurrentUser
                   }
-                >
-
-                  <EditProfile
-                    user={
-                      user
-                    }
-                    onProfileUpdated={
-                      loadCurrentUser
-                    }
-                  />
-
-                </PrivateRoute>
-
+                />
               }
             />
+
 
           </Route>
 
 
           {/* =================================================
-              AUTHENTICATION PAGES
+              LOGIN
           ================================================== */}
 
           <Route
@@ -1151,6 +1352,10 @@ function App() {
           />
 
 
+          {/* =================================================
+              REGISTER
+          ================================================== */}
+
           <Route
             path="/register"
             element={
@@ -1180,6 +1385,10 @@ function App() {
           />
 
 
+          {/* =================================================
+              FORGOT PASSWORD
+          ================================================== */}
+
           <Route
             path="/forgot-password"
             element={
@@ -1204,6 +1413,10 @@ function App() {
             }
           />
 
+
+          {/* =================================================
+              RESET PASSWORD
+          ================================================== */}
 
           <Route
             path="/reset-password/:token"
@@ -1309,12 +1522,12 @@ function App() {
           <Route
             path="*"
             element={
-              <Navigate
-                to="/"
-                replace
-              />
+              <StandalonePage>
+                <NotFound />
+              </StandalonePage>
             }
           />
+
 
         </Routes>
 

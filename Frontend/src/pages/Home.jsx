@@ -1,36 +1,27 @@
 import {
-  useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 
 import {
-  ArrowLeft,
-  ArrowRight,
   BookOpen,
-  Clock3,
-  Feather,
-  Lightbulb,
+  FileText,
+  Image as ImageIcon,
   Loader2,
   PenLine,
-  Quote,
   RefreshCw,
   Sparkles,
-  UsersRound,
+  Users,
 } from "lucide-react";
 
 import {
   Link,
+  useNavigate,
 } from "react-router-dom";
-
-import WritingCard from "../components/WritingCard";
-import WritingCardSkeleton from "../components/WritingCardSkeleton";
 
 import {
   getFollowingFeed,
-  getToken,
   getWritings,
 } from "../api/api";
 
@@ -38,293 +29,79 @@ import {
   useLanguage,
 } from "../Language/LanguageContext";
 
-import "./HomeAnimations.css";
+import WritingCard
+  from "../components/WritingCard";
+
+import "./Home.css";
 
 
 // =========================================================
 // CONSTANTS
 // =========================================================
 
-const FEED_PAGE_SIZE = 12;
-
-const FEED_TYPES = {
-  FOR_YOU: "for-you",
-  FOLLOWING: "following",
-  LATEST: "latest",
-};
-
-
-// =========================================================
-// CLASSIC PUBLIC-DOMAIN QUOTES
-// =========================================================
-
-const LITERARY_QUOTES = [
-  {
-    quote:
-      "To thine own self be true.",
-    author:
-      "William Shakespeare",
-    source:
-      "Hamlet",
-  },
-  {
-    quote:
-      "There is no charm equal to tenderness of heart.",
-    author:
-      "Jane Austen",
-    source:
-      "Emma",
-  },
-  {
-    quote:
-      "I am no bird; and no net ensnares me.",
-    author:
-      "Charlotte Brontë",
-    source:
-      "Jane Eyre",
-  },
-  {
-    quote:
-      "Forever is composed of nows.",
-    author:
-      "Emily Dickinson",
-    source:
-      "Poem 690",
-  },
-];
-
-
-// =========================================================
-// CATEGORIES
-// =========================================================
-
-const CATEGORIES = [
-  {
-    value: "কবিতা",
-    translationKey: "categories.poetry",
-    symbol: "✦",
-    number: "01",
-  },
-  {
-    value: "গল্প",
-    translationKey: "categories.story",
-    symbol: "◈",
-    number: "02",
-  },
-  {
-    value: "অনুভূতি",
-    translationKey: "categories.reflection",
-    symbol: "●",
-    number: "03",
-  },
-  {
-    value: "প্রবন্ধ",
-    translationKey: "categories.essay",
-    symbol: "◇",
-    number: "04",
-  },
-];
+const PAGE_SIZE = 12;
 
 
 // =========================================================
 // HELPERS
 // =========================================================
 
-function safeNumber(
-  value
+function getInitials(
+  name
 ) {
 
-  const number =
-    Number(
-      value
-    );
+  const safeName =
+    String(
+      name || ""
+    ).trim();
 
-  return Number.isFinite(
-    number
-  )
-    ? Math.max(
-        0,
-        number
-      )
-    : 0;
-}
-
-
-// =========================================================
-
-function getWritingTimestamp(
-  writing
-) {
-
-  const value =
-    writing?.published_at ||
-    writing?.created_at ||
-    writing?.updated_at;
-
-  if (!value) {
-    return 0;
+  if (!safeName) {
+    return "U";
   }
 
-  const timestamp =
-    new Date(
-      value
-    ).getTime();
+  const parts =
+    safeName
+      .split(/\s+/)
+      .filter(Boolean);
 
-  return Number.isFinite(
-    timestamp
-  )
-    ? timestamp
-    : 0;
-}
+  if (
+    parts.length === 1
+  ) {
 
-
-// =========================================================
-// TEMPORARY FOR-YOU RANKING
-// =========================================================
-
-function getRecommendationScore(
-  writing
-) {
-
-  const likes =
-    safeNumber(
-      writing?.likes_count ??
-      writing?.likes
-    );
-
-  const comments =
-    safeNumber(
-      writing?.comments_count
-    );
-
-  const timestamp =
-    getWritingTimestamp(
-      writing
-    );
-
-  let freshnessScore = 0;
-
-  if (timestamp > 0) {
-
-    const ageHours =
-      Math.max(
-        0,
-        (
-          Date.now() -
-          timestamp
-        ) /
-        (
-          1000 *
-          60 *
-          60
-        )
-      );
-
-    freshnessScore =
-      Math.max(
-        0,
-        168 - ageHours
-      ) / 24;
+    return parts[0]
+      .slice(0, 2)
+      .toUpperCase();
   }
 
   return (
-    likes * 2
-    +
-    comments * 3
-    +
-    freshnessScore
-  );
+    `${parts[0][0]}${parts[1][0]}`
+  ).toUpperCase();
 }
 
 
 // =========================================================
-
-function sortFeedItems(
-  items,
-  feedType
-) {
-
-  const safeItems =
-    Array.isArray(
-      items
-    )
-      ? [...items]
-      : [];
-
-  if (
-    feedType ===
-    FEED_TYPES.FOR_YOU
-  ) {
-
-    return safeItems.sort(
-      (
-        first,
-        second
-      ) => {
-
-        const difference =
-          getRecommendationScore(
-            second
-          )
-          -
-          getRecommendationScore(
-            first
-          );
-
-        if (
-          difference !== 0
-        ) {
-          return difference;
-        }
-
-        return (
-          getWritingTimestamp(
-            second
-          )
-          -
-          getWritingTimestamp(
-            first
-          )
-        );
-      }
-    );
-  }
-
-  if (
-    feedType ===
-    FEED_TYPES.LATEST
-  ) {
-
-    return safeItems.sort(
-      (
-        first,
-        second
-      ) =>
-        getWritingTimestamp(
-          second
-        )
-        -
-        getWritingTimestamp(
-          first
-        )
-    );
-  }
-
-  return safeItems;
-}
-
-
+// NORMALIZE WRITINGS RESPONSE
 // =========================================================
 
-function extractFeedItems(
+function normalizeWritings(
   response
 ) {
+
+  if (
+    Array.isArray(
+      response
+    )
+  ) {
+
+    return response;
+  }
 
   if (
     Array.isArray(
       response?.writings
     )
   ) {
+
     return response.writings;
   }
 
@@ -333,23 +110,17 @@ function extractFeedItems(
       response?.items
     )
   ) {
+
     return response.items;
   }
 
   if (
     Array.isArray(
-      response?.feed
+      response?.results
     )
   ) {
-    return response.feed;
-  }
 
-  if (
-    Array.isArray(
-      response
-    )
-  ) {
-    return response;
+    return response.results;
   }
 
   return [];
@@ -357,49 +128,240 @@ function extractFeedItems(
 
 
 // =========================================================
+// HAS MORE
+// =========================================================
 
-function mergeUniqueWritings(
-  existing,
+function getHasMore({
+  response,
+  items,
+  page,
+}) {
+
+  if (
+    typeof response?.has_more ===
+    "boolean"
+  ) {
+
+    return response.has_more;
+  }
+
+
+  if (
+    typeof response?.pagination
+      ?.has_next ===
+    "boolean"
+  ) {
+
+    return (
+      response.pagination.has_next
+    );
+  }
+
+
+  if (
+    Number.isFinite(
+      Number(
+        response?.pagination
+          ?.pages
+      )
+    )
+  ) {
+
+    return (
+      page <
+      Number(
+        response.pagination.pages
+      )
+    );
+  }
+
+
+  if (
+    Number.isFinite(
+      Number(
+        response?.total_pages
+      )
+    )
+  ) {
+
+    return (
+      page <
+      Number(
+        response.total_pages
+      )
+    );
+  }
+
+
+  return (
+    items.length >=
+    PAGE_SIZE
+  );
+}
+
+
+// =========================================================
+// SORT LATEST
+// =========================================================
+
+function sortLatest(
+  writings
+) {
+
+  return [
+    ...writings,
+  ].sort(
+    (
+      first,
+      second
+    ) => {
+
+      const firstDate =
+        new Date(
+          first?.published_at ||
+          first?.created_at ||
+          0
+        ).getTime();
+
+      const secondDate =
+        new Date(
+          second?.published_at ||
+          second?.created_at ||
+          0
+        ).getTime();
+
+      return (
+        secondDate -
+        firstDate
+      );
+    }
+  );
+}
+
+
+// =========================================================
+// REMOVE DUPLICATES
+// =========================================================
+
+function mergeUnique(
+  current,
   incoming
 ) {
 
-  const combined = [
-    ...(
-      Array.isArray(
-        existing
-      )
-        ? existing
-        : []
-    ),
-    ...(
-      Array.isArray(
-        incoming
-      )
-        ? incoming
-        : []
-    ),
-  ];
+  const map =
+    new Map();
+
+
+  [
+    ...current,
+    ...incoming,
+  ].forEach(
+    (
+      writing
+    ) => {
+
+      if (
+        writing?.id ===
+        undefined ||
+        writing?.id ===
+        null
+      ) {
+        return;
+      }
+
+      map.set(
+        String(
+          writing.id
+        ),
+        writing
+      );
+    }
+  );
+
 
   return Array.from(
-    new Map(
-      combined
-        .filter(
-          (
-            writing
-          ) =>
-            writing?.id
+    map.values()
+  );
+}
+
+
+// =========================================================
+// FEED SKELETON
+// =========================================================
+
+function FeedSkeleton() {
+
+  return (
+    <div
+      className="home-feed-skeletons"
+      aria-hidden="true"
+    >
+
+      {[1, 2, 3].map(
+        (
+          item
+        ) => (
+
+          <article
+            key={item}
+            className="home-feed-skeleton"
+          >
+
+            <div
+              className="home-skeleton-header"
+            >
+
+              <span
+                className="home-skeleton-avatar"
+              />
+
+              <div
+                className="home-skeleton-author"
+              >
+                <span />
+                <span />
+              </div>
+
+            </div>
+
+
+            <span
+              className="home-skeleton-chip"
+            />
+
+
+            <div
+              className="home-skeleton-title"
+            >
+              <span />
+              <span />
+            </div>
+
+
+            <div
+              className="home-skeleton-content"
+            >
+              <span />
+              <span />
+              <span />
+            </div>
+
+
+            <div
+              className="home-skeleton-footer"
+            >
+              <span />
+              <span />
+              <span />
+              <span />
+            </div>
+
+          </article>
+
         )
-        .map(
-          (
-            writing
-          ) => [
-            Number(
-              writing.id
-            ),
-            writing,
-          ]
-        )
-    ).values()
+      )}
+
+    </div>
   );
 }
 
@@ -408,942 +370,794 @@ function mergeUniqueWritings(
 // HOME
 // =========================================================
 
-function Home({
+export default function Home({
+  user = null,
   writings = [],
   loading = false,
 }) {
 
+  const navigate =
+    useNavigate();
+
+
   const {
-    t,
     language,
   } = useLanguage();
 
-  const homeRef =
-    useRef(
-      null
+
+  // =======================================================
+  // LANGUAGE COPY
+  // =======================================================
+
+  const copy =
+    useMemo(
+      () => {
+
+        if (
+          language === "bn"
+        ) {
+
+          return {
+
+            feedTitle:
+              "আপনার ফিড",
+
+            feedSubtitle:
+              "লেখা, গল্প, কবিতা এবং মানুষের ভাবনা আবিষ্কার করুন।",
+
+            forYou:
+              "আপনার জন্য",
+
+            following:
+              "অনুসরণ করছেন",
+
+            latest:
+              "সাম্প্রতিক",
+
+            composePlaceholder:
+              `${user?.name || "আপনি"}, কী ভাবছেন?`,
+
+            createWriting:
+              "লেখা",
+
+            poetry:
+              "কবিতা",
+
+            artwork:
+              "শিল্পকর্ম",
+
+            document:
+              "ডকুমেন্ট",
+
+            publish:
+              "তৈরি করুন",
+
+            refresh:
+              "রিফ্রেশ",
+
+            refreshing:
+              "রিফ্রেশ হচ্ছে",
+
+            loadMore:
+              "আরও দেখুন",
+
+            loadingMore:
+              "লোড হচ্ছে",
+
+            emptyTitle:
+              "এখানে এখনও কোনো লেখা নেই",
+
+            emptyDescription:
+              "কমিউনিটির জন্য নতুন কিছু লিখুন অথবা আরও লেখককে অনুসরণ করুন।",
+
+            followingEmptyTitle:
+              "আপনার Following feed এখনও খালি",
+
+            followingEmptyDescription:
+              "আরও লেখককে অনুসরণ করলে তাদের নতুন লেখা এখানে দেখা যাবে।",
+
+            exploreWriters:
+              "লেখক খুঁজুন",
+
+            startWriting:
+              "লেখা শুরু করুন",
+
+            errorTitle:
+              "ফিড লোড করা যায়নি",
+
+            retry:
+              "আবার চেষ্টা করুন",
+
+            loginTitle:
+              "SHOBDO-তে যোগ দিন",
+
+            loginDescription:
+              "লেখা প্রকাশ, অনুসরণ, পছন্দ এবং সংরক্ষণ করতে লগ ইন করুন।",
+
+            login:
+              "লগ ইন",
+
+            createAccount:
+              "অ্যাকাউন্ট তৈরি করুন",
+
+          };
+
+        }
+
+
+        if (
+          language === "hi"
+        ) {
+
+          return {
+
+            feedTitle:
+              "आपकी फ़ीड",
+
+            feedSubtitle:
+              "लेखन, कहानियाँ, कविताएँ और नए विचार खोजें।",
+
+            forYou:
+              "आपके लिए",
+
+            following:
+              "फ़ॉलोइंग",
+
+            latest:
+              "नवीनतम",
+
+            composePlaceholder:
+              `${user?.name || "आप"}, क्या सोच रहे हैं?`,
+
+            createWriting:
+              "लेखन",
+
+            poetry:
+              "कविता",
+
+            artwork:
+              "कला",
+
+            document:
+              "दस्तावेज़",
+
+            publish:
+              "बनाएँ",
+
+            refresh:
+              "रीफ़्रेश",
+
+            refreshing:
+              "रीफ़्रेश हो रहा है",
+
+            loadMore:
+              "और दिखाएँ",
+
+            loadingMore:
+              "लोड हो रहा है",
+
+            emptyTitle:
+              "अभी यहाँ कोई रचना नहीं है",
+
+            emptyDescription:
+              "समुदाय के लिए कुछ नया लिखें या अधिक लेखकों को फ़ॉलो करें।",
+
+            followingEmptyTitle:
+              "आपकी Following feed अभी खाली है",
+
+            followingEmptyDescription:
+              "लेखकों को फ़ॉलो करें और उनकी नई रचनाएँ यहाँ दिखाई देंगी।",
+
+            exploreWriters:
+              "लेखक खोजें",
+
+            startWriting:
+              "लिखना शुरू करें",
+
+            errorTitle:
+              "फ़ीड लोड नहीं हो सकी",
+
+            retry:
+              "फिर कोशिश करें",
+
+            loginTitle:
+              "SHOBDO से जुड़ें",
+
+            loginDescription:
+              "पोस्ट करने, फ़ॉलो करने, लाइक करने और सेव करने के लिए लॉग इन करें।",
+
+            login:
+              "लॉग इन",
+
+            createAccount:
+              "अकाउंट बनाएँ",
+
+          };
+
+        }
+
+
+        return {
+
+          feedTitle:
+            "Your feed",
+
+          feedSubtitle:
+            "Discover writing, stories, poetry and ideas from the community.",
+
+          forYou:
+            "For you",
+
+          following:
+            "Following",
+
+          latest:
+            "Latest",
+
+          composePlaceholder:
+            `What's on your mind, ${user?.name || "writer"}?`,
+
+          createWriting:
+            "Writing",
+
+          poetry:
+            "Poetry",
+
+          artwork:
+            "Artwork",
+
+          document:
+            "Document",
+
+          publish:
+            "Create",
+
+          refresh:
+            "Refresh",
+
+          refreshing:
+            "Refreshing",
+
+          loadMore:
+            "Load more",
+
+          loadingMore:
+            "Loading",
+
+          emptyTitle:
+            "Nothing has been published here yet",
+
+          emptyDescription:
+            "Create something for the community or discover more writers.",
+
+          followingEmptyTitle:
+            "Your Following feed is quiet",
+
+          followingEmptyDescription:
+            "Follow writers and their newest work will appear here.",
+
+          exploreWriters:
+            "Discover writers",
+
+          startWriting:
+            "Start writing",
+
+          errorTitle:
+            "Unable to load your feed",
+
+          retry:
+            "Try again",
+
+          loginTitle:
+            "Join the SHOBDO community",
+
+          loginDescription:
+            "Log in to publish, follow writers, like posts and save your favourites.",
+
+          login:
+            "Log in",
+
+          createAccount:
+            "Create account",
+
+        };
+
+      },
+      [
+        language,
+        user?.name,
+      ]
     );
 
-  const feedRequestIdRef =
-    useRef(
-      0
-    );
-
 
   // =======================================================
-  // TRANSLATION FALLBACK
-  // =======================================================
-
-  function translate(
-    key,
-    fallbackBn,
-    fallbackEn,
-    fallbackHi = null,
-  ) {
-
-    try {
-
-      const translated =
-        t(
-          key
-        );
-
-      if (
-        translated &&
-        translated !== key
-      ) {
-        return translated;
-      }
-
-    } catch {
-      // Fallback below.
-    }
-
-    if (
-      language === "bn"
-    ) {
-      return fallbackBn;
-    }
-
-    if (
-      language === "hi"
-    ) {
-      return (
-        fallbackHi ||
-        fallbackEn
-      );
-    }
-
-    return fallbackEn;
-  }
-
-
-  // =======================================================
-  // LABELS
-  // =======================================================
-
-  const labels = {
-
-    feedEyebrow:
-      language === "bn"
-        ? "আপনার ফিড"
-        : language === "hi"
-          ? "आपकी फ़ीड"
-          : "YOUR FEED",
-
-    feedTitle:
-      language === "bn"
-        ? "SHOBDO-তে কী লেখা হচ্ছে"
-        : language === "hi"
-          ? "SHOBDO पर क्या लिखा जा रहा है"
-          : "What's being written on SHOBDO",
-
-    feedDescription:
-      language === "bn"
-        ? "নতুন লেখক, অনুসরণ করা মানুষ এবং সদ্য প্রকাশিত লেখা আবিষ্কার করুন।"
-        : language === "hi"
-          ? "नए लेखक, फ़ॉलो किए गए लोगों और नई रचनाओं को खोजें।"
-          : "Discover writers, people you follow, and newly published work.",
-
-    forYou:
-      language === "bn"
-        ? "আপনার জন্য"
-        : language === "hi"
-          ? "आपके लिए"
-          : "For You",
-
-    following:
-      language === "bn"
-        ? "অনুসরণ"
-        : language === "hi"
-          ? "फ़ॉलोइंग"
-          : "Following",
-
-    latest:
-      language === "bn"
-        ? "সর্বশেষ"
-        : language === "hi"
-          ? "नवीनतम"
-          : "Latest",
-
-    refresh:
-      language === "bn"
-        ? "রিফ্রেশ"
-        : language === "hi"
-          ? "रीफ़्रेश"
-          : "Refresh",
-
-    loadingFeed:
-      language === "bn"
-        ? "ফিড লোড হচ্ছে..."
-        : language === "hi"
-          ? "फ़ीड लोड हो रही है..."
-          : "Loading your feed...",
-
-    feedError:
-      language === "bn"
-        ? "ফিড লোড করা যায়নি।"
-        : language === "hi"
-          ? "फ़ीड लोड नहीं हो सकी।"
-          : "The feed could not be loaded.",
-
-    retry:
-      language === "bn"
-        ? "আবার চেষ্টা করুন"
-        : language === "hi"
-          ? "फिर कोशिश करें"
-          : "Try again",
-
-    loadMore:
-      language === "bn"
-        ? "আরও লেখা দেখুন"
-        : language === "hi"
-          ? "और रचनाएँ देखें"
-          : "Load more",
-
-    loadingMore:
-      language === "bn"
-        ? "আরও লেখা লোড হচ্ছে..."
-        : language === "hi"
-          ? "और रचनाएँ लोड हो रही हैं..."
-          : "Loading more...",
-
-    noForYou:
-      language === "bn"
-        ? "এই মুহূর্তে কোনো প্রস্তাবিত লেখা নেই।"
-        : language === "hi"
-          ? "अभी कोई सुझाई गई रचना नहीं है।"
-          : "No recommended writings right now.",
-
-    noFollowing:
-      language === "bn"
-        ? "আপনি যাদের অনুসরণ করেন তাদের নতুন কোনো লেখা নেই।"
-        : language === "hi"
-          ? "जिन लोगों को आप फ़ॉलो करते हैं उनकी कोई नई रचना नहीं है।"
-          : "There are no new writings from people you follow.",
-
-    noLatest:
-      language === "bn"
-        ? "এখনও কোনো প্রকাশিত লেখা নেই।"
-        : language === "hi"
-          ? "अभी कोई प्रकाशित रचना नहीं है।"
-          : "There are no published writings yet.",
-
-    followingLoginTitle:
-      language === "bn"
-        ? "আপনার Following Feed দেখুন"
-        : language === "hi"
-          ? "अपनी Following Feed देखें"
-          : "See your Following feed",
-
-    followingLoginDescription:
-      language === "bn"
-        ? "আপনি যাদের অনুসরণ করেন তাদের লেখা দেখতে লগ ইন করুন।"
-        : language === "hi"
-          ? "जिन लोगों को आप फ़ॉलो करते हैं उनकी रचनाएँ देखने के लिए लॉग इन करें।"
-          : "Log in to see writings from people you follow.",
-
-    login:
-      translate(
-        "navbar.login",
-        "লগ ইন",
-        "Log in",
-        "लॉग इन"
-      ),
-
-    explore:
-      translate(
-        "navbar.explore",
-        "অন্বেষণ করুন",
-        "Explore",
-        "एक्सप्लोर"
-      ),
-  };
-
-
-  // =======================================================
-  // QUOTE STATE
-  // =======================================================
-
-  const [
-    quoteIndex,
-    setQuoteIndex,
-  ] = useState(
-    0
-  );
-
-
-  // =======================================================
-  // FEED STATE
+  // STATE
   // =======================================================
 
   const [
     activeFeed,
     setActiveFeed,
   ] = useState(
-    FEED_TYPES.FOR_YOU
+    "for-you"
   );
 
+
   const [
-    feedWritings,
-    setFeedWritings,
+    publicWritings,
+    setPublicWritings,
   ] = useState(
-    []
+    Array.isArray(
+      writings
+    )
+      ? writings
+      : []
   );
+
+
+  const [
+    followingWritings,
+    setFollowingWritings,
+  ] = useState([]);
+
+
+  const [
+    publicPage,
+    setPublicPage,
+  ] = useState(1);
+
+
+  const [
+    followingPage,
+    setFollowingPage,
+  ] = useState(1);
+
+
+  const [
+    publicHasMore,
+    setPublicHasMore,
+  ] = useState(
+    Array.isArray(
+      writings
+    ) &&
+    writings.length >=
+      PAGE_SIZE
+  );
+
+
+  const [
+    followingHasMore,
+    setFollowingHasMore,
+  ] = useState(true);
+
 
   const [
     feedLoading,
     setFeedLoading,
   ] = useState(
-    true
+    loading
   );
+
 
   const [
     loadingMore,
     setLoadingMore,
-  ] = useState(
-    false
-  );
+  ] = useState(false);
+
+
+  const [
+    refreshing,
+    setRefreshing,
+  ] = useState(false);
+
 
   const [
     feedError,
     setFeedError,
-  ] = useState(
-    ""
-  );
+  ] = useState("");
+
 
   const [
-    feedPage,
-    setFeedPage,
-  ] = useState(
-    1
-  );
-
-  const [
-    feedTotal,
-    setFeedTotal,
-  ] = useState(
-    0
-  );
-
-  const [
-    feedHasNext,
-    setFeedHasNext,
-  ] = useState(
-    false
-  );
-
-  const [
-    followingRequiresLogin,
-    setFollowingRequiresLogin,
-  ] = useState(
-    false
-  );
+    followingLoaded,
+    setFollowingLoaded,
+  ] = useState(false);
 
 
   // =======================================================
-  // SCROLL REVEAL
+  // SYNC APP WRITINGS
   // =======================================================
 
   useEffect(
     () => {
 
-      const root =
-        homeRef.current;
-
-      if (!root) {
-        return undefined;
-      }
-
-      const elements =
-        Array.from(
-          root.querySelectorAll(
-            "[data-home-reveal]"
-          )
-        );
-
       if (
-        elements.length === 0
-      ) {
-        return undefined;
-      }
-
-      const reducedMotion =
-        window.matchMedia?.(
-          "(prefers-reduced-motion: reduce)"
-        )?.matches;
-
-      if (
-        reducedMotion ||
-        !(
-          "IntersectionObserver"
-          in window
-        )
-      ) {
-
-        elements.forEach(
-          (
-            element
-          ) => {
-            element.classList.add(
-              "is-visible"
-            );
-          }
-        );
-
-        return undefined;
-      }
-
-      const observer =
-        new IntersectionObserver(
-          (
-            entries
-          ) => {
-
-            entries.forEach(
-              (
-                entry
-              ) => {
-
-                if (
-                  entry.isIntersecting
-                ) {
-
-                  entry.target.classList.add(
-                    "is-visible"
-                  );
-
-                  observer.unobserve(
-                    entry.target
-                  );
-                }
-              }
-            );
-          },
-          {
-            threshold: 0.12,
-            rootMargin:
-              "0px 0px -55px 0px",
-          }
-        );
-
-      elements.forEach(
-        (
-          element
-        ) => {
-
-          if (
-            !element.classList.contains(
-              "is-visible"
-            )
-          ) {
-
-            observer.observe(
-              element
-            );
-          }
-        }
-      );
-
-      return () => {
-        observer.disconnect();
-      };
-
-    },
-    [
-      language,
-      activeFeed,
-      feedWritings.length,
-      quoteIndex,
-    ]
-  );
-
-
-  // =======================================================
-  // AUTO ROTATE QUOTES
-  // =======================================================
-
-  useEffect(
-    () => {
-
-      const reducedMotion =
-        window.matchMedia?.(
-          "(prefers-reduced-motion: reduce)"
-        )?.matches;
-
-      if (
-        reducedMotion
-      ) {
-        return undefined;
-      }
-
-      const timer =
-        window.setInterval(
-          () => {
-
-            if (
-              document.hidden
-            ) {
-              return;
-            }
-
-            setQuoteIndex(
-              (
-                current
-              ) =>
-                (
-                  current + 1
-                )
-                %
-                LITERARY_QUOTES.length
-            );
-          },
-          7000
-        );
-
-      return () => {
-        window.clearInterval(
-          timer
-        );
-      };
-
-    },
-    []
-  );
-
-
-  // =======================================================
-  // QUOTE CONTROLS
-  // =======================================================
-
-  function previousQuote() {
-
-    setQuoteIndex(
-      (
-        current
-      ) =>
-        (
-          current -
-          1 +
-          LITERARY_QUOTES.length
-        )
-        %
-        LITERARY_QUOTES.length
-    );
-  }
-
-
-  function nextQuote() {
-
-    setQuoteIndex(
-      (
-        current
-      ) =>
-        (
-          current + 1
-        )
-        %
-        LITERARY_QUOTES.length
-    );
-  }
-
-
-  const activeQuote =
-    LITERARY_QUOTES[
-      quoteIndex
-    ];
-
-
-  // =======================================================
-  // FEATURED WRITING
-  // =======================================================
-
-  const featuredWriting =
-    useMemo(
-      () =>
         Array.isArray(
           writings
         )
-          ? writings[0] || null
-          : null,
-      [
-        writings,
-      ]
-    );
+      ) {
 
-
-  // =======================================================
-  // CATEGORY LABEL
-  // =======================================================
-
-  function categoryLabel(
-    value
-  ) {
-
-    const map = {
-      "কবিতা":
-        t(
-          "categories.poetry"
-        ),
-
-      "গল্প":
-        t(
-          "categories.story"
-        ),
-
-      "অনুভূতি":
-        t(
-          "categories.reflection"
-        ),
-
-      "প্রবন্ধ":
-        t(
-          "categories.essay"
-        ),
-
-      "অন্যান্য":
-        t(
-          "categories.other"
-        ),
-    };
-
-    return (
-      map[value] ||
-      value
-    );
-  }
-
-
-  // =======================================================
-  // LOAD FEED
-  // =======================================================
-
-  const loadFeed =
-    useCallback(
-      async ({
-        feedType,
-        pageNumber = 1,
-        append = false,
-      }) => {
-
-        const requestId =
-          feedRequestIdRef.current + 1;
-
-        feedRequestIdRef.current =
-          requestId;
-
-        const selectedFeed =
-          feedType ||
-          FEED_TYPES.FOR_YOU;
-
-
-        // =================================================
-        // FOLLOWING REQUIRES AUTH
-        // =================================================
-
-        if (
-          selectedFeed ===
-            FEED_TYPES.FOLLOWING
-          &&
-          !getToken()
-        ) {
-
-          if (
-            requestId !==
-            feedRequestIdRef.current
-          ) {
-            return;
-          }
-
-          setFollowingRequiresLogin(
-            true
-          );
-
-          setFeedWritings(
-            []
-          );
-
-          setFeedPage(
-            1
-          );
-
-          setFeedTotal(
-            0
-          );
-
-          setFeedHasNext(
-            false
-          );
-
-          setFeedError(
-            ""
-          );
-
-          setFeedLoading(
-            false
-          );
-
-          setLoadingMore(
-            false
-          );
-
-          return;
-        }
-
-
-        setFollowingRequiresLogin(
-          false
+        setPublicWritings(
+          writings
         );
 
-
-        if (
-          append
-        ) {
-
-          setLoadingMore(
-            true
-          );
-
-        } else {
-
-          setFeedLoading(
-            true
-          );
-
-          setFeedError(
-            ""
-          );
-        }
-
-
-        try {
-
-          let response;
-
-
-          if (
-            selectedFeed ===
-            FEED_TYPES.FOLLOWING
-          ) {
-
-            response =
-              await getFollowingFeed({
-                page:
-                  pageNumber,
-
-                limit:
-                  FEED_PAGE_SIZE,
-              });
-
-          } else {
-
-            response =
-              await getWritings({
-                page:
-                  pageNumber,
-
-                limit:
-                  FEED_PAGE_SIZE,
-              });
-          }
-
-
-          if (
-            requestId !==
-            feedRequestIdRef.current
-          ) {
-            return;
-          }
-
-
-          let received =
-            extractFeedItems(
-              response
-            );
-
-
-          received =
-            sortFeedItems(
-              received,
-              selectedFeed
-            );
-
-
-          if (
-            append
-          ) {
-
-            setFeedWritings(
-              (
-                previous
-              ) => {
-
-                const combined =
-                  mergeUniqueWritings(
-                    previous,
-                    received
-                  );
-
-                return (
-                  selectedFeed ===
-                    FEED_TYPES.FOLLOWING
-                    ? combined
-                    : sortFeedItems(
-                        combined,
-                        selectedFeed
-                      )
-                );
-              }
-            );
-
-          } else {
-
-            setFeedWritings(
-              received
-            );
-          }
-
-
-          const currentPage =
-            Number(
-              response?.page
-            ) ||
-            pageNumber;
-
-
-          const pages =
-            safeNumber(
-              response?.pages
-            );
-
-
-          const explicitHasNext =
-            typeof response?.has_next ===
-            "boolean"
-              ? response.has_next
-              : null;
-
-
-          const inferredHasNext =
-            explicitHasNext !== null
-              ? explicitHasNext
-              : pages > 0
-                ? currentPage < pages
-                : received.length >=
-                  FEED_PAGE_SIZE;
-
-
-          setFeedPage(
-            currentPage
-          );
-
-          setFeedHasNext(
-            inferredHasNext
-          );
-
-          setFeedTotal(
-            safeNumber(
-              response?.total
-            )
-          );
-
-          setFeedError(
-            ""
-          );
-
-        } catch (
-          error
-        ) {
-
-          if (
-            requestId !==
-            feedRequestIdRef.current
-          ) {
-            return;
-          }
-
-          console.error(
-            "HOME FEED ERROR:",
-            error
-          );
-
-
-          if (
-            !append
-          ) {
-            setFeedWritings(
-              []
-            );
-          }
-
-
-          setFeedError(
-            error?.message ||
-            "Unable to load feed."
-          );
-
-
-          if (
-            (
-              error?.status === 401 ||
-              error?.status === 422
-            )
-            &&
-            selectedFeed ===
-              FEED_TYPES.FOLLOWING
-          ) {
-
-            setFollowingRequiresLogin(
-              true
-            );
-
-            setFeedError(
-              ""
-            );
-          }
-
-        } finally {
-
-          if (
-            requestId ===
-            feedRequestIdRef.current
-          ) {
-
-            setFeedLoading(
-              false
-            );
-
-            setLoadingMore(
-              false
-            );
-          }
-        }
-      },
-      []
-    );
-
-
-  // =======================================================
-  // LOAD FEED WHEN TAB CHANGES
-  // =======================================================
-
-  useEffect(
-    () => {
-
-      setFeedWritings(
-        []
-      );
-
-      setFeedPage(
-        1
-      );
-
-      setFeedHasNext(
-        false
-      );
-
-      setFeedTotal(
-        0
-      );
-
-      setFeedError(
-        ""
-      );
-
-      loadFeed({
-        feedType:
-          activeFeed,
-
-        pageNumber:
-          1,
-
-        append:
-          false,
-      });
+        setPublicPage(
+          1
+        );
+
+        setPublicHasMore(
+          writings.length >=
+          PAGE_SIZE
+        );
+      }
 
     },
     [
-      activeFeed,
-      loadFeed,
+      writings,
     ]
   );
 
 
   // =======================================================
-  // REFRESH FEED
+  // SYNC APP LOADING
   // =======================================================
 
-  function handleRefreshFeed() {
+  useEffect(
+    () => {
 
-    loadFeed({
-      feedType:
-        activeFeed,
+      setFeedLoading(
+        loading
+      );
 
-      pageNumber:
-        1,
+    },
+    [
+      loading,
+    ]
+  );
 
-      append:
-        false,
+
+  // =======================================================
+  // PUBLIC FEED
+  // =======================================================
+
+  async function loadPublicFeed({
+    page = 1,
+    append = false,
+    refresh = false,
+  } = {}) {
+
+    if (
+      refresh
+    ) {
+
+      setRefreshing(
+        true
+      );
+
+    } else if (
+      append
+    ) {
+
+      setLoadingMore(
+        true
+      );
+
+    } else {
+
+      setFeedLoading(
+        true
+      );
+
+    }
+
+
+    setFeedError(
+      ""
+    );
+
+
+    try {
+
+      const response =
+        await getWritings({
+
+          page,
+
+          limit:
+            PAGE_SIZE,
+
+        });
+
+
+      const items =
+        normalizeWritings(
+          response
+        );
+
+
+      setPublicWritings(
+        (
+          previous
+        ) =>
+
+          append
+            ? mergeUnique(
+                previous,
+                items
+              )
+            : items
+      );
+
+
+      setPublicPage(
+        page
+      );
+
+
+      setPublicHasMore(
+        getHasMore({
+          response,
+          items,
+          page,
+        })
+      );
+
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        "HOME PUBLIC FEED ERROR:",
+        error
+      );
+
+
+      setFeedError(
+        error?.message ||
+        copy.errorTitle
+      );
+
+    } finally {
+
+      setFeedLoading(
+        false
+      );
+
+      setLoadingMore(
+        false
+      );
+
+      setRefreshing(
+        false
+      );
+
+    }
+
+  }
+
+
+  // =======================================================
+  // FOLLOWING FEED
+  // =======================================================
+
+  async function loadFollowingFeed({
+    page = 1,
+    append = false,
+    refresh = false,
+  } = {}) {
+
+    if (
+      !user?.id
+    ) {
+
+      navigate(
+        "/login"
+      );
+
+      return;
+    }
+
+
+    if (
+      refresh
+    ) {
+
+      setRefreshing(
+        true
+      );
+
+    } else if (
+      append
+    ) {
+
+      setLoadingMore(
+        true
+      );
+
+    } else {
+
+      setFeedLoading(
+        true
+      );
+
+    }
+
+
+    setFeedError(
+      ""
+    );
+
+
+    try {
+
+      const response =
+        await getFollowingFeed({
+
+          page,
+
+          limit:
+            PAGE_SIZE,
+
+        });
+
+
+      const items =
+        normalizeWritings(
+          response
+        );
+
+
+      setFollowingWritings(
+        (
+          previous
+        ) =>
+
+          append
+            ? mergeUnique(
+                previous,
+                items
+              )
+            : items
+      );
+
+
+      setFollowingPage(
+        page
+      );
+
+
+      setFollowingHasMore(
+        getHasMore({
+          response,
+          items,
+          page,
+        })
+      );
+
+
+      setFollowingLoaded(
+        true
+      );
+
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        "HOME FOLLOWING FEED ERROR:",
+        error
+      );
+
+
+      if (
+        error?.status ===
+        401
+      ) {
+
+        navigate(
+          "/login"
+        );
+
+        return;
+      }
+
+
+      setFeedError(
+        error?.message ||
+        copy.errorTitle
+      );
+
+    } finally {
+
+      setFeedLoading(
+        false
+      );
+
+      setLoadingMore(
+        false
+      );
+
+      setRefreshing(
+        false
+      );
+
+    }
+
+  }
+
+
+  // =======================================================
+  // SELECT FEED TAB
+  // =======================================================
+
+  async function handleFeedChange(
+    feed
+  ) {
+
+    if (
+      feed ===
+        "following" &&
+      !user?.id
+    ) {
+
+      navigate(
+        "/login"
+      );
+
+      return;
+    }
+
+
+    setActiveFeed(
+      feed
+    );
+
+
+    setFeedError(
+      ""
+    );
+
+
+    if (
+      feed ===
+        "following" &&
+      !followingLoaded
+    ) {
+
+      await loadFollowingFeed({
+        page: 1,
+      });
+
+    }
+
+  }
+
+
+  // =======================================================
+  // REFRESH
+  // =======================================================
+
+  async function handleRefresh() {
+
+    if (
+      activeFeed ===
+      "following"
+    ) {
+
+      await loadFollowingFeed({
+        page: 1,
+        refresh: true,
+      });
+
+      return;
+    }
+
+
+    await loadPublicFeed({
+      page: 1,
+      refresh: true,
     });
+
   }
 
 
@@ -1351,41 +1165,120 @@ function Home({
   // LOAD MORE
   // =======================================================
 
-  function handleLoadMore() {
+  async function handleLoadMore() {
 
     if (
-      loadingMore ||
-      feedLoading ||
-      !feedHasNext
+      loadingMore
     ) {
       return;
     }
 
-    loadFeed({
-      feedType:
-        activeFeed,
 
-      pageNumber:
-        feedPage + 1,
+    if (
+      activeFeed ===
+      "following"
+    ) {
+
+      if (
+        !followingHasMore
+      ) {
+        return;
+      }
+
+
+      await loadFollowingFeed({
+
+        page:
+          followingPage +
+          1,
+
+        append:
+          true,
+
+      });
+
+
+      return;
+    }
+
+
+    if (
+      !publicHasMore
+    ) {
+      return;
+    }
+
+
+    await loadPublicFeed({
+
+      page:
+        publicPage +
+        1,
 
       append:
         true,
+
     });
+
   }
 
 
   // =======================================================
-  // EMPTY MESSAGE
+  // CURRENT FEED
   // =======================================================
 
-  const emptyFeedMessage =
+  const currentWritings =
+    useMemo(
+      () => {
+
+        if (
+          activeFeed ===
+          "following"
+        ) {
+
+          return (
+            followingWritings
+          );
+        }
+
+
+        if (
+          activeFeed ===
+          "latest"
+        ) {
+
+          return sortLatest(
+            publicWritings
+          );
+        }
+
+
+        return publicWritings;
+
+      },
+      [
+        activeFeed,
+        publicWritings,
+        followingWritings,
+      ]
+    );
+
+
+  const currentHasMore =
     activeFeed ===
-      FEED_TYPES.FOLLOWING
-      ? labels.noFollowing
-      : activeFeed ===
-          FEED_TYPES.LATEST
-        ? labels.noLatest
-        : labels.noForYou;
+    "following"
+      ? followingHasMore
+      : publicHasMore;
+
+
+  // =======================================================
+  // USER AVATAR
+  // =======================================================
+
+  const userInitials =
+    getInitials(
+      user?.name
+    );
 
 
   // =======================================================
@@ -1394,937 +1287,325 @@ function Home({
 
   return (
 
-    <main
-      ref={
-        homeRef
-      }
-      className="literary-home animated-home"
+    <div
+      className="home-social-feed"
     >
 
       {/* =================================================
-          HERO
+          FEED HEADER
       ================================================== */}
 
-      <section
-        className="literary-hero animated-literary-hero"
+      <header
+        className="home-feed-header"
       >
 
-        <div
-          className="literary-hero-noise"
-        />
+        <div>
+
+          <span
+            className="home-feed-eyebrow"
+          >
+            <Sparkles
+              size={14}
+            />
+
+            SHOBDO
+          </span>
 
 
-        <div
-          className="home-hero-glow"
-          aria-hidden="true"
-        />
+          <h1>
+            {copy.feedTitle}
+          </h1>
 
 
-        <div
-          className="home-hero-orbit home-hero-orbit-one"
-          aria-hidden="true"
-        />
+          <p>
+            {copy.feedSubtitle}
+          </p>
+
+        </div>
 
 
-        <div
-          className="home-hero-orbit home-hero-orbit-two"
-          aria-hidden="true"
-        />
-
-
-        <div
-          className="literary-hero-inner"
+        <button
+          type="button"
+          className="home-refresh-button"
+          onClick={
+            handleRefresh
+          }
+          disabled={
+            refreshing ||
+            feedLoading
+          }
         >
 
-          {/* LEFT */}
+          <RefreshCw
+            size={17}
+            className={
+              refreshing
+                ? "home-spin"
+                : ""
+            }
+          />
+
+          <span>
+            {
+              refreshing
+                ? copy.refreshing
+                : copy.refresh
+            }
+          </span>
+
+        </button>
+
+      </header>
+
+
+      {/* =================================================
+          COMPOSER
+      ================================================== */}
+
+      {user ? (
+
+        <section
+          className="home-composer"
+        >
 
           <div
-            key={
-              `hero-copy-${language}`
-            }
-            className="literary-hero-copy home-hero-copy-animated"
+            className="home-composer-main"
           >
 
-            <div
-              className="literary-kicker home-hero-kicker"
+            <Link
+              to={
+                `/users/${user.id}`
+              }
+              className="home-composer-avatar"
             >
 
-              <Sparkles
-                size={14}
+              {user?.avatar_url
+                ? (
+
+                  <img
+                    src={
+                      user.avatar_url
+                    }
+                    alt=""
+                  />
+
+                )
+                : (
+
+                  <span>
+                    {userInitials}
+                  </span>
+
+                )}
+
+            </Link>
+
+
+            <button
+              type="button"
+              className="home-composer-input"
+              onClick={
+                () =>
+                  navigate(
+                    "/write"
+                  )
+              }
+            >
+
+              {
+                copy.composePlaceholder
+              }
+
+            </button>
+
+
+            <button
+              type="button"
+              className="home-composer-create"
+              onClick={
+                () =>
+                  navigate(
+                    "/write"
+                  )
+              }
+            >
+
+              <PenLine
+                size={17}
               />
 
               <span>
-                {
-                  t(
-                    "home.eyebrow"
-                  )
-                }
+                {copy.publish}
               </span>
 
-            </div>
-
-
-            <h1
-              className="home-hero-title-motion"
-            >
-              {
-                t(
-                  "home.heroTitle"
-                )
-              }
-            </h1>
-
-
-            <p
-              className="literary-hero-description home-hero-description-motion"
-            >
-              {
-                t(
-                  "home.heroDescription"
-                )
-              }
-            </p>
-
-
-            <div
-              className="literary-hero-buttons home-hero-actions-motion"
-            >
-
-              <Link
-                to="/write"
-                className="literary-primary-button home-motion-button"
-              >
-
-                <PenLine
-                  size={17}
-                />
-
-                {
-                  t(
-                    "home.startWriting"
-                  )
-                }
-
-              </Link>
-
-
-              <Link
-                to="/explore"
-                className="literary-text-button home-motion-text-link"
-              >
-
-                {
-                  t(
-                    "home.exploreWriting"
-                  )
-                }
-
-                <ArrowRight
-                  size={16}
-                />
-
-              </Link>
-
-            </div>
-
-
-            <div
-              className="literary-hero-footnote home-hero-footnote-motion"
-            >
-
-              <span />
-
-              <p>
-                {
-                  t(
-                    "home.writerInvitation",
-                    "Some stories are waiting for only you to write them."
-                  )
-                }
-              </p>
-
-            </div>
+            </button>
 
           </div>
 
 
-          {/* RIGHT — MANUSCRIPT */}
-
           <div
-            key={
-              `manuscript-${language}`
-            }
-            className="literary-manuscript-wrap home-manuscript-entrance"
+            className="home-composer-actions"
           >
 
-            <div
-              className="literary-manuscript-shadow home-manuscript-shadow-motion"
-            />
-
-
-            <div
-              className="literary-manuscript home-manuscript-card"
+            <button
+              type="button"
+              onClick={
+                () =>
+                  navigate(
+                    "/write"
+                  )
+              }
             >
 
-              <div
-                className="manuscript-top"
-              >
-
-                <Feather
-                  size={25}
-                  className="home-feather-motion"
-                />
-
-                <span>
-                  SHOBDO
-                </span>
-
-              </div>
-
-
-              <div
-                className="manuscript-rule home-rule-animation"
+              <PenLine
+                size={17}
               />
 
+              <span>
+                {copy.createWriting}
+              </span>
 
-              <p
-                className="manuscript-small"
-              >
-                {
-                  t(
-                    "home.blankPageLabel",
-                    "A BLANK PAGE"
+            </button>
+
+
+            <button
+              type="button"
+              onClick={
+                () =>
+                  navigate(
+                    "/write?mode=writing&category=কবিতা"
                   )
-                }
-              </p>
+              }
+            >
+
+              <BookOpen
+                size={17}
+              />
+
+              <span>
+                {copy.poetry}
+              </span>
+
+            </button>
 
 
-              <h2>
-                {
-                  t(
-                    "home.blankPageTitle",
-                    "What will you write today?"
+            <button
+              type="button"
+              onClick={
+                () =>
+                  navigate(
+                    "/write?mode=artwork"
                   )
-                }
-              </h2>
+              }
+            >
+
+              <ImageIcon
+                size={17}
+              />
+
+              <span>
+                {copy.artwork}
+              </span>
+
+            </button>
 
 
-              <div
-                className="manuscript-lines home-manuscript-lines"
-              >
-
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-
-              </div>
-
-
-              <Link
-                to="/write"
-                className="manuscript-write-link home-motion-text-link"
-              >
-
-                <PenLine
-                  size={15}
-                />
-
-                {
-                  t(
-                    "home.beginStory",
-                    "Begin your story"
+            <button
+              type="button"
+              onClick={
+                () =>
+                  navigate(
+                    "/write?mode=document"
                   )
-                }
+              }
+            >
 
-              </Link>
+              <FileText
+                size={17}
+              />
 
-            </div>
+              <span>
+                {copy.document}
+              </span>
+
+            </button>
 
           </div>
 
-        </div>
+        </section>
 
-      </section>
+      ) : (
 
-
-      {/* =================================================
-          QUOTE EXPERIENCE
-      ================================================== */}
-
-      <section
-        className="literary-quotes-section home-reveal"
-        data-home-reveal
-      >
-
-        <div
-          className="literary-quotes-shell"
+        <section
+          className="home-guest-card"
         >
 
           <div
-            className="quote-section-side"
+            className="home-guest-icon"
           >
-
-            <span
-              className="quote-side-number"
-            >
-              01
-            </span>
-
-
-            <div>
-
-              <p
-                className="literary-section-label"
-              >
-                {
-                  t(
-                    "home.quoteEyebrow",
-                    "WORDS THAT REMAIN"
-                  )
-                }
-              </p>
-
-
-              <h2>
-                {
-                  t(
-                    "home.quoteTitle",
-                    "Words that moved generations."
-                  )
-                }
-              </h2>
-
-
-              <p>
-                {
-                  t(
-                    "home.quoteDescription",
-                    "Sometimes one sentence is enough to make someone pick up a pen."
-                  )
-                }
-              </p>
-
-            </div>
-
-          </div>
-
-
-          <div
-            className="quote-stage"
-            aria-live="polite"
-          >
-
-            <Quote
-              className="quote-stage-icon home-quote-icon-motion"
-              size={46}
-            />
-
-
-            <div
-              key={
-                `quote-${quoteIndex}`
-              }
-              className="home-quote-content-motion"
-            >
-
-              <blockquote>
-                “{activeQuote.quote}”
-              </blockquote>
-
-
-              <div
-                className="quote-author"
-              >
-
-                <span />
-
-                <div>
-
-                  <strong>
-                    {activeQuote.author}
-                  </strong>
-
-                  <small>
-                    {activeQuote.source}
-                  </small>
-
-                </div>
-
-              </div>
-
-            </div>
-
-
-            <div
-              className="quote-navigation"
-            >
-
-              <button
-                type="button"
-                onClick={
-                  previousQuote
-                }
-                aria-label="Previous quote"
-                className="home-round-motion-button"
-              >
-
-                <ArrowLeft
-                  size={16}
-                />
-
-              </button>
-
-
-              <div
-                className="quote-dots"
-              >
-
-                {LITERARY_QUOTES.map(
-                  (
-                    item,
-                    index
-                  ) => (
-
-                    <button
-                      key={
-                        `${item.author}-${index}`
-                      }
-                      type="button"
-                      className={
-                        index ===
-                        quoteIndex
-                          ? "active"
-                          : ""
-                      }
-                      onClick={
-                        () =>
-                          setQuoteIndex(
-                            index
-                          )
-                      }
-                      aria-label={
-                        `Quote ${index + 1}`
-                      }
-                    />
-                  )
-                )}
-
-              </div>
-
-
-              <button
-                type="button"
-                onClick={
-                  nextQuote
-                }
-                aria-label="Next quote"
-                className="home-round-motion-button"
-              >
-
-                <ArrowRight
-                  size={16}
-                />
-
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* =================================================
-          WRITING INVITATION
-      ================================================== */}
-
-      <section
-        className="literary-prompt-section home-reveal"
-        data-home-reveal
-      >
-
-        <div
-          className="literary-prompt-card home-prompt-card-motion"
-        >
-
-          <div
-            className="prompt-light home-prompt-light"
-          >
-
-            <Lightbulb
-              size={25}
-            />
-
-          </div>
-
-
-          <div
-            className="prompt-content"
-          >
-
-            <span>
-              {
-                t(
-                  "home.promptEyebrow",
-                  "A THOUGHT FOR TODAY"
-                )
-              }
-            </span>
-
-
-            <h2>
-              {
-                t(
-                  "home.promptTitle",
-                  "Write about something you never said aloud."
-                )
-              }
-            </h2>
-
-
-            <p>
-              {
-                t(
-                  "home.promptDescription",
-                  "It does not have to be perfect. It only has to be yours."
-                )
-              }
-            </p>
-
-          </div>
-
-
-          <Link
-            to="/write"
-            className="prompt-write-button home-motion-button"
-          >
-
             <PenLine
-              size={17}
+              size={22}
             />
-
-            {
-              t(
-                "home.startWriting"
-              )
-            }
-
-          </Link>
-
-        </div>
-
-      </section>
+          </div>
 
 
-      {/* =================================================
-          CATEGORIES
-      ================================================== */}
-
-      <section
-        className="literary-content-section"
-      >
-
-        <div
-          className="literary-section-header home-reveal"
-          data-home-reveal
-        >
-
-          <div>
-
-            <span
-              className="literary-section-label"
-            >
-              {
-                t(
-                  "home.discoverEyebrow",
-                  "DISCOVER"
-                )
-              }
-            </span>
-
+          <div
+            className="home-guest-copy"
+          >
 
             <h2>
-              {
-                t(
-                  "home.categoriesTitle"
-                )
-              }
+              {copy.loginTitle}
             </h2>
-
 
             <p>
               {
-                t(
-                  "home.categoriesDescription"
-                )
+                copy.loginDescription
               }
             </p>
 
           </div>
 
 
-          <Link
-            to="/explore"
-            className="literary-view-all home-motion-text-link"
+          <div
+            className="home-guest-actions"
           >
 
-            {
-              t(
-                "home.viewAll"
-              )
-            }
-
-            <ArrowRight
-              size={15}
-            />
-
-          </Link>
-
-        </div>
-
-
-        <div
-          className="literary-category-grid"
-        >
-
-          {CATEGORIES.map(
-            (
-              item,
-              index
-            ) => (
-
-              <div
-                key={
-                  item.value
-                }
-                className="home-reveal home-category-reveal"
-                data-home-reveal
-                style={{
-                  "--home-reveal-delay":
-                    `${index * 80}ms`,
-                }}
-              >
-
-                <Link
-                  to={
-                    `/explore?category=${encodeURIComponent(
-                      item.value
-                    )}`
-                  }
-                  className="literary-category-card home-category-card-motion"
-                >
-
-                  <div
-                    className="category-card-top"
-                  >
-
-                    <span
-                      className="category-number"
-                    >
-                      {item.number}
-                    </span>
-
-
-                    <span
-                      className="category-symbol"
-                    >
-                      {item.symbol}
-                    </span>
-
-                  </div>
-
-
-                  <div
-                    className="category-card-bottom"
-                  >
-
-                    <div>
-
-                      <h3>
-                        {
-                          t(
-                            item.translationKey
-                          )
-                        }
-                      </h3>
-
-
-                      <p>
-                        {
-                          t(
-                            "home.exploreWriting"
-                          )
-                        }
-                      </p>
-
-                    </div>
-
-
-                    <ArrowRight
-                      size={17}
-                    />
-
-                  </div>
-
-                </Link>
-
-              </div>
-            )
-          )}
-
-        </div>
-
-      </section>
-
-
-      {/* =================================================
-          FEATURED COMMUNITY WRITING
-      ================================================== */}
-
-      {!loading &&
-        featuredWriting && (
-
-          <section
-            className="literary-featured-section home-reveal"
-            data-home-reveal
-          >
-
-            <div
-              className="literary-featured-shell home-featured-motion"
+            <Link
+              to="/login"
+              className="home-guest-login"
             >
-
-              <div
-                className="featured-side-label"
-              >
-
-                <span>
-                  02
-                </span>
+              {copy.login}
+            </Link>
 
 
-                <p>
-                  {
-                    t(
-                      "home.featuredEyebrow",
-                      "FROM THE COMMUNITY"
-                    )
-                  }
-                </p>
-
-              </div>
-
-
-              <article
-                className="literary-featured-article"
-              >
-
-                <div
-                  className="featured-article-meta"
-                >
-
-                  <span>
-                    {
-                      categoryLabel(
-                        featuredWriting.category
-                      )
-                    }
-                  </span>
-
-
-                  <i />
-
-
-                  <span>
-                    {
-                      featuredWriting
-                        ?.author
-                        ?.name
-                      ||
-                      featuredWriting
-                        ?.author_name
-                      ||
-                      t(
-                        "common.unknownAuthor"
-                      )
-                    }
-                  </span>
-
-                </div>
-
-
-                <h2>
-                  {
-                    featuredWriting.title
-                    ||
-                    t(
-                      "common.untitled"
-                    )
-                  }
-                </h2>
-
-
-                <p>
-                  {
-                    featuredWriting
-                      ?.content
-                      ?.trim()
-                      ?.slice(
-                        0,
-                        420
-                      )
-                    ||
-                    t(
-                      "writingCard.previewUnavailable"
-                    )
-                  }
-
-                  {
-                    featuredWriting
-                      ?.content
-                      ?.length >
-                    420
-                      ? "…"
-                      : ""
-                  }
-                </p>
-
-
-                <Link
-                  to={
-                    `/writings/${featuredWriting.id}`
-                  }
-                  className="home-motion-text-link"
-                >
-                  {
-                    t(
-                      "writingCard.read"
-                    )
-                  }
-
-                  <ArrowRight
-                    size={16}
-                  />
-                </Link>
-
-              </article>
-
-
-              <div
-                className="featured-quote-mark home-featured-quote-motion"
-              >
-
-                <Quote
-                  size={72}
-                />
-
-              </div>
-
-            </div>
-
-          </section>
-        )}
-
-
-      {/* =================================================
-          PROFESSIONAL SOCIAL FEED
-      ================================================== */}
-
-      <section
-        className="literary-content-section home-feed-section"
-        aria-busy={
-          feedLoading ||
-          loadingMore
-        }
-      >
-
-        <div
-          className="literary-section-header home-feed-heading home-reveal"
-          data-home-reveal
-        >
-
-          <div>
-
-            <span
-              className="literary-section-label"
+            <Link
+              to="/register"
+              className="home-guest-register"
             >
               {
-                labels.feedEyebrow
+                copy.createAccount
               }
-            </span>
-
-
-            <h2>
-              {
-                labels.feedTitle
-              }
-            </h2>
-
-
-            <p>
-              {
-                labels.feedDescription
-              }
-            </p>
+            </Link>
 
           </div>
 
+        </section>
 
-          <button
-            type="button"
-            className="home-feed-refresh"
-            onClick={
-              handleRefreshFeed
-            }
-            disabled={
-              feedLoading
-            }
-            title={
-              labels.refresh
-            }
-            aria-label={
-              labels.refresh
-            }
-          >
-
-            {feedLoading
-              ? (
-                  <Loader2
-                    size={17}
-                    className="home-feed-spin"
-                  />
-                )
-              : (
-                  <RefreshCw
-                    size={17}
-                  />
-                )}
-
-            <span>
-              {
-                labels.refresh
-              }
-            </span>
-
-          </button>
-
-        </div>
+      )}
 
 
-        {/* FEED TAB BAR */}
+      {/* =================================================
+          FEED TOOLBAR
+      ================================================== */}
+
+      <section
+        className="home-feed-toolbar"
+      >
 
         <div
-          className="home-feed-tabs home-reveal"
-          data-home-reveal
+          className="home-feed-tabs"
           role="tablist"
-          aria-label="SHOBDO feed"
-          style={{
-            "--home-reveal-delay":
-              "70ms",
-          }}
+          aria-label="Feed"
         >
 
           <button
@@ -2332,31 +1613,27 @@ function Home({
             role="tab"
             aria-selected={
               activeFeed ===
-              FEED_TYPES.FOR_YOU
+              "for-you"
             }
             className={
               activeFeed ===
-              FEED_TYPES.FOR_YOU
-                ? "home-feed-tab home-feed-tab-active"
-                : "home-feed-tab"
+              "for-you"
+                ? "active"
+                : ""
             }
             onClick={
               () =>
-                setActiveFeed(
-                  FEED_TYPES.FOR_YOU
+                handleFeedChange(
+                  "for-you"
                 )
             }
           >
 
             <Sparkles
-              size={17}
+              size={16}
             />
 
-            <span>
-              {
-                labels.forYou
-              }
-            </span>
+            {copy.forYou}
 
           </button>
 
@@ -2366,31 +1643,27 @@ function Home({
             role="tab"
             aria-selected={
               activeFeed ===
-              FEED_TYPES.FOLLOWING
+              "following"
             }
             className={
               activeFeed ===
-              FEED_TYPES.FOLLOWING
-                ? "home-feed-tab home-feed-tab-active"
-                : "home-feed-tab"
+              "following"
+                ? "active"
+                : ""
             }
             onClick={
               () =>
-                setActiveFeed(
-                  FEED_TYPES.FOLLOWING
+                handleFeedChange(
+                  "following"
                 )
             }
           >
 
-            <UsersRound
-              size={17}
+            <Users
+              size={16}
             />
 
-            <span>
-              {
-                labels.following
-              }
-            </span>
+            {copy.following}
 
           </button>
 
@@ -2400,324 +1673,29 @@ function Home({
             role="tab"
             aria-selected={
               activeFeed ===
-              FEED_TYPES.LATEST
+              "latest"
             }
             className={
               activeFeed ===
-              FEED_TYPES.LATEST
-                ? "home-feed-tab home-feed-tab-active"
-                : "home-feed-tab"
+              "latest"
+                ? "active"
+                : ""
             }
             onClick={
               () =>
-                setActiveFeed(
-                  FEED_TYPES.LATEST
+                handleFeedChange(
+                  "latest"
                 )
             }
           >
 
-            <Clock3
-              size={17}
+            <BookOpen
+              size={16}
             />
 
-            <span>
-              {
-                labels.latest
-              }
-            </span>
+            {copy.latest}
 
           </button>
-
-        </div>
-
-
-        {/* FEED CONTENT */}
-
-        <div
-          key={
-            `feed-content-${activeFeed}`
-          }
-          className="home-feed-content-swap"
-        >
-
-          {!feedLoading &&
-            followingRequiresLogin &&
-            activeFeed ===
-              FEED_TYPES.FOLLOWING && (
-
-              <div
-                className="home-feed-state home-feed-auth-state"
-              >
-
-                <div
-                  className="home-feed-state-icon"
-                >
-                  <UsersRound
-                    size={28}
-                  />
-                </div>
-
-
-                <h3>
-                  {
-                    labels.followingLoginTitle
-                  }
-                </h3>
-
-
-                <p>
-                  {
-                    labels.followingLoginDescription
-                  }
-                </p>
-
-
-                <Link
-                  to="/login"
-                  className="literary-primary-button home-motion-button"
-                >
-                  {
-                    labels.login
-                  }
-                </Link>
-
-              </div>
-            )}
-
-
-          {feedLoading &&
-            !followingRequiresLogin && (
-
-              <div
-                className="home-feed-skeleton-list"
-                aria-label={
-                  labels.loadingFeed
-                }
-                aria-busy="true"
-              >
-
-                <WritingCardSkeleton />
-                <WritingCardSkeleton />
-                <WritingCardSkeleton />
-                <WritingCardSkeleton />
-
-              </div>
-            )}
-
-
-          {!feedLoading &&
-            !followingRequiresLogin &&
-            feedError && (
-
-              <div
-                className="home-feed-state home-feed-error-state"
-              >
-
-                <Feather
-                  size={30}
-                />
-
-
-                <h3>
-                  {
-                    labels.feedError
-                  }
-                </h3>
-
-
-                <p>
-                  {
-                    feedError
-                  }
-                </p>
-
-
-                <button
-                  type="button"
-                  onClick={
-                    handleRefreshFeed
-                  }
-                >
-
-                  <RefreshCw
-                    size={16}
-                  />
-
-                  {
-                    labels.retry
-                  }
-
-                </button>
-
-              </div>
-            )}
-
-
-          {!feedLoading &&
-            !followingRequiresLogin &&
-            !feedError &&
-            feedWritings.length ===
-              0 && (
-
-              <div
-                className="home-feed-state"
-              >
-
-                <div
-                  className="home-feed-state-icon"
-                >
-                  <Feather
-                    size={28}
-                  />
-                </div>
-
-
-                <h3>
-                  {
-                    emptyFeedMessage
-                  }
-                </h3>
-
-
-                <Link
-                  to="/explore"
-                  className="literary-text-button home-motion-text-link"
-                >
-
-                  {
-                    labels.explore
-                  }
-
-                  <ArrowRight
-                    size={16}
-                  />
-
-                </Link>
-
-              </div>
-            )}
-
-
-          {!feedLoading &&
-            !followingRequiresLogin &&
-            !feedError &&
-            feedWritings.length > 0 && (
-
-              <>
-
-                <div
-                  className="home-feed-list"
-                >
-
-                  {feedWritings.map(
-                    (
-                      writing,
-                      index
-                    ) => (
-
-                      <div
-                        key={
-                          writing.id
-                        }
-                        className="home-feed-card-motion"
-                        style={{
-                          "--home-feed-index":
-                            index,
-                        }}
-                      >
-
-                        <WritingCard
-                          writing={
-                            writing
-                          }
-                        />
-
-                      </div>
-                    )
-                  )}
-
-                </div>
-
-
-                {feedTotal > 0 && (
-
-                  <div
-                    className="home-feed-summary home-feed-summary-motion"
-                  >
-
-                    <span>
-                      {
-                        feedWritings.length
-                      }
-                    </span>
-
-                    <span>
-                      /
-                    </span>
-
-                    <span>
-                      {
-                        feedTotal
-                      }
-                    </span>
-
-                  </div>
-                )}
-
-
-                {feedHasNext && (
-
-                  <div
-                    className="home-feed-load-more-wrap"
-                  >
-
-                    <button
-                      type="button"
-                      className="home-feed-load-more"
-                      disabled={
-                        loadingMore
-                      }
-                      onClick={
-                        handleLoadMore
-                      }
-                    >
-
-                      {loadingMore
-                        ? (
-                            <>
-                              <Loader2
-                                size={18}
-                                className="home-feed-spin"
-                              />
-
-                              <span>
-                                {
-                                  labels.loadingMore
-                                }
-                              </span>
-                            </>
-                          )
-                        : (
-                            <>
-                              <BookOpen
-                                size={18}
-                              />
-
-                              <span>
-                                {
-                                  labels.loadMore
-                                }
-                              </span>
-                            </>
-                          )}
-
-                    </button>
-
-                  </div>
-                )}
-
-              </>
-            )}
 
         </div>
 
@@ -2725,90 +1703,274 @@ function Home({
 
 
       {/* =================================================
-          FINAL CALL TO WRITE
+          ERROR
       ================================================== */}
 
-      <section
-        className="literary-final-section home-reveal"
-        data-home-reveal
-      >
-
-        <div
-          className="final-background-word home-background-word-motion"
-          aria-hidden="true"
-        >
-          SHOBDO
-        </div>
-
-
-        <div
-          key={
-            `final-${language}`
-          }
-          className="literary-final-inner home-final-content-motion"
+      {feedError && (
+        <section
+          className="home-feed-error"
         >
 
-          <Feather
-            size={34}
-            className="home-feather-motion"
-          />
+          <div>
+
+            <strong>
+              {copy.errorTitle}
+            </strong>
+
+            <p>
+              {feedError}
+            </p>
+
+          </div>
 
 
-          <span>
-            {
-              t(
-                "home.finalEyebrow",
-                "YOUR PAGE IS STILL BLANK"
-              )
+          <button
+            type="button"
+            onClick={
+              handleRefresh
             }
-          </span>
+          >
+
+            <RefreshCw
+              size={16}
+            />
+
+            {copy.retry}
+
+          </button>
+
+        </section>
+      )}
+
+
+      {/* =================================================
+          LOADING
+      ================================================== */}
+
+      {feedLoading &&
+        currentWritings.length ===
+          0 && (
+
+        <FeedSkeleton />
+
+      )}
+
+
+      {/* =================================================
+          EMPTY
+      ================================================== */}
+
+      {!feedLoading &&
+        !feedError &&
+        currentWritings.length ===
+          0 && (
+
+        <section
+          className="home-empty-feed"
+        >
+
+          <div
+            className="home-empty-icon"
+          >
+
+            {activeFeed ===
+            "following"
+              ? (
+
+                <Users
+                  size={28}
+                />
+
+              )
+              : (
+
+                <BookOpen
+                  size={28}
+                />
+
+              )}
+
+          </div>
 
 
           <h2>
+
             {
-              t(
-                "home.finalTitle",
-                "Someone may be waiting to read the words only you can write."
-              )
+              activeFeed ===
+              "following"
+                ? copy.followingEmptyTitle
+                : copy.emptyTitle
             }
+
           </h2>
 
 
           <p>
+
             {
-              t(
-                "home.finalDescription",
-                "Begin with one sentence. The rest can find its way."
-              )
+              activeFeed ===
+              "following"
+                ? copy.followingEmptyDescription
+                : copy.emptyDescription
             }
+
           </p>
 
 
-          <Link
-            to="/write"
-            className="literary-final-button home-motion-button"
+          <div
+            className="home-empty-actions"
           >
 
-            {
-              t(
-                "home.beginWriting",
-                "Write something"
-              )
+            <Link
+              to="/explore"
+              className="home-empty-secondary"
+            >
+              {
+                copy.exploreWriters
+              }
+            </Link>
+
+
+            <Link
+              to={
+                user
+                  ? "/write"
+                  : "/login"
+              }
+              className="home-empty-primary"
+            >
+
+              <PenLine
+                size={16}
+              />
+
+              {
+                copy.startWriting
+              }
+
+            </Link>
+
+          </div>
+
+        </section>
+
+      )}
+
+
+      {/* =================================================
+          WRITING FEED
+      ================================================== */}
+
+      {currentWritings.length >
+        0 && (
+
+        <section
+          className="home-writing-feed"
+        >
+
+          {currentWritings.map(
+            (
+              writing
+            ) => (
+
+              <div
+                className="home-feed-post"
+                key={
+                  writing.id
+                }
+              >
+
+                <WritingCard
+                  writing={
+                    writing
+                  }
+                />
+
+              </div>
+
+            )
+          )}
+
+        </section>
+
+      )}
+
+
+      {/* =================================================
+          LOAD MORE
+      ================================================== */}
+
+      {!feedLoading &&
+        !feedError &&
+        currentWritings.length >
+          0 &&
+        currentHasMore && (
+
+        <div
+          className="home-load-more-wrap"
+        >
+
+          <button
+            type="button"
+            className="home-load-more"
+            onClick={
+              handleLoadMore
             }
+            disabled={
+              loadingMore
+            }
+          >
 
-            <ArrowRight
-              size={17}
-            />
+            {loadingMore
+              ? (
+                <>
+                  <Loader2
+                    size={17}
+                    className="home-spin"
+                  />
 
-          </Link>
+                  {
+                    copy.loadingMore
+                  }
+                </>
+              )
+              : (
+                copy.loadMore
+              )}
+
+          </button>
 
         </div>
 
-      </section>
+      )}
 
-    </main>
+
+      {/* =================================================
+          END MESSAGE
+      ================================================== */}
+
+      {!feedLoading &&
+        !currentHasMore &&
+        currentWritings.length >
+          3 && (
+
+        <div
+          className="home-feed-end"
+        >
+
+          <span />
+
+          <p>
+            SHOBDO
+          </p>
+
+          <span />
+
+        </div>
+
+      )}
+
+    </div>
+
   );
 }
-
-
-export default Home;

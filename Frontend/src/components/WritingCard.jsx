@@ -6,15 +6,18 @@ import {
 } from "react";
 
 import {
+  ArrowRight,
   BookOpen,
   Bookmark,
   CalendarDays,
   Check,
   Clock3,
+  Copy,
   Globe2,
   Hash,
   Heart,
   MessageCircle,
+  MoreHorizontal,
   Repeat2,
   Share2,
   User,
@@ -47,7 +50,7 @@ import "./WritingCard.css";
 
 
 // =========================================================
-// HELPERS
+// NUMBER HELPER
 // =========================================================
 
 function safeNumber(
@@ -83,14 +86,17 @@ function getInitials(
       value || ""
     ).trim();
 
+
   if (!text) {
     return "";
   }
+
 
   const parts =
     text
       .split(/\s+/)
       .filter(Boolean);
+
 
   if (
     parts.length === 1
@@ -104,6 +110,7 @@ function getInitials(
       .toUpperCase();
   }
 
+
   return (
     `${parts[0][0]}${parts[1][0]}`
   ).toUpperCase();
@@ -111,7 +118,7 @@ function getInitials(
 
 
 // =========================================================
-// SHARE URL
+// WRITING URL
 // =========================================================
 
 function getWritingShareUrl(
@@ -121,12 +128,15 @@ function getWritingShareUrl(
   const path =
     `/writings/${writingId}`;
 
+
   if (
     typeof window ===
     "undefined"
   ) {
+
     return path;
   }
+
 
   try {
 
@@ -154,12 +164,11 @@ async function copyText(
 
   if (
     typeof navigator !==
-      "undefined"
-    &&
-    navigator.clipboard
-    &&
+      "undefined" &&
+    navigator.clipboard &&
     typeof navigator.clipboard
-      .writeText === "function"
+      .writeText ===
+      "function"
   ) {
 
     await navigator.clipboard.writeText(
@@ -174,6 +183,7 @@ async function copyText(
     typeof document ===
     "undefined"
   ) {
+
     return false;
   }
 
@@ -183,13 +193,16 @@ async function copyText(
       "textarea"
     );
 
+
   textarea.value =
     text;
+
 
   textarea.setAttribute(
     "readonly",
     ""
   );
+
 
   textarea.style.position =
     "fixed";
@@ -203,11 +216,14 @@ async function copyText(
   textarea.style.left =
     "-9999px";
 
+
   document.body.appendChild(
     textarea
   );
 
+
   textarea.select();
+
 
   textarea.setSelectionRange(
     0,
@@ -217,6 +233,7 @@ async function copyText(
 
   let success =
     false;
+
 
   try {
 
@@ -236,6 +253,7 @@ async function copyText(
     textarea
   );
 
+
   return success;
 }
 
@@ -248,17 +266,23 @@ function WritingCard({
   writing,
 }) {
 
+  const navigate =
+    useNavigate();
+
+
   const {
     t,
     language,
   } = useLanguage();
 
 
-  const navigate =
-    useNavigate();
-
-
   const shareResetTimerRef =
+    useRef(
+      null
+    );
+
+
+  const menuRef =
     useRef(
       null
     );
@@ -282,6 +306,7 @@ function WritingCard({
           key
         );
 
+
       if (
         translated &&
         translated !== key
@@ -292,7 +317,7 @@ function WritingCard({
 
     } catch {
 
-      // Use fallback below.
+      // Use local fallback.
     }
 
 
@@ -325,14 +350,6 @@ function WritingCard({
 
   const labels = {
 
-    by:
-      translate(
-        "writingCard.by",
-        "লেখক",
-        "By",
-        "लेखक"
-      ),
-
     unknownAuthor:
       translate(
         "common.unknownAuthor",
@@ -344,17 +361,24 @@ function WritingCard({
     untitled:
       translate(
         "common.untitled",
-        "শিরোনামহীন",
-        "Untitled",
+        "শিরোনামহীন লেখা",
+        "Untitled writing",
         "बिना शीर्षक"
       ),
+
+    writer:
+      language === "bn"
+        ? "লেখক"
+        : language === "hi"
+          ? "लेखक"
+          : "Writer",
 
     previewUnavailable:
       translate(
         "writingCard.previewUnavailable",
-        "লেখার কোনো প্রিভিউ নেই।",
-        "No preview available.",
-        "कोई पूर्वावलोकन उपलब्ध नहीं है।"
+        "এই লেখার কোনো প্রিভিউ নেই।",
+        "No preview is available for this writing.",
+        "इस रचना का पूर्वावलोकन उपलब्ध नहीं है।"
       ),
 
     minutes:
@@ -376,9 +400,9 @@ function WritingCard({
     read:
       translate(
         "writingCard.read",
-        "পড়ুন",
-        "Read",
-        "पढ़ें"
+        "লেখাটি পড়ুন",
+        "Read more",
+        "और पढ़ें"
       ),
 
     like:
@@ -395,18 +419,18 @@ function WritingCard({
           ? "पसंद हटाएँ"
           : "Unlike",
 
-    comments:
+    comment:
       language === "bn"
         ? "মন্তব্য"
         : language === "hi"
-          ? "टिप्पणियाँ"
-          : "Comments",
+          ? "टिप्पणी"
+          : "Comment",
 
     repost:
       language === "bn"
-        ? "পুনরায় শেয়ার করুন"
+        ? "রিপোস্ট"
         : language === "hi"
-          ? "रीपोस्ट करें"
+          ? "रीपोस्ट"
           : "Repost",
 
     unrepost:
@@ -416,39 +440,11 @@ function WritingCard({
           ? "रीपोस्ट हटाएँ"
           : "Remove repost",
 
-    reposted:
-      language === "bn"
-        ? "রিপোস্ট হয়েছে"
-        : language === "hi"
-          ? "रीपोस्ट किया गया"
-          : "Reposted",
-
-    save:
-      language === "bn"
-        ? "সংরক্ষণ করুন"
-        : language === "hi"
-          ? "सहेजें"
-          : "Save",
-
-    saved:
-      language === "bn"
-        ? "সংরক্ষিত"
-        : language === "hi"
-          ? "सहेजा गया"
-          : "Saved",
-
-    removeSaved:
-      language === "bn"
-        ? "সংরক্ষিত তালিকা থেকে সরান"
-        : language === "hi"
-          ? "सहेजी गई सूची से हटाएँ"
-          : "Remove from saved writings",
-
     share:
       language === "bn"
-        ? "শেয়ার করুন"
+        ? "শেয়ার"
         : language === "hi"
-          ? "शेयर करें"
+          ? "शेयर"
           : "Share",
 
     shared:
@@ -467,10 +463,52 @@ function WritingCard({
 
     shareFailed:
       language === "bn"
-        ? "লিংক শেয়ার করা যায়নি"
+        ? "শেয়ার করা যায়নি"
         : language === "hi"
-          ? "लिंक शेयर नहीं हो सका"
+          ? "शेयर नहीं हो सका"
           : "Unable to share",
+
+    save:
+      language === "bn"
+        ? "সংরক্ষণ"
+        : language === "hi"
+          ? "सहेजें"
+          : "Save",
+
+    saved:
+      language === "bn"
+        ? "সংরক্ষিত"
+        : language === "hi"
+          ? "सहेजा गया"
+          : "Saved",
+
+    removeSaved:
+      language === "bn"
+        ? "সংরক্ষিত তালিকা থেকে সরান"
+        : language === "hi"
+          ? "सहेजी गई सूची से हटाएँ"
+          : "Remove from saved",
+
+    more:
+      language === "bn"
+        ? "আরও অপশন"
+        : language === "hi"
+          ? "अधिक विकल्प"
+          : "More options",
+
+    openPost:
+      language === "bn"
+        ? "লেখাটি খুলুন"
+        : language === "hi"
+          ? "रचना खोलें"
+          : "Open post",
+
+    copyLink:
+      language === "bn"
+        ? "লিংক কপি করুন"
+        : language === "hi"
+          ? "लिंक कॉपी करें"
+          : "Copy link",
 
   };
 
@@ -488,8 +526,7 @@ function WritingCard({
   const hasWritingId =
     Number.isInteger(
       writingId
-    )
-    &&
+    ) &&
     writingId > 0;
 
 
@@ -530,58 +567,6 @@ function WritingCard({
 
 
   // =======================================================
-  // SYNC LIKE STATE
-  // =======================================================
-
-  useEffect(
-    () => {
-
-      setLikesCount(
-        safeNumber(
-          writing?.likes_count ??
-          writing?.likes
-        )
-      );
-
-
-      setLiked(
-        Boolean(
-          writing?.liked_by_current_user ??
-          writing?.is_liked ??
-          writing?.liked ??
-          false
-        )
-      );
-
-    },
-    [
-      writing?.id,
-      writing?.likes_count,
-      writing?.likes,
-      writing?.liked_by_current_user,
-      writing?.is_liked,
-      writing?.liked,
-    ]
-  );
-
-
-  // =======================================================
-  // COMMENT COUNT
-  // =======================================================
-
-  const commentsCount =
-    safeNumber(
-      writing?.comments_count ??
-      (
-        Array.isArray(
-          writing?.comments
-        )
-          ? writing.comments.length
-          : writing?.comments
-      )
-    );
-
-  // =======================================================
   // REPOST STATE
   // =======================================================
 
@@ -596,6 +581,7 @@ function WritingCard({
     )
   );
 
+
   const [
     reposted,
     setReposted,
@@ -609,6 +595,7 @@ function WritingCard({
     )
   );
 
+
   const [
     reposting,
     setReposting,
@@ -616,46 +603,6 @@ function WritingCard({
     false
   );
 
-  // =======================================================
-  // SYNC REPOST STATE
-  // =======================================================
-
-  useEffect(
-    () => {
-
-      setRepostsCount(
-        safeNumber(
-          writing?.reposts_count ??
-          writing?.repost_count ??
-          0
-        )
-      );
-      
-      setReposted(
-        Boolean(
-          writing?.reposted_by_me ??
-          writing?.reposted_by_current_user ??
-          writing?.is_reposted ??
-          writing?.reposted ??
-          false
-        )
-      );
-      
-      setReposting(
-        false
-      );
-
-    },
-    [
-      writing?.id,
-      writing?.reposts_count,
-      writing?.repost_count,
-      writing?.reposted_by_me,
-      writing?.reposted_by_current_user,
-      writing?.is_reposted,
-      writing?.reposted,
-    ]
-  );
 
   // =======================================================
   // SAVE STATE
@@ -703,7 +650,99 @@ function WritingCard({
 
 
   // =======================================================
-  // RESET SAVE STATE
+  // MENU
+  // =======================================================
+
+  const [
+    menuOpen,
+    setMenuOpen,
+  ] = useState(
+    false
+  );
+
+
+  // =======================================================
+  // SYNC LIKE STATE
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      setLikesCount(
+        safeNumber(
+          writing?.likes_count ??
+          writing?.likes
+        )
+      );
+
+
+      setLiked(
+        Boolean(
+          writing?.liked_by_current_user ??
+          writing?.is_liked ??
+          writing?.liked ??
+          false
+        )
+      );
+
+    },
+    [
+      writing?.id,
+      writing?.likes_count,
+      writing?.likes,
+      writing?.liked_by_current_user,
+      writing?.is_liked,
+      writing?.liked,
+    ]
+  );
+
+
+  // =======================================================
+  // SYNC REPOST STATE
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      setRepostsCount(
+        safeNumber(
+          writing?.reposts_count ??
+          writing?.repost_count ??
+          0
+        )
+      );
+
+
+      setReposted(
+        Boolean(
+          writing?.reposted_by_me ??
+          writing?.reposted_by_current_user ??
+          writing?.is_reposted ??
+          writing?.reposted ??
+          false
+        )
+      );
+
+
+      setReposting(
+        false
+      );
+
+    },
+    [
+      writing?.id,
+      writing?.reposts_count,
+      writing?.repost_count,
+      writing?.reposted_by_me,
+      writing?.reposted_by_current_user,
+      writing?.is_reposted,
+      writing?.reposted,
+    ]
+  );
+
+
+  // =======================================================
+  // SYNC SAVE STATE
   // =======================================================
 
   useEffect(
@@ -734,7 +773,7 @@ function WritingCard({
 
 
   // =======================================================
-  // RESET SHARE STATE WHEN WRITING CHANGES
+  // RESET SHARE STATE
   // =======================================================
 
   useEffect(
@@ -753,6 +792,7 @@ function WritingCard({
           shareResetTimerRef.current
         );
 
+
         shareResetTimerRef.current =
           null;
       }
@@ -765,7 +805,7 @@ function WritingCard({
 
 
   // =======================================================
-  // CLEAN SHARE TIMER
+  // CLEAN TIMER
   // =======================================================
 
   useEffect(
@@ -782,6 +822,50 @@ function WritingCard({
           );
         }
 
+      };
+
+    },
+    []
+  );
+
+
+  // =======================================================
+  // CLOSE MENU OUTSIDE
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      function handleOutsideClick(
+        event
+      ) {
+
+        if (
+          menuRef.current &&
+          !menuRef.current.contains(
+            event.target
+          )
+        ) {
+
+          setMenuOpen(
+            false
+          );
+        }
+      }
+
+
+      document.addEventListener(
+        "mousedown",
+        handleOutsideClick
+      );
+
+
+      return () => {
+
+        document.removeEventListener(
+          "mousedown",
+          handleOutsideClick
+        );
       };
 
     },
@@ -819,12 +903,8 @@ function WritingCard({
         }
 
 
-        const token =
-          getToken();
-
-
         if (
-          !token
+          !getToken()
         ) {
 
           if (
@@ -851,6 +931,7 @@ function WritingCard({
           if (
             cancelled
           ) {
+
             return;
           }
 
@@ -872,7 +953,7 @@ function WritingCard({
           ) {
 
             console.error(
-              "GET SAVED WRITING STATUS ERROR:",
+              "GET SAVED STATUS ERROR:",
               error
             );
           }
@@ -906,6 +987,23 @@ function WritingCard({
       writingId,
     ]
   );
+
+
+  // =======================================================
+  // COMMENTS
+  // =======================================================
+
+  const commentsCount =
+    safeNumber(
+      writing?.comments_count ??
+      (
+        Array.isArray(
+          writing?.comments
+        )
+          ? writing.comments.length
+          : writing?.comments
+      )
+    );
 
 
   // =======================================================
@@ -986,8 +1084,7 @@ function WritingCard({
   const hasAuthorId =
     Number.isInteger(
       authorId
-    )
-    &&
+    ) &&
     authorId > 0;
 
 
@@ -1022,15 +1119,16 @@ function WritingCard({
     "";
 
 
-  // =======================================================
-  // CATEGORY / LANGUAGE
-  // =======================================================
-
-  const category =
-    getCategoryLabel(
-      writing?.category
+  const authorInitials =
+    getInitials(
+      authorName ||
+      authorUsername
     );
 
+
+  // =======================================================
+  // LANGUAGE / CATEGORY
+  // =======================================================
 
   const languageCode =
     writing?.language ||
@@ -1043,6 +1141,12 @@ function WritingCard({
     );
 
 
+  const category =
+    getCategoryLabel(
+      writing?.category
+    );
+
+
   // =======================================================
   // TAGS
   // =======================================================
@@ -1051,7 +1155,8 @@ function WritingCard({
     useMemo(
       () => {
 
-        const source = [];
+        const collected =
+          [];
 
 
         if (
@@ -1070,7 +1175,7 @@ function WritingCard({
                 "string"
               ) {
 
-                source.push({
+                collected.push({
                   name:
                     tag,
                 });
@@ -1085,7 +1190,8 @@ function WritingCard({
                 "object"
               ) {
 
-                source.push({
+                collected.push({
+
                   id:
                     tag.id,
 
@@ -1093,15 +1199,17 @@ function WritingCard({
                     tag.name ||
                     tag.hashtag ||
                     "",
+
                 });
               }
+
             }
           );
         }
 
 
         if (
-          source.length === 0 &&
+          collected.length === 0 &&
           Array.isArray(
             writing?.hashtags
           )
@@ -1112,10 +1220,11 @@ function WritingCard({
               hashtag
             ) => {
 
-              source.push({
+              collected.push({
                 name:
                   hashtag,
               });
+
             }
           );
         }
@@ -1125,7 +1234,7 @@ function WritingCard({
           new Set();
 
 
-        return source
+        return collected
           .map(
             (
               tag
@@ -1147,6 +1256,7 @@ function WritingCard({
               if (
                 !name
               ) {
+
                 return null;
               }
 
@@ -1160,6 +1270,7 @@ function WritingCard({
                   key
                 )
               ) {
+
                 return null;
               }
 
@@ -1177,16 +1288,16 @@ function WritingCard({
 
                 name,
 
-                hashtag:
-                  `#${name}`,
               };
+
             }
           )
           .filter(Boolean)
           .slice(
             0,
-            20
+            6
           );
+
       },
       [
         writing?.tags,
@@ -1196,7 +1307,7 @@ function WritingCard({
 
 
   // =======================================================
-  // CONTENT PREVIEW
+  // PREVIEW
   // =======================================================
 
   const preview =
@@ -1207,7 +1318,12 @@ function WritingCard({
           String(
             writing?.content ||
             ""
-          ).trim();
+          )
+            .replace(
+              /\s+/g,
+              " "
+            )
+            .trim();
 
 
         if (
@@ -1221,7 +1337,7 @@ function WritingCard({
 
 
         if (
-          text.length <= 240
+          text.length <= 320
         ) {
 
           return text;
@@ -1232,10 +1348,11 @@ function WritingCard({
           `${text
             .slice(
               0,
-              240
+              320
             )
             .trim()}…`
         );
+
       },
       [
         writing?.content,
@@ -1273,6 +1390,7 @@ function WritingCard({
           )
           .filter(Boolean)
           .length;
+
       },
       [
         writing?.content,
@@ -1295,17 +1413,19 @@ function WritingCard({
 
 
   // =======================================================
-  // FULL DATE
+  // DATE
   // =======================================================
+
+  const publishedValue =
+    writing?.published_at ||
+    writing?.created_at;
+
 
   function formatDate(
     value
   ) {
 
-    if (
-      !value
-    ) {
-
+    if (!value) {
       return "";
     }
 
@@ -1329,11 +1449,13 @@ function WritingCard({
     try {
 
       return new Intl.DateTimeFormat(
+
         language === "bn"
           ? "bn-IN"
           : language === "hi"
             ? "hi-IN"
-            : undefined,
+            : "en-IN",
+
         {
           day:
             "numeric",
@@ -1344,6 +1466,7 @@ function WritingCard({
           year:
             "numeric",
         }
+
       ).format(
         date
       );
@@ -1357,17 +1480,11 @@ function WritingCard({
   }
 
 
-  // =======================================================
-  // RELATIVE PUBLISHED TIME
-  // =======================================================
-
   function formatRelativeTime(
     value
   ) {
 
-    if (
-      !value
-    ) {
+    if (!value) {
       return "";
     }
 
@@ -1383,18 +1500,19 @@ function WritingCard({
         date.getTime()
       )
     ) {
+
       return "";
     }
 
 
-    const differenceMs =
+    const difference =
       date.getTime() -
       Date.now();
 
 
-    const absoluteMs =
+    const absolute =
       Math.abs(
-        differenceMs
+        difference
       );
 
 
@@ -1416,12 +1534,13 @@ function WritingCard({
 
 
     if (
-      absoluteMs < hour
+      absolute <
+      hour
     ) {
 
       valueNumber =
         Math.round(
-          differenceMs /
+          difference /
           minute
         );
 
@@ -1429,12 +1548,13 @@ function WritingCard({
         "minute";
 
     } else if (
-      absoluteMs < day
+      absolute <
+      day
     ) {
 
       valueNumber =
         Math.round(
-          differenceMs /
+          difference /
           hour
         );
 
@@ -1442,12 +1562,13 @@ function WritingCard({
         "hour";
 
     } else if (
-      absoluteMs < week
+      absolute <
+      week
     ) {
 
       valueNumber =
         Math.round(
-          differenceMs /
+          difference /
           day
         );
 
@@ -1469,6 +1590,7 @@ function WritingCard({
       if (
         language === "bn"
       ) {
+
         return "এইমাত্র";
       }
 
@@ -1476,6 +1598,7 @@ function WritingCard({
       if (
         language === "hi"
       ) {
+
         return "अभी";
       }
 
@@ -1488,15 +1611,18 @@ function WritingCard({
 
       const formatter =
         new Intl.RelativeTimeFormat(
+
           language === "bn"
             ? "bn"
             : language === "hi"
               ? "hi"
               : "en",
+
           {
             numeric:
               "auto",
           }
+
         );
 
 
@@ -1514,11 +1640,6 @@ function WritingCard({
   }
 
 
-  const publishedValue =
-    writing?.published_at ||
-    writing?.created_at;
-
-
   const publishedDate =
     formatDate(
       publishedValue
@@ -1532,7 +1653,7 @@ function WritingCard({
 
 
   // =======================================================
-  // LIKE / UNLIKE
+  // LIKE
   // =======================================================
 
   async function handleLike(
@@ -1548,6 +1669,7 @@ function WritingCard({
       liking ||
       !hasWritingId
     ) {
+
       return;
     }
 
@@ -1571,8 +1693,6 @@ function WritingCard({
     const previousCount =
       likesCount;
 
-
-    // Optimistic UI.
 
     setLiked(
       !previousLiked
@@ -1606,70 +1726,43 @@ function WritingCard({
         );
 
 
+      const serverLiked =
+        data?.liked ??
+        data?.is_liked;
+
+
       if (
-        typeof data?.liked ===
+        typeof serverLiked ===
         "boolean"
       ) {
 
         setLiked(
-          data.liked
-        );
-
-      } else if (
-        typeof data?.is_liked ===
-        "boolean"
-      ) {
-
-        setLiked(
-          data.is_liked
+          serverLiked
         );
       }
+
+
+      const serverCount =
+        data?.likes_count ??
+        data?.writing?.likes_count ??
+        data?.likes;
 
 
       if (
         Number.isFinite(
           Number(
-            data?.likes_count
+            serverCount
           )
         )
       ) {
 
         setLikesCount(
           safeNumber(
-            data.likes_count
-          )
-        );
-
-      } else if (
-        Number.isFinite(
-          Number(
-            data?.writing
-              ?.likes_count
-          )
-        )
-      ) {
-
-        setLikesCount(
-          safeNumber(
-            data.writing
-              .likes_count
-          )
-        );
-
-      } else if (
-        Number.isFinite(
-          Number(
-            data?.likes
-          )
-        )
-      ) {
-
-        setLikesCount(
-          safeNumber(
-            data.likes
+            serverCount
           )
         );
       }
+
 
     } catch (
       error
@@ -1700,7 +1793,7 @@ function WritingCard({
 
 
   // =======================================================
-  // SAVE / UNSAVE
+  // SAVE
   // =======================================================
 
   async function handleSave(
@@ -1759,24 +1852,21 @@ function WritingCard({
             );
 
 
+      const serverSaved =
+        data?.saved ??
+        data?.is_saved;
+
+
       if (
-        typeof data?.saved ===
+        typeof serverSaved ===
         "boolean"
       ) {
 
         setSaved(
-          data.saved
-        );
-
-      } else if (
-        typeof data?.is_saved ===
-        "boolean"
-      ) {
-
-        setSaved(
-          data.is_saved
+          serverSaved
         );
       }
+
 
     } catch (
       error
@@ -1800,8 +1890,9 @@ function WritingCard({
     }
   }
 
+
   // =======================================================
-  // REPOST / UNREPOST
+  // REPOST
   // =======================================================
 
   async function handleRepost(
@@ -1846,30 +1937,21 @@ function WritingCard({
       !previousReposted;
 
 
-    // =====================================================
-    // OPTIMISTIC UI
-    // =====================================================
-
     setReposted(
       nextReposted
     );
 
 
     setRepostsCount(
-
       Math.max(
-
         0,
-
         previousCount +
         (
           previousReposted
             ? -1
             : 1
         )
-
       )
-
     );
 
 
@@ -1890,10 +1972,6 @@ function WritingCard({
             );
 
 
-      // ===================================================
-      // SERVER STATUS
-      // ===================================================
-
       const serverReposted =
         data?.reposted ??
         data?.reposted_by_me ??
@@ -1912,10 +1990,6 @@ function WritingCard({
       }
 
 
-      // ===================================================
-      // SERVER COUNT
-      // ===================================================
-
       if (
         Number.isFinite(
           Number(
@@ -1932,13 +2006,6 @@ function WritingCard({
       }
 
 
-      // ===================================================
-      // GLOBAL EVENT
-      //
-      // Other pages can later listen to this event if they
-      // need to refresh repost/profile statistics.
-      // ===================================================
-
       if (
         typeof window !==
         "undefined"
@@ -1949,6 +2016,7 @@ function WritingCard({
           new CustomEvent(
             "shobdo:repost-changed",
             {
+
               detail: {
 
                 writingId,
@@ -1959,38 +2027,18 @@ function WritingCard({
                     ? serverReposted
                     : nextReposted,
 
-                repostsCount:
-                  Number.isFinite(
-                    Number(
-                      data?.reposts_count
-                    )
-                  )
-                    ? safeNumber(
-                        data.reposts_count
-                      )
-                    : (
-                        previousCount +
-                        (
-                          previousReposted
-                            ? -1
-                            : 1
-                        )
-                      ),
-
               },
+
             }
           )
 
         );
       }
 
+
     } catch (
       error
     ) {
-
-      // ===================================================
-      // ROLLBACK OPTIMISTIC STATE
-      // ===================================================
 
       setReposted(
         previousReposted
@@ -2015,8 +2063,9 @@ function WritingCard({
     }
   }
 
+
   // =======================================================
-  // SHARE FEEDBACK RESET
+  // SHARE RESET
   // =======================================================
 
   function resetShareStateLater() {
@@ -2039,6 +2088,7 @@ function WritingCard({
             "idle"
           );
 
+
           shareResetTimerRef.current =
             null;
 
@@ -2049,7 +2099,7 @@ function WritingCard({
 
 
   // =======================================================
-  // COPY SHARE URL
+  // COPY URL
   // =======================================================
 
   async function copyShareUrl(
@@ -2067,7 +2117,7 @@ function WritingCard({
     ) {
 
       throw new Error(
-        "Unable to copy share link."
+        "Unable to copy link."
       );
     }
 
@@ -2082,7 +2132,7 @@ function WritingCard({
 
 
   // =======================================================
-  // SHARE WRITING
+  // SHARE
   // =======================================================
 
   async function handleShare(
@@ -2096,7 +2146,8 @@ function WritingCard({
 
     if (
       !hasWritingId ||
-      shareState === "sharing"
+      shareState ===
+        "sharing"
     ) {
 
       return;
@@ -2129,18 +2180,9 @@ function WritingCard({
     );
 
 
-    // -----------------------------------------------------
-    // NATIVE WEB SHARE
-    //
-    // Supported by many mobile browsers and some desktop
-    // browsers. It can share directly to WhatsApp, Facebook,
-    // Messages, Telegram, email, etc.
-    // -----------------------------------------------------
-
     if (
       typeof navigator !==
-        "undefined"
-      &&
+        "undefined" &&
       typeof navigator.share ===
         "function"
     ) {
@@ -2148,6 +2190,7 @@ function WritingCard({
       try {
 
         await navigator.share({
+
           title:
             `${shareTitle} — SHOBDO`,
 
@@ -2156,6 +2199,7 @@ function WritingCard({
 
           url:
             shareUrl,
+
         });
 
 
@@ -2173,10 +2217,9 @@ function WritingCard({
         error
       ) {
 
-        // User closed/cancelled native share sheet.
         if (
           error?.name ===
-            "AbortError"
+          "AbortError"
         ) {
 
           setShareState(
@@ -2185,21 +2228,9 @@ function WritingCard({
 
           return;
         }
-
-
-        // Native share failed.
-        // Continue to clipboard fallback.
-        console.warn(
-          "NATIVE SHARE FAILED, USING COPY FALLBACK:",
-          error
-        );
       }
     }
 
-
-    // -----------------------------------------------------
-    // DESKTOP / FALLBACK
-    // -----------------------------------------------------
 
     try {
 
@@ -2228,12 +2259,61 @@ function WritingCard({
 
 
   // =======================================================
+  // COPY LINK FROM MENU
+  // =======================================================
+
+  async function handleMenuCopyLink() {
+
+    setMenuOpen(
+      false
+    );
+
+
+    if (
+      !hasWritingId
+    ) {
+
+      return;
+    }
+
+
+    try {
+
+      await copyShareUrl(
+        getWritingShareUrl(
+          writingId
+        )
+      );
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        "COPY WRITING LINK ERROR:",
+        error
+      );
+
+
+      setShareState(
+        "error"
+      );
+
+
+      resetShareStateLater();
+    }
+  }
+
+
+  // =======================================================
   // SHARE PRESENTATION
   // =======================================================
 
   const shareSuccessful =
-    shareState === "copied" ||
-    shareState === "shared";
+    shareState ===
+      "copied" ||
+    shareState ===
+      "shared";
 
 
   const shareLabel =
@@ -2247,109 +2327,7 @@ function WritingCard({
 
 
   // =======================================================
-  // AUTHOR AVATAR
-  // =======================================================
-
-  const authorInitials =
-    getInitials(
-      authorName ||
-      authorUsername
-    );
-
-
-  const authorAvatarContent =
-    authorAvatar
-      ? (
-
-          <img
-            src={
-              authorAvatar
-            }
-            alt=""
-            loading="lazy"
-          />
-
-        )
-      : authorInitials
-        ? (
-
-            <span>
-              {
-                authorInitials
-              }
-            </span>
-
-          )
-        : (
-
-            <User
-              size={17}
-            />
-
-          );
-
-
-  // =======================================================
-  // AUTHOR CONTENT
-  // =======================================================
-
-  const authorContent = (
-
-    <>
-
-      <div
-        className="writing-author-avatar"
-      >
-        {
-          authorAvatarContent
-        }
-      </div>
-
-
-      <div
-        className="writing-author-info"
-      >
-
-        <div
-          className="writing-author-name-row"
-        >
-
-          <strong>
-            {
-              authorName
-            }
-          </strong>
-
-
-          {authorUsername && (
-
-            <span
-              className="writing-author-username"
-            >
-              @{authorUsername}
-            </span>
-
-          )}
-
-        </div>
-
-
-        <span
-          className="writing-author-byline"
-        >
-          {
-            labels.by
-          }
-        </span>
-
-      </div>
-
-    </>
-  );
-
-
-  // =======================================================
-  // INVALID WRITING SAFETY
+  // SAFETY
   // =======================================================
 
   if (
@@ -2372,72 +2350,269 @@ function WritingCard({
     >
 
       {/* =================================================
-          HEADER / AUTHOR
+          HEADER
       ================================================== */}
 
-      <div
+      <header
         className="writing-card-header"
       >
 
-        {hasAuthorId
-          ? (
+        <div
+          className="writing-author-section"
+        >
+
+          {hasAuthorId
+            ? (
 
               <Link
                 to={
                   `/users/${authorId}`
                 }
-                className="writing-card-author writing-card-author-link"
+                className="writing-author-avatar"
                 aria-label={
                   `${authorName} profile`
                 }
               >
-                {
-                  authorContent
-                }
+
+                {authorAvatar
+                  ? (
+
+                    <img
+                      src={
+                        authorAvatar
+                      }
+                      alt=""
+                      loading="lazy"
+                    />
+
+                  )
+                  : authorInitials
+                    ? (
+
+                      <span>
+                        {
+                          authorInitials
+                        }
+                      </span>
+
+                    )
+                    : (
+
+                      <User
+                        size={18}
+                      />
+
+                    )}
+
               </Link>
 
             )
-          : (
+            : (
 
               <div
-                className="writing-card-author"
+                className="writing-author-avatar"
               >
-                {
-                  authorContent
-                }
+
+                {authorInitials
+                  ? (
+                    <span>
+                      {
+                        authorInitials
+                      }
+                    </span>
+                  )
+                  : (
+                    <User
+                      size={18}
+                    />
+                  )}
+
               </div>
 
             )}
 
 
-        <div
-          className="writing-card-header-meta"
-        >
+          <div
+            className="writing-author-content"
+          >
 
-          {relativePublishedDate && (
-
-            <span
-              className="writing-card-published-time"
-              title={
-                publishedDate
-              }
+            <div
+              className="writing-author-primary"
             >
 
-              <CalendarDays
-                size={13}
-              />
+              {hasAuthorId
+                ? (
 
-              {
-                relativePublishedDate
-              }
+                  <Link
+                    to={
+                      `/users/${authorId}`
+                    }
+                    className="writing-author-name"
+                  >
+                    {authorName}
+                  </Link>
 
-            </span>
+                )
+                : (
+
+                  <strong
+                    className="writing-author-name"
+                  >
+                    {authorName}
+                  </strong>
+
+                )}
+
+
+              {authorUsername && (
+
+                <span
+                  className="writing-author-username"
+                >
+                  @{authorUsername}
+                </span>
+
+              )}
+
+            </div>
+
+
+            <div
+              className="writing-author-secondary"
+            >
+
+              <span>
+                {labels.writer}
+              </span>
+
+
+              {relativePublishedDate && (
+                <>
+                  <span
+                    className="writing-meta-dot"
+                  >
+                    ·
+                  </span>
+
+                  <time
+                    title={
+                      publishedDate
+                    }
+                  >
+                    {
+                      relativePublishedDate
+                    }
+                  </time>
+                </>
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* ===============================================
+            MORE MENU
+        ================================================ */}
+
+        <div
+          className="writing-more-menu"
+          ref={
+            menuRef
+          }
+        >
+
+          <button
+            type="button"
+            className={
+              menuOpen
+                ? "writing-more-button active"
+                : "writing-more-button"
+            }
+            aria-label={
+              labels.more
+            }
+            aria-expanded={
+              menuOpen
+            }
+            onClick={
+              () =>
+                setMenuOpen(
+                  (
+                    current
+                  ) =>
+                    !current
+                )
+            }
+          >
+
+            <MoreHorizontal
+              size={20}
+            />
+
+          </button>
+
+
+          {menuOpen && (
+
+            <div
+              className="writing-more-dropdown"
+            >
+
+              <button
+                type="button"
+                onClick={
+                  () => {
+
+                    setMenuOpen(
+                      false
+                    );
+
+                    navigate(
+                      `/writings/${writingId}`
+                    );
+
+                  }
+                }
+              >
+
+                <BookOpen
+                  size={16}
+                />
+
+                <span>
+                  {labels.openPost}
+                </span>
+
+              </button>
+
+
+              <button
+                type="button"
+                onClick={
+                  handleMenuCopyLink
+                }
+              >
+
+                <Copy
+                  size={16}
+                />
+
+                <span>
+                  {labels.copyLink}
+                </span>
+
+              </button>
+
+            </div>
 
           )}
 
         </div>
 
-      </div>
+      </header>
 
 
       {/* =================================================
@@ -2457,9 +2632,7 @@ function WritingCard({
           />
 
           <span>
-            {
-              languageLabel
-            }
+            {languageLabel}
           </span>
 
         </span>
@@ -2468,9 +2641,7 @@ function WritingCard({
         <span
           className="writing-category-badge"
         >
-          {
-            category
-          }
+          {category}
         </span>
 
       </div>
@@ -2500,27 +2671,25 @@ function WritingCard({
 
 
       {/* =================================================
-          CONTENT PREVIEW
+          PREVIEW
       ================================================== */}
 
       <p
         className="writing-card-preview"
       >
-        {
-          preview
-        }
+        {preview}
       </p>
 
 
       {/* =================================================
-          CLICKABLE HASHTAGS
+          TAGS
       ================================================== */}
 
-      {tags.length > 0 && (
+      {tags.length >
+        0 && (
 
         <div
           className="writing-card-tags"
-          aria-label="Hashtags"
         >
 
           {tags.map(
@@ -2539,20 +2708,14 @@ function WritingCard({
                   )}`
                 }
                 className="writing-card-tag"
-                title={
-                  tag.hashtag
-                }
               >
 
                 <Hash
-                  size={13}
-                  aria-hidden="true"
+                  size={12}
                 />
 
                 <span>
-                  {
-                    tag.name
-                  }
+                  {tag.name}
                 </span>
 
               </Link>
@@ -2575,19 +2738,15 @@ function WritingCard({
 
         {publishedDate && (
 
-          <span
-            title={
-              publishedDate
-            }
-          >
+          <span>
 
             <CalendarDays
-              size={13}
+              size={14}
             />
 
-            {
-              publishedDate
-            }
+            <span>
+              {publishedDate}
+            </span>
 
           </span>
 
@@ -2597,18 +2756,14 @@ function WritingCard({
         <span>
 
           <Clock3
-            size={13}
+            size={14}
           />
 
-          {
-            readingTime
-          }
-
-          {" "}
-
-          {
-            labels.minutes
-          }
+          <span>
+            {readingTime}
+            {" "}
+            {labels.minutes}
+          </span>
 
         </span>
 
@@ -2616,18 +2771,14 @@ function WritingCard({
         <span>
 
           <BookOpen
-            size={13}
+            size={14}
           />
 
-          {
-            wordCount
-          }
-
-          {" "}
-
-          {
-            labels.words
-          }
+          <span>
+            {wordCount}
+            {" "}
+            {labels.words}
+          </span>
 
         </span>
 
@@ -2635,27 +2786,25 @@ function WritingCard({
 
 
       {/* =================================================
-          FOOTER ACTIONS
+          SOCIAL ACTIONS
       ================================================== */}
 
-      <div
+      <footer
         className="writing-card-footer"
       >
 
         <div
-          className="writing-card-social"
+          className="writing-card-actions"
         >
 
-          {/* ===============================================
-              LIKE
-          ================================================ */}
+          {/* LIKE */}
 
           <button
             type="button"
             className={
               liked
-                ? "writing-like-button liked"
-                : "writing-like-button"
+                ? "writing-action-button writing-like-button active"
+                : "writing-action-button writing-like-button"
             }
             onClick={
               handleLike
@@ -2666,11 +2815,6 @@ function WritingCard({
             aria-pressed={
               liked
             }
-            aria-label={
-              liked
-                ? labels.unlike
-                : labels.like
-            }
             title={
               liked
                 ? labels.unlike
@@ -2679,7 +2823,7 @@ function WritingCard({
           >
 
             <Heart
-              size={16}
+              size={18}
               fill={
                 liked
                   ? "currentColor"
@@ -2687,54 +2831,60 @@ function WritingCard({
               }
             />
 
-            <span>
-              {
-                likesCount
-              }
+            <span
+              className="writing-action-count"
+            >
+              {likesCount}
+            </span>
+
+            <span
+              className="writing-action-label"
+            >
+              {labels.like}
             </span>
 
           </button>
 
 
-          {/* ===============================================
-              COMMENTS
-          ================================================ */}
+          {/* COMMENT */}
 
           <Link
             to={
               `/writings/${writingId}#comments`
             }
-            className="writing-comment-count"
+            className="writing-action-button writing-comment-button"
             title={
-              labels.comments
-            }
-            aria-label={
-              `${labels.comments}: ${commentsCount}`
+              labels.comment
             }
           >
 
             <MessageCircle
-              size={16}
+              size={18}
             />
 
-            <span>
-              {
-                commentsCount
-              }
+            <span
+              className="writing-action-count"
+            >
+              {commentsCount}
+            </span>
+
+            <span
+              className="writing-action-label"
+            >
+              {labels.comment}
             </span>
 
           </Link>
 
-          {/* ===============================================
-              REPOST
-          ================================================ */}
+
+          {/* REPOST */}
 
           <button
             type="button"
             className={
               reposted
-                ? "writing-repost-button reposted"
-                : "writing-repost-button"
+                ? "writing-action-button writing-repost-button active"
+                : "writing-action-button writing-repost-button"
             }
             onClick={
               handleRepost
@@ -2745,51 +2895,59 @@ function WritingCard({
             aria-pressed={
               reposted
             }
-            aria-label={
-              reposted
-                ? labels.unrepost
-                : labels.repost
-            }
             title={
               reposted
-                ? labels.reposted
+                ? labels.unrepost
                 : labels.repost
             }
           >
 
             <Repeat2
-              size={16}
+              size={18}
             />
 
-            <span>
-              {
-                repostsCount
-              }
+            <span
+              className="writing-action-count"
+            >
+              {repostsCount}
+            </span>
+
+            <span
+              className="writing-action-label"
+            >
+              {labels.repost}
             </span>
 
           </button>
 
-          {/* ===============================================
-              SHARE
-          ================================================ */}
+
+          {/* SHARE */}
 
           <button
             type="button"
-            className={
+            className={[
+              "writing-action-button",
+              "writing-share-button",
+
               shareSuccessful
-                ? "writing-share-button success"
-                : shareState === "error"
-                  ? "writing-share-button error"
-                  : "writing-share-button"
+                ? "success"
+                : "",
+
+              shareState ===
+              "error"
+                ? "error"
+                : "",
+
+            ]
+              .filter(Boolean)
+              .join(" ")
             }
             onClick={
               handleShare
             }
             disabled={
-              shareState === "sharing"
-            }
-            aria-label={
-              shareLabel
+              shareState ===
+              "sharing"
             }
             title={
               shareLabel
@@ -2798,42 +2956,34 @@ function WritingCard({
 
             {shareSuccessful
               ? (
-
-                  <Check
-                    size={16}
-                  />
-
-                )
+                <Check
+                  size={18}
+                />
+              )
               : (
-
-                  <Share2
-                    size={16}
-                  />
-
-                )}
+                <Share2
+                  size={18}
+                />
+              )}
 
 
             <span
-              className="writing-share-label"
+              className="writing-action-label"
             >
-              {
-                shareLabel
-              }
+              {shareLabel}
             </span>
 
           </button>
 
 
-          {/* ===============================================
-              SAVE
-          ================================================ */}
+          {/* SAVE */}
 
           <button
             type="button"
             className={
               saved
-                ? "writing-save-button saved"
-                : "writing-save-button"
+                ? "writing-action-button writing-save-button active"
+                : "writing-action-button writing-save-button"
             }
             onClick={
               handleSave
@@ -2845,20 +2995,15 @@ function WritingCard({
             aria-pressed={
               saved
             }
-            aria-label={
-              saved
-                ? labels.removeSaved
-                : labels.save
-            }
             title={
               saved
-                ? labels.saved
+                ? labels.removeSaved
                 : labels.save
             }
           >
 
             <Bookmark
-              size={16}
+              size={18}
               fill={
                 saved
                   ? "currentColor"
@@ -2866,13 +3011,23 @@ function WritingCard({
               }
             />
 
+            <span
+              className="writing-action-label"
+            >
+              {
+                saved
+                  ? labels.saved
+                  : labels.save
+              }
+            </span>
+
           </button>
 
         </div>
 
 
         {/* ===============================================
-            READ
+            READ MORE
         ================================================ */}
 
         <Link
@@ -2882,20 +3037,17 @@ function WritingCard({
           className="writing-read-link"
         >
 
-          {
-            labels.read
-          }
-
-
-          <span
-            aria-hidden="true"
-          >
-            →
+          <span>
+            {labels.read}
           </span>
+
+          <ArrowRight
+            size={16}
+          />
 
         </Link>
 
-      </div>
+      </footer>
 
     </article>
   );

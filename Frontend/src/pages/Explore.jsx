@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import {
+  Link,
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
@@ -55,10 +56,18 @@ import DocumentCard
 import ArtworkCard
   from "../components/ArtworkCard";
 
+import SEO
+  from "../components/SEO";
+
+import "./Explore.css";
+
 
 // =========================================================
-// WRITING / DOCUMENT CATEGORY VALUES
+// CONSTANTS
 // =========================================================
+
+const PAGE_SIZE = 12;
+
 
 const WRITING_CATEGORY_VALUES = [
   "",
@@ -69,10 +78,6 @@ const WRITING_CATEGORY_VALUES = [
   "অন্যান্য",
 ];
 
-
-// =========================================================
-// ARTWORK CATEGORY VALUES
-// =========================================================
 
 const ARTWORK_CATEGORY_VALUES = [
   "",
@@ -86,16 +91,267 @@ const ARTWORK_CATEGORY_VALUES = [
 ];
 
 
+const VALID_SORTS = [
+  "latest",
+  "oldest",
+  "title",
+];
+
+
 // =========================================================
-// EXPLORE PAGE
+// RESPONSE HELPERS
+// =========================================================
+
+function normalizeWritingResponse(
+  data
+) {
+
+  if (
+    Array.isArray(
+      data
+    )
+  ) {
+
+    return data;
+
+  }
+
+
+  if (
+    Array.isArray(
+      data?.writings
+    )
+  ) {
+
+    return data.writings;
+
+  }
+
+
+  if (
+    Array.isArray(
+      data?.items
+    )
+  ) {
+
+    return data.items;
+
+  }
+
+
+  if (
+    Array.isArray(
+      data?.results
+    )
+  ) {
+
+    return data.results;
+
+  }
+
+
+  if (
+    Array.isArray(
+      data?.data?.writings
+    )
+  ) {
+
+    return data.data.writings;
+
+  }
+
+
+  return [];
+
+}
+
+
+function normalizeDocumentResponse(
+  data
+) {
+
+  if (
+    Array.isArray(
+      data
+    )
+  ) {
+
+    return data;
+
+  }
+
+
+  if (
+    Array.isArray(
+      data?.documents
+    )
+  ) {
+
+    return data.documents;
+
+  }
+
+
+  if (
+    Array.isArray(
+      data?.items
+    )
+  ) {
+
+    return data.items;
+
+  }
+
+
+  if (
+    Array.isArray(
+      data?.data?.documents
+    )
+  ) {
+
+    return data.data.documents;
+
+  }
+
+
+  return [];
+
+}
+
+
+function normalizeArtworkResponse(
+  data
+) {
+
+  if (
+    Array.isArray(
+      data
+    )
+  ) {
+
+    return data;
+
+  }
+
+
+  if (
+    Array.isArray(
+      data?.artworks
+    )
+  ) {
+
+    return data.artworks;
+
+  }
+
+
+  if (
+    Array.isArray(
+      data?.items
+    )
+  ) {
+
+    return data.items;
+
+  }
+
+
+  if (
+    Array.isArray(
+      data?.data?.artworks
+    )
+  ) {
+
+    return data.data.artworks;
+
+  }
+
+
+  return [];
+
+}
+
+
+function normalizePagination(
+  data,
+  fallbackPage = 1
+) {
+
+  const source =
+    data?.pagination ||
+    data?.data?.pagination;
+
+
+  if (
+    source &&
+    typeof source ===
+      "object"
+  ) {
+
+    return source;
+
+  }
+
+
+  const page =
+    Number(
+      data?.page
+    ) ||
+    fallbackPage;
+
+
+  const pages =
+    Number(
+      data?.pages
+    ) ||
+    0;
+
+
+  const total =
+    Number(
+      data?.total
+    ) ||
+    0;
+
+
+  if (
+    pages ||
+    total
+  ) {
+
+    return {
+
+      page,
+
+      pages,
+
+      total,
+
+      has_prev:
+        Boolean(
+          data?.has_prev
+        ),
+
+      has_next:
+        Boolean(
+          data?.has_next
+        ),
+
+    };
+
+  }
+
+
+  return null;
+
+}
+
+
+// =========================================================
+// EXPLORE
 // =========================================================
 
 function Explore() {
-
-  const {
-    t,
-  } = useLanguage();
-
 
   const navigate =
     useNavigate();
@@ -107,181 +363,14 @@ function Explore() {
   ] = useSearchParams();
 
 
-  // =======================================================
-  // INITIAL URL VALUES
-  // =======================================================
+  const {
+    t,
 
-  const initialSearch =
-    searchParams.get(
-      "search"
-    ) || "";
+    language:
+      uiLanguage,
 
+  } = useLanguage();
 
-  const initialLanguage =
-    searchParams.get(
-      "language"
-    ) || "";
-
-
-  const initialCategory =
-    searchParams.get(
-      "category"
-    ) || "";
-
-
-  const urlType =
-    searchParams.get(
-      "type"
-    );
-
-
-  const urlFeed =
-    searchParams.get(
-      "feed"
-    );
-
-
-  const initialContentMode =
-    urlType === "documents"
-      ? "documents"
-      : urlType === "artworks"
-        ? "artworks"
-        : "writings";
-
-
-  const initialFeedMode =
-    urlFeed === "following"
-      ? "following"
-      : urlFeed === "saved"
-        ? "saved"
-        : "all";
-
-
-  // =======================================================
-  // CONTENT TYPE
-  //
-  // writings
-  // documents
-  // artworks
-  // =======================================================
-
-  const [
-    contentMode,
-    setContentMode,
-  ] = useState(
-    initialContentMode
-  );
-
-
-  // =======================================================
-  // WRITING FEED
-  //
-  // all
-  // following
-  // saved
-  // =======================================================
-
-  const [
-    feedMode,
-    setFeedMode,
-  ] = useState(
-    initialFeedMode
-  );
-
-
-  // =======================================================
-  // FILTERS
-  // =======================================================
-
-  const [
-    search,
-    setSearch,
-  ] = useState(
-    initialSearch
-  );
-
-
-  const [
-    submittedSearch,
-    setSubmittedSearch,
-  ] = useState(
-    initialSearch
-  );
-
-
-  const [
-    language,
-    setLanguage,
-  ] = useState(
-    initialLanguage
-  );
-
-
-  const [
-    category,
-    setCategory,
-  ] = useState(
-    initialCategory
-  );
-
-
-  const [
-    sortBy,
-    setSortBy,
-  ] = useState(
-    "latest"
-  );
-
-
-  // =======================================================
-  // DATA
-  // =======================================================
-
-  const [
-    writings,
-    setWritings,
-  ] = useState([]);
-
-
-  const [
-    documents,
-    setDocuments,
-  ] = useState([]);
-
-
-  const [
-    artworks,
-    setArtworks,
-  ] = useState([]);
-
-
-  const [
-    loading,
-    setLoading,
-  ] = useState(true);
-
-
-  const [
-    error,
-    setError,
-  ] = useState("");
-
-
-  const [
-    page,
-    setPage,
-  ] = useState(1);
-
-
-  const [
-    pagination,
-    setPagination,
-  ] = useState(null);
-
-
-  // =======================================================
-  // AUTH
-  // =======================================================
 
   const isLoggedIn =
     Boolean(
@@ -290,124 +379,549 @@ function Explore() {
 
 
   // =======================================================
-  // WRITING CATEGORY LABEL
+  // TRANSLATION
   // =======================================================
 
-  function getWritingCategoryLabel(
-    value
+  function translate(
+    key,
+    fallbackBn,
+    fallbackEn,
+    fallbackHi = null
   ) {
 
-    const map = {
+    try {
 
-      "":
+      const translated =
         t(
-          "explore.allCategories",
-          "All Categories"
-        ),
-
-      "কবিতা":
-        t(
-          "categories.poetry",
-          "Poetry"
-        ),
-
-      "গল্প":
-        t(
-          "categories.story",
-          "Story"
-        ),
-
-      "অনুভূতি":
-        t(
-          "categories.reflection",
-          "Feelings"
-        ),
-
-      "প্রবন্ধ":
-        t(
-          "categories.essay",
-          "Essay"
-        ),
-
-      "অন্যান্য":
-        t(
-          "categories.other",
-          "Other"
-        ),
-    };
+          key
+        );
 
 
-    return (
-      map[value] ||
-      value
-    );
+      if (
+        translated &&
+        translated !== key
+      ) {
+
+        return translated;
+
+      }
+
+    } catch {
+
+      // Use local fallback.
+
+    }
+
+
+    if (
+      uiLanguage ===
+        "bn"
+    ) {
+
+      return fallbackBn;
+
+    }
+
+
+    if (
+      uiLanguage ===
+        "hi"
+    ) {
+
+      return (
+        fallbackHi ||
+        fallbackEn
+      );
+
+    }
+
+
+    return fallbackEn;
 
   }
 
 
   // =======================================================
-  // ARTWORK CATEGORY LABEL
+  // TEXT
   // =======================================================
 
-  function getArtworkCategoryLabel(
-    value
+  const labels = {
+
+    eyebrow:
+      translate(
+        "explore.eyebrow",
+        "আবিষ্কার করুন",
+        "DISCOVER",
+        "खोजें"
+      ),
+
+
+    title:
+      translate(
+        "explore.title",
+        "SHOBDO অন্বেষণ করুন",
+        "Explore SHOBDO",
+        "SHOBDO खोजें"
+      ),
+
+
+    description:
+      translate(
+        "explore.description",
+        "SHOBDO সম্প্রদায়ের লেখা, PDF নথি ও শিল্পকর্ম আবিষ্কার করুন।",
+        "Discover writings, PDF documents and artwork from the SHOBDO community.",
+        "SHOBDO समुदाय की रचनाएँ, PDF दस्तावेज़ और कलाकृतियाँ खोजें।"
+      ),
+
+
+    writings:
+      translate(
+        "explore.writingsTab",
+        "লেখা",
+        "Writings",
+        "रचनाएँ"
+      ),
+
+
+    documents:
+      translate(
+        "explore.documentsTab",
+        "PDF নথি",
+        "PDF Documents",
+        "PDF दस्तावेज़"
+      ),
+
+
+    artworks:
+      translate(
+        "explore.artworkTab",
+        "শিল্পকর্ম",
+        "Artwork",
+        "कलाकृति"
+      ),
+
+
+    all:
+      translate(
+        "explore.allWritings",
+        "সব লেখা",
+        "All writings",
+        "सभी रचनाएँ"
+      ),
+
+
+    following:
+      translate(
+        "explore.following",
+        "অনুসরণ",
+        "Following",
+        "फ़ॉलोइंग"
+      ),
+
+
+    saved:
+      translate(
+        "explore.saved",
+        "সংরক্ষিত",
+        "Saved",
+        "सहेजे गए"
+      ),
+
+
+    searchPlaceholder:
+      translate(
+        "explore.searchPlaceholder",
+        "কবিতা, গল্প, বিষয় বা লেখক খুঁজুন...",
+        "Search poems, stories, topics or writers...",
+        "कविता, कहानी, विषय या लेखक खोजें..."
+      ),
+
+
+    search:
+      translate(
+        "explore.searchButton",
+        "খুঁজুন",
+        "Search",
+        "खोजें"
+      ),
+
+
+    allLanguages:
+      translate(
+        "explore.allLanguages",
+        "সব ভাষা",
+        "All languages",
+        "सभी भाषाएँ"
+      ),
+
+
+    allCategories:
+      translate(
+        "explore.allCategories",
+        "সব বিভাগ",
+        "All categories",
+        "सभी श्रेणियाँ"
+      ),
+
+
+    latest:
+      translate(
+        "explore.latest",
+        "সাম্প্রতিক",
+        "Latest",
+        "नवीनतम"
+      ),
+
+
+    oldest:
+      translate(
+        "explore.oldest",
+        "পুরোনো আগে",
+        "Oldest first",
+        "सबसे पुराना पहले"
+      ),
+
+
+    titleAZ:
+      translate(
+        "explore.titleAZ",
+        "শিরোনাম A-Z",
+        "Title A-Z",
+        "शीर्षक A-Z"
+      ),
+
+
+    clearFilters:
+      translate(
+        "explore.clearFilters",
+        "ফিল্টার মুছুন",
+        "Clear filters",
+        "फ़िल्टर साफ़ करें"
+      ),
+
+
+    publicNotice:
+      translate(
+        "explore.publicNotice",
+        "অ্যাকাউন্ট ছাড়াই প্রকাশ্য লেখা, PDF ও শিল্পকর্ম অন্বেষণ করুন।",
+        "Explore public writings, PDFs and artwork without an account.",
+        "बिना अकाउंट के सार्वजनिक रचनाएँ, PDF और कलाकृतियाँ खोजें।"
+      ),
+
+
+    join:
+      translate(
+        "explore.join",
+        "SHOBDO-তে যোগ দিন",
+        "Join SHOBDO",
+        "SHOBDO से जुड़ें"
+      ),
+
+
+    login:
+      translate(
+        "navbar.login",
+        "লগ ইন",
+        "Log in",
+        "लॉग इन"
+      ),
+
+
+    followingDescription:
+      translate(
+        "explore.followingDescription",
+        "আপনি যাদের অনুসরণ করেন তাদের সাম্প্রতিক লেখা।",
+        "Recent writings from writers you follow.",
+        "आपके फ़ॉलो किए गए लेखकों की नई रचनाएँ।"
+      ),
+
+
+    savedDescription:
+      translate(
+        "explore.savedDescription",
+        "আপনার সংরক্ষিত লেখার ব্যক্তিগত সংগ্রহ।",
+        "Your private collection of saved writings.",
+        "आपकी सहेजी गई रचनाओं का निजी संग्रह।"
+      ),
+
+
+    documentsDescription:
+      translate(
+        "explore.documentsDescription",
+        "SHOBDO সম্প্রদায়ের প্রকাশিত PDF বই, প্রবন্ধ, কবিতা সংকলন ও পাণ্ডুলিপি দেখুন।",
+        "Browse PDF books, essays, poetry collections and manuscripts published by the SHOBDO community.",
+        "SHOBDO समुदाय द्वारा प्रकाशित PDF पुस्तकें, निबंध, कविता संग्रह और पांडुलिपियाँ देखें।"
+      ),
+
+
+    artworksDescription:
+      translate(
+        "explore.artworksDescription",
+        "SHOBDO নির্মাতাদের চিত্রকর্ম, ইলাস্ট্রেশন, ফটোগ্রাফি, স্কেচ ও ডিজিটাল আর্ট দেখুন।",
+        "Discover paintings, illustrations, photography, sketches and digital art from SHOBDO creators.",
+        "SHOBDO रचनाकारों की पेंटिंग, इलस्ट्रेशन, फोटोग्राफी, स्केच और डिजिटल आर्ट देखें।"
+      ),
+
+
+    loading:
+      translate(
+        "explore.loading",
+        "কনটেন্ট লোড হচ্ছে...",
+        "Loading content...",
+        "सामग्री लोड हो रही है..."
+      ),
+
+
+    retry:
+      translate(
+        "explore.retry",
+        "আবার চেষ্টা করুন",
+        "Try again",
+        "फिर कोशिश करें"
+      ),
+
+
+    previous:
+      translate(
+        "explore.previous",
+        "আগের",
+        "Previous",
+        "पिछला"
+      ),
+
+
+    next:
+      translate(
+        "explore.next",
+        "পরের",
+        "Next",
+        "अगला"
+      ),
+
+
+    page:
+      translate(
+        "explore.page",
+        "পৃষ্ঠা",
+        "Page",
+        "पृष्ठ"
+      ),
+
+
+    of:
+      translate(
+        "explore.of",
+        "এর",
+        "of",
+        "में से"
+      ),
+
+  };
+
+
+  // =======================================================
+  // URL STATE
+  // =======================================================
+
+  const typeParam =
+    searchParams.get(
+      "type"
+    );
+
+
+  const contentMode =
+    typeParam ===
+      "documents"
+      ? "documents"
+      : typeParam ===
+          "artworks"
+        ? "artworks"
+        : "writings";
+
+
+  const feedParam =
+    searchParams.get(
+      "feed"
+    );
+
+
+  const feedMode =
+    isLoggedIn &&
+    (
+      feedParam ===
+        "following" ||
+      feedParam ===
+        "saved"
+    )
+      ? feedParam
+      : "all";
+
+
+  const submittedSearch =
+    searchParams.get(
+      "search"
+    ) ||
+    searchParams.get(
+      "q"
+    ) ||
+    "";
+
+
+  const contentLanguage =
+    searchParams.get(
+      "language"
+    ) ||
+    "";
+
+
+  const category =
+    searchParams.get(
+      "category"
+    ) ||
+    "";
+
+
+  const requestedSort =
+    searchParams.get(
+      "sort"
+    ) ||
+    "latest";
+
+
+  const sortBy =
+    VALID_SORTS.includes(
+      requestedSort
+    )
+      ? requestedSort
+      : "latest";
+
+
+  const page =
+    Math.max(
+      1,
+      Number(
+        searchParams.get(
+          "page"
+        )
+      ) ||
+      1
+    );
+
+
+  // =======================================================
+  // SEARCH INPUT
+  // =======================================================
+
+  const [
+    search,
+    setSearch,
+  ] = useState(
+    submittedSearch
+  );
+
+
+  useEffect(
+    () => {
+
+      setSearch(
+        submittedSearch
+      );
+
+    },
+    [
+      submittedSearch,
+    ]
+  );
+
+
+  // =======================================================
+  // DATA STATE
+  // =======================================================
+
+  const [
+    writings,
+    setWritings,
+  ] = useState(
+    []
+  );
+
+
+  const [
+    documents,
+    setDocuments,
+  ] = useState(
+    []
+  );
+
+
+  const [
+    artworks,
+    setArtworks,
+  ] = useState(
+    []
+  );
+
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(
+    true
+  );
+
+
+  const [
+    error,
+    setError,
+  ] = useState(
+    ""
+  );
+
+
+  const [
+    pagination,
+    setPagination,
+  ] = useState(
+    null
+  );
+
+
+  // =======================================================
+  // URL HELPERS
+  // =======================================================
+
+  function replaceParams(
+    callback
   ) {
 
-    const map = {
-
-      "":
-        t(
-          "explore.allCategories",
-          "All Categories"
-        ),
-
-      "Digital Art":
-        t(
-          "explore.digitalArt",
-          "Digital Art"
-        ),
-
-      Painting:
-        t(
-          "explore.painting",
-          "Painting"
-        ),
-
-      Sketch:
-        t(
-          "explore.sketch",
-          "Sketch"
-        ),
-
-      Illustration:
-        t(
-          "explore.illustration",
-          "Illustration"
-        ),
-
-      Photography:
-        t(
-          "explore.photography",
-          "Photography"
-        ),
-
-      Calligraphy:
-        t(
-          "explore.calligraphy",
-          "Calligraphy"
-        ),
-
-      Other:
-        t(
-          "explore.otherArtwork",
-          "Other"
-        ),
-    };
+    const next =
+      new URLSearchParams(
+        searchParams
+      );
 
 
-    return (
-      map[value] ||
-      value
+    callback(
+      next
+    );
+
+
+    setSearchParams(
+      next,
+      {
+        replace:
+          true,
+      }
+    );
+
+  }
+
+
+  function removePage(
+    params
+  ) {
+
+    params.delete(
+      "page"
     );
 
   }
@@ -417,24 +931,176 @@ function Explore() {
   // CATEGORY LABEL
   // =======================================================
 
+  function getWritingCategoryLabel(
+    value
+  ) {
+
+    const map = {
+
+      "":
+        labels.allCategories,
+
+
+      "কবিতা":
+        translate(
+          "categories.poetry",
+          "কবিতা",
+          "Poetry",
+          "कविता"
+        ),
+
+
+      "গল্প":
+        translate(
+          "categories.story",
+          "গল্প",
+          "Story",
+          "कहानी"
+        ),
+
+
+      "অনুভূতি":
+        translate(
+          "categories.reflection",
+          "অনুভূতি",
+          "Reflection",
+          "अनुभूति"
+        ),
+
+
+      "প্রবন্ধ":
+        translate(
+          "categories.essay",
+          "প্রবন্ধ",
+          "Essay",
+          "निबंध"
+        ),
+
+
+      "অন্যান্য":
+        translate(
+          "categories.other",
+          "অন্যান্য",
+          "Other",
+          "अन्य"
+        ),
+
+    };
+
+
+    return (
+      map[value] ||
+      value
+    );
+
+  }
+
+
+  function getArtworkCategoryLabel(
+    value
+  ) {
+
+    const map = {
+
+      "":
+        labels.allCategories,
+
+
+      "Digital Art":
+        translate(
+          "explore.digitalArt",
+          "ডিজিটাল আর্ট",
+          "Digital Art",
+          "डिजिटल आर्ट"
+        ),
+
+
+      Painting:
+        translate(
+          "explore.painting",
+          "চিত্রকর্ম",
+          "Painting",
+          "पेंटिंग"
+        ),
+
+
+      Sketch:
+        translate(
+          "explore.sketch",
+          "স্কেচ",
+          "Sketch",
+          "स्केच"
+        ),
+
+
+      Illustration:
+        translate(
+          "explore.illustration",
+          "ইলাস্ট্রেশন",
+          "Illustration",
+          "इलस्ट्रेशन"
+        ),
+
+
+      Photography:
+        translate(
+          "explore.photography",
+          "ফটোগ্রাফি",
+          "Photography",
+          "फोटोग्राफी"
+        ),
+
+
+      Calligraphy:
+        translate(
+          "explore.calligraphy",
+          "ক্যালিগ্রাফি",
+          "Calligraphy",
+          "कैलिग्राफी"
+        ),
+
+
+      Other:
+        translate(
+          "explore.otherArtwork",
+          "অন্যান্য",
+          "Other",
+          "अन्य"
+        ),
+
+    };
+
+
+    return (
+      map[value] ||
+      value
+    );
+
+  }
+
+
   function getCategoryLabel(
     value
   ) {
 
     if (
       contentMode ===
-      "artworks"
+        "artworks"
     ) {
 
-      return getArtworkCategoryLabel(
-        value
+      return (
+        getArtworkCategoryLabel(
+          value
+        )
       );
 
     }
 
 
-    return getWritingCategoryLabel(
-      value
+    return (
+      getWritingCategoryLabel(
+        value
+      )
     );
 
   }
@@ -444,14 +1110,15 @@ function Explore() {
   // LANGUAGE LABEL
   // =======================================================
 
-  function getLanguageLabel(
+  function getContentLanguageLabel(
     code,
     fallbackItem = null
   ) {
 
     const normalized =
       String(
-        code || ""
+        code ||
+        ""
       )
         .trim()
         .toLowerCase();
@@ -460,46 +1127,67 @@ function Explore() {
     const map = {
 
       bn:
-        t(
+        translate(
           "explore.languageBengali",
-          "Bengali"
+          "বাংলা",
+          "Bengali",
+          "बांग्ला"
         ),
+
 
       en:
-        t(
+        translate(
           "explore.languageEnglish",
-          "English"
+          "ইংরেজি",
+          "English",
+          "अंग्रेज़ी"
         ),
+
 
       hi:
-        t(
+        translate(
           "explore.languageHindi",
-          "Hindi"
+          "হিন্দি",
+          "Hindi",
+          "हिंदी"
         ),
+
 
       as:
-        t(
+        translate(
           "explore.languageAssamese",
-          "Assamese"
+          "অসমীয়া",
+          "Assamese",
+          "असमिया"
         ),
+
 
       or:
-        t(
+        translate(
           "explore.languageOdia",
-          "Odia"
+          "ওড়িয়া",
+          "Odia",
+          "ओड़िया"
         ),
+
 
       ta:
-        t(
+        translate(
           "explore.languageTamil",
-          "Tamil"
+          "তামিল",
+          "Tamil",
+          "तमिल"
         ),
 
+
       te:
-        t(
+        translate(
           "explore.languageTelugu",
-          "Telugu"
+          "তেলুগু",
+          "Telugu",
+          "तेलुगु"
         ),
+
     };
 
 
@@ -514,36 +1202,34 @@ function Explore() {
     }
 
 
-    if (
-      fallbackItem
-    ) {
-
-      return (
-        fallbackItem.nativeName ||
-        fallbackItem.name ||
-        normalized.toUpperCase()
-      );
-
-    }
-
-
-    return normalized.toUpperCase();
+    return (
+      fallbackItem?.nativeName ||
+      fallbackItem?.name ||
+      normalized.toUpperCase()
+    );
 
   }
 
 
-  // =======================================================
-  // CURRENT CATEGORY OPTIONS
-  // =======================================================
+  const selectedLanguage =
+    LANGUAGES.find(
+      (
+        item
+      ) =>
+        item.code ===
+          contentLanguage
+    );
+
 
   const categoryOptions =
-    contentMode === "artworks"
+    contentMode ===
+      "artworks"
       ? ARTWORK_CATEGORY_VALUES
       : WRITING_CATEGORY_VALUES;
 
 
   // =======================================================
-  // CHANGE CONTENT TYPE
+  // CONTENT MODE
   // =======================================================
 
   function changeContentMode(
@@ -551,7 +1237,8 @@ function Explore() {
   ) {
 
     if (
-      mode === contentMode
+      mode ===
+        contentMode
     ) {
 
       return;
@@ -559,14 +1246,34 @@ function Explore() {
     }
 
 
-    setContentMode(
-      mode
-    );
+    const next =
+      new URLSearchParams();
 
 
-    setFeedMode(
-      "all"
-    );
+    if (
+      mode ===
+        "documents"
+    ) {
+
+      next.set(
+        "type",
+        "documents"
+      );
+
+    }
+
+
+    if (
+      mode ===
+        "artworks"
+    ) {
+
+      next.set(
+        "type",
+        "artworks"
+      );
+
+    }
 
 
     setSearch(
@@ -574,28 +1281,8 @@ function Explore() {
     );
 
 
-    setSubmittedSearch(
+    setError(
       ""
-    );
-
-
-    setLanguage(
-      ""
-    );
-
-
-    setCategory(
-      ""
-    );
-
-
-    setSortBy(
-      "latest"
-    );
-
-
-    setPage(
-      1
     );
 
 
@@ -604,157 +1291,340 @@ function Explore() {
     );
 
 
-    setError(
-      ""
+    setSearchParams(
+      next,
+      {
+        replace:
+          true,
+      }
     );
 
   }
 
 
   // =======================================================
-  // UPDATE URL
+  // WRITING FEED
   // =======================================================
 
-  useEffect(
-    () => {
+  function changeFeed(
+    mode
+  ) {
 
-      const params =
-        new URLSearchParams();
+    if (
+      mode ===
+        feedMode
+    ) {
 
+      return;
 
-      // ---------------------------------------------------
-      // CONTENT TYPE
-      // ---------------------------------------------------
-
-      if (
-        contentMode ===
-        "documents"
-      ) {
-
-        params.set(
-          "type",
-          "documents"
-        );
-
-      }
+    }
 
 
-      if (
-        contentMode ===
-        "artworks"
-      ) {
-
-        params.set(
-          "type",
-          "artworks"
-        );
-
-      }
-
-
-      // ---------------------------------------------------
-      // WRITING FEED
-      // ---------------------------------------------------
-
-      if (
-        contentMode ===
-        "writings" &&
-        feedMode ===
-        "following"
-      ) {
-
-        params.set(
-          "feed",
-          "following"
-        );
-
-      }
-
-
-      if (
-        contentMode ===
-        "writings" &&
-        feedMode ===
-        "saved"
-      ) {
-
-        params.set(
-          "feed",
+    if (
+      (
+        mode ===
+          "following" ||
+        mode ===
           "saved"
-        );
+      ) &&
+      !isLoggedIn
+    ) {
 
-      }
-
-
-      // ---------------------------------------------------
-      // SEARCH/FILTERS ONLY FOR ALL WRITINGS
-      // ---------------------------------------------------
-
-      if (
-        contentMode ===
-        "writings" &&
-        feedMode ===
-        "all" &&
-        submittedSearch
-      ) {
-
-        params.set(
-          "search",
-          submittedSearch
-        );
-
-      }
-
-
-      if (
-        (
-          contentMode !== "writings" ||
-          feedMode === "all"
-        ) &&
-        language
-      ) {
-
-        params.set(
-          "language",
-          language
-        );
-
-      }
-
-
-      if (
-        (
-          contentMode !== "writings" ||
-          feedMode === "all"
-        ) &&
-        category
-      ) {
-
-        params.set(
-          "category",
-          category
-        );
-
-      }
-
-
-      setSearchParams(
-        params,
-        {
-          replace: true,
-        }
+      navigate(
+        "/login"
       );
 
-    },
-    [
-      contentMode,
-      feedMode,
-      submittedSearch,
-      language,
-      category,
-      setSearchParams,
-    ]
-  );
+
+      return;
+
+    }
+
+
+    const next =
+      new URLSearchParams();
+
+
+    if (
+      mode ===
+        "following" ||
+      mode ===
+        "saved"
+    ) {
+
+      next.set(
+        "feed",
+        mode
+      );
+
+    }
+
+
+    setSearch(
+      ""
+    );
+
+
+    setError(
+      ""
+    );
+
+
+    setSearchParams(
+      next,
+      {
+        replace:
+          true,
+      }
+    );
+
+  }
+
+
+  // =======================================================
+  // SEARCH
+  // =======================================================
+
+  function handleSearch(
+    event
+  ) {
+
+    event.preventDefault();
+
+
+    if (
+      contentMode !==
+        "writings" ||
+      feedMode !==
+        "all"
+    ) {
+
+      return;
+
+    }
+
+
+    const value =
+      search.trim();
+
+
+    replaceParams(
+      (
+        params
+      ) => {
+
+        params.delete(
+          "q"
+        );
+
+
+        if (
+          value
+        ) {
+
+          params.set(
+            "search",
+            value
+          );
+
+        } else {
+
+          params.delete(
+            "search"
+          );
+
+        }
+
+
+        removePage(
+          params
+        );
+
+      }
+    );
+
+  }
+
+
+  function clearSearch() {
+
+    setSearch(
+      ""
+    );
+
+
+    replaceParams(
+      (
+        params
+      ) => {
+
+        params.delete(
+          "search"
+        );
+
+
+        params.delete(
+          "q"
+        );
+
+
+        removePage(
+          params
+        );
+
+      }
+    );
+
+  }
+
+
+  // =======================================================
+  // FILTER CHANGE
+  // =======================================================
+
+  function setFilter(
+    key,
+    value
+  ) {
+
+    replaceParams(
+      (
+        params
+      ) => {
+
+        if (
+          value
+        ) {
+
+          params.set(
+            key,
+            value
+          );
+
+        } else {
+
+          params.delete(
+            key
+          );
+
+        }
+
+
+        removePage(
+          params
+        );
+
+      }
+    );
+
+  }
+
+
+  // =======================================================
+  // RESET FILTERS
+  // =======================================================
+
+  function resetFilters() {
+
+    setSearch(
+      ""
+    );
+
+
+    replaceParams(
+      (
+        params
+      ) => {
+
+        params.delete(
+          "search"
+        );
+
+
+        params.delete(
+          "q"
+        );
+
+
+        params.delete(
+          "language"
+        );
+
+
+        params.delete(
+          "category"
+        );
+
+
+        params.delete(
+          "sort"
+        );
+
+
+        params.delete(
+          "page"
+        );
+
+      }
+    );
+
+  }
+
+
+  // =======================================================
+  // PAGE CHANGE
+  // =======================================================
+
+  function goToPage(
+    nextPage
+  ) {
+
+    const safePage =
+      Math.max(
+        1,
+        Number(
+          nextPage
+        ) ||
+        1
+      );
+
+
+    replaceParams(
+      (
+        params
+      ) => {
+
+        if (
+          safePage <= 1
+        ) {
+
+          params.delete(
+            "page"
+          );
+
+        } else {
+
+          params.set(
+            "page",
+            String(
+              safePage
+            )
+          );
+
+        }
+
+      }
+    );
+
+
+    window.scrollTo({
+      top:
+        0,
+
+      behavior:
+        "smooth",
+    });
+
+  }
 
 
   // =======================================================
@@ -782,21 +1652,28 @@ function Explore() {
 
         try {
 
-          // =================================================
+          // ===============================================
           // DOCUMENTS
-          // =================================================
+          // ===============================================
 
           if (
             contentMode ===
-            "documents"
+              "documents"
           ) {
 
             const data =
               await getDocuments({
+
                 page,
-                limit: 12,
-                language,
+
+                limit:
+                  PAGE_SIZE,
+
+                language:
+                  contentLanguage,
+
                 category,
+
               });
 
 
@@ -809,16 +1686,10 @@ function Explore() {
             }
 
 
-            const items =
-              Array.isArray(
-                data?.documents
-              )
-                ? data.documents
-                : [];
-
-
             setDocuments(
-              items
+              normalizeDocumentResponse(
+                data
+              )
             );
 
 
@@ -833,8 +1704,10 @@ function Explore() {
 
 
             setPagination(
-              data?.pagination ||
-              null
+              normalizePagination(
+                data,
+                page
+              )
             );
 
 
@@ -843,21 +1716,28 @@ function Explore() {
           }
 
 
-          // =================================================
+          // ===============================================
           // ARTWORK
-          // =================================================
+          // ===============================================
 
           if (
             contentMode ===
-            "artworks"
+              "artworks"
           ) {
 
             const data =
               await getArtworks({
+
                 page,
-                limit: 12,
-                language,
+
+                limit:
+                  PAGE_SIZE,
+
+                language:
+                  contentLanguage,
+
                 category,
+
               });
 
 
@@ -870,26 +1750,10 @@ function Explore() {
             }
 
 
-            const items =
-              Array.isArray(
-                data?.artworks
-              )
-                ? data.artworks
-                : Array.isArray(
-                    data?.items
-                  )
-                  ? data.items
-                  : Array.isArray(
-                      data?.data
-                        ?.artworks
-                    )
-                    ? data.data
-                        .artworks
-                    : [];
-
-
             setArtworks(
-              items
+              normalizeArtworkResponse(
+                data
+              )
             );
 
 
@@ -904,9 +1768,10 @@ function Explore() {
 
 
             setPagination(
-              data?.pagination ||
-              data?.data?.pagination ||
-              null
+              normalizePagination(
+                data,
+                page
+              )
             );
 
 
@@ -915,40 +1780,27 @@ function Explore() {
           }
 
 
-          // =================================================
+          // ===============================================
           // FOLLOWING WRITINGS
-          // =================================================
+          // ===============================================
 
           if (
             feedMode ===
-            "following"
+              "following"
           ) {
 
             if (
               !isLoggedIn
             ) {
 
-              if (
-                mounted
-              ) {
+              setWritings(
+                []
+              );
 
-                setWritings(
-                  []
-                );
 
-                setDocuments(
-                  []
-                );
-
-                setArtworks(
-                  []
-                );
-
-                setPagination(
-                  null
-                );
-
-              }
+              setPagination(
+                null
+              );
 
 
               return;
@@ -958,8 +1810,12 @@ function Explore() {
 
             const data =
               await getFollowingFeed({
+
                 page,
-                limit: 12,
+
+                limit:
+                  PAGE_SIZE,
+
               });
 
 
@@ -973,11 +1829,9 @@ function Explore() {
 
 
             setWritings(
-              Array.isArray(
-                data?.writings
+              normalizeWritingResponse(
+                data
               )
-                ? data.writings
-                : []
             );
 
 
@@ -991,35 +1845,12 @@ function Explore() {
             );
 
 
-            setPagination({
-              page:
-                Number(
-                  data?.page
-                ) ||
-                page,
-
-              pages:
-                Number(
-                  data?.pages
-                ) ||
-                0,
-
-              total:
-                Number(
-                  data?.total
-                ) ||
-                0,
-
-              has_prev:
-                Boolean(
-                  data?.has_prev
-                ),
-
-              has_next:
-                Boolean(
-                  data?.has_next
-                ),
-            });
+            setPagination(
+              normalizePagination(
+                data,
+                page
+              )
+            );
 
 
             return;
@@ -1027,40 +1858,27 @@ function Explore() {
           }
 
 
-          // =================================================
+          // ===============================================
           // SAVED WRITINGS
-          // =================================================
+          // ===============================================
 
           if (
             feedMode ===
-            "saved"
+              "saved"
           ) {
 
             if (
               !isLoggedIn
             ) {
 
-              if (
-                mounted
-              ) {
+              setWritings(
+                []
+              );
 
-                setWritings(
-                  []
-                );
 
-                setDocuments(
-                  []
-                );
-
-                setArtworks(
-                  []
-                );
-
-                setPagination(
-                  null
-                );
-
-              }
+              setPagination(
+                null
+              );
 
 
               return;
@@ -1070,8 +1888,12 @@ function Explore() {
 
             const data =
               await getSavedWritings({
+
                 page,
-                perPage: 12,
+
+                perPage:
+                  PAGE_SIZE,
+
               });
 
 
@@ -1109,10 +1931,9 @@ function Explore() {
 
 
                     return {
+
                       ...item.writing,
 
-                      // WritingCard can immediately
-                      // render this as saved.
                       is_saved:
                         true,
 
@@ -1121,6 +1942,7 @@ function Explore() {
 
                       saved_at:
                         item.saved_at,
+
                     };
 
                   }
@@ -1146,8 +1968,10 @@ function Explore() {
 
 
             setPagination(
-              data?.pagination ||
-              null
+              normalizePagination(
+                data,
+                page
+              )
             );
 
 
@@ -1156,18 +1980,26 @@ function Explore() {
           }
 
 
-          // =================================================
-          // ALL WRITINGS
-          // =================================================
+          // ===============================================
+          // PUBLIC WRITINGS
+          // ===============================================
 
           const data =
             await getWritings({
+
               page,
-              limit: 12,
+
+              limit:
+                PAGE_SIZE,
+
               search:
                 submittedSearch,
-              language,
+
+              language:
+                contentLanguage,
+
               category,
+
             });
 
 
@@ -1181,11 +2013,9 @@ function Explore() {
 
 
           setWritings(
-            Array.isArray(
-              data?.writings
+            normalizeWritingResponse(
+              data
             )
-              ? data.writings
-              : []
           );
 
 
@@ -1200,10 +2030,11 @@ function Explore() {
 
 
           setPagination(
-            data?.pagination ||
-            null
+            normalizePagination(
+              data,
+              page
+            )
           );
-
 
         } catch (
           requestError
@@ -1246,12 +2077,13 @@ function Explore() {
 
           setError(
             requestError?.message ||
-            t(
+            translate(
               "explore.loadError",
-              "Unable to load content."
+              "কনটেন্ট লোড করা যায়নি।",
+              "Unable to load content.",
+              "सामग्री लोड नहीं हो सकी।"
             )
           );
-
 
         } finally {
 
@@ -1286,204 +2118,11 @@ function Explore() {
       feedMode,
       page,
       submittedSearch,
-      language,
+      contentLanguage,
       category,
       isLoggedIn,
-      t,
     ]
   );
-
-
-  // =======================================================
-  // CHANGE WRITING FEED
-  // =======================================================
-
-  function changeFeed(
-    mode
-  ) {
-
-    if (
-      mode ===
-      feedMode
-    ) {
-
-      return;
-
-    }
-
-
-    // -----------------------------------------------------
-    // LOGIN REQUIRED
-    // -----------------------------------------------------
-
-    if (
-      (
-        mode ===
-          "following" ||
-        mode ===
-          "saved"
-      ) &&
-      !isLoggedIn
-    ) {
-
-      navigate(
-        "/login"
-      );
-
-      return;
-
-    }
-
-
-    setPage(
-      1
-    );
-
-
-    setError(
-      ""
-    );
-
-
-    // -----------------------------------------------------
-    // PERSONAL FEEDS DON'T USE GLOBAL FILTERS
-    // -----------------------------------------------------
-
-    if (
-      mode ===
-        "following" ||
-      mode ===
-        "saved"
-    ) {
-
-      setSearch(
-        ""
-      );
-
-
-      setSubmittedSearch(
-        ""
-      );
-
-
-      setLanguage(
-        ""
-      );
-
-
-      setCategory(
-        ""
-      );
-
-
-      setSortBy(
-        "latest"
-      );
-
-    }
-
-
-    setFeedMode(
-      mode
-    );
-
-  }
-
-
-  // =======================================================
-  // SEARCH WRITINGS
-  // =======================================================
-
-  function handleSearch(
-    event
-  ) {
-
-    event.preventDefault();
-
-
-    if (
-      contentMode !==
-        "writings" ||
-      feedMode !==
-        "all"
-    ) {
-
-      return;
-
-    }
-
-
-    setPage(
-      1
-    );
-
-
-    setSubmittedSearch(
-      search.trim()
-    );
-
-  }
-
-
-  // =======================================================
-  // CLEAR SEARCH
-  // =======================================================
-
-  function clearSearch() {
-
-    setSearch(
-      ""
-    );
-
-
-    setSubmittedSearch(
-      ""
-    );
-
-
-    setPage(
-      1
-    );
-
-  }
-
-
-  // =======================================================
-  // RESET FILTERS
-  // =======================================================
-
-  function resetFilters() {
-
-    setSearch(
-      ""
-    );
-
-
-    setSubmittedSearch(
-      ""
-    );
-
-
-    setLanguage(
-      ""
-    );
-
-
-    setCategory(
-      ""
-    );
-
-
-    setSortBy(
-      "latest"
-    );
-
-
-    setPage(
-      1
-    );
-
-  }
 
 
   // =======================================================
@@ -1492,16 +2131,16 @@ function Explore() {
 
   const currentItems =
     contentMode ===
-    "documents"
+      "documents"
       ? documents
       : contentMode ===
-        "artworks"
+          "artworks"
         ? artworks
         : writings;
 
 
   // =======================================================
-  // SORT
+  // SORT CURRENT PAGE
   // =======================================================
 
   const sortedItems =
@@ -1521,7 +2160,7 @@ function Explore() {
 
             if (
               sortBy ===
-              "oldest"
+                "oldest"
             ) {
 
               return (
@@ -1543,28 +2182,25 @@ function Explore() {
 
             if (
               sortBy ===
-              "title"
+                "title"
             ) {
 
               return String(
-                a.title || ""
+                a.title ||
+                ""
               ).localeCompare(
                 String(
-                  b.title || ""
+                  b.title ||
+                  ""
                 )
               );
 
             }
 
 
-            // -------------------------------------------------
-            // SAVED MODE:
-            // newest saved item first if saved_at exists
-            // -------------------------------------------------
-
             if (
               feedMode ===
-              "saved"
+                "saved"
             ) {
 
               return (
@@ -1616,46 +2252,287 @@ function Explore() {
 
 
   // =======================================================
-  // ACTIVE FILTERS
+  // FILTER STATE
   // =======================================================
 
   const hasActiveFilters =
     Boolean(
-      (
-        contentMode ===
-          "writings" &&
-        feedMode ===
-          "all" &&
-        submittedSearch
-      )
-      ||
-      language
-      ||
-      category
+      submittedSearch ||
+      contentLanguage ||
+      category ||
+      sortBy !==
+        "latest"
     );
 
-
-  // =======================================================
-  // SELECTED LANGUAGE
-  // =======================================================
-
-  const selectedLanguage =
-    LANGUAGES.find(
-      (
-        item
-      ) =>
-        item.code ===
-        language
-    );
-
-
-  // =======================================================
-  // RESULT COUNT
-  // =======================================================
 
   const totalResults =
     pagination?.total ??
     sortedItems.length;
+
+
+  // =======================================================
+  // DYNAMIC SEO
+  // =======================================================
+
+  const seoNoIndex =
+    Boolean(
+      submittedSearch
+    ) ||
+    feedMode !==
+      "all" ||
+    sortBy !==
+      "latest";
+
+
+  const seoLanguageLabel =
+    selectedLanguage
+      ? getContentLanguageLabel(
+          selectedLanguage.code,
+          selectedLanguage
+        )
+      : "";
+
+
+  const seoCategoryLabel =
+    category
+      ? getCategoryLabel(
+          category
+        )
+      : "";
+
+
+  let seoBaseTitle =
+    labels.title;
+
+
+  if (
+    contentMode ===
+      "documents"
+  ) {
+
+    seoBaseTitle =
+      labels.documents;
+
+  } else if (
+    contentMode ===
+      "artworks"
+  ) {
+
+    seoBaseTitle =
+      labels.artworks;
+
+  } else if (
+    feedMode ===
+      "following"
+  ) {
+
+    seoBaseTitle =
+      labels.following;
+
+  } else if (
+    feedMode ===
+      "saved"
+  ) {
+
+    seoBaseTitle =
+      labels.saved;
+
+  }
+
+
+  if (
+    submittedSearch
+  ) {
+
+    seoBaseTitle =
+      translate(
+        "explore.seoSearchTitle",
+        `“${submittedSearch}” অনুসন্ধান`,
+        `Search for “${submittedSearch}”`,
+        `“${submittedSearch}” की खोज`
+      );
+
+  } else if (
+    seoCategoryLabel
+  ) {
+
+    seoBaseTitle =
+      `${seoCategoryLabel} — ${seoBaseTitle}`;
+
+  }
+
+
+  const seoTitle =
+    [
+      seoBaseTitle,
+
+      seoLanguageLabel,
+
+      page > 1
+        ? `${labels.page} ${page}`
+        : "",
+    ]
+      .filter(
+        Boolean
+      )
+      .join(
+        " — "
+      );
+
+
+  let seoDescription =
+    labels.description;
+
+
+  if (
+    contentMode ===
+      "documents"
+  ) {
+
+    seoDescription =
+      labels.documentsDescription;
+
+  } else if (
+    contentMode ===
+      "artworks"
+  ) {
+
+    seoDescription =
+      labels.artworksDescription;
+
+  } else if (
+    feedMode ===
+      "following"
+  ) {
+
+    seoDescription =
+      labels.followingDescription;
+
+  } else if (
+    feedMode ===
+      "saved"
+  ) {
+
+    seoDescription =
+      labels.savedDescription;
+
+  }
+
+
+  if (
+    submittedSearch
+  ) {
+
+    seoDescription =
+      translate(
+        "explore.seoSearchDescription",
+        `SHOBDO-তে “${submittedSearch}” সম্পর্কিত প্রকাশ্য লেখা খুঁজুন।`,
+        `Discover public SHOBDO writings related to “${submittedSearch}”.`,
+        `SHOBDO पर “${submittedSearch}” से संबंधित सार्वजनिक रचनाएँ खोजें।`
+      );
+
+  } else if (
+    seoCategoryLabel ||
+    seoLanguageLabel
+  ) {
+
+    const filterSummary =
+      [
+        seoCategoryLabel,
+        seoLanguageLabel,
+      ]
+        .filter(
+          Boolean
+        )
+        .join(
+          " · "
+        );
+
+
+    seoDescription =
+      `${seoDescription} ${filterSummary}.`;
+
+  }
+
+
+  const canonicalParams =
+    new URLSearchParams();
+
+
+  if (
+    contentMode ===
+      "documents"
+  ) {
+
+    canonicalParams.set(
+      "type",
+      "documents"
+    );
+
+  }
+
+
+  if (
+    contentMode ===
+      "artworks"
+  ) {
+
+    canonicalParams.set(
+      "type",
+      "artworks"
+    );
+
+  }
+
+
+  if (
+    contentLanguage
+  ) {
+
+    canonicalParams.set(
+      "language",
+      contentLanguage
+    );
+
+  }
+
+
+  if (
+    category
+  ) {
+
+    canonicalParams.set(
+      "category",
+      category
+    );
+
+  }
+
+
+  if (
+    page > 1
+  ) {
+
+    canonicalParams.set(
+      "page",
+      String(
+        page
+      )
+    );
+
+  }
+
+
+  const canonicalQuery =
+    canonicalParams.toString();
+
+
+  const seoCanonicalPath =
+    seoNoIndex
+      ? ""
+      : canonicalQuery
+        ? `/explore?${canonicalQuery}`
+        : "/explore";
 
 
   // =======================================================
@@ -1666,12 +2543,14 @@ function Explore() {
 
     if (
       contentMode ===
-      "documents"
+        "documents"
     ) {
 
-      return t(
+      return translate(
         "explore.documentsFound",
-        "PDF documents found"
+        "টি PDF নথি পাওয়া গেছে",
+        "PDF documents found",
+        "PDF दस्तावेज़ मिले"
       );
 
     }
@@ -1679,12 +2558,14 @@ function Explore() {
 
     if (
       contentMode ===
-      "artworks"
+        "artworks"
     ) {
 
-      return t(
+      return translate(
         "explore.artworksFound",
-        "artworks found"
+        "টি শিল্পকর্ম পাওয়া গেছে",
+        "artworks found",
+        "कलाकृतियाँ मिलीं"
       );
 
     }
@@ -1692,12 +2573,14 @@ function Explore() {
 
     if (
       feedMode ===
-      "following"
+        "following"
     ) {
 
-      return t(
+      return translate(
         "explore.followingWritings",
-        "following writings"
+        "টি অনুসরণকৃত লেখা",
+        "following writings",
+        "फ़ॉलो की गई रचनाएँ"
       );
 
     }
@@ -1705,39 +2588,45 @@ function Explore() {
 
     if (
       feedMode ===
-      "saved"
+        "saved"
     ) {
 
-      return t(
+      return translate(
         "explore.savedWritingsFound",
-        "saved writings"
+        "টি সংরক্ষিত লেখা",
+        "saved writings",
+        "सहेजी गई रचनाएँ"
       );
 
     }
 
 
-    return t(
+    return translate(
       "explore.writingsFound",
-      "writings found"
+      "টি লেখা পাওয়া গেছে",
+      "writings found",
+      "रचनाएँ मिलीं"
     );
 
   }
 
 
   // =======================================================
-  // EMPTY TITLE
+  // EMPTY STATE
   // =======================================================
 
   function getEmptyTitle() {
 
     if (
       contentMode ===
-      "artworks"
+        "artworks"
     ) {
 
-      return t(
+      return translate(
         "explore.noArtwork",
-        "No artwork found"
+        "কোনো শিল্পকর্ম পাওয়া যায়নি",
+        "No artwork found",
+        "कोई कलाकृति नहीं मिली"
       );
 
     }
@@ -1745,12 +2634,14 @@ function Explore() {
 
     if (
       contentMode ===
-      "documents"
+        "documents"
     ) {
 
-      return t(
+      return translate(
         "explore.noDocuments",
-        "No PDF documents found"
+        "কোনো PDF নথি পাওয়া যায়নি",
+        "No PDF documents found",
+        "कोई PDF दस्तावेज़ नहीं मिला"
       );
 
     }
@@ -1758,24 +2649,14 @@ function Explore() {
 
     if (
       feedMode ===
-      "following"
+        "following"
     ) {
 
-      if (
-        !isLoggedIn
-      ) {
-
-        return t(
-          "explore.signInFollowingTitle",
-          "Sign in required"
-        );
-
-      }
-
-
-      return t(
+      return translate(
         "explore.followingEmpty",
-        "Following feed is empty"
+        "Following feed খালি",
+        "Following feed is empty",
+        "फ़ॉलोइंग फ़ीड खाली है"
       );
 
     }
@@ -1783,51 +2664,41 @@ function Explore() {
 
     if (
       feedMode ===
-      "saved"
+        "saved"
     ) {
 
-      if (
-        !isLoggedIn
-      ) {
-
-        return t(
-          "explore.signInSavedTitle",
-          "Sign in required"
-        );
-
-      }
-
-
-      return t(
+      return translate(
         "explore.savedEmpty",
-        "No saved writings yet"
+        "এখনও কোনো লেখা সংরক্ষণ করা হয়নি",
+        "No saved writings yet",
+        "अभी कोई रचना सहेजी नहीं गई है"
       );
 
     }
 
 
-    return t(
+    return translate(
       "explore.noResultsTitle",
-      "No writings found"
+      "কোনো লেখা পাওয়া যায়নি",
+      "No writings found",
+      "कोई रचना नहीं मिली"
     );
 
   }
 
-
-  // =======================================================
-  // EMPTY DESCRIPTION
-  // =======================================================
 
   function getEmptyDescription() {
 
     if (
       contentMode ===
-      "artworks"
+        "artworks"
     ) {
 
-      return t(
+      return translate(
         "explore.noArtworkDescription",
-        "Published public artwork will appear here."
+        "প্রকাশিত শিল্পকর্ম এখানে দেখা যাবে।",
+        "Published public artwork will appear here.",
+        "प्रकाशित सार्वजनिक कलाकृतियाँ यहाँ दिखाई देंगी।"
       );
 
     }
@@ -1835,12 +2706,14 @@ function Explore() {
 
     if (
       contentMode ===
-      "documents"
+        "documents"
     ) {
 
-      return t(
+      return translate(
         "explore.noDocumentsDescription",
-        "Published public PDF documents will appear here."
+        "প্রকাশিত PDF নথি এখানে দেখা যাবে।",
+        "Published public PDF documents will appear here.",
+        "प्रकाशित सार्वजनिक PDF दस्तावेज़ यहाँ दिखाई देंगे।"
       );
 
     }
@@ -1848,24 +2721,14 @@ function Explore() {
 
     if (
       feedMode ===
-      "following"
+        "following"
     ) {
 
-      if (
-        !isLoggedIn
-      ) {
-
-        return t(
-          "explore.signInFollowing",
-          "Sign in to see writings from authors you follow."
-        );
-
-      }
-
-
-      return t(
+      return translate(
         "explore.followingEmptyDescription",
-        "New writings from authors you follow will appear here."
+        "আপনি যাদের অনুসরণ করেন তাদের নতুন লেখা এখানে দেখা যাবে।",
+        "New writings from writers you follow will appear here.",
+        "आपके फ़ॉलो किए गए लेखकों की नई रचनाएँ यहाँ दिखाई देंगी।"
       );
 
     }
@@ -1873,304 +2736,267 @@ function Explore() {
 
     if (
       feedMode ===
-      "saved"
+        "saved"
     ) {
 
-      if (
-        !isLoggedIn
-      ) {
-
-        return t(
-          "explore.signInSaved",
-          "Sign in to view your saved writings."
-        );
-
-      }
-
-
-      return t(
+      return translate(
         "explore.savedEmptyDescription",
-        "Use the bookmark button on a writing to save it for later."
+        "কোনো লেখা পরে পড়ার জন্য সংরক্ষণ করলে এখানে দেখা যাবে।",
+        "Use the bookmark button on a writing to save it for later.",
+        "बाद में पढ़ने के लिए किसी रचना को बुकमार्क करें।"
       );
 
     }
 
 
-    return t(
+    return translate(
       "explore.noResultsDescription",
-      "Try another search term, category or language."
+      "অন্য সার্চ শব্দ, বিভাগ বা ভাষা ব্যবহার করে দেখুন।",
+      "Try another search term, category or language.",
+      "कोई दूसरा खोज शब्द, श्रेणी या भाषा आज़माएँ।"
     );
 
   }
 
 
   // =======================================================
-  // LOADING TEXT
-  // =======================================================
-
-  function getLoadingText() {
-
-    if (
-      contentMode ===
-      "documents"
-    ) {
-
-      return t(
-        "explore.loadingDocuments",
-        "Loading PDF documents..."
-      );
-
-    }
-
-
-    if (
-      contentMode ===
-      "artworks"
-    ) {
-
-      return t(
-        "explore.loadingArtwork",
-        "Loading artwork..."
-      );
-
-    }
-
-
-    if (
-      feedMode ===
-      "following"
-    ) {
-
-      return t(
-        "explore.loadingFollowing",
-        "Loading writings from authors you follow..."
-      );
-
-    }
-
-
-    if (
-      feedMode ===
-      "saved"
-    ) {
-
-      return t(
-        "explore.loadingSaved",
-        "Loading your saved writings..."
-      );
-
-    }
-
-
-    return t(
-      "explore.loading",
-      "Loading writings..."
-    );
-
-  }
-
-
-  // =======================================================
-  // UI
+  // RENDER
   // =======================================================
 
   return (
 
-    <main
-      className="explore-page"
-    >
+    <>
 
-      <div
-        className="explore-shell"
+      <SEO
+        title={
+          seoTitle
+        }
+        description={
+          seoDescription
+        }
+        path={
+          seoCanonicalPath
+        }
+        type="website"
+        noIndex={
+          seoNoIndex
+        }
+      />
+
+
+      <main
+        className={
+          isLoggedIn
+            ? "explore-page"
+            : "explore-page explore-page-public"
+        }
       >
 
-
-        {/* =================================================
-            HERO
-        ================================================== */}
-
-        <header
-          className="explore-hero"
+        <div
+          className="explore-shell"
         >
 
-          <div
-            className="explore-eyebrow"
+
+          {/* =================================================
+              HERO
+          ================================================== */}
+
+          <header
+            className="explore-hero"
           >
 
-            <BookOpen
-              size={16}
-            />
+            <div
+              className="explore-eyebrow"
+            >
 
-            <span>
+              <BookOpen
+                size={16}
+              />
 
-              {t(
-                "explore.eyebrow",
-                "DISCOVER"
-              )}
+              <span>
+                {labels.eyebrow}
+              </span>
 
-            </span>
+            </div>
+
+
+            <h1>
+              {labels.title}
+            </h1>
+
+
+            <p>
+              {labels.description}
+            </p>
+
+          </header>
+
+
+          {/* =================================================
+              PUBLIC VISITOR BANNER
+          ================================================== */}
+
+          {!isLoggedIn && (
+
+            <section
+              className="explore-public-banner"
+            >
+
+              <div
+                className="explore-public-banner-copy"
+              >
+
+                <Globe2
+                  size={18}
+                />
+
+                <span>
+                  {labels.publicNotice}
+                </span>
+
+              </div>
+
+
+              <div
+                className="explore-public-banner-actions"
+              >
+
+                <Link
+                  to="/login"
+                >
+                  {labels.login}
+                </Link>
+
+
+                <Link
+                  to="/register"
+                  className="primary"
+                >
+                  {labels.join}
+                </Link>
+
+              </div>
+
+            </section>
+
+          )}
+
+
+          {/* =================================================
+              CONTENT TYPE
+          ================================================== */}
+
+          <div
+            className="explore-content-tabs"
+            role="tablist"
+            aria-label="Explore content"
+          >
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={
+                contentMode ===
+                  "writings"
+              }
+              className={
+                contentMode ===
+                  "writings"
+                  ? "explore-content-tab active"
+                  : "explore-content-tab"
+              }
+              onClick={
+                () =>
+                  changeContentMode(
+                    "writings"
+                  )
+              }
+            >
+
+              <BookOpen
+                size={18}
+              />
+
+              <span>
+                {labels.writings}
+              </span>
+
+            </button>
+
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={
+                contentMode ===
+                  "documents"
+              }
+              className={
+                contentMode ===
+                  "documents"
+                  ? "explore-content-tab active"
+                  : "explore-content-tab"
+              }
+              onClick={
+                () =>
+                  changeContentMode(
+                    "documents"
+                  )
+              }
+            >
+
+              <FileText
+                size={18}
+              />
+
+              <span>
+                {labels.documents}
+              </span>
+
+            </button>
+
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={
+                contentMode ===
+                  "artworks"
+              }
+              className={
+                contentMode ===
+                  "artworks"
+                  ? "explore-content-tab active"
+                  : "explore-content-tab"
+              }
+              onClick={
+                () =>
+                  changeContentMode(
+                    "artworks"
+                  )
+              }
+            >
+
+              <ImageIcon
+                size={18}
+              />
+
+              <span>
+                {labels.artworks}
+              </span>
+
+            </button>
 
           </div>
 
 
-          <h1>
+          {/* =================================================
+              LOGGED-IN WRITING FEEDS
+          ================================================== */}
 
-            {t(
-              "explore.title",
-              "Explore SHOBDO"
-            )}
-
-          </h1>
-
-
-          <p>
-
-            {t(
-              "explore.description",
-              "Discover writings, PDF documents and artwork from the SHOBDO community."
-            )}
-
-          </p>
-
-        </header>
-
-
-        {/* =================================================
-            MAIN CONTENT TABS
-        ================================================== */}
-
-        <div
-          className="explore-content-tabs"
-          role="tablist"
-          aria-label="Explore content"
-        >
-
-          {/* WRITINGS */}
-
-          <button
-            type="button"
-            role="tab"
-            aria-selected={
-              contentMode ===
-              "writings"
-            }
-            className={
-              contentMode ===
-              "writings"
-                ? "explore-content-tab active"
-                : "explore-content-tab"
-            }
-            onClick={
-              () =>
-                changeContentMode(
-                  "writings"
-                )
-            }
-          >
-
-            <BookOpen
-              size={18}
-            />
-
-            <span>
-
-              {t(
-                "explore.writingsTab",
-                "Writings"
-              )}
-
-            </span>
-
-          </button>
-
-
-          {/* PDF DOCUMENTS */}
-
-          <button
-            type="button"
-            role="tab"
-            aria-selected={
-              contentMode ===
-              "documents"
-            }
-            className={
-              contentMode ===
-              "documents"
-                ? "explore-content-tab active"
-                : "explore-content-tab"
-            }
-            onClick={
-              () =>
-                changeContentMode(
-                  "documents"
-                )
-            }
-          >
-
-            <FileText
-              size={18}
-            />
-
-            <span>
-
-              {t(
-                "explore.documentsTab",
-                "PDF Documents"
-              )}
-
-            </span>
-
-          </button>
-
-
-          {/* ARTWORK */}
-
-          <button
-            type="button"
-            role="tab"
-            aria-selected={
-              contentMode ===
-              "artworks"
-            }
-            className={
-              contentMode ===
-              "artworks"
-                ? "explore-content-tab active"
-                : "explore-content-tab"
-            }
-            onClick={
-              () =>
-                changeContentMode(
-                  "artworks"
-                )
-            }
-          >
-
-            <ImageIcon
-              size={18}
-            />
-
-            <span>
-
-              {t(
-                "explore.artworkTab",
-                "Artwork"
-              )}
-
-            </span>
-
-          </button>
-
-        </div>
-
-
-        {/* =================================================
-            WRITING FEED TABS
-        ================================================== */}
-
-        {
-          contentMode ===
-            "writings" && (
+          {contentMode ===
+            "writings" &&
+            isLoggedIn && (
 
             <div
               className="explore-feed-tabs"
@@ -2178,19 +3004,16 @@ function Explore() {
               aria-label="Writing feed"
             >
 
-
-              {/* ALL WRITINGS */}
-
               <button
                 type="button"
                 role="tab"
                 aria-selected={
                   feedMode ===
-                  "all"
+                    "all"
                 }
                 className={
                   feedMode ===
-                  "all"
+                    "all"
                     ? "explore-feed-tab active"
                     : "explore-feed-tab"
                 }
@@ -2206,26 +3029,21 @@ function Explore() {
                   size={16}
                 />
 
-                {t(
-                  "explore.allWritings",
-                  "All Writings"
-                )}
+                {labels.all}
 
               </button>
 
-
-              {/* FOLLOWING */}
 
               <button
                 type="button"
                 role="tab"
                 aria-selected={
                   feedMode ===
-                  "following"
+                    "following"
                 }
                 className={
                   feedMode ===
-                  "following"
+                    "following"
                     ? "explore-feed-tab active"
                     : "explore-feed-tab"
                 }
@@ -2241,26 +3059,21 @@ function Explore() {
                   size={16}
                 />
 
-                {t(
-                  "explore.following",
-                  "Following"
-                )}
+                {labels.following}
 
               </button>
 
-
-              {/* SAVED */}
 
               <button
                 type="button"
                 role="tab"
                 aria-selected={
                   feedMode ===
-                  "saved"
+                    "saved"
                 }
                 className={
                   feedMode ===
-                  "saved"
+                    "saved"
                     ? "explore-feed-tab active"
                     : "explore-feed-tab"
                 }
@@ -2276,34 +3089,29 @@ function Explore() {
                   size={16}
                   fill={
                     feedMode ===
-                    "saved"
+                      "saved"
                       ? "currentColor"
                       : "none"
                   }
                 />
 
-                {t(
-                  "explore.saved",
-                  "Saved"
-                )}
+                {labels.saved}
 
               </button>
 
             </div>
 
-          )
-        }
+          )}
 
 
-        {/* =================================================
-            FOLLOWING NOTICE
-        ================================================== */}
+          {/* =================================================
+              FEED / MODE DESCRIPTION
+          ================================================== */}
 
-        {
-          contentMode ===
+          {contentMode ===
             "writings" &&
-          feedMode ===
-            "following" && (
+            feedMode ===
+              "following" && (
 
             <div
               className="explore-following-notice"
@@ -2314,36 +3122,20 @@ function Explore() {
               />
 
               <span>
-
                 {
-                  isLoggedIn
-                    ? t(
-                        "explore.followingDescription",
-                        "Recent writings from authors you follow."
-                      )
-                    : t(
-                        "explore.signInFollowing",
-                        "Sign in to see writings from authors you follow."
-                      )
+                  labels.followingDescription
                 }
-
               </span>
 
             </div>
 
-          )
-        }
+          )}
 
 
-        {/* =================================================
-            SAVED NOTICE
-        ================================================== */}
-
-        {
-          contentMode ===
+          {contentMode ===
             "writings" &&
-          feedMode ===
-            "saved" && (
+            feedMode ===
+              "saved" && (
 
             <div
               className="explore-following-notice explore-saved-notice"
@@ -2354,33 +3146,17 @@ function Explore() {
               />
 
               <span>
-
                 {
-                  isLoggedIn
-                    ? t(
-                        "explore.savedDescription",
-                        "Your private collection of bookmarked writings."
-                      )
-                    : t(
-                        "explore.signInSaved",
-                        "Sign in to view your saved writings."
-                      )
+                  labels.savedDescription
                 }
-
               </span>
 
             </div>
 
-          )
-        }
+          )}
 
 
-        {/* =================================================
-            DOCUMENT NOTICE
-        ================================================== */}
-
-        {
-          contentMode ===
+          {contentMode ===
             "documents" && (
 
             <div
@@ -2392,26 +3168,17 @@ function Explore() {
               />
 
               <span>
-
-                {t(
-                  "explore.documentsDescription",
-                  "Browse PDF books, essays, poetry collections and manuscripts published by the SHOBDO community."
-                )}
-
+                {
+                  labels.documentsDescription
+                }
               </span>
 
             </div>
 
-          )
-        }
+          )}
 
 
-        {/* =================================================
-            ARTWORK NOTICE
-        ================================================== */}
-
-        {
-          contentMode ===
+          {contentMode ===
             "artworks" && (
 
             <div
@@ -2423,29 +3190,24 @@ function Explore() {
               />
 
               <span>
-
-                {t(
-                  "explore.artworksDescription",
-                  "Discover paintings, illustrations, photography, sketches and digital artwork from SHOBDO creators."
-                )}
-
+                {
+                  labels.artworksDescription
+                }
               </span>
 
             </div>
 
-          )
-        }
+          )}
 
 
-        {/* =================================================
-            WRITING SEARCH
-        ================================================== */}
+          {/* =================================================
+              SEARCH
+          ================================================== */}
 
-        {
-          contentMode ===
+          {contentMode ===
             "writings" &&
-          feedMode ===
-            "all" && (
+            feedMode ===
+              "all" && (
 
             <form
               className="explore-search"
@@ -2473,68 +3235,58 @@ function Explore() {
                     )
                 }
                 placeholder={
-                  t(
-                    "explore.searchPlaceholder",
-                    "Search poems, stories, topics or authors..."
-                  )
+                  labels.searchPlaceholder
+                }
+                aria-label={
+                  labels.searchPlaceholder
                 }
               />
 
 
-              {
-                search && (
+              {search && (
 
-                  <button
-                    type="button"
-                    className="explore-search-clear"
-                    onClick={
-                      clearSearch
-                    }
-                    aria-label={
-                      t(
-                        "common.clear",
-                        "Clear"
-                      )
-                    }
-                  >
+                <button
+                  type="button"
+                  className="explore-search-clear"
+                  onClick={
+                    clearSearch
+                  }
+                  aria-label={
+                    translate(
+                      "explore.clearSearch",
+                      "সার্চ মুছুন",
+                      "Clear search",
+                      "खोज साफ़ करें"
+                    )
+                  }
+                >
 
-                    <X
-                      size={16}
-                    />
+                  <X
+                    size={16}
+                  />
 
-                  </button>
+                </button>
 
-                )
-              }
+              )}
 
 
               <button
                 type="submit"
                 className="explore-search-submit"
               >
-
-                {t(
-                  "explore.searchButton",
-                  "Search"
-                )}
-
+                {labels.search}
               </button>
 
             </form>
 
-          )
-        }
+          )}
 
 
-        {/* =================================================
-            FILTERS
+          {/* =================================================
+              FILTERS
+          ================================================== */}
 
-            Filters are intentionally hidden from Following
-            and Saved feeds.
-        ================================================== */}
-
-        {
-          (
+          {(
             contentMode !==
               "writings" ||
             feedMode ===
@@ -2544,7 +3296,6 @@ function Explore() {
             <section
               className="explore-filters"
             >
-
 
               {/* LANGUAGE */}
 
@@ -2559,64 +3310,53 @@ function Explore() {
 
                 <select
                   value={
-                    language
+                    contentLanguage
                   }
                   onChange={
                     (
                       event
-                    ) => {
-
-                      setLanguage(
+                    ) =>
+                      setFilter(
+                        "language",
                         event.target.value
-                      );
-
-                      setPage(
-                        1
-                      );
-
-                    }
+                      )
                   }
                 >
 
                   <option
                     value=""
                   >
-
-                    {t(
-                      "explore.allLanguages",
-                      "All Languages"
-                    )}
-
+                    {
+                      labels.allLanguages
+                    }
                   </option>
 
 
-                  {
-                    LANGUAGES.map(
-                      (
-                        item
-                      ) => (
+                  {LANGUAGES.map(
+                    (
+                      item
+                    ) => (
 
-                        <option
-                          key={
-                            item.code
-                          }
-                          value={
-                            item.code
-                          }
-                        >
+                      <option
+                        key={
+                          item.code
+                        }
+                        value={
+                          item.code
+                        }
+                      >
 
-                          {
-                            getLanguageLabel(
-                              item.code,
-                              item
-                            )
-                          }
+                        {
+                          getContentLanguageLabel(
+                            item.code,
+                            item
+                          )
+                        }
 
-                        </option>
+                      </option>
 
-                      )
                     )
-                  }
+                  )}
 
                 </select>
 
@@ -2641,47 +3381,39 @@ function Explore() {
                   onChange={
                     (
                       event
-                    ) => {
-
-                      setCategory(
+                    ) =>
+                      setFilter(
+                        "category",
                         event.target.value
-                      );
-
-                      setPage(
-                        1
-                      );
-
-                    }
+                      )
                   }
                 >
 
-                  {
-                    categoryOptions.map(
-                      (
-                        item
-                      ) => (
+                  {categoryOptions.map(
+                    (
+                      item
+                    ) => (
 
-                        <option
-                          key={
-                            item ||
-                            "all"
-                          }
-                          value={
+                      <option
+                        key={
+                          item ||
+                          "all"
+                        }
+                        value={
+                          item
+                        }
+                      >
+
+                        {
+                          getCategoryLabel(
                             item
-                          }
-                        >
+                          )
+                        }
 
-                          {
-                            getCategoryLabel(
-                              item
-                            )
-                          }
+                      </option>
 
-                        </option>
-
-                      )
                     )
-                  }
+                  )}
 
                 </select>
 
@@ -2706,46 +3438,42 @@ function Explore() {
                   onChange={
                     (
                       event
-                    ) =>
-                      setSortBy(
-                        event.target.value
-                      )
+                    ) => {
+
+                      const value =
+                        event.target.value;
+
+
+                      setFilter(
+                        "sort",
+                        value ===
+                          "latest"
+                          ? ""
+                          : value
+                      );
+
+                    }
                   }
                 >
 
                   <option
                     value="latest"
                   >
-
-                    {t(
-                      "explore.latest",
-                      "Latest"
-                    )}
-
+                    {labels.latest}
                   </option>
 
 
                   <option
                     value="oldest"
                   >
-
-                    {t(
-                      "explore.oldest",
-                      "Oldest First"
-                    )}
-
+                    {labels.oldest}
                   </option>
 
 
                   <option
                     value="title"
                   >
-
-                    {t(
-                      "explore.titleAZ",
-                      "Title A-Z"
-                    )}
-
+                    {labels.titleAZ}
                   </option>
 
                 </select>
@@ -2753,79 +3481,65 @@ function Explore() {
               </div>
 
 
-              {/* RESET */}
+              {hasActiveFilters && (
 
-              {
-                hasActiveFilters && (
+                <button
+                  type="button"
+                  className="explore-reset-button"
+                  onClick={
+                    resetFilters
+                  }
+                >
 
-                  <button
-                    type="button"
-                    className="explore-reset-button"
-                    onClick={
-                      resetFilters
-                    }
-                  >
+                  <X
+                    size={15}
+                  />
 
-                    <X
-                      size={15}
-                    />
+                  {
+                    labels.clearFilters
+                  }
 
-                    {t(
-                      "explore.clearFilters",
-                      "Clear Filters"
-                    )}
+                </button>
 
-                  </button>
-
-                )
-              }
+              )}
 
             </section>
 
-          )
-        }
+          )}
 
 
-        {/* =================================================
-            RESULT SUMMARY
-        ================================================== */}
+          {/* =================================================
+              RESULT SUMMARY
+          ================================================== */}
 
-        <div
-          className="explore-result-summary"
-        >
+          <div
+            className="explore-result-summary"
+            aria-live="polite"
+          >
 
-          <span>
+            <span>
 
-            {totalResults}
+              {totalResults}
 
-            {" "}
+              {" "}
 
-            {getResultLabel()}
+              {getResultLabel()}
 
-          </span>
+            </span>
 
 
-          {
-            contentMode ===
-              "writings" &&
-            feedMode ===
-              "all" &&
-            submittedSearch && (
+            {submittedSearch && (
 
               <span
                 className="explore-active-filter"
               >
-
                 “{submittedSearch}”
-
               </span>
 
-            )
-          }
+            )}
 
 
-          {
-            selectedLanguage && (
+            {selectedLanguage && (
 
               <span
                 className="explore-active-filter"
@@ -2836,7 +3550,7 @@ function Explore() {
                 />
 
                 {
-                  getLanguageLabel(
+                  getContentLanguageLabel(
                     selectedLanguage.code,
                     selectedLanguage
                   )
@@ -2844,105 +3558,78 @@ function Explore() {
 
               </span>
 
-            )
-          }
+            )}
 
 
-          {
-            category && (
+            {category && (
 
               <span
                 className="explore-active-filter"
               >
-
                 {
                   getCategoryLabel(
                     category
                   )
                 }
-
               </span>
 
-            )
-          }
+            )}
 
-        </div>
+          </div>
 
 
-        {/* =================================================
-            LOADING
-        ================================================== */}
+          {/* =================================================
+              LOADING
+          ================================================== */}
 
-        {
-          loading && (
+          {loading && (
 
             <div
               className="explore-loading"
+              role="status"
+              aria-live="polite"
             >
 
               <Loader2
-                size={30}
+                size={29}
                 className="spin"
               />
 
               <p>
-                {getLoadingText()}
+                {labels.loading}
               </p>
 
             </div>
 
-          )
-        }
+          )}
 
 
-        {/* =================================================
-            ERROR
-        ================================================== */}
+          {/* =================================================
+              ERROR
+          ================================================== */}
 
-        {
-          !loading &&
-          error && (
+          {!loading &&
+            error && (
 
             <section
               className="explore-state"
             >
 
-              {
-                contentMode ===
-                "artworks"
-                  ? (
-                      <ImageIcon
-                        size={32}
-                      />
-                    )
-                  : contentMode ===
-                    "documents"
-                    ? (
-                        <FileText
-                          size={32}
-                        />
-                      )
-                    : feedMode ===
-                      "saved"
-                      ? (
-                          <Bookmark
-                            size={32}
-                          />
-                        )
-                      : (
-                          <BookOpen
-                            size={32}
-                          />
-                        )
-              }
+              <BookOpen
+                size={32}
+              />
 
 
               <h2>
 
-                {t(
-                  "explore.loadContentError",
-                  "Unable to load content"
-                )}
+                {
+                  translate(
+                    "explore.loadContentError",
+                    "কনটেন্ট লোড করা যায়নি",
+                    "Unable to load content",
+                    "सामग्री लोड नहीं हो सकी"
+                  )
+                }
 
               </h2>
 
@@ -2956,33 +3643,29 @@ function Explore() {
                 type="button"
                 onClick={
                   () =>
-                    window.location
-                      .reload()
+                    window.location.reload()
                 }
               >
 
-                {t(
-                  "explore.retry",
-                  "Try Again"
-                )}
+                {
+                  labels.retry
+                }
 
               </button>
 
             </section>
 
-          )
-        }
+          )}
 
 
-        {/* =================================================
-            EMPTY STATE
-        ================================================== */}
+          {/* =================================================
+              EMPTY
+          ================================================== */}
 
-        {
-          !loading &&
-          !error &&
-          sortedItems.length ===
-            0 && (
+          {!loading &&
+            !error &&
+            sortedItems.length ===
+              0 && (
 
             <section
               className="explore-state"
@@ -2990,37 +3673,47 @@ function Explore() {
 
               {
                 contentMode ===
-                "artworks"
+                  "artworks"
                   ? (
+
                       <ImageIcon
                         size={32}
                       />
+
                     )
                   : contentMode ===
-                    "documents"
+                      "documents"
                     ? (
+
                         <FileText
                           size={32}
                         />
+
                       )
                     : feedMode ===
-                      "following"
+                        "following"
                       ? (
+
                           <Users
                             size={32}
                           />
+
                         )
                       : feedMode ===
-                        "saved"
+                          "saved"
                         ? (
+
                             <Bookmark
-                              size={34}
+                              size={32}
                             />
+
                           )
                         : (
+
                             <Search
                               size={32}
                             />
+
                           )
               }
 
@@ -3035,165 +3728,149 @@ function Explore() {
               </p>
 
 
-              {
-                hasActiveFilters && (
+              {hasActiveFilters && (
 
-                  <button
-                    type="button"
-                    onClick={
-                      resetFilters
-                    }
-                  >
+                <button
+                  type="button"
+                  onClick={
+                    resetFilters
+                  }
+                >
 
-                    {t(
-                      "explore.clearFilters",
-                      "Clear Filters"
-                    )}
+                  {
+                    labels.clearFilters
+                  }
 
-                  </button>
+                </button>
 
-                )
-              }
+              )}
 
             </section>
 
-          )
-        }
+          )}
 
 
-        {/* =================================================
-            WRITINGS GRID
-        ================================================== */}
+          {/* =================================================
+              WRITINGS
+          ================================================== */}
 
-        {
-          contentMode ===
+          {contentMode ===
             "writings" &&
-          !loading &&
-          !error &&
-          sortedItems.length >
-            0 && (
+            !loading &&
+            !error &&
+            sortedItems.length >
+              0 && (
 
             <section
               className="explore-writing-grid"
             >
 
-              {
-                sortedItems.map(
-                  (
-                    writing
-                  ) => (
+              {sortedItems.map(
+                (
+                  writing
+                ) => (
 
-                    <WritingCard
-                      key={
-                        writing.id
-                      }
-                      writing={
-                        writing
-                      }
-                    />
+                  <WritingCard
+                    key={
+                      writing.id
+                    }
+                    writing={
+                      writing
+                    }
+                  />
 
-                  )
                 )
-              }
+              )}
 
             </section>
 
-          )
-        }
+          )}
 
 
-        {/* =================================================
-            DOCUMENT GRID
-        ================================================== */}
+          {/* =================================================
+              DOCUMENTS
+          ================================================== */}
 
-        {
-          contentMode ===
+          {contentMode ===
             "documents" &&
-          !loading &&
-          !error &&
-          sortedItems.length >
-            0 && (
+            !loading &&
+            !error &&
+            sortedItems.length >
+              0 && (
 
             <section
               className="explore-document-grid"
             >
 
-              {
-                sortedItems.map(
-                  (
-                    document
-                  ) => (
+              {sortedItems.map(
+                (
+                  document
+                ) => (
 
-                    <DocumentCard
-                      key={
-                        document.id
-                      }
-                      document={
-                        document
-                      }
-                    />
+                  <DocumentCard
+                    key={
+                      document.id
+                    }
+                    document={
+                      document
+                    }
+                  />
 
-                  )
                 )
-              }
+              )}
 
             </section>
 
-          )
-        }
+          )}
 
 
-        {/* =================================================
-            ARTWORK GRID
-        ================================================== */}
+          {/* =================================================
+              ARTWORK
+          ================================================== */}
 
-        {
-          contentMode ===
+          {contentMode ===
             "artworks" &&
-          !loading &&
-          !error &&
-          sortedItems.length >
-            0 && (
+            !loading &&
+            !error &&
+            sortedItems.length >
+              0 && (
 
             <section
               className="explore-artwork-grid"
             >
 
-              {
-                sortedItems.map(
-                  (
-                    artwork
-                  ) => (
+              {sortedItems.map(
+                (
+                  artwork
+                ) => (
 
-                    <ArtworkCard
-                      key={
-                        artwork.id
-                      }
-                      artwork={
-                        artwork
-                      }
-                    />
+                  <ArtworkCard
+                    key={
+                      artwork.id
+                    }
+                    artwork={
+                      artwork
+                    }
+                  />
 
-                  )
                 )
-              }
+              )}
 
             </section>
 
-          )
-        }
+          )}
 
 
-        {/* =================================================
-            PAGINATION
-        ================================================== */}
+          {/* =================================================
+              PAGINATION
+          ================================================== */}
 
-        {
-          !loading &&
-          !error &&
-          pagination &&
-          pagination.pages >
-            1 && (
+          {!loading &&
+            !error &&
+            pagination &&
+            Number(
+              pagination.pages
+            ) > 1 && (
 
             <nav
               className="explore-pagination"
@@ -3203,62 +3880,39 @@ function Explore() {
               <button
                 type="button"
                 disabled={
-                  !pagination
-                    .has_prev
+                  !pagination.has_prev
                 }
                 onClick={
-                  () => {
-
-                    setPage(
-                      (
-                        current
-                      ) =>
-                        Math.max(
-                          1,
-                          current - 1
-                        )
-                    );
-
-
-                    window.scrollTo({
-                      top: 0,
-                      behavior:
-                        "smooth",
-                    });
-
-                  }
+                  () =>
+                    goToPage(
+                      page - 1
+                    )
                 }
               >
 
-                {t(
-                  "explore.previous",
-                  "Previous"
-                )}
+                {
+                  labels.previous
+                }
 
               </button>
 
 
               <span>
 
-                {t(
-                  "explore.page",
-                  "Page"
-                )}
+                {labels.page}
 
                 {" "}
 
                 <strong>
                   {
-                    pagination.page
+                    pagination.page ||
+                    page
                   }
                 </strong>
 
                 {" "}
 
-                {t(
-                  "explore.of",
-                  "of"
-                )}
+                {labels.of}
 
                 {" "}
 
@@ -3272,46 +3926,31 @@ function Explore() {
               <button
                 type="button"
                 disabled={
-                  !pagination
-                    .has_next
+                  !pagination.has_next
                 }
                 onClick={
-                  () => {
-
-                    setPage(
-                      (
-                        current
-                      ) =>
-                        current + 1
-                    );
-
-
-                    window.scrollTo({
-                      top: 0,
-                      behavior:
-                        "smooth",
-                    });
-
-                  }
+                  () =>
+                    goToPage(
+                      page + 1
+                    )
                 }
               >
 
-                {t(
-                  "explore.next",
-                  "Next"
-                )}
+                {
+                  labels.next
+                }
 
               </button>
 
             </nav>
 
-          )
-        }
+          )}
 
+        </div>
 
-      </div>
+      </main>
 
-    </main>
+    </>
 
   );
 

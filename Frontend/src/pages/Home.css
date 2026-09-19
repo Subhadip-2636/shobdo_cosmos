@@ -1,0 +1,1740 @@
+/* =========================================================
+   SHOBDO
+   PROFESSIONAL SOCIAL MEDIA HOME FEED
+========================================================= */
+
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.home-social-feed {
+  width: 100%;
+  max-width: 760px;
+
+  margin: 0 auto;
+
+  padding:
+    24px
+    18px
+    80px;
+
+  color: #2b2621;
+}
+
+
+/* =========================================================
+   FEED HEADER
+========================================================= */
+
+.home-feed-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 24px;
+
+  padding:
+    2px
+    2px
+    22px;
+}
+
+
+.home-feed-header > div {
+  min-width: 0;
+}
+
+
+.home-feed-eyebrow {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 7px;
+
+  color: #946a27;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  letter-spacing: 0.14em;
+
+  text-transform: uppercase;
+}
+
+
+.home-feed-header h1 {
+  margin:
+    8px
+    0
+    5px;
+
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+
+  font-size:
+    clamp(
+      28px,
+      3vw,
+      36px
+    );
+
+  line-height: 1.12;
+
+  font-weight: 700;
+
+  letter-spacing:
+    -0.035em;
+
+  color: #29231f;
+}
+
+
+.home-feed-header p {
+  max-width: 530px;
+
+  margin: 0;
+
+  color: #81776e;
+
+  font-size: 14px;
+
+  line-height: 1.65;
+}
+
+
+/* =========================================================
+   REFRESH BUTTON
+========================================================= */
+
+.home-refresh-button {
+  min-height: 40px;
+
+  flex: 0 0 auto;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  padding:
+    0
+    14px;
+
+  border:
+    1px solid
+    #e6dbce;
+
+  border-radius: 12px;
+
+  background:
+    #fffdfa;
+
+  color:
+    #6d6258;
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+
+.home-refresh-button:hover:not(:disabled) {
+  border-color:
+    #d8c3a3;
+
+  background:
+    #fbf4e9;
+
+  color:
+    #805d25;
+
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 5px 14px
+    rgba(
+      79,
+      58,
+      29,
+      0.06
+    );
+}
+
+
+.home-refresh-button:disabled {
+  opacity: 0.58;
+
+  cursor: default;
+}
+
+
+/* =========================================================
+   COMPOSER
+========================================================= */
+
+.home-composer {
+  width: 100%;
+
+  overflow: hidden;
+
+  margin-bottom: 15px;
+
+  border:
+    1px solid
+    #e7ddd1;
+
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #fffefa 0%,
+      #fffdf9 100%
+    );
+
+  box-shadow:
+    0 5px 22px
+    rgba(
+      67,
+      49,
+      29,
+      0.045
+    );
+}
+
+
+.home-composer-main {
+  display: grid;
+
+  grid-template-columns:
+    46px
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 11px;
+
+  padding:
+    15px
+    16px
+    13px;
+}
+
+
+/* =========================================================
+   COMPOSER AVATAR
+========================================================= */
+
+.home-composer-avatar {
+  width: 44px;
+  height: 44px;
+
+  overflow: hidden;
+
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      145deg,
+      #302a25,
+      #151311
+    );
+
+  color: #ffffff;
+
+  text-decoration: none;
+
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(
+      255,
+      255,
+      255,
+      0.08
+    );
+}
+
+
+.home-composer-avatar img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+
+/* =========================================================
+   COMPOSER INPUT
+========================================================= */
+
+.home-composer-input {
+  width: 100%;
+  min-width: 0;
+
+  min-height: 44px;
+
+  padding:
+    0
+    17px;
+
+  border:
+    1px solid
+    #ece4db;
+
+  border-radius: 999px;
+
+  outline: none;
+
+  background:
+    #faf8f5;
+
+  color:
+    #8b8279;
+
+  font-family: inherit;
+
+  font-size: 14px;
+
+  text-align: left;
+
+  cursor: text;
+
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+
+.home-composer-input:hover {
+  border-color:
+    #d9c8b5;
+
+  background:
+    #ffffff;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(
+      156,
+      110,
+      37,
+      0.045
+    );
+}
+
+
+/* =========================================================
+   CREATE BUTTON
+========================================================= */
+
+.home-composer-create {
+  min-height: 42px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  padding:
+    0
+    18px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #946820,
+      #b08743
+    );
+
+  color:
+    #ffffff;
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 7px 16px
+    rgba(
+      133,
+      92,
+      27,
+      0.17
+    );
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    filter 0.18s ease;
+}
+
+
+.home-composer-create:hover {
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 9px 19px
+    rgba(
+      133,
+      92,
+      27,
+      0.22
+    );
+
+  filter:
+    brightness(1.02);
+}
+
+
+/* =========================================================
+   COMPOSER ACTIONS
+========================================================= */
+
+.home-composer-actions {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      4,
+      minmax(0, 1fr)
+    );
+
+  border-top:
+    1px solid
+    #eee7df;
+}
+
+
+.home-composer-actions button {
+  min-width: 0;
+
+  min-height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  padding:
+    0
+    10px;
+
+  border: none;
+
+  border-right:
+    1px solid
+    #f1eae2;
+
+  background:
+    transparent;
+
+  color:
+    #70675e;
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  font-weight: 650;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
+}
+
+
+.home-composer-actions button:last-child {
+  border-right: none;
+}
+
+
+.home-composer-actions button:hover {
+  background:
+    #fbf5eb;
+
+  color:
+    #8b6221;
+}
+
+
+/* =========================================================
+   GUEST CARD
+========================================================= */
+
+.home-guest-card {
+  display: grid;
+
+  grid-template-columns:
+    auto
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 14px;
+
+  margin-bottom: 15px;
+
+  padding:
+    16px
+    17px;
+
+  border:
+    1px solid
+    #e5d9cb;
+
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fffdf9,
+      #f9f1e5
+    );
+}
+
+
+.home-guest-icon {
+  width: 45px;
+  height: 45px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 14px;
+
+  background:
+    #efe0c8;
+
+  color:
+    #89611f;
+}
+
+
+.home-guest-copy {
+  min-width: 0;
+}
+
+
+.home-guest-copy h2 {
+  margin:
+    0
+    0
+    4px;
+
+  color:
+    #302820;
+
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+
+  font-size: 16px;
+
+  font-weight: 700;
+}
+
+
+.home-guest-copy p {
+  margin: 0;
+
+  color:
+    #7d746b;
+
+  font-size: 12px;
+
+  line-height: 1.55;
+}
+
+
+.home-guest-actions {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+}
+
+
+.home-guest-actions a {
+  min-height: 38px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding:
+    0
+    14px;
+
+  border-radius: 10px;
+
+  text-decoration: none;
+
+  font-size: 12px;
+
+  font-weight: 800;
+
+  transition:
+    background-color 0.17s ease,
+    color 0.17s ease,
+    border-color 0.17s ease,
+    transform 0.17s ease;
+}
+
+
+.home-guest-login {
+  border:
+    1px solid
+    #dac9b2;
+
+  background:
+    #ffffff;
+
+  color:
+    #705329;
+}
+
+
+.home-guest-register {
+  border:
+    1px solid
+    #8e6526;
+
+  background:
+    #8e6526;
+
+  color:
+    #ffffff;
+}
+
+
+.home-guest-actions a:hover {
+  transform:
+    translateY(-1px);
+}
+
+
+/* =========================================================
+   FEED TOOLBAR
+========================================================= */
+
+.home-feed-toolbar {
+  position: sticky;
+
+  top: 72px;
+
+  z-index: 20;
+
+  overflow: hidden;
+
+  margin-bottom: 15px;
+
+  border:
+    1px solid
+    #e7ddd1;
+
+  border-radius: 15px;
+
+  background:
+    rgba(
+      255,
+      253,
+      249,
+      0.94
+    );
+
+  box-shadow:
+    0 5px 17px
+    rgba(
+      66,
+      49,
+      29,
+      0.035
+    );
+
+  backdrop-filter:
+    blur(14px);
+
+  -webkit-backdrop-filter:
+    blur(14px);
+}
+
+
+.home-feed-tabs {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+}
+
+
+.home-feed-tabs button {
+  position: relative;
+
+  min-width: 0;
+
+  min-height: 52px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  padding:
+    0
+    10px;
+
+  border: none;
+
+  background:
+    transparent;
+
+  color:
+    #837a71;
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
+}
+
+
+.home-feed-tabs button:hover {
+  background:
+    rgba(
+      158,
+      113,
+      42,
+      0.035
+    );
+
+  color:
+    #785421;
+}
+
+
+.home-feed-tabs button.active {
+  color:
+    #80591e;
+}
+
+
+.home-feed-tabs button.active::after {
+  content: "";
+
+  position: absolute;
+
+  left: 26%;
+  right: 26%;
+  bottom: 0;
+
+  height: 2px;
+
+  border-radius:
+    999px;
+
+  background:
+    #9c702b;
+}
+
+
+/* =========================================================
+   WRITING FEED
+========================================================= */
+
+.home-writing-feed {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 15px;
+}
+
+
+.home-feed-post {
+  width: 100%;
+  min-width: 0;
+}
+
+
+/*
+  WritingCard might contain its own max-width.
+  Override it inside the Home feed.
+*/
+
+.home-feed-post > article,
+.home-feed-post .writing-card,
+.home-feed-post .writing-card-shell {
+  width: 100%;
+
+  max-width: none;
+
+  margin-left: 0;
+  margin-right: 0;
+}
+
+
+/* =========================================================
+   ERROR STATE
+========================================================= */
+
+.home-feed-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 18px;
+
+  margin-bottom: 15px;
+
+  padding:
+    15px
+    16px;
+
+  border:
+    1px solid
+    #eccfc6;
+
+  border-radius: 14px;
+
+  background:
+    #fff8f6;
+}
+
+
+.home-feed-error > div {
+  min-width: 0;
+}
+
+
+.home-feed-error strong {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color:
+    #874237;
+
+  font-size: 13px;
+
+  font-weight: 800;
+}
+
+
+.home-feed-error p {
+  margin: 0;
+
+  color:
+    #95675e;
+
+  font-size: 12px;
+
+  line-height: 1.45;
+
+  overflow-wrap: anywhere;
+}
+
+
+.home-feed-error button {
+  flex: 0 0 auto;
+
+  min-height: 37px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  padding:
+    0
+    13px;
+
+  border:
+    1px solid
+    #dfb8ae;
+
+  border-radius: 9px;
+
+  background:
+    #ffffff;
+
+  color:
+    #87453a;
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  font-weight: 750;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   EMPTY FEED
+========================================================= */
+
+.home-empty-feed {
+  padding:
+    55px
+    24px;
+
+  border:
+    1px solid
+    #e7ddd2;
+
+  border-radius: 18px;
+
+  background:
+    #fffdfa;
+
+  text-align: center;
+}
+
+
+.home-empty-icon {
+  width: 60px;
+  height: 60px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin:
+    0
+    auto
+    16px;
+
+  border-radius: 18px;
+
+  background:
+    #f0e4d0;
+
+  color:
+    #8c6324;
+}
+
+
+.home-empty-feed h2 {
+  max-width: 430px;
+
+  margin:
+    0
+    auto
+    8px;
+
+  color:
+    #312a24;
+
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+
+  font-size: 20px;
+
+  font-weight: 700;
+
+  line-height: 1.3;
+}
+
+
+.home-empty-feed p {
+  max-width: 455px;
+
+  margin:
+    0
+    auto
+    21px;
+
+  color:
+    #82796f;
+
+  font-size: 13px;
+
+  line-height: 1.65;
+}
+
+
+.home-empty-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 8px;
+}
+
+
+.home-empty-actions a {
+  min-height: 40px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  padding:
+    0
+    16px;
+
+  border-radius: 10px;
+
+  text-decoration: none;
+
+  font-size: 12px;
+
+  font-weight: 800;
+}
+
+
+.home-empty-primary {
+  background:
+    #8d6527;
+
+  color:
+    #ffffff;
+}
+
+
+.home-empty-secondary {
+  border:
+    1px solid
+    #dccfbd;
+
+  background:
+    #ffffff;
+
+  color:
+    #675b4d;
+}
+
+
+/* =========================================================
+   LOAD MORE
+========================================================= */
+
+.home-load-more-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding:
+    23px
+    0
+    5px;
+}
+
+
+.home-load-more {
+  min-width: 150px;
+  min-height: 43px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  padding:
+    0
+    21px;
+
+  border:
+    1px solid
+    #dbcbb4;
+
+  border-radius: 999px;
+
+  background:
+    #fffdf9;
+
+  color:
+    #745321;
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 4px 14px
+    rgba(
+      67,
+      50,
+      28,
+      0.035
+    );
+
+  transition:
+    background-color 0.17s ease,
+    border-color 0.17s ease,
+    transform 0.17s ease,
+    box-shadow 0.17s ease;
+}
+
+
+.home-load-more:hover:not(:disabled) {
+  background:
+    #fbf2e5;
+
+  border-color:
+    #ccb790;
+
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 6px 16px
+    rgba(
+      67,
+      50,
+      28,
+      0.055
+    );
+}
+
+
+.home-load-more:disabled {
+  opacity: 0.62;
+
+  cursor: default;
+}
+
+
+/* =========================================================
+   END OF FEED
+========================================================= */
+
+.home-feed-end {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 13px;
+
+  padding:
+    30px
+    0
+    6px;
+
+  color:
+    #a79d93;
+}
+
+
+.home-feed-end span {
+  width: 54px;
+  height: 1px;
+
+  background:
+    #e5ddd4;
+}
+
+
+.home-feed-end p {
+  margin: 0;
+
+  font-size: 10px;
+
+  font-weight: 800;
+
+  letter-spacing:
+    0.18em;
+}
+
+
+/* =========================================================
+   SKELETON LOADING
+========================================================= */
+
+.home-feed-skeletons {
+  display: flex;
+  flex-direction: column;
+
+  gap: 15px;
+}
+
+
+.home-feed-skeleton {
+  padding: 20px;
+
+  border:
+    1px solid
+    #eae2d9;
+
+  border-radius: 18px;
+
+  background:
+    #fffdfa;
+}
+
+
+.home-skeleton-header {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+}
+
+
+.home-skeleton-avatar {
+  width: 43px;
+  height: 43px;
+
+  flex: 0 0 auto;
+
+  border-radius: 50%;
+
+  background:
+    #eee8e0;
+}
+
+
+.home-skeleton-author {
+  width: 165px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+
+.home-skeleton-author span,
+.home-skeleton-chip,
+.home-skeleton-title span,
+.home-skeleton-content span,
+.home-skeleton-footer span {
+  display: block;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #ede7df 0%,
+      #f8f4ef 50%,
+      #ede7df 100%
+    );
+
+  background-size:
+    220% 100%;
+
+  animation:
+    homeSkeleton
+    1.35s
+    linear
+    infinite;
+}
+
+
+.home-skeleton-author span:first-child {
+  width: 122px;
+  height: 11px;
+}
+
+
+.home-skeleton-author span:last-child {
+  width: 82px;
+  height: 8px;
+}
+
+
+.home-skeleton-chip {
+  width: 80px;
+  height: 23px;
+
+  margin-top: 18px;
+}
+
+
+.home-skeleton-title {
+  display: flex;
+  flex-direction: column;
+
+  gap: 9px;
+
+  margin-top: 17px;
+}
+
+
+.home-skeleton-title span {
+  width: 73%;
+  height: 17px;
+}
+
+
+.home-skeleton-title span:last-child {
+  width: 49%;
+}
+
+
+.home-skeleton-content {
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+
+  margin-top: 18px;
+}
+
+
+.home-skeleton-content span {
+  width: 100%;
+  height: 9px;
+}
+
+
+.home-skeleton-content span:nth-child(2) {
+  width: 93%;
+}
+
+
+.home-skeleton-content span:nth-child(3) {
+  width: 68%;
+}
+
+
+.home-skeleton-footer {
+  display: flex;
+  align-items: center;
+
+  gap: 20px;
+
+  margin-top: 27px;
+
+  padding-top: 15px;
+
+  border-top:
+    1px solid
+    #eee7df;
+}
+
+
+.home-skeleton-footer span {
+  width: 53px;
+  height: 9px;
+}
+
+
+/* =========================================================
+   ANIMATIONS
+========================================================= */
+
+@keyframes homeSkeleton {
+
+  0% {
+    background-position:
+      200% 0;
+  }
+
+  100% {
+    background-position:
+      -200% 0;
+  }
+
+}
+
+
+@keyframes homeSpin {
+
+  from {
+    transform:
+      rotate(0deg);
+  }
+
+  to {
+    transform:
+      rotate(360deg);
+  }
+
+}
+
+
+.home-spin {
+  animation:
+    homeSpin
+    0.8s
+    linear
+    infinite;
+}
+
+
+/* =========================================================
+   FOCUS STATES
+========================================================= */
+
+.home-refresh-button:focus-visible,
+.home-composer-input:focus-visible,
+.home-composer-create:focus-visible,
+.home-composer-actions button:focus-visible,
+.home-feed-tabs button:focus-visible,
+.home-feed-error button:focus-visible,
+.home-load-more:focus-visible {
+  outline:
+    3px solid
+    rgba(
+      151,
+      106,
+      35,
+      0.18
+    );
+
+  outline-offset:
+    2px;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (
+  max-width: 900px
+) {
+
+  .home-social-feed {
+    max-width: 720px;
+
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+  max-width: 640px
+) {
+
+  .home-social-feed {
+    max-width: 100%;
+
+    padding:
+      15px
+      10px
+      95px;
+  }
+
+
+  /* HEADER */
+
+  .home-feed-header {
+    gap: 12px;
+
+    padding:
+      3px
+      4px
+      17px;
+  }
+
+
+  .home-feed-header h1 {
+    font-size: 27px;
+  }
+
+
+  .home-feed-header p {
+    font-size: 12px;
+
+    line-height: 1.55;
+  }
+
+
+  .home-refresh-button {
+    width: 40px;
+
+    padding: 0;
+  }
+
+
+  .home-refresh-button span {
+    display: none;
+  }
+
+
+  /* COMPOSER */
+
+  .home-composer {
+    border-radius: 15px;
+  }
+
+
+  .home-composer-main {
+    grid-template-columns:
+      40px
+      minmax(0, 1fr);
+
+    gap: 9px;
+
+    padding:
+      12px
+      12px
+      11px;
+  }
+
+
+  .home-composer-avatar {
+    width: 39px;
+    height: 39px;
+
+    font-size: 11px;
+  }
+
+
+  .home-composer-input {
+    min-height: 41px;
+
+    padding:
+      0
+      14px;
+
+    font-size: 12px;
+  }
+
+
+  .home-composer-create {
+    display: none;
+  }
+
+
+  .home-composer-actions button {
+    min-height: 48px;
+
+    flex-direction: column;
+
+    gap: 3px;
+
+    padding:
+      5px
+      4px;
+
+    font-size: 10px;
+  }
+
+
+  .home-composer-actions button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+
+  /* TOOLBAR */
+
+  .home-feed-toolbar {
+    top: 62px;
+
+    border-radius: 13px;
+  }
+
+
+  .home-feed-tabs button {
+    min-height: 49px;
+
+    gap: 5px;
+
+    font-size: 11px;
+  }
+
+
+  .home-feed-tabs button svg {
+    width: 15px;
+    height: 15px;
+  }
+
+
+  /* GUEST */
+
+  .home-guest-card {
+    grid-template-columns:
+      auto
+      minmax(0, 1fr);
+
+    padding: 14px;
+  }
+
+
+  .home-guest-actions {
+    grid-column:
+      1 / -1;
+
+    width: 100%;
+  }
+
+
+  .home-guest-actions a {
+    flex: 1;
+  }
+
+
+  /* ERROR */
+
+  .home-feed-error {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+
+  /* EMPTY */
+
+  .home-empty-feed {
+    padding:
+      43px
+      20px;
+  }
+
+
+  .home-empty-feed h2 {
+    font-size: 18px;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (
+  max-width: 430px
+) {
+
+  .home-social-feed {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+
+  .home-feed-tabs button {
+    font-size: 11px;
+  }
+
+
+  .home-feed-tabs button svg {
+    display: none;
+  }
+
+
+  .home-composer-actions button span {
+    max-width: 68px;
+
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+  }
+
+
+  .home-feed-error {
+    padding:
+      14px;
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+
+  .home-refresh-button,
+  .home-composer-input,
+  .home-composer-create,
+  .home-composer-actions button,
+  .home-feed-tabs button,
+  .home-load-more,
+  .home-guest-actions a {
+    transition: none;
+  }
+
+
+  .home-spin,
+  .home-skeleton-author span,
+  .home-skeleton-chip,
+  .home-skeleton-title span,
+  .home-skeleton-content span,
+  .home-skeleton-footer span {
+    animation: none;
+  }
+
+}

@@ -1,14 +1,6 @@
 /* =========================================================
    SHOBDO
-   PROFESSIONAL SOCIAL NAVBAR
-
-   Desktop
-   Tablet
-   Mobile
-   430px
-   390px
-   360px
-   320px
+   PROFESSIONAL SOCIAL MEDIA NAVBAR
 ========================================================= */
 
 
@@ -17,161 +9,104 @@
 ========================================================= */
 
 .shobdo-navbar {
-  --navbar-brand:
-    #642b8f;
+  position: sticky;
 
-  --navbar-brand-dark:
-    #542278;
+  top: 0;
 
-  --navbar-brand-soft:
-    #f2eaf7;
+  z-index: 1100;
 
-  --navbar-border:
-    rgba(
-      35,
-      25,
-      42,
-      0.08
-    );
-
-  --navbar-text:
-    #211c24;
-
-  --navbar-text-secondary:
-    #5c5560;
-
-  --navbar-muted:
-    #918a94;
-
-  --navbar-ease:
-    cubic-bezier(
-      0.22,
-      1,
-      0.36,
-      1
-    );
-
-  position:
-    sticky;
-
-  top:
-    0;
-
-  z-index:
-    1200;
-
-  width:
-    100%;
-
-  min-width:
-    0;
+  width: 100%;
 
   border-bottom:
     1px solid
-    var(
-      --navbar-border
+    rgba(
+      87,
+      62,
+      31,
+      0.07
     );
 
   background:
     rgba(
       255,
-      255,
-      255,
-      0.94
+      253,
+      249,
+      0.92
     );
 
   backdrop-filter:
     blur(18px)
-    saturate(1.18);
+    saturate(1.15);
 
   -webkit-backdrop-filter:
     blur(18px)
-    saturate(1.18);
+    saturate(1.15);
 
   transition:
-    background-color 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease;
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 
 .shobdo-navbar-scrolled {
   border-bottom-color:
     rgba(
-      35,
-      25,
-      42,
-      0.095
+      84,
+      60,
+      31,
+      0.11
     );
 
   background:
     rgba(
       255,
-      255,
-      255,
-      0.975
+      253,
+      249,
+      0.97
     );
 
   box-shadow:
     0
-    7px
-    28px
+    6px
+    24px
     rgba(
-      29,
-      20,
-      34,
-      0.055
+      56,
+      41,
+      25,
+      0.045
     );
 }
 
 
 /* =========================================================
-   BOX SIZING
-========================================================= */
-
-.shobdo-navbar *,
-.shobdo-navbar *::before,
-.shobdo-navbar *::after {
-  box-sizing:
-    border-box;
-}
-
-
-/* =========================================================
-   NAVBAR INNER
+   INNER
 ========================================================= */
 
 .shobdo-navbar-inner {
   width:
     min(
       100%,
-      1480px
+      1500px
     );
 
-  min-width:
-    0;
-
   min-height:
-    72px;
+    70px;
 
   margin:
     0 auto;
-
-  padding:
-    0
-    28px;
 
   display:
     grid;
 
   grid-template-columns:
-    auto
+    230px
     minmax(
       280px,
-      620px
+      640px
     )
     minmax(
-      0,
+      max-content,
       1fr
     );
 
@@ -179,7 +114,14 @@
     center;
 
   gap:
-    32px;
+    26px;
+
+  padding:
+    9px
+    28px;
+
+  box-sizing:
+    border-box;
 }
 
 
@@ -188,43 +130,31 @@
 ========================================================= */
 
 .shobdo-navbar-brand {
-  min-width:
-    0;
+  min-width: 0;
 
-  display:
-    inline-flex;
+  display: inline-flex;
+  align-items: center;
 
-  align-items:
-    center;
-
-  gap:
-    10px;
+  gap: 10px;
 
   color:
-    var(
-      --navbar-brand
-    );
+    inherit;
 
   text-decoration:
     none;
-
-  white-space:
-    nowrap;
-
-  -webkit-tap-highlight-color:
-    transparent;
 }
 
 
 .shobdo-navbar-logo {
   width:
-    36px;
+    39px;
 
   height:
-    36px;
+    39px;
 
   flex:
-    0 0 36px;
+    0 0
+    39px;
 
   display:
     grid;
@@ -232,42 +162,105 @@
   place-items:
     center;
 
-  overflow:
-    hidden;
+  border:
+    1px solid
+    #29231e;
 
   border-radius:
-    11px;
+    12px;
 
   background:
     linear-gradient(
-      135deg,
-      #642b8f,
-      #8e55b7
+      145deg,
+      #36302a,
+      #171411
     );
 
   color:
-    #ffffff;
+    #f3dfbd;
 
   box-shadow:
     0
     5px
-    16px
+    14px
     rgba(
-      100,
-      43,
-      143,
-      0.16
+      44,
+      31,
+      19,
+      0.13
     );
 
   transition:
-    transform 220ms var(--navbar-ease),
-    box-shadow 220ms ease;
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+
+.shobdo-navbar-brand:hover
+.shobdo-navbar-logo {
+  transform:
+    rotate(-4deg)
+    translateY(-1px);
+
+  box-shadow:
+    0
+    7px
+    17px
+    rgba(
+      44,
+      31,
+      19,
+      0.16
+    );
+}
+
+
+.shobdo-navbar-brand-copy {
+  min-width: 0;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    1px;
 }
 
 
 .shobdo-navbar-brand-name {
+  color:
+    #29231e;
+
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+
   font-size:
     19px;
+
+  font-weight:
+    700;
+
+  line-height:
+    1.05;
+
+  letter-spacing:
+    0.08em;
+}
+
+
+.shobdo-navbar-tagline {
+  margin-top:
+    3px;
+
+  color:
+    #9a7a4b;
+
+  font-size:
+    7.5px;
 
   font-weight:
     800;
@@ -276,39 +269,18 @@
     1;
 
   letter-spacing:
-    0.08em;
-}
+    0.13em;
 
+  white-space:
+    nowrap;
 
-@media (
-  hover: hover
-) and (
-  pointer: fine
-) {
-
-  .shobdo-navbar-brand:hover
-  .shobdo-navbar-logo {
-    transform:
-      translateY(-1px)
-      rotate(-2deg);
-
-    box-shadow:
-      0
-      8px
-      20px
-      rgba(
-        100,
-        43,
-        143,
-        0.2
-      );
-  }
-
+  text-transform:
+    uppercase;
 }
 
 
 /* =========================================================
-   DESKTOP SEARCH
+   SEARCH
 ========================================================= */
 
 .shobdo-navbar-search {
@@ -322,7 +294,7 @@
     0;
 
   height:
-    44px;
+    43px;
 
   display:
     flex;
@@ -332,62 +304,52 @@
 
   border:
     1px solid
-    #e7e2e9;
+    #e4d9cc;
 
   border-radius:
-    14px;
+    999px;
 
   background:
-    #f7f5f8;
+    #faf7f2;
 
   transition:
-    border-color 160ms ease,
-    background-color 160ms ease,
-    box-shadow 160ms ease;
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 
 .shobdo-navbar-search:focus-within {
   border-color:
-    rgba(
-      100,
-      43,
-      143,
-      0.42
-    );
+    #cbae82;
 
   background:
-    #ffffff;
+    #fffefa;
 
   box-shadow:
     0
     0
     0
-    4px
+    3px
     rgba(
-      100,
-      43,
-      143,
+      145,
+      102,
+      38,
       0.07
     );
 }
 
 
 .shobdo-navbar-search-icon {
-  position:
-    absolute;
-
-  left:
-    14px;
-
   flex:
-    0 0 auto;
+    0 0
+    auto;
+
+  margin-left:
+    15px;
 
   color:
-    #77717c;
-
-  pointer-events:
-    none;
+    #9a9087;
 }
 
 
@@ -403,47 +365,36 @@
 
   padding:
     0
-    42px
+    38px
     0
-    43px;
+    10px;
 
   border:
-    0;
+    none;
 
   outline:
-    0;
-
-  border-radius:
-    inherit;
+    none;
 
   background:
     transparent;
 
   color:
-    var(
-      --navbar-text
-    );
+    #39312a;
 
-  font:
+  font-family:
     inherit;
 
   font-size:
-    14px;
+    12px;
 
-  line-height:
-    1;
+  font-weight:
+    500;
 }
 
 
 .shobdo-navbar-search input::placeholder {
-  overflow:
-    hidden;
-
   color:
-    #99939d;
-
-  text-overflow:
-    ellipsis;
+    #9f968e;
 }
 
 
@@ -454,7 +405,7 @@
 
 
 /* =========================================================
-   SEARCH CLEAR
+   CLEAR SEARCH
 ========================================================= */
 
 .shobdo-search-clear {
@@ -462,13 +413,13 @@
     absolute;
 
   right:
-    9px;
+    7px;
 
   width:
-    28px;
+    29px;
 
   height:
-    28px;
+    29px;
 
   display:
     grid;
@@ -476,94 +427,35 @@
   place-items:
     center;
 
-  padding:
-    0;
+  padding: 0;
 
   border:
-    0;
+    none;
 
   border-radius:
-    8px;
+    50%;
 
   background:
     transparent;
 
   color:
-    #918b94;
+    #8b8178;
 
   cursor:
     pointer;
 
-  -webkit-tap-highlight-color:
-    transparent;
-
   transition:
-    background-color 150ms ease,
-    color 150ms ease,
-    transform 150ms ease;
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 
-@media (
-  hover: hover
-) {
+.shobdo-search-clear:hover {
+  background:
+    #eee5da;
 
-  .shobdo-search-clear:hover {
-    background:
-      #ece8ee;
-
-    color:
-      #4e4851;
-  }
-
-}
-
-
-.shobdo-search-clear:active {
-  transform:
-    scale(0.92);
-}
-
-
-/* =========================================================
-   SCREEN READER ONLY
-========================================================= */
-
-.shobdo-sr-only {
-  position:
-    absolute !important;
-
-  width:
-    1px !important;
-
-  height:
-    1px !important;
-
-  padding:
-    0 !important;
-
-  margin:
-    -1px !important;
-
-  overflow:
-    hidden !important;
-
-  clip:
-    rect(
-      0,
-      0,
-      0,
-      0
-    ) !important;
-
-  clip-path:
-    inset(50%) !important;
-
-  white-space:
-    nowrap !important;
-
-  border:
-    0 !important;
+  color:
+    #6f4e1d;
 }
 
 
@@ -585,12 +477,12 @@
     flex-end;
 
   gap:
-    8px;
+    7px;
 }
 
 
 /* =========================================================
-   COMMON ICON BUTTON
+   GENERIC ICON BUTTON
 ========================================================= */
 
 .shobdo-navbar-icon-button {
@@ -598,22 +490,20 @@
     relative;
 
   width:
-    42px;
+    40px;
 
   height:
-    42px;
+    40px;
 
   flex:
-    0 0 42px;
+    0 0
+    40px;
 
   display:
     grid;
 
   place-items:
     center;
-
-  padding:
-    0;
 
   border:
     1px solid
@@ -626,7 +516,7 @@
     transparent;
 
   color:
-    #514a55;
+    #665d54;
 
   text-decoration:
     none;
@@ -634,67 +524,41 @@
   cursor:
     pointer;
 
-  -webkit-tap-highlight-color:
-    transparent;
-
   transition:
-    background-color 150ms ease,
-    border-color 150ms ease,
-    color 150ms ease,
-    transform 150ms ease;
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
 }
 
 
-@media (
-  hover: hover
-) and (
-  pointer: fine
-) {
+.shobdo-navbar-icon-button:hover {
+  border-color:
+    #e7d9c8;
 
-  .shobdo-navbar-icon-button:hover {
-    background:
-      #f4eff7;
+  background:
+    #f8f1e7;
 
-    color:
-      var(
-        --navbar-brand
-      );
-  }
-
-}
-
-
-.shobdo-navbar-icon-button:active {
-  transform:
-    scale(0.94);
+  color:
+    #80591f;
 }
 
 
 .shobdo-navbar-icon-button.active {
   border-color:
-    #ded4e5;
+    #dbc6aa;
 
   background:
-    var(
-      --navbar-brand-soft
-    );
+    #f3e6d2;
 
   color:
-    var(
-      --navbar-brand
-    );
+    #80591f;
 }
 
 
 /* =========================================================
-   NOTIFICATIONS
+   NOTIFICATION BADGE
 ========================================================= */
-
-.shobdo-notification-button {
-  overflow:
-    visible;
-}
-
 
 .shobdo-navbar-notification-badge {
   position:
@@ -704,7 +568,7 @@
     1px;
 
   right:
-    -1px;
+    0;
 
   min-width:
     18px;
@@ -727,24 +591,22 @@
 
   border:
     2px solid
-    #ffffff;
+    #fffdfa;
 
   border-radius:
     999px;
 
   background:
-    var(
-      --navbar-brand
-    );
+    #a05438;
 
   color:
     #ffffff;
 
   font-size:
-    8px;
+    7px;
 
   font-weight:
-    800;
+    900;
 
   line-height:
     1;
@@ -758,74 +620,154 @@
 .shobdo-navbar-dropdown {
   position:
     relative;
-
-  min-width:
-    0;
-}
-
-
-.shobdo-dropdown-divider {
-  width:
-    100%;
-
-  height:
-    1px;
-
-  margin:
-    7px
-    0;
-
-  background:
-    #eee9f0;
-}
-
-
-.shobdo-dropdown-heading {
-  display:
-    flex;
-
-  align-items:
-    center;
-
-  gap:
-    8px;
-
-  padding:
-    4px
-    8px
-    12px;
-
-  color:
-    #5a535e;
-
-  font-size:
-    12px;
-
-  font-weight:
-    700;
-
-  line-height:
-    1.3;
 }
 
 
 /* =========================================================
-   DROPDOWN ANIMATION
+   LANGUAGE BUTTON
 ========================================================= */
+
+.shobdo-language-button {
+  min-height:
+    40px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    7px;
+
+  padding:
+    0
+    11px;
+
+  border:
+    1px solid
+    transparent;
+
+  border-radius:
+    12px;
+
+  background:
+    transparent;
+
+  color:
+    #655c53;
+
+  font-family:
+    inherit;
+
+  font-size:
+    10.5px;
+
+  font-weight:
+    700;
+
+  cursor:
+    pointer;
+
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+
+.shobdo-language-button:hover,
+.shobdo-language-button.active {
+  border-color:
+    #e7d9c8;
+
+  background:
+    #f8f1e7;
+
+  color:
+    #80591f;
+}
+
+
+.shobdo-language-button
+.rotate,
+.shobdo-profile-trigger
+.rotate {
+  transform:
+    rotate(180deg);
+}
+
+
+.shobdo-language-button
+svg:last-child,
+.shobdo-profile-trigger
+svg:last-child {
+  transition:
+    transform 0.18s ease;
+}
+
+
+/* =========================================================
+   COMMON DROPDOWN
+========================================================= */
+
+.shobdo-language-dropdown,
+.shobdo-profile-dropdown {
+  position:
+    absolute;
+
+  top:
+    calc(
+      100% + 10px
+    );
+
+  right:
+    0;
+
+  z-index:
+    1200;
+
+  overflow:
+    hidden;
+
+  border:
+    1px solid
+    #e4d7c7;
+
+  border-radius:
+    16px;
+
+  background:
+    #fffefa;
+
+  box-shadow:
+    0
+    18px
+    48px
+    rgba(
+      53,
+      38,
+      22,
+      0.14
+    );
+}
+
 
 .shobdo-dropdown-animate {
   transform-origin:
     top right;
 
   animation:
-    shobdoDropdownEnter
-    180ms
-    var(--navbar-ease)
-    both;
+    shobdoDropdownIn
+    0.16s
+    ease-out;
 }
 
 
-@keyframes shobdoDropdownEnter {
+@keyframes shobdoDropdownIn {
 
   from {
     opacity:
@@ -833,9 +775,8 @@
 
     transform:
       translateY(-5px)
-      scale(0.985);
+      scale(0.98);
   }
-
 
   to {
     opacity:
@@ -850,16 +791,19 @@
 
 
 /* =========================================================
-   LANGUAGE BUTTON
+   LANGUAGE DROPDOWN
 ========================================================= */
 
-.shobdo-language-button {
-  height:
-    42px;
+.shobdo-language-dropdown {
+  width:
+    245px;
 
-  min-width:
-    0;
+  padding:
+    7px;
+}
 
+
+.shobdo-dropdown-heading {
   display:
     flex;
 
@@ -867,183 +811,34 @@
     center;
 
   gap:
-    7px;
+    8px;
 
   padding:
-    0
-    12px;
-
-  border:
-    1px solid
-    #e5dfe8;
-
-  border-radius:
-    13px;
-
-  background:
-    #ffffff;
+    10px
+    10px
+    11px;
 
   color:
-    #55505a;
-
-  cursor:
-    pointer;
-
-  font:
-    inherit;
+    #75695d;
 
   font-size:
-    12px;
-
-  font-weight:
-    600;
-
-  white-space:
-    nowrap;
-
-  -webkit-tap-highlight-color:
-    transparent;
-
-  transition:
-    background-color 150ms ease,
-    color 150ms ease,
-    border-color 150ms ease,
-    transform 150ms ease;
-}
-
-
-@media (
-  hover: hover
-) {
-
-  .shobdo-language-button:hover {
-    border-color:
-      #d7c9df;
-
-    background:
-      #f7f2fa;
-
-    color:
-      var(
-        --navbar-brand
-      );
-  }
-
-}
-
-
-.shobdo-language-button.active {
-  border-color:
-    #d7c9df;
-
-  background:
-    #f7f2fa;
-
-  color:
-    var(
-      --navbar-brand
-    );
-}
-
-
-.shobdo-language-button:active {
-  transform:
-    scale(0.97);
-}
-
-
-.shobdo-language-button .rotate,
-.shobdo-profile-trigger .rotate {
-  transform:
-    rotate(180deg);
-}
-
-
-.shobdo-language-button svg,
-.shobdo-profile-trigger > svg {
-  flex:
-    0 0 auto;
-
-  transition:
-    transform 180ms
-    var(--navbar-ease);
-}
-
-
-.shobdo-language-name {
-  max-width:
-    95px;
-
-  overflow:
-    hidden;
-
-  text-overflow:
-    ellipsis;
-
-  white-space:
-    nowrap;
-}
-
-
-/* =========================================================
-   LANGUAGE DROPDOWN
-========================================================= */
-
-.shobdo-language-dropdown {
-  position:
-    absolute;
-
-  top:
-    calc(
-      100% + 10px
-    );
-
-  right:
-    0;
-
-  z-index:
-    30;
-
-  width:
-    245px;
-
-  max-height:
-    min(
-      430px,
-      calc(
-        100vh - 100px
-      )
-    );
-
-  overflow-y:
-    auto;
-
-  padding:
     10px;
 
-  border:
+  font-weight:
+    800;
+
+  letter-spacing:
+    0.04em;
+
+  border-bottom:
     1px solid
-    #e6e0e9;
+    #eee6dd;
+}
 
-  border-radius:
-    16px;
 
-  background:
-    #ffffff;
-
-  box-shadow:
-    0
-    18px
-    50px
-    rgba(
-      31,
-      23,
-      36,
-      0.12
-    );
-
-  scrollbar-width:
-    thin;
+.shobdo-dropdown-heading svg {
+  color:
+    #98713a;
 }
 
 
@@ -1055,7 +850,10 @@
     column;
 
   gap:
-    3px;
+    2px;
+
+  padding-top:
+    5px;
 }
 
 
@@ -1080,16 +878,19 @@
     9px;
 
   border:
-    0;
+    none;
 
   border-radius:
-    11px;
+    10px;
 
   background:
     transparent;
 
   color:
-    #4e4851;
+    #4d453e;
+
+  font-family:
+    inherit;
 
   text-align:
     left;
@@ -1097,58 +898,65 @@
   cursor:
     pointer;
 
-  font:
-    inherit;
-
-  -webkit-tap-highlight-color:
-    transparent;
-
   transition:
-    background-color 150ms ease,
-    color 150ms ease;
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 
-@media (
-  hover: hover
-) {
+.shobdo-language-option:hover {
+  background:
+    #faf3e8;
 
-  .shobdo-language-option:hover {
-    background:
-      #f6f2f8;
-  }
-
+  color:
+    #754f19;
 }
 
 
 .shobdo-language-option.selected {
   background:
-    var(
-      --navbar-brand-soft
-    );
+    #f2e5d2;
 
   color:
-    var(
-      --navbar-brand
-    );
+    #754f19;
 }
 
 
 .shobdo-language-check {
   width:
-    18px;
+    26px;
 
   height:
-    18px;
+    26px;
 
   flex:
-    0 0 18px;
+    0 0
+    26px;
 
   display:
     grid;
 
   place-items:
     center;
+
+  border-radius:
+    8px;
+
+  background:
+    #f5eee5;
+
+  color:
+    #8b6124;
+}
+
+
+.shobdo-language-option.selected
+.shobdo-language-check {
+  background:
+    #8c6428;
+
+  color:
+    #ffffff;
 }
 
 
@@ -1163,40 +971,25 @@
     column;
 
   gap:
-    1px;
+    2px;
 }
 
 
 .shobdo-language-option-text strong {
-  overflow:
-    hidden;
-
   font-size:
-    13px;
+    11px;
 
-  text-overflow:
-    ellipsis;
-
-  white-space:
-    nowrap;
+  font-weight:
+    750;
 }
 
 
 .shobdo-language-option-text small {
-  overflow:
-    hidden;
-
   color:
-    #9a949d;
+    #9b9188;
 
   font-size:
-    10px;
-
-  text-overflow:
-    ellipsis;
-
-  white-space:
-    nowrap;
+    9px;
 }
 
 
@@ -1204,21 +997,15 @@
    PROFILE TRIGGER
 ========================================================= */
 
-.shobdo-profile-wrapper {
-  min-width:
-    0;
-}
-
-
 .shobdo-profile-trigger {
-  max-width:
-    215px;
-
-  height:
-    44px;
-
   min-width:
     0;
+
+  max-width:
+    205px;
+
+  min-height:
+    43px;
 
   display:
     flex;
@@ -1227,75 +1014,51 @@
     center;
 
   gap:
-    9px;
+    8px;
 
   padding:
-    3px
+    4px
     8px
-    3px
-    4px;
+    4px
+    5px;
 
   border:
     1px solid
     transparent;
 
   border-radius:
-    14px;
+    13px;
 
   background:
     transparent;
 
   color:
-    #373139;
+    #554d45;
+
+  font-family:
+    inherit;
 
   cursor:
     pointer;
 
-  font:
-    inherit;
-
-  -webkit-tap-highlight-color:
-    transparent;
-
   transition:
-    background-color 150ms ease,
-    border-color 150ms ease,
-    transform 150ms ease;
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 
-@media (
-  hover: hover
-) {
-
-  .shobdo-profile-trigger:hover {
-    border-color:
-      #e5dee8;
-
-    background:
-      #f6f2f8;
-  }
-
-}
-
-
+.shobdo-profile-trigger:hover,
 .shobdo-profile-trigger.active {
   border-color:
-    #e5dee8;
+    #e5d8c9;
 
   background:
-    #f6f2f8;
-}
-
-
-.shobdo-profile-trigger:active {
-  transform:
-    scale(0.98);
+    #faf3e9;
 }
 
 
 /* =========================================================
-   PROFILE AVATARS
+   PROFILE AVATAR
 ========================================================= */
 
 .shobdo-profile-avatar,
@@ -1309,21 +1072,22 @@
   place-items:
     center;
 
-  flex:
-    0 0 auto;
-
   border-radius:
     50%;
 
   background:
     linear-gradient(
-      135deg,
-      #642b8f,
-      #8e55b7
+      145deg,
+      #3b332c,
+      #181512
     );
 
   color:
     #ffffff;
+
+  font-family:
+    Georgia,
+    serif;
 
   font-weight:
     700;
@@ -1332,13 +1096,17 @@
 
 .shobdo-profile-avatar {
   width:
-    36px;
+    34px;
 
   height:
-    36px;
+    34px;
+
+  flex:
+    0 0
+    34px;
 
   font-size:
-    11px;
+    9px;
 }
 
 
@@ -1349,8 +1117,12 @@
   height:
     45px;
 
+  flex:
+    0 0
+    45px;
+
   font-size:
-    12px;
+    11px;
 }
 
 
@@ -1367,9 +1139,6 @@
 
   object-fit:
     cover;
-
-  object-position:
-    center;
 }
 
 
@@ -1378,9 +1147,6 @@
 ========================================================= */
 
 .shobdo-profile-trigger-text {
-  max-width:
-    135px;
-
   min-width:
     0;
 
@@ -1389,6 +1155,9 @@
 
   flex-direction:
     column;
+
+  align-items:
+    flex-start;
 
   gap:
     1px;
@@ -1399,17 +1168,20 @@
 
 
 .shobdo-profile-trigger-text strong {
+  max-width:
+    115px;
+
   overflow:
     hidden;
 
   color:
-    #2e2831;
+    #3a332c;
 
   font-size:
-    12px;
+    10.5px;
 
-  line-height:
-    1.25;
+  font-weight:
+    800;
 
   text-overflow:
     ellipsis;
@@ -1420,17 +1192,17 @@
 
 
 .shobdo-profile-trigger-text small {
+  max-width:
+    115px;
+
   overflow:
     hidden;
 
   color:
-    #99929c;
+    #9a9087;
 
   font-size:
-    9px;
-
-  line-height:
-    1.25;
+    8.5px;
 
   text-overflow:
     ellipsis;
@@ -1445,71 +1217,15 @@
 ========================================================= */
 
 .shobdo-profile-dropdown {
-  position:
-    absolute;
-
-  top:
-    calc(
-      100% + 10px
-    );
-
-  right:
-    0;
-
-  z-index:
-    30;
-
   width:
-    275px;
-
-  max-height:
-    min(
-      540px,
-      calc(
-        100vh - 100px
-      )
-    );
-
-  overflow-y:
-    auto;
+    260px;
 
   padding:
-    10px;
-
-  border:
-    1px solid
-    #e6e0e9;
-
-  border-radius:
-    17px;
-
-  background:
-    #ffffff;
-
-  box-shadow:
-    0
-    20px
-    55px
-    rgba(
-      31,
-      23,
-      36,
-      0.13
-    );
-
-  scrollbar-width:
-    thin;
+    7px;
 }
 
 
-/* =========================================================
-   PROFILE DROPDOWN HEADER
-========================================================= */
-
 .shobdo-profile-dropdown-user {
-  min-width:
-    0;
-
   display:
     flex;
 
@@ -1517,13 +1233,13 @@
     center;
 
   gap:
-    11px;
+    10px;
 
   padding:
-    8px;
+    10px;
 
   border-radius:
-    12px;
+    11px;
 
   color:
     inherit;
@@ -1532,28 +1248,19 @@
     none;
 
   transition:
-    background-color 150ms ease;
+    background-color 0.15s ease;
 }
 
 
-@media (
-  hover: hover
-) {
-
-  .shobdo-profile-dropdown-user:hover {
-    background:
-      #f7f4f8;
-  }
-
+.shobdo-profile-dropdown-user:hover {
+  background:
+    #faf3e9;
 }
 
 
 .shobdo-profile-dropdown-user-text {
   min-width:
     0;
-
-  flex:
-    1;
 
   display:
     flex;
@@ -1567,17 +1274,20 @@
 
 
 .shobdo-profile-dropdown-user-text strong {
+  max-width:
+    160px;
+
   overflow:
     hidden;
 
   color:
-    #272229;
+    #352e28;
 
   font-size:
-    13px;
+    12px;
 
-  line-height:
-    1.3;
+  font-weight:
+    800;
 
   text-overflow:
     ellipsis;
@@ -1588,23 +1298,40 @@
 
 
 .shobdo-profile-dropdown-user-text small {
+  max-width:
+    160px;
+
   overflow:
     hidden;
 
   color:
-    #938d96;
+    #948a80;
 
   font-size:
-    10px;
-
-  line-height:
-    1.3;
+    9.5px;
 
   text-overflow:
     ellipsis;
 
   white-space:
     nowrap;
+}
+
+
+/* =========================================================
+   DIVIDER
+========================================================= */
+
+.shobdo-dropdown-divider {
+  height:
+    1px;
+
+  margin:
+    6px
+    4px;
+
+  background:
+    #eee5da;
 }
 
 
@@ -1626,97 +1353,86 @@
     center;
 
   gap:
-    11px;
+    10px;
 
   padding:
     0
     10px;
 
   border:
-    0;
+    none;
 
   border-radius:
-    10px;
+    9px;
 
   background:
     transparent;
 
   color:
-    #514b54;
+    #5d544b;
 
-  text-decoration:
-    none;
+  font-family:
+    inherit;
+
+  font-size:
+    10.5px;
+
+  font-weight:
+    700;
 
   text-align:
     left;
 
+  text-decoration:
+    none;
+
   cursor:
     pointer;
 
-  font:
-    inherit;
-
-  font-size:
-    12px;
-
-  font-weight:
-    600;
-
-  -webkit-tap-highlight-color:
-    transparent;
-
   transition:
-    background-color 150ms ease,
-    color 150ms ease;
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 
 .shobdo-profile-menu-item svg {
-  flex:
-    0 0 auto;
+  color:
+    #907040;
 }
 
 
-@media (
-  hover: hover
-) {
+.shobdo-profile-menu-item:hover {
+  background:
+    #faf3e9;
 
-  .shobdo-profile-menu-item:hover {
-    background:
-      #f5f1f7;
-
-    color:
-      var(
-        --navbar-brand
-      );
-  }
-
+  color:
+    #744f1b;
 }
 
 
 .shobdo-logout-item {
   color:
-    #b23b4a;
+    #96524a;
 }
 
 
-@media (
-  hover: hover
-) {
+.shobdo-logout-item svg {
+  color:
+    #a65d54;
+}
 
-  .shobdo-logout-item:hover {
-    background:
-      #fff1f2;
 
-    color:
-      #a82f3e;
-  }
+.shobdo-logout-item:hover {
+  background:
+    #fff0ee;
 
+  color:
+    #914a42;
 }
 
 
 /* =========================================================
-   GUEST AUTH
+   GUEST BUTTONS
 ========================================================= */
 
 .shobdo-guest-actions {
@@ -1734,7 +1450,7 @@
 .shobdo-login-button,
 .shobdo-register-button {
   min-height:
-    42px;
+    39px;
 
   display:
     inline-flex;
@@ -1746,64 +1462,56 @@
     center;
 
   gap:
-    7px;
+    6px;
 
   padding:
     0
-    14px;
+    13px;
 
   border-radius:
-    13px;
+    11px;
+
+  font-size:
+    10.5px;
+
+  font-weight:
+    800;
 
   text-decoration:
     none;
 
-  font-size:
-    12px;
-
-  font-weight:
-    700;
-
-  white-space:
-    nowrap;
-
-  -webkit-tap-highlight-color:
-    transparent;
-
   transition:
-    background-color 160ms ease,
-    border-color 160ms ease,
-    color 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 
 .shobdo-login-button {
   border:
     1px solid
-    #ded4e5;
+    #ddcbb4;
 
   background:
-    #ffffff;
+    #fffdfa;
 
   color:
-    var(
-      --navbar-brand
-    );
+    #715424;
 }
 
 
 .shobdo-register-button {
   border:
     1px solid
-    var(
-      --navbar-brand
-    );
+    #8d6326;
 
   background:
-    var(
-      --navbar-brand
+    linear-gradient(
+      135deg,
+      #8d6326,
+      #a97d3b
     );
 
   color:
@@ -1811,68 +1519,46 @@
 
   box-shadow:
     0
-    6px
-    16px
+    5px
+    14px
     rgba(
-      100,
-      43,
-      143,
+      130,
+      88,
+      27,
       0.15
     );
 }
 
 
-@media (
-  hover: hover
-) {
-
-  .shobdo-login-button:hover {
-    border-color:
-      #cdbad9;
-
-    background:
-      #f7f2fa;
-  }
-
-
-  .shobdo-register-button:hover {
-    background:
-      var(
-        --navbar-brand-dark
-      );
-
-    border-color:
-      var(
-        --navbar-brand-dark
-      );
-
-    box-shadow:
-      0
-      9px
-      20px
-      rgba(
-        100,
-        43,
-        143,
-        0.2
-      );
-
-    transform:
-      translateY(-1px);
-  }
-
+.shobdo-login-button:hover,
+.shobdo-register-button:hover {
+  transform:
+    translateY(-1px);
 }
 
 
-.shobdo-login-button:active,
-.shobdo-register-button:active {
-  transform:
-    scale(0.97);
+.shobdo-login-button:hover {
+  background:
+    #faf2e7;
+}
+
+
+.shobdo-register-button:hover {
+  box-shadow:
+    0
+    7px
+    17px
+    rgba(
+      130,
+      88,
+      27,
+      0.2
+    );
 }
 
 
 /* =========================================================
-   MOBILE SEARCH TRIGGER
+   MOBILE SEARCH BUTTON DEFAULT
 ========================================================= */
 
 .shobdo-mobile-search-trigger {
@@ -1882,38 +1568,291 @@
 
 
 /* =========================================================
-   MOBILE SEARCH DEFAULT
+   MOBILE SEARCH OVERLAY
 ========================================================= */
 
 .shobdo-mobile-search-panel {
+  position:
+    fixed;
+
+  inset:
+    0;
+
+  z-index:
+    1500;
+
   display:
+    flex;
+
+  align-items:
+    flex-start;
+
+  justify-content:
+    center;
+
+  padding:
+    75px
+    14px
+    20px;
+
+  background:
+    rgba(
+      30,
+      24,
+      20,
+      0.32
+    );
+
+  backdrop-filter:
+    blur(7px);
+
+  -webkit-backdrop-filter:
+    blur(7px);
+
+  animation:
+    shobdoSearchOverlayIn
+    0.16s
+    ease-out;
+}
+
+
+@keyframes shobdoSearchOverlayIn {
+
+  from {
+    opacity:
+      0;
+  }
+
+  to {
+    opacity:
+      1;
+  }
+
+}
+
+
+.shobdo-mobile-search-shell {
+  width:
+    min(
+      100%,
+      560px
+    );
+
+  padding:
+    12px;
+
+  border:
+    1px solid
+    #e2d4c3;
+
+  border-radius:
+    17px;
+
+  background:
+    #fffdfa;
+
+  box-shadow:
+    0
+    22px
+    58px
+    rgba(
+      42,
+      31,
+      19,
+      0.18
+    );
+}
+
+
+.shobdo-mobile-search-form {
+  width:
+    100%;
+
+  min-height:
+    47px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    9px;
+
+  padding:
+    0
+    7px
+    0
+    13px;
+
+  border:
+    1px solid
+    #ddcebc;
+
+  border-radius:
+    13px;
+
+  background:
+    #faf7f2;
+}
+
+
+.shobdo-mobile-search-form > svg {
+  flex:
+    0 0
+    auto;
+
+  color:
+    #907f6a;
+}
+
+
+.shobdo-mobile-search-form input {
+  min-width:
+    0;
+
+  flex:
+    1;
+
+  height:
+    43px;
+
+  border:
     none;
+
+  outline:
+    none;
+
+  background:
+    transparent;
+
+  color:
+    #342d27;
+
+  font-family:
+    inherit;
+
+  font-size:
+    12px;
+}
+
+
+.shobdo-mobile-search-clear,
+.shobdo-mobile-search-close {
+  width:
+    34px;
+
+  height:
+    34px;
+
+  flex:
+    0 0
+    34px;
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  border:
+    none;
+
+  border-radius:
+    9px;
+
+  background:
+    transparent;
+
+  color:
+    #756a60;
+
+  cursor:
+    pointer;
+}
+
+
+.shobdo-mobile-search-clear:hover,
+.shobdo-mobile-search-close:hover {
+  background:
+    #eee5da;
+
+  color:
+    #6d4d1c;
+}
+
+
+.shobdo-mobile-search-hint {
+  margin:
+    9px
+    4px
+    0;
+
+  color:
+    #958b82;
+
+  font-size:
+    9.5px;
+
+  line-height:
+    1.5;
 }
 
 
 /* =========================================================
-   ACCESSIBILITY
+   SCREEN READER
 ========================================================= */
 
-.shobdo-navbar-brand:focus-visible,
-.shobdo-navbar-icon-button:focus-visible,
-.shobdo-search-clear:focus-visible,
-.shobdo-language-button:focus-visible,
-.shobdo-language-option:focus-visible,
-.shobdo-profile-trigger:focus-visible,
-.shobdo-profile-dropdown-user:focus-visible,
-.shobdo-profile-menu-item:focus-visible,
-.shobdo-login-button:focus-visible,
-.shobdo-register-button:focus-visible,
-.shobdo-mobile-search-clear:focus-visible,
-.shobdo-mobile-search-close:focus-visible {
+.shobdo-sr-only {
+  position:
+    absolute;
+
+  width:
+    1px;
+
+  height:
+    1px;
+
+  padding:
+    0;
+
+  margin:
+    -1px;
+
+  overflow:
+    hidden;
+
+  clip:
+    rect(
+      0,
+      0,
+      0,
+      0
+    );
+
+  white-space:
+    nowrap;
+
+  border:
+    0;
+}
+
+
+/* =========================================================
+   FOCUS
+========================================================= */
+
+.shobdo-navbar a:focus-visible,
+.shobdo-navbar button:focus-visible,
+.shobdo-navbar input:focus-visible {
   outline:
     3px solid
     rgba(
+      142,
       100,
-      43,
-      143,
-      0.2
+      38,
+      0.17
     );
 
   outline-offset:
@@ -1922,34 +1861,7 @@
 
 
 /* =========================================================
-   LARGE DESKTOP
-========================================================= */
-
-@media (
-  min-width: 1480px
-) {
-
-  .shobdo-navbar-inner {
-    grid-template-columns:
-      238px
-      minmax(
-        320px,
-        620px
-      )
-      minmax(
-        0,
-        1fr
-      );
-
-    gap:
-      28px;
-  }
-
-}
-
-
-/* =========================================================
-   LAPTOP
+   1320
 ========================================================= */
 
 @media (
@@ -1957,56 +1869,25 @@
 ) {
 
   .shobdo-navbar-inner {
+    grid-template-columns:
+      210px
+      minmax(
+        260px,
+        560px
+      )
+      minmax(
+        max-content,
+        1fr
+      );
+
+    gap:
+      20px;
+
     padding-left:
-      22px;
+      21px;
 
     padding-right:
-      22px;
-
-    gap:
-      22px;
-
-    grid-template-columns:
-      auto
-      minmax(
-        250px,
-        1fr
-      )
-      auto;
-  }
-
-
-  .shobdo-profile-trigger-text {
-    max-width:
-      105px;
-  }
-
-}
-
-
-/* =========================================================
-   TABLET / SMALL LAPTOP
-========================================================= */
-
-@media (
-  max-width: 1100px
-) {
-
-  .shobdo-navbar-inner {
-    grid-template-columns:
-      auto
-      minmax(
-        210px,
-        1fr
-      )
-      auto;
-
-    gap:
-      16px;
-
-    padding:
-      0
-      18px;
+      21px;
   }
 
 
@@ -2017,19 +1898,42 @@
 
 
   .shobdo-profile-trigger {
-    width:
-      42px;
+    padding-right:
+      6px;
+  }
 
-    padding:
-      3px;
+}
 
-    justify-content:
-      center;
+
+/* =========================================================
+   1050
+========================================================= */
+
+@media (
+  max-width: 1050px
+) {
+
+  .shobdo-navbar-inner {
+    grid-template-columns:
+      180px
+      minmax(
+        220px,
+        1fr
+      )
+      auto;
+
+    gap:
+      15px;
+
+    padding-left:
+      17px;
+
+    padding-right:
+      17px;
   }
 
 
-  .shobdo-profile-trigger
-  > svg {
+  .shobdo-navbar-tagline {
     display:
       none;
   }
@@ -2043,49 +1947,41 @@
 
   .shobdo-language-button {
     width:
-      42px;
+      40px;
+
+    height:
+      40px;
+
+    min-height:
+      40px;
 
     padding:
       0;
-
-    justify-content:
-      center;
   }
 
 
   .shobdo-language-button
-  > svg:last-child {
+  svg:last-child {
     display:
       none;
-  }
-
-
-  .shobdo-login-button,
-  .shobdo-register-button {
-    padding:
-      0
-      11px;
   }
 
 }
 
 
 /* =========================================================
-   900px TABLET
+   820
 ========================================================= */
 
 @media (
-  max-width: 900px
+  max-width: 820px
 ) {
 
   .shobdo-navbar-inner {
-    min-height:
-      68px;
-
     grid-template-columns:
       auto
       minmax(
-        180px,
+        190px,
         1fr
       )
       auto;
@@ -2094,8 +1990,8 @@
       12px;
 
     padding:
-      0
-      14px;
+      8px
+      13px;
   }
 
 
@@ -2107,57 +2003,13 @@
 
   .shobdo-navbar-logo {
     width:
-      34px;
+      37px;
 
     height:
-      34px;
+      37px;
 
     flex-basis:
-      34px;
-  }
-
-
-  .shobdo-navbar-search {
-    height:
-      42px;
-  }
-
-
-  .shobdo-navbar-actions {
-    gap:
-      5px;
-  }
-
-
-  .shobdo-navbar-icon-button,
-  .shobdo-language-button,
-  .shobdo-profile-trigger {
-    width:
-      40px;
-
-    height:
-      40px;
-
-    min-height:
-      40px;
-
-    flex-basis:
-      40px;
-  }
-
-
-  .shobdo-profile-avatar {
-    width:
-      34px;
-
-    height:
-      34px;
-  }
-
-
-  .shobdo-guest-actions {
-    gap:
-      4px;
+      37px;
   }
 
 
@@ -2173,12 +2025,6 @@
     width:
       40px;
 
-    height:
-      40px;
-
-    min-height:
-      40px;
-
     padding:
       0;
   }
@@ -2187,8 +2033,7 @@
 
 
 /* =========================================================
-   MOBILE
-   700px AND BELOW
+   MOBILE <= 700
 ========================================================= */
 
 @media (
@@ -2196,20 +2041,14 @@
 ) {
 
   .shobdo-navbar {
-    position:
-      sticky;
-
-    top:
-      0;
+    min-height:
+      61px;
   }
 
 
   .shobdo-navbar-inner {
     min-height:
-      62px;
-
-    width:
-      100%;
+      61px;
 
     display:
       flex;
@@ -2217,67 +2056,72 @@
     align-items:
       center;
 
-    justify-content:
-      space-between;
-
     gap:
       8px;
 
     padding:
-      0
-      max(
-        12px,
-        env(
-          safe-area-inset-left
-        )
-      )
-      0
-      max(
-        12px,
-        env(
-          safe-area-inset-right
-        )
-      );
+      8px
+      10px;
   }
 
 
-  /* =====================================================
-     BRAND
-  ====================================================== */
+  /* BRAND */
 
   .shobdo-navbar-brand {
-    min-width:
-      0;
-
     flex:
-      0 1 auto;
+      1;
+
+    gap:
+      8px;
   }
 
 
   .shobdo-navbar-logo {
     width:
-      34px;
+      36px;
 
     height:
-      34px;
+      36px;
 
     flex-basis:
-      34px;
+      36px;
 
     border-radius:
-      10px;
+      11px;
+  }
+
+
+  .shobdo-navbar-logo svg {
+    width:
+      18px;
+
+    height:
+      18px;
   }
 
 
   .shobdo-navbar-brand-name {
     font-size:
       16px;
+
+    letter-spacing:
+      0.07em;
   }
 
 
-  /* =====================================================
-     DESKTOP SEARCH HIDDEN
-  ====================================================== */
+  .shobdo-navbar-brand-copy {
+    justify-content:
+      center;
+  }
+
+
+  .shobdo-navbar-tagline {
+    display:
+      none;
+  }
+
+
+  /* DESKTOP SEARCH */
 
   .shobdo-navbar-search {
     display:
@@ -2285,18 +2129,7 @@
   }
 
 
-  /* =====================================================
-     ACTIONS
-  ====================================================== */
-
-  .shobdo-navbar-actions {
-    flex:
-      0 0 auto;
-
-    gap:
-      4px;
-  }
-
+  /* MOBILE SEARCH */
 
   .shobdo-mobile-search-trigger {
     display:
@@ -2304,133 +2137,56 @@
   }
 
 
-  .shobdo-navbar-icon-button {
-    width:
-      39px;
+  /* ACTIONS */
 
-    height:
-      39px;
-
-    flex-basis:
-      39px;
-
-    border-radius:
-      11px;
-  }
-
-
-  /* =====================================================
-     LANGUAGE
-  ====================================================== */
-
-  .shobdo-language-button {
-    width:
-      39px;
-
-    height:
-      39px;
-
-    min-height:
-      39px;
-
-    padding:
-      0;
-
-    justify-content:
-      center;
-
-    border:
-      0;
-
-    border-radius:
-      11px;
-
-    background:
-      transparent;
-  }
-
-
-  .shobdo-language-name,
-  .shobdo-language-button
-  > svg:last-child {
-    display:
-      none;
-  }
-
-
-  /* =====================================================
-     LANGUAGE DROPDOWN
-  ====================================================== */
-
-  .shobdo-language-dropdown {
-    position:
-      fixed;
-
-    top:
-      68px;
-
-    left:
-      max(
-        10px,
-        env(
-          safe-area-inset-left
-        )
-      );
-
-    right:
-      max(
-        10px,
-        env(
-          safe-area-inset-right
-        )
-      );
-
-    z-index:
-      1250;
-
-    width:
+  .shobdo-navbar-actions {
+    flex:
+      0 0
       auto;
 
-    max-height:
-      calc(
-        100dvh - 88px
-      );
-
-    border-radius:
-      16px;
-
-    box-shadow:
-      0
-      18px
-      50px
-      rgba(
-        31,
-        23,
-        36,
-        0.15
-      );
+    gap:
+      3px;
   }
 
 
-  /* =====================================================
-     PROFILE
-  ====================================================== */
+  .shobdo-navbar-icon-button {
+    width:
+      38px;
+
+    height:
+      38px;
+
+    flex-basis:
+      38px;
+
+    border-radius:
+      11px;
+  }
+
+
+  /* PROFILE */
 
   .shobdo-profile-trigger {
     width:
-      40px;
+      39px;
+
+    min-width:
+      39px;
 
     height:
-      40px;
+      39px;
 
     min-height:
-      40px;
+      39px;
 
     padding:
-      3px;
+      2px;
 
     justify-content:
       center;
+
+    border-radius:
+      50%;
   }
 
 
@@ -2440,63 +2196,86 @@
 
     height:
       34px;
+
+    flex-basis:
+      34px;
   }
 
 
   .shobdo-profile-trigger-text,
-  .shobdo-profile-trigger
-  > svg {
+  .shobdo-profile-trigger >
+  svg:last-child {
     display:
       none;
   }
 
 
-  /* =====================================================
-     PROFILE DROPDOWN
-  ====================================================== */
+  /* LANGUAGE */
 
+  .shobdo-language-button {
+    width:
+      38px;
+
+    height:
+      38px;
+
+    min-height:
+      38px;
+
+    padding:
+      0;
+
+    border-radius:
+      11px;
+  }
+
+
+  .shobdo-language-name,
+  .shobdo-language-button
+  svg:last-child {
+    display:
+      none;
+  }
+
+
+  /* DROPDOWNS */
+
+  .shobdo-language-dropdown,
   .shobdo-profile-dropdown {
     position:
       fixed;
 
     top:
-      68px;
-
-    left:
-      max(
-        10px,
-        env(
-          safe-area-inset-left
-        )
-      );
+      66px;
 
     right:
-      max(
-        10px,
-        env(
-          safe-area-inset-right
-        )
-      );
-
-    z-index:
-      1250;
-
-    width:
-      auto;
-
-    max-height:
-      calc(
-        100dvh - 88px
-      );
-
-    border-radius:
-      16px;
+      9px;
   }
 
 
-  /* =====================================================
-     GUEST AUTH
-  ====================================================== */
+  .shobdo-language-dropdown {
+    width:
+      min(
+        245px,
+        calc(
+          100vw - 18px
+        )
+      );
+  }
+
+
+  .shobdo-profile-dropdown {
+    width:
+      min(
+        260px,
+        calc(
+          100vw - 18px
+        )
+      );
+  }
+
+
+  /* GUEST */
 
   .shobdo-guest-actions {
     gap:
@@ -2507,13 +2286,13 @@
   .shobdo-login-button,
   .shobdo-register-button {
     width:
-      39px;
+      38px;
 
     height:
-      39px;
+      38px;
 
     min-height:
-      39px;
+      38px;
 
     padding:
       0;
@@ -2530,416 +2309,18 @@
   }
 
 
-  /* =====================================================
-     MOBILE SEARCH OVERLAY
-  ====================================================== */
+  /* SEARCH OVERLAY */
 
   .shobdo-mobile-search-panel {
-    position:
-      fixed;
-
-    inset:
-      0;
-
-    z-index:
-      1500;
-
-    display:
-      block;
-
-    padding:
-      max(
-        10px,
-        env(
-          safe-area-inset-top
-        )
-      )
-      max(
-        10px,
-        env(
-          safe-area-inset-right
-        )
-      )
-      10px
-      max(
-        10px,
-        env(
-          safe-area-inset-left
-        )
-      );
-
-    background:
-      rgba(
-        26,
-        18,
-        30,
-        0.3
-      );
-
-    backdrop-filter:
-      blur(5px);
-
-    -webkit-backdrop-filter:
-      blur(5px);
-
-    animation:
-      shobdoSearchBackdropIn
-      160ms
-      ease
-      both;
-  }
-
-
-  @keyframes shobdoSearchBackdropIn {
-
-    from {
-      opacity:
-        0;
-    }
-
-
-    to {
-      opacity:
-        1;
-    }
-
-  }
-
-
-  .shobdo-mobile-search-shell {
-    width:
-      min(
-        100%,
-        680px
-      );
-
-    margin:
-      0 auto;
-
-    padding:
-      8px;
-
-    border:
-      1px solid
-      rgba(
-        100,
-        43,
-        143,
-        0.08
-      );
-
-    border-radius:
-      17px;
-
-    background:
-      rgba(
-        255,
-        255,
-        255,
-        0.99
-      );
-
-    box-shadow:
-      0
-      18px
-      55px
-      rgba(
-        31,
-        22,
-        36,
-        0.16
-      );
-
-    animation:
-      shobdoMobileSearchEnter
-      240ms
-      var(--navbar-ease)
-      both;
-  }
-
-
-  @keyframes shobdoMobileSearchEnter {
-
-    from {
-      opacity:
-        0;
-
-      transform:
-        translateY(-10px)
-        scale(0.985);
-    }
-
-
-    to {
-      opacity:
-        1;
-
-      transform:
-        translateY(0)
-        scale(1);
-    }
-
-  }
-
-
-  .shobdo-mobile-search-form {
-    min-width:
-      0;
-
-    min-height:
-      50px;
-
-    display:
-      flex;
-
-    align-items:
-      center;
-
-    gap:
-      9px;
-
-    padding:
-      0
-      8px
-      0
-      12px;
-
-    border:
-      1px solid
-      #ded5e4;
-
-    border-radius:
-      13px;
-
-    background:
-      #ffffff;
-  }
-
-
-  .shobdo-mobile-search-form
-  > svg {
-    flex:
-      0 0 auto;
-
-    color:
-      #746e77;
-  }
-
-
-  .shobdo-mobile-search-form input {
-    width:
-      100%;
-
-    min-width:
-      0;
-
-    height:
-      46px;
-
-    flex:
-      1;
-
-    padding:
-      0;
-
-    border:
-      0;
-
-    outline:
-      0;
-
-    background:
-      transparent;
-
-    color:
-      var(
-        --navbar-text
-      );
-
-    font:
-      inherit;
-
-    font-size:
-      14px;
-  }
-
-
-  .shobdo-mobile-search-form
-  input::placeholder {
-    color:
-      #99929c;
-
-    text-overflow:
-      ellipsis;
-  }
-
-
-  .shobdo-mobile-search-form
-  input::-webkit-search-cancel-button {
-    display:
-      none;
-  }
-
-
-  .shobdo-mobile-search-clear,
-  .shobdo-mobile-search-close {
-    width:
-      36px;
-
-    height:
-      36px;
-
-    flex:
-      0 0 36px;
-
-    display:
-      grid;
-
-    place-items:
-      center;
-
-    padding:
-      0;
-
-    border:
-      0;
-
-    border-radius:
-      10px;
-
-    background:
-      transparent;
-
-    color:
-      #716a74;
-
-    cursor:
-      pointer;
-
-    -webkit-tap-highlight-color:
-      transparent;
-
-    transition:
-      background-color 150ms ease,
-      color 150ms ease,
-      transform 150ms ease;
-  }
-
-
-  .shobdo-mobile-search-clear {
-    width:
-      32px;
-
-    height:
-      32px;
-
-    flex-basis:
-      32px;
-
-    background:
-      #f5f2f6;
-  }
-
-
-  @media (
-    hover: hover
-  ) {
-
-    .shobdo-mobile-search-clear:hover,
-    .shobdo-mobile-search-close:hover {
-      background:
-        #f1edf3;
-
-      color:
-        var(
-          --navbar-brand
-        );
-    }
-
-  }
-
-
-  .shobdo-mobile-search-clear:active,
-  .shobdo-mobile-search-close:active {
-    transform:
-      scale(0.92);
-  }
-
-
-  .shobdo-mobile-search-hint {
-    margin:
-      8px
-      6px
-      3px;
-
-    color:
-      #918a94;
-
-    font-size:
-      11px;
-
-    line-height:
-      1.5;
+    padding-top:
+      68px;
   }
 
 }
 
 
 /* =========================================================
-   520px
-========================================================= */
-
-@media (
-  max-width: 520px
-) {
-
-  .shobdo-navbar-inner {
-    padding-left:
-      max(
-        10px,
-        env(
-          safe-area-inset-left
-        )
-      );
-
-    padding-right:
-      max(
-        10px,
-        env(
-          safe-area-inset-right
-        )
-      );
-  }
-
-
-  .shobdo-navbar-brand {
-    gap:
-      8px;
-  }
-
-
-  .shobdo-navbar-actions {
-    gap:
-      3px;
-  }
-
-
-  .shobdo-navbar-notification-badge {
-    min-width:
-      17px;
-
-    height:
-      17px;
-
-    font-size:
-      7px;
-  }
-
-}
-
-
-/* =========================================================
-   430px
+   SMALL MOBILE
 ========================================================= */
 
 @media (
@@ -2947,51 +2328,60 @@
 ) {
 
   .shobdo-navbar-inner {
-    min-height:
-      60px;
+    padding-left:
+      8px;
 
-    gap:
-      6px;
-  }
-
-
-  .shobdo-navbar-logo {
-    width:
-      33px;
-
-    height:
-      33px;
-
-    flex-basis:
-      33px;
+    padding-right:
+      8px;
   }
 
 
   .shobdo-navbar-brand-name {
     font-size:
       15px;
+  }
 
-    letter-spacing:
-      0.065em;
+
+  .shobdo-navbar-logo {
+    width:
+      34px;
+
+    height:
+      34px;
+
+    flex-basis:
+      34px;
   }
 
 
   .shobdo-navbar-icon-button,
-  .shobdo-language-button,
-  .shobdo-profile-trigger,
-  .shobdo-login-button,
-  .shobdo-register-button {
+  .shobdo-language-button {
     width:
-      38px;
+      36px;
 
     height:
-      38px;
+      36px;
 
     min-height:
-      38px;
+      36px;
 
     flex-basis:
-      38px;
+      36px;
+  }
+
+
+  .shobdo-profile-trigger {
+    width:
+      36px;
+
+    min-width:
+      36px;
+
+    height:
+      36px;
+
+    min-height:
+      36px;
   }
 
 
@@ -3001,233 +2391,9 @@
 
     height:
       32px;
-  }
-
-
-  .shobdo-mobile-search-shell {
-    padding:
-      7px;
-
-    border-radius:
-      15px;
-  }
-
-
-  .shobdo-mobile-search-form {
-    gap:
-      7px;
-  }
-
-}
-
-
-/* =========================================================
-   390px
-========================================================= */
-
-@media (
-  max-width: 390px
-) {
-
-  .shobdo-navbar-inner {
-    padding-left:
-      max(
-        8px,
-        env(
-          safe-area-inset-left
-        )
-      );
-
-    padding-right:
-      max(
-        8px,
-        env(
-          safe-area-inset-right
-        )
-      );
-  }
-
-
-  .shobdo-navbar-actions {
-    gap:
-      2px;
-  }
-
-
-  .shobdo-navbar-brand-name {
-    font-size:
-      14px;
-  }
-
-
-  .shobdo-navbar-icon-button,
-  .shobdo-language-button,
-  .shobdo-profile-trigger,
-  .shobdo-login-button,
-  .shobdo-register-button {
-    width:
-      37px;
-
-    height:
-      37px;
-
-    min-height:
-      37px;
-
-    flex-basis:
-      37px;
-  }
-
-
-  .shobdo-mobile-search-hint {
-    font-size:
-      10px;
-  }
-
-}
-
-
-/* =========================================================
-   360px
-========================================================= */
-
-@media (
-  max-width: 360px
-) {
-
-  .shobdo-navbar-inner {
-    min-height:
-      58px;
-
-    padding-left:
-      max(
-        7px,
-        env(
-          safe-area-inset-left
-        )
-      );
-
-    padding-right:
-      max(
-        7px,
-        env(
-          safe-area-inset-right
-        )
-      );
-  }
-
-
-  .shobdo-navbar-logo {
-    width:
-      32px;
-
-    height:
-      32px;
 
     flex-basis:
       32px;
-  }
-
-
-  .shobdo-navbar-brand-name {
-    display:
-      none;
-  }
-
-
-  .shobdo-navbar-icon-button,
-  .shobdo-language-button,
-  .shobdo-profile-trigger,
-  .shobdo-login-button,
-  .shobdo-register-button {
-    width:
-      36px;
-
-    height:
-      36px;
-
-    min-height:
-      36px;
-
-    flex-basis:
-      36px;
-  }
-
-
-  .shobdo-profile-avatar {
-    width:
-      30px;
-
-    height:
-      30px;
-  }
-
-
-  .shobdo-mobile-search-panel {
-    padding-left:
-      7px;
-
-    padding-right:
-      7px;
-  }
-
-
-  .shobdo-mobile-search-form {
-    padding-left:
-      10px;
-
-    padding-right:
-      6px;
-  }
-
-}
-
-
-/* =========================================================
-   320px
-========================================================= */
-
-@media (
-  max-width: 320px
-) {
-
-  .shobdo-navbar-inner {
-    padding-left:
-      max(
-        5px,
-        env(
-          safe-area-inset-left
-        )
-      );
-
-    padding-right:
-      max(
-        5px,
-        env(
-          safe-area-inset-right
-        )
-      );
-
-    gap:
-      4px;
-  }
-
-
-  .shobdo-navbar-brand {
-    flex:
-      0 0 auto;
-  }
-
-
-  .shobdo-navbar-logo {
-    width:
-      31px;
-
-    height:
-      31px;
-
-    flex-basis:
-      31px;
   }
 
 
@@ -3236,112 +2402,45 @@
       1px;
   }
 
+}
 
-  .shobdo-navbar-icon-button,
-  .shobdo-language-button,
-  .shobdo-profile-trigger,
-  .shobdo-login-button,
-  .shobdo-register-button {
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (
+  max-width: 360px
+) {
+
+  .shobdo-navbar-brand-copy {
+    display:
+      none;
+  }
+
+
+  .shobdo-navbar-brand {
+    flex:
+      1;
+  }
+
+
+  .shobdo-navbar-logo {
     width:
       35px;
 
     height:
-      35px;
-
-    min-height:
       35px;
 
     flex-basis:
       35px;
-  }
-
-
-  .shobdo-navbar-icon-button svg,
-  .shobdo-language-button svg,
-  .shobdo-login-button svg,
-  .shobdo-register-button svg {
-    width:
-      18px;
-
-    height:
-      18px;
-  }
-
-
-  .shobdo-profile-avatar {
-    width:
-      29px;
-
-    height:
-      29px;
-  }
-
-
-  .shobdo-navbar-notification-badge {
-    top:
-      0;
-
-    right:
-      -1px;
-
-    min-width:
-      15px;
-
-    height:
-      15px;
-
-    padding:
-      0
-      2px;
-
-    border-width:
-      1.5px;
-
-    font-size:
-      6px;
-  }
-
-
-  .shobdo-mobile-search-form {
-    gap:
-      5px;
-  }
-
-
-  .shobdo-mobile-search-form input {
-    font-size:
-      13px;
-  }
-
-
-  .shobdo-mobile-search-clear {
-    width:
-      30px;
-
-    height:
-      30px;
-
-    flex-basis:
-      30px;
-  }
-
-
-  .shobdo-mobile-search-close {
-    width:
-      32px;
-
-    height:
-      32px;
-
-    flex-basis:
-      32px;
   }
 
 }
 
 
 /* =========================================================
-   TOUCH DEVICES
+   TOUCH
 ========================================================= */
 
 @media (
@@ -3350,23 +2449,9 @@
   pointer: coarse
 ) {
 
-  .shobdo-navbar-brand,
-  .shobdo-navbar-icon-button,
-  .shobdo-language-button,
-  .shobdo-language-option,
-  .shobdo-profile-trigger,
-  .shobdo-profile-menu-item,
-  .shobdo-login-button,
-  .shobdo-register-button,
-  .shobdo-mobile-search-clear,
-  .shobdo-mobile-search-close {
-    -webkit-tap-highlight-color:
-      transparent;
-  }
-
-
   .shobdo-navbar-brand:hover
   .shobdo-navbar-logo,
+  .shobdo-login-button:hover,
   .shobdo-register-button:hover {
     transform:
       none;
@@ -3380,94 +2465,28 @@
 ========================================================= */
 
 @media (
-  prefers-reduced-motion: reduce
+  prefers-reduced-motion:
+  reduce
 ) {
 
   .shobdo-navbar,
   .shobdo-navbar-logo,
-  .shobdo-search-clear,
+  .shobdo-navbar-search,
   .shobdo-navbar-icon-button,
   .shobdo-language-button,
-  .shobdo-language-button svg,
-  .shobdo-language-option,
   .shobdo-profile-trigger,
-  .shobdo-profile-trigger > svg,
-  .shobdo-profile-dropdown-user,
   .shobdo-profile-menu-item,
   .shobdo-login-button,
-  .shobdo-register-button,
-  .shobdo-mobile-search-clear,
-  .shobdo-mobile-search-close {
+  .shobdo-register-button {
     transition:
-      none !important;
+      none;
   }
 
 
   .shobdo-dropdown-animate,
-  .shobdo-mobile-search-panel,
-  .shobdo-mobile-search-shell {
-    animation:
-      none !important;
-  }
-
-}
-
-
-/* =========================================================
-   HIGH CONTRAST
-========================================================= */
-
-@media (
-  forced-colors: active
-) {
-
-  .shobdo-navbar,
-  .shobdo-navbar-search,
-  .shobdo-language-button,
-  .shobdo-language-dropdown,
-  .shobdo-profile-dropdown,
-  .shobdo-login-button,
-  .shobdo-register-button,
-  .shobdo-mobile-search-shell,
-  .shobdo-mobile-search-form {
-    border:
-      1px solid
-      CanvasText;
-  }
-
-
-  .shobdo-navbar-logo,
-  .shobdo-register-button {
-    forced-color-adjust:
-      auto;
-  }
-
-}
-
-
-/* =========================================================
-   PRINT
-========================================================= */
-
-@media print {
-
-  .shobdo-navbar {
-    position:
-      static;
-
-    box-shadow:
-      none;
-
-    background:
-      #ffffff;
-  }
-
-
-  .shobdo-navbar-search,
-  .shobdo-navbar-actions,
   .shobdo-mobile-search-panel {
-    display:
-      none !important;
+    animation:
+      none;
   }
 
 }
