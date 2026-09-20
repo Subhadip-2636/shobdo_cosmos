@@ -29,10 +29,32 @@ from extensions import (
 
 
 # =========================================================
-# LOAD ENVIRONMENT VARIABLES
+# ENVIRONMENT
 # =========================================================
 
 load_dotenv()
+
+
+# =========================================================
+# CONSTANTS
+# =========================================================
+
+LOCAL_FRONTEND_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+
+PRODUCTION_FRONTEND_ORIGINS = [
+    "https://shobdoverse.com",
+    "https://www.shobdoverse.com",
+    "https://shobdo-cosmos.pages.dev",
+]
+
+
+DEFAULT_PRODUCTION_FRONTEND_URL = (
+    "https://www.shobdoverse.com"
+)
 
 
 # =========================================================
@@ -43,19 +65,18 @@ def clean_url(
     value,
 ):
     """
-    Normalize a frontend origin.
+    Normalize an origin / frontend URL.
 
     Example:
 
-        https://shobdo.com/
+        https://www.shobdoverse.com/
 
     becomes:
 
-        https://shobdo.com
+        https://www.shobdoverse.com
     """
 
     if not value:
-
         return None
 
 
@@ -83,13 +104,11 @@ def add_origin(
     value,
 ):
     """
-    Add an origin only when it is valid and not duplicated.
+    Add a normalized origin without duplicates.
     """
 
-    origin = (
-        clean_url(
-            value
-        )
+    origin = clean_url(
+        value
     )
 
 
@@ -107,56 +126,202 @@ def add_origin(
 # =========================================================
 
 
-def get_allowed_origins():
+def is_render_environment():
     """
-    Build CORS origin list for development and production.
+    Detect a Render production environment.
     """
 
-    origins = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ]
-
-
-    # =====================================================
-    # MAIN FRONTEND
-    # =====================================================
-
-    add_origin(
-        origins,
+    value = (
         os.getenv(
-            "FRONTEND_URL"
-        ),
-    )
-
-
-    # =====================================================
-    # PRODUCTION FRONTEND
-    # =====================================================
-
-    add_origin(
-        origins,
-        os.getenv(
-            "PRODUCTION_FRONTEND_URL"
-        ),
-    )
-
-
-    # =====================================================
-    # EXTRA FRONTEND ORIGINS
-    #
-    # Example:
-    #
-    # CORS_ORIGINS=https://shobdo.com,https://www.shobdo.com
-    # =====================================================
-
-    extra_origins = (
-        os.getenv(
-            "CORS_ORIGINS",
+            "RENDER",
             "",
         )
         or
         ""
+    )
+
+
+    return (
+        value
+        .strip()
+        .lower()
+        in {
+            "true",
+            "1",
+            "yes",
+            "on",
+        }
+    )
+
+
+# =========================================================
+
+
+def get_frontend_url():
+    """
+    Resolve SHOBDO's canonical frontend URL.
+
+    Priority:
+
+    1. FRONTEND_URL
+    2. PRODUCTION_FRONTEND_URL
+    3. PUBLIC_SITE_URL
+    4. production SHOBDO domain on Render
+    5. localhost during local development
+    """
+
+    candidates = [
+
+        os.getenv(
+            "FRONTEND_URL"
+        ),
+
+        os.getenv(
+            "PRODUCTION_FRONTEND_URL"
+        ),
+
+        os.getenv(
+            "PUBLIC_SITE_URL"
+        ),
+
+    ]
+
+
+    for candidate in candidates:
+
+        url = clean_url(
+            candidate
+        )
+
+
+        if url:
+            return url
+
+
+    if is_render_environment():
+
+        return (
+            DEFAULT_PRODUCTION_FRONTEND_URL
+        )
+
+
+    return (
+        "http://localhost:5173"
+    )
+
+
+# =========================================================
+
+
+def get_allowed_origins():
+    """
+    Build the complete CORS origin list.
+
+    Includes:
+
+    - local Vite development
+    - Cloudflare Pages URL
+    - shobdoverse.com
+    - www.shobdoverse.com
+    - Render environment values
+    - optional additional origins
+    """
+
+    origins = []
+
+
+    # -----------------------------------------------------
+    # LOCAL DEVELOPMENT
+    # -----------------------------------------------------
+
+    for origin in (
+        LOCAL_FRONTEND_ORIGINS
+    ):
+
+        add_origin(
+            origins,
+            origin,
+        )
+
+
+    # -----------------------------------------------------
+    # KNOWN PRODUCTION FRONTENDS
+    # -----------------------------------------------------
+
+    for origin in (
+        PRODUCTION_FRONTEND_ORIGINS
+    ):
+
+        add_origin(
+            origins,
+            origin,
+        )
+
+
+    # -----------------------------------------------------
+    # FRONTEND_URL
+    # -----------------------------------------------------
+
+    add_origin(
+
+        origins,
+
+        os.getenv(
+            "FRONTEND_URL"
+        ),
+
+    )
+
+
+    # -----------------------------------------------------
+    # PRODUCTION_FRONTEND_URL
+    # -----------------------------------------------------
+
+    add_origin(
+
+        origins,
+
+        os.getenv(
+            "PRODUCTION_FRONTEND_URL"
+        ),
+
+    )
+
+
+    # -----------------------------------------------------
+    # PUBLIC_SITE_URL
+    # -----------------------------------------------------
+
+    add_origin(
+
+        origins,
+
+        os.getenv(
+            "PUBLIC_SITE_URL"
+        ),
+
+    )
+
+
+    # -----------------------------------------------------
+    # EXTRA FRONTEND ORIGINS
+    #
+    # Example:
+    #
+    # CORS_ORIGINS=
+    # https://example.com,https://www.example.com
+    # -----------------------------------------------------
+
+    extra_origins = (
+
+        os.getenv(
+            "CORS_ORIGINS",
+            "",
+        )
+
+        or
+        ""
+
     )
 
 
@@ -185,18 +350,20 @@ def create_app():
 
 
     # =====================================================
-    # REVERSE PROXY SUPPORT
+    # REVERSE PROXY
     #
-    # Render / Cloudflare run behind reverse proxies.
+    # Cloudflare + Render sit in front of Flask.
     # =====================================================
 
     app.wsgi_app = ProxyFix(
+
         app.wsgi_app,
 
         x_for=1,
         x_proto=1,
         x_host=1,
         x_port=1,
+
     )
 
 
@@ -205,9 +372,11 @@ def create_app():
     # =====================================================
 
     database_url = (
+
         os.getenv(
             "DATABASE_URL"
         )
+
     )
 
 
@@ -257,9 +426,11 @@ def create_app():
     # =====================================================
 
     jwt_secret = (
+
         os.getenv(
             "JWT_SECRET_KEY"
         )
+
     )
 
 
@@ -407,23 +578,11 @@ def create_app():
 
 
     # =====================================================
-    # FRONTEND URL
+    # FRONTEND / PUBLIC URL
     # =====================================================
 
     frontend_url = (
-
-        clean_url(
-
-            os.getenv(
-                "FRONTEND_URL"
-            )
-
-        )
-
-        or
-
-        "http://localhost:5173"
-
+        get_frontend_url()
     )
 
 
@@ -432,11 +591,13 @@ def create_app():
     ] = frontend_url
 
 
+    app.config[
+        "PUBLIC_SITE_URL"
+    ] = frontend_url
+
+
     # =====================================================
     # FILE UPLOADS
-    #
-    # OCR validation itself allows 10 MB.
-    # Multipart form data requires a little overhead.
     # =====================================================
 
     app.config[
@@ -461,9 +622,7 @@ def create_app():
 
     try:
 
-        app.json.sort_keys = (
-            False
-        )
+        app.json.sort_keys = False
 
     except Exception:
 
@@ -471,7 +630,7 @@ def create_app():
 
 
     # =====================================================
-    # PRODUCTION URL SCHEME
+    # HTTPS
     # =====================================================
 
     app.config[
@@ -480,9 +639,7 @@ def create_app():
 
         "https"
 
-        if os.getenv(
-            "RENDER"
-        )
+        if is_render_environment()
 
         else "http"
 
@@ -490,7 +647,7 @@ def create_app():
 
 
     # =====================================================
-    # CORS ORIGINS
+    # CORS
     # =====================================================
 
     allowed_origins = (
@@ -541,6 +698,8 @@ def create_app():
                 "allow_headers": [
                     "Content-Type",
                     "Authorization",
+                    "Accept",
+                    "Origin",
                 ],
 
                 "methods": [
@@ -607,10 +766,9 @@ def create_app():
 
 
     # =====================================================
-    # IMPORT DATABASE MODELS
+    # DATABASE MODELS
     #
-    # These imports ensure SQLAlchemy / Alembic knows about
-    # all important SHOBDO tables and relationships.
+    # Import all models so SQLAlchemy / Alembic knows them.
     # =====================================================
 
     from models.user import (
@@ -650,19 +808,12 @@ def create_app():
     _models = (
 
         User,
-
         Writing,
-
         Tag,
-
         Notification,
-
         Document,
-
         Artwork,
-
         SavedWriting,
-
         Repost,
 
     )
@@ -685,62 +836,48 @@ def create_app():
 
 
     # =====================================================
-    # IMPORT BLUEPRINTS
+    # BLUEPRINT IMPORTS
     # =====================================================
 
     from routes.auth_routes import (
         auth_bp,
     )
 
-
     from routes.writing_routes import (
         writings_bp,
     )
-
 
     from routes.like_routes import (
         like_bp,
     )
 
-
     from routes.comment_routes import (
         comment_bp,
     )
-
 
     from routes.user_routes import (
         user_bp,
     )
 
-
     from routes.notification_routes import (
         notification_bp,
     )
-
 
     from routes.document_routes import (
         document_bp,
     )
 
-
     from routes.artwork_routes import (
         artwork_bp,
     )
-
 
     from routes.saved_routes import (
         saved_bp,
     )
 
-
     from routes.search_routes import (
         search_bp,
     )
-
-
-    # =====================================================
-    # NEW: TRENDING TOPICS
-    # =====================================================
 
     from routes.trending_routes import (
         trending_bp,
@@ -753,8 +890,6 @@ def create_app():
 
     # =====================================================
     # REGISTER AUTH
-    #
-    # auth_bp contains relative routes.
     # =====================================================
 
     app.register_blueprint(
@@ -769,8 +904,6 @@ def create_app():
 
     # =====================================================
     # REGISTER WRITINGS
-    #
-    # writings_bp contains relative routes.
     # =====================================================
 
     app.register_blueprint(
@@ -813,12 +946,6 @@ def create_app():
 
     # =====================================================
     # REGISTER USERS
-    #
-    # user_bp already has:
-    #
-    # /api/users
-    #
-    # DO NOT add another prefix.
     # =====================================================
 
     app.register_blueprint(
@@ -828,10 +955,6 @@ def create_app():
 
     # =====================================================
     # REGISTER NOTIFICATIONS
-    #
-    # notification_bp already contains:
-    #
-    # /api/notifications
     # =====================================================
 
     app.register_blueprint(
@@ -841,14 +964,6 @@ def create_app():
 
     # =====================================================
     # REGISTER DOCUMENTS
-    #
-    # document_bp contains:
-    #
-    # /documents
-    #
-    # resulting in:
-    #
-    # /api/documents
     # =====================================================
 
     app.register_blueprint(
@@ -863,8 +978,6 @@ def create_app():
 
     # =====================================================
     # REGISTER ARTWORK
-    #
-    # artwork_bp already contains its own /api routes.
     # =====================================================
 
     app.register_blueprint(
@@ -873,9 +986,7 @@ def create_app():
 
 
     # =====================================================
-    # REGISTER SAVED WRITINGS
-    #
-    # saved_bp already contains its own API prefix.
+    # REGISTER SAVED
     # =====================================================
 
     app.register_blueprint(
@@ -884,11 +995,7 @@ def create_app():
 
 
     # =====================================================
-    # REGISTER GLOBAL SEARCH
-    #
-    # search_bp already contains:
-    #
-    # /api/search
+    # REGISTER SEARCH
     # =====================================================
 
     app.register_blueprint(
@@ -898,26 +1005,15 @@ def create_app():
 
     # =====================================================
     # REGISTER TRENDING
-    #
-    # IMPORTANT:
-    #
-    # trending_bp is defined with:
-    #
-    # url_prefix="/api/trending"
-    #
-    # Therefore DO NOT add another "/api" here.
-    #
-    # Final endpoint:
-    #
-    # GET /api/trending/topics
     # =====================================================
 
     app.register_blueprint(
         trending_bp
     )
 
+
     # =====================================================
-    # REGISTER REPOST BLUEPRINT
+    # REGISTER REPOST
     # =====================================================
 
     app.register_blueprint(
@@ -944,6 +1040,16 @@ def create_app():
 
             "status":
                 "running",
+
+            "environment":
+                (
+                    "production"
+                    if is_render_environment()
+                    else "development"
+                ),
+
+            "frontend":
+                frontend_url,
 
             "api":
                 "/api",
@@ -978,10 +1084,13 @@ def create_app():
                 "running",
 
             "version":
-                "1.1.0",
+                "1.2.0",
 
             "realtime":
                 True,
+
+            "frontend":
+                frontend_url,
 
             "health":
                 "/api/health",
@@ -1011,13 +1120,14 @@ def create_app():
 
 
     # =====================================================
-    # HEALTH CHECK
+    # HEALTH
     # =====================================================
 
     @app.route(
         "/api/health",
         methods=[
             "GET",
+            "OPTIONS",
         ],
     )
     def health():
@@ -1041,6 +1151,9 @@ def create_app():
 
             "hashtags":
                 "enabled",
+
+            "frontend":
+                frontend_url,
 
         }), 200
 
@@ -1202,7 +1315,7 @@ def create_app():
 
 
     # =====================================================
-    # 413 — FILE TOO LARGE
+    # 413
     # =====================================================
 
     @app.errorhandler(
@@ -1270,6 +1383,15 @@ def create_app():
     # =====================================================
 
     if app.debug:
+
+        print(
+            "\nSHOBDO frontend:"
+        )
+
+        print(
+            f" - {frontend_url}"
+        )
+
 
         print(
             "\nAllowed frontend origins:"

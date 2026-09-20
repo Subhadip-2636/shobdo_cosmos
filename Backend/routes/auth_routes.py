@@ -5757,6 +5757,16 @@ def link_instagram_account():
     ],
 )
 def instagram_deauthorize():
+    """
+    Meta/Instagram deauthorization callback.
+
+    Meta sends a signed_request. We verify the HMAC signature,
+    identify the Instagram account, and remove only the stored
+    Instagram connection from the matching SHOBDO account.
+
+    The operation is intentionally idempotent: if the Instagram
+    account is already unlinked, the callback still succeeds.
+    """
 
     signed_request = (
         get_signed_request_from_request()
@@ -5766,11 +5776,19 @@ def instagram_deauthorize():
     if not signed_request:
 
         return jsonify({
+
+            "success":
+                False,
+
+            "provider":
+                "instagram",
+
             "message":
                 (
                     "Instagram signed request "
                     "is required."
-                )
+                ),
+
         }), 400
 
 
@@ -5798,11 +5816,19 @@ def instagram_deauthorize():
 
 
         return jsonify({
+
+            "success":
+                False,
+
+            "provider":
+                "instagram",
+
             "message":
                 (
                     "Instagram deauthorization request "
                     "could not be verified."
-                )
+                ),
+
         }), 400
 
 
@@ -5813,13 +5839,36 @@ def instagram_deauthorize():
     )
 
 
+    if not instagram_user_id:
+
+        current_app.logger.warning(
+            "Verified Instagram deauthorization request "
+            "did not contain a user identifier."
+        )
+
+
+        return jsonify({
+
+            "success":
+                False,
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "Instagram deauthorization request "
+                    "did not contain an account identifier."
+                ),
+
+        }), 400
+
+
     try:
 
-        if instagram_user_id:
-
-            remove_instagram_connection_by_user_id(
-                instagram_user_id
-            )
+        remove_instagram_connection_by_user_id(
+            instagram_user_id
+        )
 
 
     except Exception as error:
@@ -5837,18 +5886,32 @@ def instagram_deauthorize():
 
 
         return jsonify({
+
+            "success":
+                False,
+
+            "provider":
+                "instagram",
+
             "message":
                 (
                     "Instagram deauthorization "
                     "could not be completed."
-                )
+                ),
+
         }), 500
 
 
-    return jsonify({
+    response = jsonify({
 
         "success":
             True,
+
+        "status":
+            "deauthorized",
+
+        "provider":
+            "instagram",
 
         "message":
             (
@@ -5856,7 +5919,23 @@ def instagram_deauthorize():
                 "was removed from SHOBDO."
             ),
 
-    }), 200
+    })
+
+
+    response.headers[
+        "Cache-Control"
+    ] = (
+        "no-store, no-cache, "
+        "must-revalidate, max-age=0"
+    )
+
+
+    response.headers[
+        "Pragma"
+    ] = "no-cache"
+
+
+    return response, 200
 
 
 # =========================================================
@@ -5870,6 +5949,18 @@ def instagram_deauthorize():
     ],
 )
 def instagram_data_deletion():
+    """
+    Meta/Instagram user-data deletion callback.
+
+    Meta posts a signed_request. After verification, SHOBDO
+    removes the stored Instagram connection and returns the
+    confirmation payload required by Meta:
+
+        {
+            "url": "https://.../data-deletion/status?code=...",
+            "confirmation_code": "..."
+        }
+    """
 
     signed_request = (
         get_signed_request_from_request()
@@ -5879,11 +5970,19 @@ def instagram_data_deletion():
     if not signed_request:
 
         return jsonify({
+
+            "success":
+                False,
+
+            "provider":
+                "instagram",
+
             "message":
                 (
                     "Instagram signed request "
                     "is required."
-                )
+                ),
+
         }), 400
 
 
@@ -5911,11 +6010,19 @@ def instagram_data_deletion():
 
 
         return jsonify({
+
+            "success":
+                False,
+
+            "provider":
+                "instagram",
+
             "message":
                 (
                     "Instagram data-deletion request "
                     "could not be verified."
-                )
+                ),
+
         }), 400
 
 
@@ -5926,13 +6033,36 @@ def instagram_data_deletion():
     )
 
 
+    if not instagram_user_id:
+
+        current_app.logger.warning(
+            "Verified Instagram data-deletion request "
+            "did not contain a user identifier."
+        )
+
+
+        return jsonify({
+
+            "success":
+                False,
+
+            "provider":
+                "instagram",
+
+            "message":
+                (
+                    "Instagram data-deletion request "
+                    "did not contain an account identifier."
+                ),
+
+        }), 400
+
+
     try:
 
-        if instagram_user_id:
-
-            remove_instagram_connection_by_user_id(
-                instagram_user_id
-            )
+        remove_instagram_connection_by_user_id(
+            instagram_user_id
+        )
 
 
         confirmation_code = (
@@ -5957,11 +6087,19 @@ def instagram_data_deletion():
 
 
         return jsonify({
+
+            "success":
+                False,
+
+            "provider":
+                "instagram",
+
             "message":
                 (
                     "Instagram data-deletion request "
                     "could not be completed."
-                )
+                ),
+
         }), 500
 
 
@@ -5981,11 +6119,19 @@ def instagram_data_deletion():
 
 
         return jsonify({
+
+            "success":
+                False,
+
+            "provider":
+                "instagram",
+
             "message":
                 (
                     "Instagram data-deletion status "
                     "URL is not configured."
-                )
+                ),
+
         }), 503
 
 
@@ -5999,7 +6145,7 @@ def instagram_data_deletion():
     )
 
 
-    return jsonify({
+    response = jsonify({
 
         "url":
             status_url,
@@ -6007,8 +6153,28 @@ def instagram_data_deletion():
         "confirmation_code":
             confirmation_code,
 
-    }), 200
+    })
 
+
+    response.headers[
+        "Cache-Control"
+    ] = (
+        "no-store, no-cache, "
+        "must-revalidate, max-age=0"
+    )
+
+
+    response.headers[
+        "Pragma"
+    ] = "no-cache"
+
+
+    return response, 200
+
+
+# =========================================================
+# INSTAGRAM DATA DELETION STATUS
+# =========================================================
 
 @auth_bp.route(
     "/instagram/data-deletion/status",
@@ -6017,6 +6183,13 @@ def instagram_data_deletion():
     ],
 )
 def instagram_data_deletion_status():
+    """
+    Public confirmation endpoint returned to Meta after a
+    successful data-deletion request.
+
+    Do not expose the Instagram user ID in the response. The
+    signed confirmation token is enough to prove completion.
+    """
 
     confirmation_code = str(
         request.args.get(
@@ -6035,6 +6208,9 @@ def instagram_data_deletion_status():
             "status":
                 "invalid",
 
+            "provider":
+                "instagram",
+
             "message":
                 (
                     "Data-deletion confirmation "
@@ -6046,10 +6222,8 @@ def instagram_data_deletion_status():
 
     try:
 
-        payload = (
-            verify_instagram_deletion_status_token(
-                confirmation_code
-            )
+        verify_instagram_deletion_status_token(
+            confirmation_code
         )
 
 
@@ -6059,6 +6233,9 @@ def instagram_data_deletion_status():
 
             "status":
                 "expired",
+
+            "provider":
+                "instagram",
 
             "message":
                 (
@@ -6076,6 +6253,9 @@ def instagram_data_deletion_status():
             "status":
                 "invalid",
 
+            "provider":
+                "instagram",
+
             "message":
                 (
                     "This data-deletion confirmation "
@@ -6085,7 +6265,7 @@ def instagram_data_deletion_status():
         }), 400
 
 
-    return jsonify({
+    response = jsonify({
 
         "status":
             "completed",
@@ -6099,12 +6279,23 @@ def instagram_data_deletion_status():
                 "has been removed from SHOBDO."
             ),
 
-        "instagram_user_id":
-            payload.get(
-                "instagram_user_id"
-            ),
+    })
 
-    }), 200
+
+    response.headers[
+        "Cache-Control"
+    ] = (
+        "no-store, no-cache, "
+        "must-revalidate, max-age=0"
+    )
+
+
+    response.headers[
+        "Pragma"
+    ] = "no-cache"
+
+
+    return response, 200
 
 
 # =========================================================
