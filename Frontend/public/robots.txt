@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# Private / account-specific areas
+Disallow: /write
+Disallow: /my-writings
+Disallow: /saved
+Disallow: /notifications
+Disallow: /profile/edit
+
+# Authentication / account utility pages
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+
+Sitemap: https://shobdoverse.com/sitemap.xml
