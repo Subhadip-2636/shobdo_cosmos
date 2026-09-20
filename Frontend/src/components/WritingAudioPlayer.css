@@ -1,313 +1,68 @@
 /* =========================================================
-   SHOBDO
-   WRITING AUDIO PLAYER
-========================================================= */
-
-
-/* =========================================================
-   ROOT
+   SHOBDO WRITING AUDIO PLAYER
+   Browser Web Speech API
 ========================================================= */
 
 .writing-audio-player {
   width: 100%;
+  min-width: 0;
 
-  margin:
-    14px
-    0;
-
-  color:
-    #4f463e;
-}
-
-
-/* =========================================================
-   COLLAPSED PLAYER
-========================================================= */
-
-.writing-audio-collapsed-button {
-  width: 100%;
-  min-height: 44px;
-
-  display: grid;
-
-  grid-template-columns:
-    auto
-    minmax(0, auto)
-    minmax(70px, 1fr)
-    auto;
-
+  display: flex;
   align-items: center;
-
   gap: 10px;
 
-  padding:
-    8px
-    11px;
+  margin-top: 14px;
+  padding: 9px 11px;
 
-  border:
-    1px solid
-    #e8ddd0;
-
-  border-radius:
-    13px;
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 14px;
 
   background:
     linear-gradient(
-      180deg,
-      #fffdfa 0%,
-      #faf6f0 100%
+      135deg,
+      rgba(248, 250, 252, 0.95),
+      rgba(255, 255, 255, 0.98)
     );
-
-  color:
-    #6f6256;
-
-  font-family: inherit;
-
-  cursor: pointer;
 
   box-shadow:
-    0 3px 12px
-    rgba(
-      69,
-      49,
-      28,
-      0.035
-    );
+    0 1px 2px rgba(15, 23, 42, 0.03);
 
   transition:
-    background-color 0.18s ease,
-    border-color 0.18s ease,
-    color 0.18s ease,
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
 }
 
 
-.writing-audio-collapsed-button:hover:not(:disabled) {
+/* =========================================================
+   ACTIVE
+========================================================= */
+
+.writing-audio-player.is-active {
   border-color:
-    #d8c5a9;
-
-  background:
-    #fbf3e8;
-
-  color:
-    #7e5922;
-
-  transform:
-    translateY(-1px);
-
-  box-shadow:
-    0 5px 16px
-    rgba(
-      73,
-      52,
-      30,
-      0.065
-    );
-}
-
-
-.writing-audio-collapsed-button:active:not(:disabled) {
-  transform:
-    scale(0.99);
-}
-
-
-.writing-audio-collapsed-button:disabled {
-  opacity: 0.55;
-
-  cursor: default;
-}
-
-
-/* =========================================================
-   ICON
-========================================================= */
-
-.writing-audio-icon {
-  width: 32px;
-  height: 32px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 10px;
-
-  background:
-    #f2e4cf;
-
-  color:
-    #8b6121;
-
-  flex: 0 0 auto;
-}
-
-
-/* =========================================================
-   COLLAPSED COPY
-========================================================= */
-
-.writing-audio-collapsed-copy {
-  min-width: 0;
-
-  display: flex;
-  align-items: center;
-
-  gap: 7px;
-}
-
-
-.writing-audio-collapsed-copy strong {
-  overflow: hidden;
-
-  font-size: 11.5px;
-
-  font-weight: 800;
-
-  white-space: nowrap;
-
-  text-overflow: ellipsis;
-}
-
-
-.writing-audio-collapsed-copy > span {
-  flex: 0 0 auto;
-
-  color:
-    #9b8b7b;
-
-  font-size:
-    9.5px;
-
-  font-weight: 700;
-}
-
-
-/* =========================================================
-   MINI WAVEFORM
-========================================================= */
-
-.writing-audio-mini-wave {
-  min-width: 0;
-  height: 26px;
-
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-
-  gap: 2px;
-
-  overflow: hidden;
-}
-
-
-.writing-audio-mini-wave > span {
-  width: 2px;
-
-  height:
-    var(
-      --wave-level,
-      8px
-    );
-
-  min-height: 4px;
-
-  border-radius:
-    999px;
-
-  background:
-    #baa079;
-
-  opacity: 0.65;
-
-  transform-origin:
-    center;
-}
-
-
-/* Animate only while speaking */
-
-.writing-audio-player.is-speaking
-.writing-audio-mini-wave > span {
-  animation:
-    writingAudioWave
-    0.9s
-    ease-in-out
-    infinite;
-
-  animation-delay:
-    calc(
-      var(
-        --wave-index
-      ) *
-      -0.07s
-    );
-}
-
-
-/* =========================================================
-   EXPANDED SHELL
-========================================================= */
-
-.writing-audio-expanded-shell {
-  width: 100%;
-
-  padding:
-    12px;
-
-  border:
-    1px solid
-    #e5d9cb;
-
-  border-radius:
-    15px;
+    rgba(37, 99, 235, 0.18);
 
   background:
     linear-gradient(
-      180deg,
-      #fffefa 0%,
-      #fbf6ef 100%
+      135deg,
+      rgba(239, 246, 255, 0.95),
+      rgba(255, 255, 255, 0.98)
     );
 
   box-shadow:
-    0 5px 18px
-    rgba(
-      69,
-      49,
-      28,
-      0.05
-    );
+    0 4px 18px rgba(37, 99, 235, 0.06);
 }
 
 
 /* =========================================================
-   TOP ROW
+   PRIMARY PLAY BUTTON
 ========================================================= */
 
-.writing-audio-top-row {
-  display: grid;
-
-  grid-template-columns:
-    auto
-    minmax(0, 1fr)
-    auto;
-
-  align-items: center;
-
-  gap: 11px;
-}
-
-
-/* =========================================================
-   PRIMARY PLAY / PAUSE
-========================================================= */
-
-.writing-audio-primary-button {
-  width: 40px;
-  height: 40px;
-
+.writing-audio-primary {
   flex: 0 0 auto;
+
+  width: 36px;
+  height: 36px;
 
   display: inline-flex;
   align-items: center;
@@ -315,296 +70,132 @@
 
   padding: 0;
 
-  border: none;
-
+  border: 0;
   border-radius: 50%;
 
-  background:
-    linear-gradient(
-      135deg,
-      #8e6423,
-      #b1843e
-    );
-
   color: #ffffff;
+  background: #111827;
 
   cursor: pointer;
 
-  box-shadow:
-    0 6px 15px
-    rgba(
-      136,
-      91,
-      25,
-      0.2
-    );
-
   transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    filter 0.18s ease;
+    transform 140ms ease,
+    background 140ms ease,
+    box-shadow 140ms ease;
 }
 
 
-.writing-audio-primary-button:hover:not(:disabled) {
+.writing-audio-primary:hover {
+  background: #1d4ed8;
+
   transform:
     translateY(-1px);
 
   box-shadow:
-    0 8px 18px
-    rgba(
-      136,
-      91,
-      25,
-      0.26
-    );
-
-  filter:
-    brightness(1.03);
+    0 5px 14px rgba(37, 99, 235, 0.2);
 }
 
 
-.writing-audio-primary-button:active:not(:disabled) {
+.writing-audio-primary:active {
   transform:
-    scale(0.94);
+    scale(0.96);
 }
 
 
-.writing-audio-primary-button:disabled {
-  opacity: 0.5;
+.writing-audio-primary:focus-visible {
+  outline:
+    3px solid rgba(37, 99, 235, 0.2);
 
-  cursor: default;
+  outline-offset: 2px;
+}
+
+
+.writing-audio-player.is-active
+.writing-audio-primary {
+  background: #2563eb;
 }
 
 
 /* =========================================================
-   STATUS
+   MAIN INFO
 ========================================================= */
 
-.writing-audio-status {
+.writing-audio-main {
+  flex: 1 1 auto;
+
   min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
 }
 
 
-.writing-audio-status-title {
+/* =========================================================
+   TOP LINE
+========================================================= */
+
+.writing-audio-topline {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 8px;
+}
+
+
+.writing-audio-title {
+  min-width: 0;
+
   display: inline-flex;
   align-items: center;
 
   gap: 6px;
 
-  color:
-    #685b4d;
-}
+  color: #334155;
 
+  font-size: 0.78rem;
+  font-weight: 650;
 
-.writing-audio-status-title svg {
-  color:
-    #9a7133;
-}
-
-
-.writing-audio-status-title strong {
-  font-size:
-    11.5px;
-
-  font-weight:
-    800;
-}
-
-
-/* =========================================================
-   MAIN VISUALIZER
-========================================================= */
-
-.writing-audio-visualizer {
-  height: 30px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 2px;
-
-  margin-top:
-    5px;
-
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 
-.writing-audio-visualizer > span {
-  width: 3px;
+.writing-audio-title svg {
+  flex: 0 0 auto;
 
-  height:
-    var(
-      --wave-level,
-      10px
-    );
-
-  min-height:
-    4px;
-
-  border-radius:
-    999px;
-
-  background:
-    linear-gradient(
-      180deg,
-      #b98b45,
-      #8f6526
-    );
-
-  opacity:
-    0.52;
-
-  transform-origin:
-    center;
-
-  transition:
-    opacity 0.18s ease;
+  color: #64748b;
 }
 
 
-.writing-audio-player.is-speaking
-.writing-audio-visualizer > span {
-  opacity: 0.9;
-
-  animation:
-    writingAudioWave
-    0.8s
-    ease-in-out
-    infinite;
-
-  animation-delay:
-    calc(
-      var(
-        --wave-index
-      ) *
-      -0.055s
-    );
+.writing-audio-player.is-active
+.writing-audio-title {
+  color: #1d4ed8;
 }
 
 
-.writing-audio-player.is-paused
-.writing-audio-visualizer > span {
-  opacity: 0.38;
+.writing-audio-player.is-active
+.writing-audio-title svg {
+  color: #2563eb;
 }
 
 
 /* =========================================================
-   COLLAPSE BUTTON
+   PROGRESS TEXT
 ========================================================= */
 
-.writing-audio-collapse-button {
-  width: 34px;
-  height: 34px;
+.writing-audio-progress-label {
+  flex: 0 0 auto;
 
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  color: #94a3b8;
 
-  padding: 0;
-
-  border: none;
-
-  border-radius: 10px;
-
-  background:
-    transparent;
-
-  color:
-    #887d72;
-
-  cursor: pointer;
-
-  transition:
-    background-color 0.16s ease,
-    color 0.16s ease;
-}
-
-
-.writing-audio-collapse-button:hover {
-  background:
-    #f2e9dd;
-
-  color:
-    #76551f;
-}
-
-
-/* =========================================================
-   PROGRESS
-========================================================= */
-
-.writing-audio-progress-row {
-  display: grid;
-
-  grid-template-columns:
-    minmax(0, 1fr)
-    auto;
-
-  align-items: center;
-
-  gap: 10px;
-
-  margin-top:
-    11px;
-}
-
-
-.writing-audio-progress-track {
-  position: relative;
-
-  height: 5px;
-
-  overflow: hidden;
-
-  border-radius:
-    999px;
-
-  background:
-    #ece3d8;
-}
-
-
-.writing-audio-progress-fill {
-  position: absolute;
-
-  inset:
-    0
-    auto
-    0
-    0;
-
-  width: 0;
-
-  border-radius:
-    inherit;
-
-  background:
-    linear-gradient(
-      90deg,
-      #9d6d26,
-      #c39855
-    );
-
-  transition:
-    width 0.18s linear;
-}
-
-
-.writing-audio-progress-value {
-  min-width: 32px;
-
-  color:
-    #938577;
-
-  font-size:
-    9.5px;
-
-  font-weight:
-    750;
-
-  text-align: right;
+  font-size: 0.68rem;
+  font-weight: 600;
 
   font-variant-numeric:
     tabular-nums;
@@ -612,167 +203,259 @@
 
 
 /* =========================================================
-   CONTROLS
+   PROGRESS BAR
 ========================================================= */
 
-.writing-audio-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.writing-audio-progress {
+  position: relative;
 
-  gap: 8px;
+  width: 100%;
+  height: 3px;
 
-  margin-top:
-    10px;
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background: rgba(148, 163, 184, 0.2);
 }
 
 
-.writing-audio-controls button {
-  min-width: 36px;
-  height: 34px;
+.writing-audio-progress > span {
+  position: absolute;
+
+  inset:
+    0 auto 0 0;
+
+  width: 0;
+
+  border-radius: inherit;
+
+  background: currentColor;
+
+  color: #2563eb;
+
+  transition:
+    width 240ms ease;
+}
+
+
+/* =========================================================
+   SPEED
+========================================================= */
+
+.writing-audio-speed {
+  flex: 0 0 auto;
+
+  min-height: 32px;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 3px;
+
+  padding:
+    0 5px;
+
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 9px;
+
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+
+.writing-audio-speed svg {
+  flex: 0 0 auto;
+}
+
+
+.writing-audio-speed select {
+  max-width: 58px;
+
+  padding:
+    4px 1px;
+
+  border: 0;
+  outline: 0;
+
+  color: #475569;
+  background: transparent;
+
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 650;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   SMALL CONTROL BUTTONS
+========================================================= */
+
+.writing-audio-icon-button {
+  flex: 0 0 auto;
+
+  width: 32px;
+  height: 32px;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  padding:
-    0
-    10px;
+  padding: 0;
 
-  border:
-    1px solid
-    #e5d9ca;
+  border: 0;
+  border-radius: 9px;
 
-  border-radius:
-    10px;
-
-  background:
-    #fffdf9;
-
-  color:
-    #776a5d;
-
-  font-family: inherit;
-
-  font-size:
-    10.5px;
-
-  font-weight:
-    800;
+  color: #64748b;
+  background: transparent;
 
   cursor: pointer;
 
   transition:
-    background-color 0.16s ease,
-    border-color 0.16s ease,
-    color 0.16s ease,
-    transform 0.16s ease;
+    color 140ms ease,
+    background 140ms ease,
+    transform 140ms ease;
 }
 
 
-.writing-audio-controls button:hover:not(:disabled) {
-  border-color:
-    #d3b990;
-
-  background:
-    #f8efe3;
-
-  color:
-    #805820;
+.writing-audio-icon-button:hover {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.055);
 
   transform:
     translateY(-1px);
 }
 
 
-.writing-audio-controls button:active:not(:disabled) {
+.writing-audio-icon-button:active {
   transform:
-    scale(0.95);
+    scale(0.94);
 }
 
 
-.writing-audio-controls button:disabled {
-  opacity:
-    0.45;
-
-  cursor:
-    default;
-}
-
-
-.writing-audio-rate-button {
-  min-width:
-    52px !important;
-}
-
-
-/* =========================================================
-   MESSAGE
-========================================================= */
-
-.writing-audio-message {
-  margin:
-    9px
-    0
-    0;
-
-  color:
-    #8b7f73;
-
-  font-size:
-    10.5px;
-
-  line-height:
-    1.45;
-
-  text-align:
-    center;
-}
-
-
-.writing-audio-message.error {
-  color:
-    #a14e45;
-}
-
-
-/* =========================================================
-   FOCUS
-========================================================= */
-
-.writing-audio-collapsed-button:focus-visible,
-.writing-audio-primary-button:focus-visible,
-.writing-audio-collapse-button:focus-visible,
-.writing-audio-controls button:focus-visible {
+.writing-audio-icon-button:focus-visible {
   outline:
-    3px solid
-    rgba(
-      151,
-      106,
-      35,
-      0.19
-    );
+    3px solid rgba(37, 99, 235, 0.18);
 
-  outline-offset:
-    2px;
+  outline-offset: 1px;
 }
 
 
 /* =========================================================
-   WAVE ANIMATION
+   STOP
 ========================================================= */
 
-@keyframes writingAudioWave {
+.writing-audio-stop:hover {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.07);
+}
 
-  0%,
-  100% {
-    transform:
-      scaleY(0.55);
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.writing-audio-player.has-error {
+  border-color:
+    rgba(220, 38, 38, 0.18);
+}
+
+
+.writing-audio-error {
+  color: #dc2626;
+
+  font-size: 0.7rem;
+  line-height: 1.3;
+}
+
+
+/* =========================================================
+   UNSUPPORTED
+========================================================= */
+
+.writing-audio-player--unsupported {
+  color: #64748b;
+
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+
+.writing-audio-player--unsupported svg {
+  flex: 0 0 auto;
+
+  color: #94a3b8;
+}
+
+
+/* =========================================================
+   DARK MODE
+========================================================= */
+
+@media (prefers-color-scheme: dark) {
+
+  .writing-audio-player {
+    border-color:
+      rgba(255, 255, 255, 0.08);
+
+    background:
+      rgba(15, 23, 42, 0.46);
   }
 
-  50% {
-    transform:
-      scaleY(1.18);
+
+  .writing-audio-player.is-active {
+    border-color:
+      rgba(96, 165, 250, 0.23);
+
+    background:
+      rgba(30, 58, 138, 0.16);
+  }
+
+
+  .writing-audio-title {
+    color: #cbd5e1;
+  }
+
+
+  .writing-audio-title svg {
+    color: #94a3b8;
+  }
+
+
+  .writing-audio-player.is-active
+  .writing-audio-title {
+    color: #93c5fd;
+  }
+
+
+  .writing-audio-speed {
+    border-color:
+      rgba(255, 255, 255, 0.08);
+
+    background:
+      rgba(15, 23, 42, 0.68);
+
+    color: #94a3b8;
+  }
+
+
+  .writing-audio-speed select {
+    color: #cbd5e1;
+  }
+
+
+  .writing-audio-icon-button {
+    color: #94a3b8;
+  }
+
+
+  .writing-audio-icon-button:hover {
+    color: #f8fafc;
+
+    background:
+      rgba(255, 255, 255, 0.07);
   }
 
 }
@@ -782,143 +465,72 @@
    MOBILE
 ========================================================= */
 
-@media (
-  max-width: 560px
-) {
+@media (max-width: 640px) {
 
   .writing-audio-player {
-    margin:
-        12px
-        0;
-   }
+    gap: 7px;
 
-
-  .writing-audio-collapsed-button {
-    min-height:
-      42px;
-
-    grid-template-columns:
-      auto
-      minmax(0, 1fr)
-      auto;
-
-    gap:
-      8px;
+    margin-top: 12px;
 
     padding:
-      7px
-      9px;
-  }
-
-
-  .writing-audio-icon {
-    width:
-      30px;
-
-    height:
-      30px;
-
-    border-radius:
-      9px;
-  }
-
-
-  .writing-audio-mini-wave {
-    display:
-      none;
-  }
-
-
-  .writing-audio-expanded-shell {
-    padding:
-      10px;
-
-    border-radius:
-      13px;
-  }
-
-
-  .writing-audio-top-row {
-    gap:
       8px;
   }
 
 
-  .writing-audio-primary-button {
-    width:
-      38px;
-
-    height:
-      38px;
+  .writing-audio-primary {
+    width: 34px;
+    height: 34px;
   }
 
 
-  .writing-audio-visualizer {
-    height:
-      26px;
-
-    gap:
-      1.5px;
-  }
-
-
-  .writing-audio-visualizer > span {
-    width:
-      2px;
-  }
-
-
-  .writing-audio-controls {
-    gap:
-      6px;
-  }
-
-
-  .writing-audio-controls button {
-    height:
-      32px;
-
-    min-width:
-      34px;
+  .writing-audio-speed {
+    min-height: 30px;
 
     padding:
-      0
-      8px;
+      0 3px;
+  }
+
+
+  .writing-audio-speed svg {
+    display: none;
+  }
+
+
+  .writing-audio-speed select {
+    max-width: 50px;
+
+    font-size: 0.7rem;
+  }
+
+
+  .writing-audio-icon-button {
+    width: 30px;
+    height: 30px;
   }
 
 }
 
 
 /* =========================================================
-   VERY SMALL MOBILE
+   EXTRA SMALL MOBILE
 ========================================================= */
 
-@media (
-  max-width: 390px
-) {
+@media (max-width: 420px) {
 
-  .writing-audio-expanded-shell {
-    padding:
-      9px;
+  .writing-audio-title {
+    font-size: 0.73rem;
   }
 
 
-  .writing-audio-status-title strong {
-    font-size:
-      10.5px;
+  .writing-audio-progress-label {
+    display: none;
   }
 
 
-  .writing-audio-visualizer > span:nth-child(n + 14) {
-    display:
-      none;
-  }
+  .writing-audio-speed {
+    border: 0;
 
-
-  .writing-audio-controls button {
-    padding:
-      0
-      7px;
+    background: transparent;
   }
 
 }
@@ -928,25 +540,13 @@
    REDUCED MOTION
 ========================================================= */
 
-@media (
-  prefers-reduced-motion:
-  reduce
-) {
+@media (prefers-reduced-motion: reduce) {
 
-  .writing-audio-collapsed-button,
-  .writing-audio-primary-button,
-  .writing-audio-collapse-button,
-  .writing-audio-controls button,
-  .writing-audio-progress-fill {
-    transition:
-      none;
-  }
-
-
-  .writing-audio-mini-wave > span,
-  .writing-audio-visualizer > span {
-    animation:
-      none !important;
+  .writing-audio-player,
+  .writing-audio-primary,
+  .writing-audio-icon-button,
+  .writing-audio-progress > span {
+    transition: none;
   }
 
 }
