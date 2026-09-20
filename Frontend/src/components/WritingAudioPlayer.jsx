@@ -25,7 +25,7 @@ import "./WritingAudioPlayer.css";
 
 // =========================================================
 // GLOBAL SPEECH OWNER
-// Only one writing should speak at a time.
+// Only one SHOBDO writing can speak at a time.
 // =========================================================
 
 let activeSpeechOwnerId = null;
@@ -80,16 +80,25 @@ const WAVE_LEVELS = [
 
 
 // =========================================================
-// CLEAN TEXT
+// TEXT NORMALIZATION
+// Preserve poem lines and stanza breaks.
 // =========================================================
 
-function cleanText(
+function normalizeSpeechText(
   value
 ) {
 
   return String(
     value || ""
   )
+    .replace(
+      /<br\s*\/?\s*>/gi,
+      "\n"
+    )
+    .replace(
+      /<\/(p|div|li|blockquote|h[1-6])>/gi,
+      "\n"
+    )
     .replace(
       /<[^>]*>/g,
       " "
@@ -99,153 +108,346 @@ function cleanText(
       " "
     )
     .replace(
-      /\s+/g,
-      " "
+      /\r\n?/g,
+      "\n"
+    )
+    .split("\n")
+    .map(
+      (
+        line
+      ) =>
+        line
+          .replace(
+            /[\t ]+/g,
+            " "
+          )
+          .trim()
+    )
+    .join("\n")
+    .replace(
+      /\n{3,}/g,
+      "\n\n"
     )
     .trim();
 }
 
 
 // =========================================================
-// CREATE SPEECH TEXT
+// SPLIT A LONG SINGLE LINE WITHOUT DESTROYING POETRY
 // =========================================================
 
-function createSpeechText(
-  title,
-  content
-) {
-
-  const safeTitle =
-    cleanText(
-      title
-    );
-
-
-  const safeContent =
-    cleanText(
-      content
-    );
-
-
-  if (
-    safeTitle &&
-    safeContent
-  ) {
-
-    return (
-      `${safeTitle}. ${safeContent}`
-    );
-  }
-
-
-  return (
-    safeContent ||
-    safeTitle
-  );
-}
-
-
-// =========================================================
-// SPLIT LONG WRITINGS
-// =========================================================
-
-function createSpeechChunks(
+function splitLongLine(
   text,
-  maxLength = 240
+  maxLength = 220
 ) {
 
-  if (!text) {
+  const safeText =
+    String(
+      text || ""
+    ).trim();
+
+
+  if (!safeText) {
     return [];
   }
 
 
-  const chunks = [];
+  if (
+    safeText.length <=
+    maxLength
+  ) {
 
-  let start = 0;
+    return [
+      safeText,
+    ];
+  }
+
+
+  const parts = [];
+
+  let cursor = 0;
 
 
   while (
-    start < text.length
+    cursor < safeText.length
   ) {
 
     let end =
       Math.min(
-        start + maxLength,
-        text.length
+        cursor + maxLength,
+        safeText.length
       );
 
 
     if (
-      end < text.length
+      end < safeText.length
     ) {
 
-      const section =
-        text.slice(
-          start,
+      const candidate =
+        safeText.slice(
+          cursor,
           end
         );
 
 
-      const breakPoints = [
-        section.lastIndexOf("।"),
-        section.lastIndexOf("."),
-        section.lastIndexOf("?"),
-        section.lastIndexOf("!"),
-        section.lastIndexOf(","),
-        section.lastIndexOf(" "),
-      ];
-
-
-      const bestBreak =
+      const punctuationBreak =
         Math.max(
-          ...breakPoints
+          candidate.lastIndexOf("।"),
+          candidate.lastIndexOf("?"),
+          candidate.lastIndexOf("!"),
+          candidate.lastIndexOf("."),
+          candidate.lastIndexOf(";"),
+          candidate.lastIndexOf(",")
         );
 
 
       if (
-        bestBreak >
-        maxLength * 0.55
+        punctuationBreak >=
+        Math.floor(
+          maxLength * 0.5
+        )
       ) {
 
         end =
-          start +
-          bestBreak +
+          cursor +
+          punctuationBreak +
           1;
+
+      } else {
+
+        const whitespaceBreak =
+          candidate.lastIndexOf(
+            " "
+          );
+
+
+        if (
+          whitespaceBreak >=
+          Math.floor(
+            maxLength * 0.5
+          )
+        ) {
+
+          end =
+            cursor +
+            whitespaceBreak;
+        }
       }
     }
 
 
-    const chunk =
-      text
+    const part =
+      safeText
         .slice(
-          start,
+          cursor,
           end
         )
         .trim();
 
 
-    if (chunk) {
-
-      chunks.push({
-        text:
-          chunk,
-
-        start,
-      });
+    if (part) {
+      parts.push(
+        part
+      );
     }
 
 
-    start =
-      end;
+    cursor =
+      Math.max(
+        end,
+        cursor + 1
+      );
+
+
+    while (
+      cursor < safeText.length &&
+      /\s/.test(
+        safeText[cursor]
+      )
+    ) {
+      cursor += 1;
+    }
   }
 
 
-  return chunks;
+  return parts;
 }
 
 
 // =========================================================
-// LANGUAGE
+// BUILD SPEECH PLAN
+// Every poem line is its own logical speech unit.
+// Blank lines create a longer stanza pause.
+// =========================================================
+
+function createSpeechPlan(
+  title,
+  content
+) {
+
+  const safeTitle =
+    normalizeSpeechText(
+      title
+    )
+      .replace(
+        /\n+/g,
+        " "
+      )
+      .trim();
+
+
+  const safeContent =
+    normalizeSpeechText(
+      content
+    );
+
+
+  const rawChunks = [];
+
+
+  if (safeTitle) {
+
+    const titleParts =
+      splitLongLine(
+        safeTitle
+      );
+
+
+    titleParts.forEach(
+      (
+        part,
+        index
+      ) => {
+
+        rawChunks.push({
+          text:
+            part,
+
+          pauseMs:
+            index ===
+            titleParts.length - 1
+              ? 420
+              : 150,
+        });
+      }
+    );
+  }
+
+
+  if (safeContent) {
+
+    const lines =
+      safeContent.split(
+        "\n"
+      );
+
+
+    lines.forEach(
+      (
+        line
+      ) => {
+
+        const trimmed =
+          line.trim();
+
+
+        if (!trimmed) {
+
+          const previous =
+            rawChunks[
+              rawChunks.length - 1
+            ];
+
+
+          if (previous) {
+
+            previous.pauseMs =
+              Math.max(
+                previous.pauseMs || 0,
+                560
+              );
+          }
+
+
+          return;
+        }
+
+
+        const parts =
+          splitLongLine(
+            trimmed
+          );
+
+
+        parts.forEach(
+          (
+            part,
+            index
+          ) => {
+
+            rawChunks.push({
+              text:
+                part,
+
+              pauseMs:
+                index ===
+                parts.length - 1
+                  ? 260
+                  : 130,
+            });
+          }
+        );
+      }
+    );
+  }
+
+
+  let totalCharacters =
+    0;
+
+
+  const chunks =
+    rawChunks.map(
+      (
+        chunk,
+        index
+      ) => {
+
+        const start =
+          totalCharacters;
+
+
+        totalCharacters +=
+          chunk.text.length;
+
+
+        const end =
+          totalCharacters;
+
+
+        return {
+          ...chunk,
+
+          index,
+
+          start,
+
+          end,
+        };
+      }
+    );
+
+
+  return {
+    chunks,
+
+    totalCharacters,
+  };
+}
+
+
+// =========================================================
+// SPEECH LANGUAGE
 // =========================================================
 
 function getSpeechLocale(
@@ -271,37 +473,136 @@ function getSpeechLocale(
 
 
 // =========================================================
-// FIND VOICE
+// WAIT FOR BROWSER VOICES
+// Chrome often returns [] on the first getVoices() call.
 // =========================================================
 
-function getBestVoice(
+function waitForVoices(
   synthesis,
-  locale
+  timeout = 1400
 ) {
 
-  const voices =
+  const existing =
     synthesis.getVoices?.() ||
     [];
 
 
   if (
-    voices.length === 0
+    existing.length > 0
+  ) {
+
+    return Promise.resolve(
+      existing
+    );
+  }
+
+
+  return new Promise(
+    (
+      resolve
+    ) => {
+
+      let finished =
+        false;
+
+
+      function finish() {
+
+        if (finished) {
+          return;
+        }
+
+
+        finished =
+          true;
+
+
+        synthesis.removeEventListener?.(
+          "voiceschanged",
+          handleVoicesChanged
+        );
+
+
+        resolve(
+          synthesis.getVoices?.() ||
+          []
+        );
+      }
+
+
+      function handleVoicesChanged() {
+
+        const voices =
+          synthesis.getVoices?.() ||
+          [];
+
+
+        if (
+          voices.length > 0
+        ) {
+          finish();
+        }
+      }
+
+
+      synthesis.addEventListener?.(
+        "voiceschanged",
+        handleVoicesChanged
+      );
+
+
+      window.setTimeout(
+        finish,
+        timeout
+      );
+    }
+  );
+}
+
+
+// =========================================================
+// SELECT A LANGUAGE-COMPATIBLE VOICE
+// Never silently read Bengali with an English voice.
+// =========================================================
+
+function chooseVoice(
+  voices,
+  locale
+) {
+
+  const safeVoices =
+    Array.isArray(
+      voices
+    )
+      ? voices
+      : [];
+
+
+  if (
+    safeVoices.length === 0
   ) {
     return null;
   }
 
 
   const normalizedLocale =
-    locale.toLowerCase();
+    String(
+      locale || ""
+    ).toLowerCase();
+
+
+  const baseLanguage =
+    normalizedLocale
+      .split("-")[0];
 
 
   const exact =
-    voices.find(
+    safeVoices.find(
       (
         voice
       ) =>
         String(
-          voice.lang || ""
+          voice?.lang || ""
         ).toLowerCase() ===
         normalizedLocale
     );
@@ -312,26 +613,57 @@ function getBestVoice(
   }
 
 
-  const baseLanguage =
-    normalizedLocale
-      .split("-")[0];
-
-
-  return (
-    voices.find(
+  const sameLanguage =
+    safeVoices.find(
       (
         voice
-      ) =>
-        String(
-          voice.lang || ""
-        )
-          .toLowerCase()
-          .startsWith(
+      ) => {
+
+        const voiceLanguage =
+          String(
+            voice?.lang || ""
+          )
+            .toLowerCase();
+
+
+        return (
+          voiceLanguage ===
+            baseLanguage ||
+          voiceLanguage.startsWith(
             `${baseLanguage}-`
           )
-    ) ||
-    null
-  );
+        );
+      }
+    );
+
+
+  if (sameLanguage) {
+    return sameLanguage;
+  }
+
+
+  // English can safely use another English/default voice.
+  // Other languages must not silently fall back to English.
+  if (
+    baseLanguage === "en"
+  ) {
+
+    return (
+      safeVoices.find(
+        (
+          voice
+        ) =>
+          Boolean(
+            voice?.default
+          )
+      ) ||
+      safeVoices[0] ||
+      null
+    );
+  }
+
+
+  return null;
 }
 
 
@@ -347,12 +679,13 @@ export default function WritingAudioPlayer({
 }) {
 
   const {
-    language: uiLanguage,
+    language:
+      uiLanguage,
   } = useLanguage();
 
 
   // =======================================================
-  // TRANSLATED COPY
+  // COPY
   // =======================================================
 
   const copy =
@@ -372,6 +705,9 @@ export default function WritingAudioPlayer({
 
             paused:
               "বিরতিতে",
+
+            preparing:
+              "ভয়েস প্রস্তুত হচ্ছে",
 
             play:
               "শুনতে শুরু করুন",
@@ -400,6 +736,9 @@ export default function WritingAudioPlayer({
             unsupported:
               "এই ব্রাউজারে অডিও রিডার সমর্থিত নয়",
 
+            voiceUnavailable:
+              "এই লেখার ভাষার জন্য আপনার ব্রাউজার বা ডিভাইসে উপযুক্ত ভয়েস পাওয়া যায়নি।",
+
             error:
               "অডিও চালানো যায়নি",
           };
@@ -419,6 +758,9 @@ export default function WritingAudioPlayer({
 
             paused:
               "रुका हुआ",
+
+            preparing:
+              "आवाज़ तैयार हो रही है",
 
             play:
               "सुनना शुरू करें",
@@ -447,6 +789,9 @@ export default function WritingAudioPlayer({
             unsupported:
               "यह ब्राउज़र ऑडियो रीडर का समर्थन नहीं करता",
 
+            voiceUnavailable:
+              "इस रचना की भाषा के लिए आपके ब्राउज़र या डिवाइस पर उपयुक्त आवाज़ उपलब्ध नहीं है।",
+
             error:
               "ऑडियो चलाया नहीं जा सका",
           };
@@ -462,6 +807,9 @@ export default function WritingAudioPlayer({
 
           paused:
             "Paused",
+
+          preparing:
+            "Preparing voice",
 
           play:
             "Start listening",
@@ -490,6 +838,9 @@ export default function WritingAudioPlayer({
           unsupported:
             "Audio reading is not supported in this browser",
 
+          voiceUnavailable:
+            "A compatible voice for this writing's language is not installed in your browser or device.",
+
           error:
             "Unable to play this writing",
         };
@@ -502,31 +853,19 @@ export default function WritingAudioPlayer({
 
 
   // =======================================================
-  // SPEECH DATA
+  // SPEECH PLAN
   // =======================================================
 
-  const speechText =
+  const speechPlan =
     useMemo(
       () =>
-        createSpeechText(
+        createSpeechPlan(
           title,
           content
         ),
       [
         title,
         content,
-      ]
-    );
-
-
-  const speechChunks =
-    useMemo(
-      () =>
-        createSpeechChunks(
-          speechText
-        ),
-      [
-        speechText,
       ]
     );
 
@@ -601,25 +940,19 @@ export default function WritingAudioPlayer({
   // REFS
   // =======================================================
 
-  const currentChunkRef =
-    useRef(
-      0
-    );
-
-
   const currentCharacterRef =
     useRef(
       0
     );
 
 
-  const cancelReasonRef =
+  const playbackIdRef =
     useRef(
-      ""
+      0
     );
 
 
-  const startTimerRef =
+  const pauseTimerRef =
     useRef(
       null
     );
@@ -632,7 +965,7 @@ export default function WritingAudioPlayer({
 
 
   // =======================================================
-  // SUPPORT
+  // DERIVED STATE
   // =======================================================
 
   const supported =
@@ -645,10 +978,13 @@ export default function WritingAudioPlayer({
 
 
   const hasText =
-    speechText.length >
-      0 &&
-    speechChunks.length >
-      0;
+    speechPlan.chunks.length > 0 &&
+    speechPlan.totalCharacters > 0;
+
+
+  const isPreparing =
+    status ===
+    "preparing";
 
 
   const isSpeaking =
@@ -662,12 +998,13 @@ export default function WritingAudioPlayer({
 
 
   const isActive =
+    isPreparing ||
     isSpeaking ||
     isPaused;
 
 
   // =======================================================
-  // SYNC RATE
+  // KEEP RATE REF CURRENT
   // =======================================================
 
   useEffect(
@@ -684,7 +1021,7 @@ export default function WritingAudioPlayer({
 
 
   // =======================================================
-  // ONLY ONE PLAYER ACTIVE
+  // ONLY ONE WRITING AT A TIME
   // =======================================================
 
   useEffect(
@@ -694,27 +1031,49 @@ export default function WritingAudioPlayer({
         event
       ) {
 
-        const owner =
+        const ownerId =
           event?.detail
             ?.ownerId;
 
 
         if (
-          owner &&
-          owner !==
+          ownerId &&
+          ownerId !==
             playerId
         ) {
+
+          playbackIdRef.current +=
+            1;
+
+
+          if (
+            pauseTimerRef.current
+          ) {
+
+            window.clearTimeout(
+              pauseTimerRef.current
+            );
+
+
+            pauseTimerRef.current =
+              null;
+          }
+
 
           setStatus(
             "idle"
           );
 
+
           setProgress(
             0
           );
 
-          currentChunkRef.current =
-            0;
+
+          setErrorMessage(
+            ""
+          );
+
 
           currentCharacterRef.current =
             0;
@@ -744,6 +1103,61 @@ export default function WritingAudioPlayer({
 
 
   // =======================================================
+  // RESET WHEN CARD CHANGES
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      playbackIdRef.current +=
+        1;
+
+
+      if (
+        pauseTimerRef.current
+      ) {
+
+        window.clearTimeout(
+          pauseTimerRef.current
+        );
+
+
+        pauseTimerRef.current =
+          null;
+      }
+
+
+      setExpanded(
+        false
+      );
+
+
+      setStatus(
+        "idle"
+      );
+
+
+      setProgress(
+        0
+      );
+
+
+      setErrorMessage(
+        ""
+      );
+
+
+      currentCharacterRef.current =
+        0;
+
+    },
+    [
+      writingId,
+    ]
+  );
+
+
+  // =======================================================
   // CLEANUP
   // =======================================================
 
@@ -752,12 +1166,16 @@ export default function WritingAudioPlayer({
 
       return () => {
 
+        playbackIdRef.current +=
+          1;
+
+
         if (
-          startTimerRef.current
+          pauseTimerRef.current
         ) {
 
           window.clearTimeout(
-            startTimerRef.current
+            pauseTimerRef.current
           );
         }
 
@@ -767,9 +1185,6 @@ export default function WritingAudioPlayer({
           activeSpeechOwnerId ===
             playerId
         ) {
-
-          cancelReasonRef.current =
-            "unmount";
 
           window
             .speechSynthesis
@@ -790,108 +1205,174 @@ export default function WritingAudioPlayer({
 
 
   // =======================================================
-  // RESET WHEN CARD CHANGES
+  // FIND POSITION IN SPEECH PLAN
   // =======================================================
 
-  useEffect(
-    () => {
-
-      setExpanded(
-        false
-      );
-
-      setStatus(
-        "idle"
-      );
-
-      setProgress(
-        0
-      );
-
-      setErrorMessage(
-        ""
-      );
-
-
-      currentChunkRef.current =
-        0;
-
-      currentCharacterRef.current =
-        0;
-
-    },
-    [
-      writingId,
-    ]
-  );
-
-
-  // =======================================================
-  // FIND CHUNK
-  // =======================================================
-
-  function findChunkIndex(
+  function findChunkPosition(
     characterIndex
   ) {
 
-    let result =
+    const safeCharacter =
+      Math.max(
+        0,
+        Math.min(
+          Number(
+            characterIndex
+          ) || 0,
+          speechPlan.totalCharacters
+        )
+      );
+
+
+    let selectedIndex =
       0;
 
 
-    speechChunks.forEach(
-      (
-        chunk,
-        index
-      ) => {
+    for (
+      let index = 0;
+      index <
+        speechPlan.chunks.length;
+      index += 1
+    ) {
 
-        if (
-          chunk.start <=
-          characterIndex
-        ) {
+      const chunk =
+        speechPlan.chunks[
+          index
+        ];
 
-          result =
-            index;
-        }
+
+      if (
+        safeCharacter >=
+          chunk.start &&
+        safeCharacter <
+          chunk.end
+      ) {
+
+        selectedIndex =
+          index;
+
+        break;
       }
-    );
 
 
-    return result;
+      if (
+        safeCharacter >=
+        chunk.end
+      ) {
+
+        selectedIndex =
+          Math.min(
+            index + 1,
+            speechPlan.chunks.length - 1
+          );
+      }
+    }
+
+
+    const chunk =
+      speechPlan.chunks[
+        selectedIndex
+      ];
+
+
+    return {
+      chunkIndex:
+        selectedIndex,
+
+      offset:
+        chunk
+          ? Math.max(
+              0,
+              safeCharacter -
+              chunk.start
+            )
+          : 0,
+    };
   }
 
 
   // =======================================================
-  // SPEAK CHUNK
+  // UPDATE PROGRESS
   // =======================================================
 
-  function speakChunk(
-    chunkIndex,
-    startCharacter = null,
-    selectedRate = rateRef.current
+  function updateProgress(
+    characterIndex
   ) {
+
+    const safeCharacter =
+      Math.max(
+        0,
+        Math.min(
+          characterIndex,
+          speechPlan.totalCharacters
+        )
+      );
+
+
+    currentCharacterRef.current =
+      safeCharacter;
+
+
+    const percentage =
+      speechPlan.totalCharacters > 0
+        ? (
+            safeCharacter /
+            speechPlan.totalCharacters
+          ) *
+          100
+        : 0;
+
+
+    setProgress(
+      Math.max(
+        0,
+        Math.min(
+          100,
+          percentage
+        )
+      )
+    );
+  }
+
+
+  // =======================================================
+  // SPEAK ONE CHUNK
+  // =======================================================
+
+  function speakChunk({
+    chunkIndex,
+    offset = 0,
+    voice,
+    selectedRate,
+    playbackId,
+  }) {
 
     if (
       !supported ||
-      !hasText
+      playbackId !==
+        playbackIdRef.current ||
+      activeSpeechOwnerId !==
+        playerId
     ) {
       return;
     }
 
 
     const chunk =
-      speechChunks[
+      speechPlan.chunks[
         chunkIndex
       ];
 
 
     if (!chunk) {
 
-      setStatus(
-        "idle"
+      updateProgress(
+        speechPlan.totalCharacters
       );
 
-      setProgress(
-        100
+
+      setStatus(
+        "idle"
       );
 
 
@@ -903,51 +1384,48 @@ export default function WritingAudioPlayer({
     }
 
 
-    const start =
-      Number.isFinite(
-        Number(
-          startCharacter
-        )
-      )
-        ? Math.max(
-            chunk.start,
-            Number(
-              startCharacter
-            )
-          )
-        : chunk.start;
-
-
-    const offset =
+    const safeOffset =
       Math.max(
         0,
-        start -
-          chunk.start
+        Math.min(
+          offset,
+          chunk.text.length
+        )
       );
 
 
-    const text =
+    const speechText =
       chunk.text
         .slice(
-          offset
+          safeOffset
         )
         .trim();
 
 
-    if (!text) {
+    if (!speechText) {
 
-      speakChunk(
-        chunkIndex + 1,
-        null,
-        selectedRate
+      updateProgress(
+        chunk.end
       );
+
+
+      speakChunk({
+        chunkIndex:
+          chunkIndex + 1,
+
+        offset:
+          0,
+
+        voice,
+
+        selectedRate,
+
+        playbackId,
+      });
+
 
       return;
     }
-
-
-    currentChunkRef.current =
-      chunkIndex;
 
 
     const synthesis =
@@ -958,12 +1436,16 @@ export default function WritingAudioPlayer({
     const utterance =
       new window
         .SpeechSynthesisUtterance(
-          text
+          speechText
         );
 
 
     utterance.lang =
       speechLocale;
+
+
+    utterance.voice =
+      voice;
 
 
     utterance.rate =
@@ -978,29 +1460,21 @@ export default function WritingAudioPlayer({
       1;
 
 
-    const voice =
-      getBestVoice(
-        synthesis,
-        speechLocale
-      );
-
-
-    if (voice) {
-
-      utterance.voice =
-        voice;
-    }
-
-
     utterance.onstart =
       () => {
 
-        cancelReasonRef.current =
-          "";
+        if (
+          playbackId !==
+            playbackIdRef.current
+        ) {
+          return;
+        }
+
 
         setStatus(
           "speaking"
         );
+
 
         setErrorMessage(
           ""
@@ -1014,8 +1488,10 @@ export default function WritingAudioPlayer({
       ) => {
 
         if (
+          playbackId !==
+            playbackIdRef.current ||
           activeSpeechOwnerId !==
-          playerId
+            playerId
         ) {
           return;
         }
@@ -1028,35 +1504,12 @@ export default function WritingAudioPlayer({
           );
 
 
-        const absoluteIndex =
+        updateProgress(
           Math.min(
-            speechText.length,
-            start +
+            chunk.end,
+            chunk.start +
+              safeOffset +
               localIndex
-          );
-
-
-        currentCharacterRef.current =
-          absoluteIndex;
-
-
-        const percentage =
-          speechText.length
-            ? (
-                absoluteIndex /
-                speechText.length
-              ) *
-              100
-            : 0;
-
-
-        setProgress(
-          Math.min(
-            100,
-            Math.max(
-              0,
-              percentage
-            )
           )
         );
       };
@@ -1066,63 +1519,87 @@ export default function WritingAudioPlayer({
       () => {
 
         if (
+          playbackId !==
+            playbackIdRef.current ||
           activeSpeechOwnerId !==
-          playerId
+            playerId
         ) {
           return;
         }
 
 
-        if (
-          cancelReasonRef.current
-        ) {
-          return;
-        }
+        updateProgress(
+          chunk.end
+        );
 
 
-        const nextChunk =
-          chunkIndex +
-          1;
+        const nextChunkIndex =
+          chunkIndex + 1;
 
 
         if (
-          nextChunk <
-          speechChunks.length
+          nextChunkIndex >=
+          speechPlan.chunks.length
         ) {
 
-          currentCharacterRef.current =
-            speechChunks[
-              nextChunk
-            ].start;
-
-
-          speakChunk(
-            nextChunk,
-            null,
-            selectedRate
+          setProgress(
+            100
           );
 
 
+          currentCharacterRef.current =
+            speechPlan.totalCharacters;
+
+
+          setStatus(
+            "idle"
+          );
+
+
+          activeSpeechOwnerId =
+            null;
+
+
           return;
         }
 
 
-        currentCharacterRef.current =
-          speechText.length;
+        pauseTimerRef.current =
+          window.setTimeout(
+            () => {
+
+              pauseTimerRef.current =
+                null;
 
 
-        setProgress(
-          100
-        );
+              if (
+                playbackId !==
+                  playbackIdRef.current ||
+                activeSpeechOwnerId !==
+                  playerId
+              ) {
+                return;
+              }
 
 
-        setStatus(
-          "idle"
-        );
+              speakChunk({
+                chunkIndex:
+                  nextChunkIndex,
 
+                offset:
+                  0,
 
-        activeSpeechOwnerId =
-          null;
+                voice,
+
+                selectedRate,
+
+                playbackId,
+              });
+
+            },
+            chunk.pauseMs ||
+              180
+          );
       };
 
 
@@ -1130,6 +1607,14 @@ export default function WritingAudioPlayer({
       (
         event
       ) => {
+
+        if (
+          playbackId !==
+            playbackIdRef.current
+        ) {
+          return;
+        }
+
 
         const error =
           String(
@@ -1139,13 +1624,9 @@ export default function WritingAudioPlayer({
 
 
         if (
-          cancelReasonRef.current ||
-          error ===
-            "canceled" ||
-          error ===
-            "interrupted"
+          error === "canceled" ||
+          error === "interrupted"
         ) {
-
           return;
         }
 
@@ -1178,10 +1659,10 @@ export default function WritingAudioPlayer({
 
 
   // =======================================================
-  // START SPEECH
+  // START / RESTART SPEECH
   // =======================================================
 
-  function startSpeech(
+  async function startSpeech(
     characterIndex = 0,
     selectedRate = rateRef.current
   ) {
@@ -1199,18 +1680,26 @@ export default function WritingAudioPlayer({
         .speechSynthesis;
 
 
+    playbackIdRef.current +=
+      1;
+
+
+    const playbackId =
+      playbackIdRef.current;
+
+
     if (
-      startTimerRef.current
+      pauseTimerRef.current
     ) {
 
       window.clearTimeout(
-        startTimerRef.current
+        pauseTimerRef.current
       );
+
+
+      pauseTimerRef.current =
+        null;
     }
-
-
-    cancelReasonRef.current =
-      "restart";
 
 
     synthesis.cancel();
@@ -1233,47 +1722,95 @@ export default function WritingAudioPlayer({
     );
 
 
-    const safeIndex =
-      Math.min(
-        Math.max(
-          0,
-          characterIndex
-        ),
-        speechText.length
+    setStatus(
+      "preparing"
+    );
+
+
+    setErrorMessage(
+      ""
+    );
+
+
+    const voices =
+      await waitForVoices(
+        synthesis
       );
 
 
-    currentCharacterRef.current =
-      safeIndex;
+    if (
+      playbackId !==
+        playbackIdRef.current ||
+      activeSpeechOwnerId !==
+        playerId
+    ) {
+      return;
+    }
 
 
-    const chunkIndex =
-      findChunkIndex(
-        safeIndex
+    const voice =
+      chooseVoice(
+        voices,
+        speechLocale
       );
 
 
-    startTimerRef.current =
-      window.setTimeout(
-        () => {
+    if (!voice) {
 
-          cancelReasonRef.current =
-            "";
-
-
-          speakChunk(
-            chunkIndex,
-            safeIndex,
-            selectedRate
-          );
-
-
-          startTimerRef.current =
-            null;
-
-        },
-        70
+      setStatus(
+        "idle"
       );
+
+
+      setErrorMessage(
+        copy.voiceUnavailable
+      );
+
+
+      activeSpeechOwnerId =
+        null;
+
+
+      return;
+    }
+
+
+    const safeCharacter =
+      Math.max(
+        0,
+        Math.min(
+          Number(
+            characterIndex
+          ) || 0,
+          speechPlan.totalCharacters
+        )
+      );
+
+
+    updateProgress(
+      safeCharacter
+    );
+
+
+    const {
+      chunkIndex,
+      offset,
+    } = findChunkPosition(
+      safeCharacter
+    );
+
+
+    speakChunk({
+      chunkIndex,
+
+      offset,
+
+      voice,
+
+      selectedRate,
+
+      playbackId,
+    });
   }
 
 
@@ -1332,15 +1869,14 @@ export default function WritingAudioPlayer({
     }
 
 
-    const start =
-      progress >=
-      99.5
+    const startCharacter =
+      progress >= 99.5
         ? 0
         : currentCharacterRef.current;
 
 
     if (
-      start === 0
+      startCharacter === 0
     ) {
 
       setProgress(
@@ -1350,7 +1886,7 @@ export default function WritingAudioPlayer({
 
 
     startSpeech(
-      start
+      startCharacter
     );
   }
 
@@ -1361,33 +1897,28 @@ export default function WritingAudioPlayer({
 
   function handleStop() {
 
-    if (
-      !supported
-    ) {
-      return;
-    }
-
-
-    cancelReasonRef.current =
-      "stop";
+    playbackIdRef.current +=
+      1;
 
 
     if (
-      startTimerRef.current
+      pauseTimerRef.current
     ) {
 
       window.clearTimeout(
-        startTimerRef.current
+        pauseTimerRef.current
       );
 
-      startTimerRef.current =
+
+      pauseTimerRef.current =
         null;
     }
 
 
     if (
+      supported &&
       activeSpeechOwnerId ===
-      playerId
+        playerId
     ) {
 
       window
@@ -1398,10 +1929,6 @@ export default function WritingAudioPlayer({
       activeSpeechOwnerId =
         null;
     }
-
-
-    currentChunkRef.current =
-      0;
 
 
     currentCharacterRef.current =
@@ -1416,6 +1943,11 @@ export default function WritingAudioPlayer({
     setProgress(
       0
     );
+
+
+    setErrorMessage(
+      ""
+    );
   }
 
 
@@ -1425,13 +1957,13 @@ export default function WritingAudioPlayer({
 
   function handleRestart() {
 
+    currentCharacterRef.current =
+      0;
+
+
     setProgress(
       0
     );
-
-
-    currentCharacterRef.current =
-      0;
 
 
     startSpeech(
@@ -1446,7 +1978,7 @@ export default function WritingAudioPlayer({
 
   function handleRateChange() {
 
-    const index =
+    const currentIndex =
       RATE_OPTIONS.indexOf(
         rate
       );
@@ -1455,7 +1987,7 @@ export default function WritingAudioPlayer({
     const nextRate =
       RATE_OPTIONS[
         (
-          index + 1
+          currentIndex + 1
         ) %
         RATE_OPTIONS.length
       ];
@@ -1485,7 +2017,7 @@ export default function WritingAudioPlayer({
 
 
   // =======================================================
-  // COLLAPSED BUTTON
+  // OPEN PLAYER
   // =======================================================
 
   function handleOpenPlayer() {
@@ -1505,15 +2037,26 @@ export default function WritingAudioPlayer({
 
 
   // =======================================================
-  // NO TEXT
+  // NOTHING TO READ
   // =======================================================
 
-  if (
-    !hasText
-  ) {
-
+  if (!hasText) {
     return null;
   }
+
+
+  // =======================================================
+  // STATUS LABEL
+  // =======================================================
+
+  const statusLabel =
+    isPreparing
+      ? copy.preparing
+      : isSpeaking
+        ? copy.listening
+        : isPaused
+          ? copy.paused
+          : copy.listen;
 
 
   // =======================================================
@@ -1536,6 +2079,10 @@ export default function WritingAudioPlayer({
 
         isPaused
           ? "is-paused"
+          : "",
+
+        isPreparing
+          ? "is-preparing"
           : "",
 
       ]
@@ -1588,13 +2135,7 @@ export default function WritingAudioPlayer({
             >
 
               <strong>
-                {
-                  isSpeaking
-                    ? copy.listening
-                    : isPaused
-                      ? copy.paused
-                      : copy.listen
-                }
+                {statusLabel}
               </strong>
 
 
@@ -1677,7 +2218,8 @@ export default function WritingAudioPlayer({
                   handlePlayPause
                 }
                 disabled={
-                  !supported
+                  !supported ||
+                  isPreparing
                 }
                 title={
                   isSpeaking
@@ -1729,13 +2271,7 @@ export default function WritingAudioPlayer({
                   />
 
                   <strong>
-                    {
-                      isSpeaking
-                        ? copy.listening
-                        : isPaused
-                          ? copy.paused
-                          : copy.listen
-                    }
+                    {statusLabel}
                   </strong>
 
                 </span>
@@ -1853,7 +2389,8 @@ export default function WritingAudioPlayer({
                   handleRestart
                 }
                 disabled={
-                  !supported
+                  !supported ||
+                  isPreparing
                 }
                 title={
                   copy.restart
@@ -1877,7 +2414,8 @@ export default function WritingAudioPlayer({
                   handleRateChange
                 }
                 disabled={
-                  !supported
+                  !supported ||
+                  isPreparing
                 }
                 title={
                   `${copy.speed}: ${rate}×`
@@ -1935,6 +2473,7 @@ export default function WritingAudioPlayer({
               <p
                 className="writing-audio-message error"
                 role="status"
+                aria-live="polite"
               >
                 {errorMessage}
               </p>
