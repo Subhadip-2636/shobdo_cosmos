@@ -6,7 +6,6 @@ import {
 } from "react";
 
 import {
-  ArrowRight,
   BookOpen,
   Bookmark,
   CalendarDays,
@@ -2786,15 +2785,23 @@ function WritingCard({
 
 
       {/* =================================================
-          SOCIAL ACTIONS
+          SOCIAL ACTIONS — COMPACT ICON-ONLY TOOLBAR
       ================================================== */}
 
       <footer
-        className="writing-card-footer"
+        className="writing-card-footer writing-card-footer--compact"
       >
 
         <div
-          className="writing-card-actions"
+          className="writing-card-actions writing-card-actions--icons"
+          role="group"
+          aria-label={
+            language === "bn"
+              ? "লেখার কার্যক্রম"
+              : language === "hi"
+                ? "रचना क्रियाएँ"
+                : "Writing actions"
+          }
         >
 
           {/* LIKE */}
@@ -2815,33 +2822,40 @@ function WritingCard({
             aria-pressed={
               liked
             }
+            aria-label={
+              `${
+                liked
+                  ? labels.unlike
+                  : labels.like
+              }${
+                likesCount > 0
+                  ? ` (${likesCount})`
+                  : ""
+              }`
+            }
             title={
-              liked
-                ? labels.unlike
-                : labels.like
+              `${
+                liked
+                  ? labels.unlike
+                  : labels.like
+              }${
+                likesCount > 0
+                  ? ` · ${likesCount}`
+                  : ""
+              }`
             }
           >
 
             <Heart
-              size={18}
+              size={20}
+              strokeWidth={1.9}
               fill={
                 liked
                   ? "currentColor"
                   : "none"
               }
+              aria-hidden="true"
             />
-
-            <span
-              className="writing-action-count"
-            >
-              {likesCount}
-            </span>
-
-            <span
-              className="writing-action-label"
-            >
-              {labels.like}
-            </span>
 
           </button>
 
@@ -2853,26 +2867,27 @@ function WritingCard({
               `/writings/${writingId}#comments`
             }
             className="writing-action-button writing-comment-button"
+            aria-label={
+              `${labels.comment}${
+                commentsCount > 0
+                  ? ` (${commentsCount})`
+                  : ""
+              }`
+            }
             title={
-              labels.comment
+              `${labels.comment}${
+                commentsCount > 0
+                  ? ` · ${commentsCount}`
+                  : ""
+              }`
             }
           >
 
             <MessageCircle
-              size={18}
+              size={20}
+              strokeWidth={1.9}
+              aria-hidden="true"
             />
-
-            <span
-              className="writing-action-count"
-            >
-              {commentsCount}
-            </span>
-
-            <span
-              className="writing-action-label"
-            >
-              {labels.comment}
-            </span>
 
           </Link>
 
@@ -2895,28 +2910,35 @@ function WritingCard({
             aria-pressed={
               reposted
             }
+            aria-label={
+              `${
+                reposted
+                  ? labels.unrepost
+                  : labels.repost
+              }${
+                repostsCount > 0
+                  ? ` (${repostsCount})`
+                  : ""
+              }`
+            }
             title={
-              reposted
-                ? labels.unrepost
-                : labels.repost
+              `${
+                reposted
+                  ? labels.unrepost
+                  : labels.repost
+              }${
+                repostsCount > 0
+                  ? ` · ${repostsCount}`
+                  : ""
+              }`
             }
           >
 
             <Repeat2
-              size={18}
+              size={20}
+              strokeWidth={1.9}
+              aria-hidden="true"
             />
-
-            <span
-              className="writing-action-count"
-            >
-              {repostsCount}
-            </span>
-
-            <span
-              className="writing-action-label"
-            >
-              {labels.repost}
-            </span>
 
           </button>
 
@@ -2949,6 +2971,9 @@ function WritingCard({
               shareState ===
               "sharing"
             }
+            aria-label={
+              shareLabel
+            }
             title={
               shareLabel
             }
@@ -2957,21 +2982,18 @@ function WritingCard({
             {shareSuccessful
               ? (
                 <Check
-                  size={18}
+                  size={20}
+                  strokeWidth={2}
+                  aria-hidden="true"
                 />
               )
               : (
                 <Share2
-                  size={18}
+                  size={20}
+                  strokeWidth={1.9}
+                  aria-hidden="true"
                 />
               )}
-
-
-            <span
-              className="writing-action-label"
-            >
-              {shareLabel}
-            </span>
 
           </button>
 
@@ -2995,6 +3017,11 @@ function WritingCard({
             aria-pressed={
               saved
             }
+            aria-label={
+              saved
+                ? labels.removeSaved
+                : labels.save
+            }
             title={
               saved
                 ? labels.removeSaved
@@ -3003,49 +3030,19 @@ function WritingCard({
           >
 
             <Bookmark
-              size={18}
+              size={20}
+              strokeWidth={1.9}
               fill={
                 saved
                   ? "currentColor"
                   : "none"
               }
+              aria-hidden="true"
             />
-
-            <span
-              className="writing-action-label"
-            >
-              {
-                saved
-                  ? labels.saved
-                  : labels.save
-              }
-            </span>
 
           </button>
 
         </div>
-
-
-        {/* ===============================================
-            READ MORE
-        ================================================ */}
-
-        <Link
-          to={
-            `/writings/${writingId}`
-          }
-          className="writing-read-link"
-        >
-
-          <span>
-            {labels.read}
-          </span>
-
-          <ArrowRight
-            size={16}
-          />
-
-        </Link>
 
       </footer>
 

@@ -1,6 +1,7 @@
 /* =========================================================
    SHOBDO
-   PROFESSIONAL SOCIAL POST CARD
+   PROFESSIONAL SOCIAL WRITING CARD
+   Full replacement stylesheet for WritingCard.jsx
 ========================================================= */
 
 
@@ -13,6 +14,10 @@
 
   width: 100%;
   min-width: 0;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
 
   padding:
     20px
@@ -25,7 +30,8 @@
     1px solid
     #e7ddd2;
 
-  border-radius: 19px;
+  border-radius:
+    20px;
 
   background:
     linear-gradient(
@@ -46,6 +52,8 @@
       0.045
     );
 
+  isolation: isolate;
+
   transition:
     border-color 0.18s ease,
     box-shadow 0.18s ease,
@@ -55,19 +63,19 @@
 
 .writing-card:hover {
   border-color:
-    #dfd0bd;
+    #ddcfbd;
 
   box-shadow:
-    0 10px 30px
+    0 13px 34px
     rgba(
       71,
       51,
       28,
-      0.07
+      0.075
     );
 
   transform:
-    translateY(-1px);
+    translateY(-2px);
 }
 
 
@@ -83,7 +91,7 @@
   align-items: flex-start;
   justify-content: space-between;
 
-  gap: 16px;
+  gap: 14px;
 }
 
 
@@ -94,6 +102,9 @@
   align-items: center;
 
   gap: 11px;
+
+  flex:
+    1 1 auto;
 }
 
 
@@ -105,7 +116,8 @@
   width: 43px;
   height: 43px;
 
-  flex: 0 0 43px;
+  flex:
+    0 0 43px;
 
   overflow: hidden;
 
@@ -113,7 +125,17 @@
   align-items: center;
   justify-content: center;
 
-  border-radius: 50%;
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.1
+    );
+
+  border-radius:
+    50%;
 
   background:
     linear-gradient(
@@ -125,34 +147,30 @@
   color:
     #ffffff;
 
-  text-decoration: none;
+  text-decoration:
+    none;
 
   font-family:
     Georgia,
     "Times New Roman",
     serif;
 
-  font-size: 12px;
+  font-size:
+    12px;
 
-  font-weight: 700;
+  font-weight:
+    700;
 
   letter-spacing:
     0.03em;
 
   box-shadow:
-    inset 0 0 0 1px
-    rgba(
-      255,
-      255,
-      255,
-      0.09
-    ),
     0 3px 10px
     rgba(
       45,
       33,
       22,
-      0.08
+      0.09
     );
 
   transition:
@@ -166,19 +184,12 @@ a.writing-author-avatar:hover {
     translateY(-1px);
 
   box-shadow:
-    inset 0 0 0 1px
-    rgba(
-      255,
-      255,
-      255,
-      0.09
-    ),
-    0 5px 13px
+    0 6px 15px
     rgba(
       45,
       33,
       22,
-      0.13
+      0.14
     );
 }
 
@@ -199,6 +210,9 @@ a.writing-author-avatar:hover {
 
 .writing-author-content {
   min-width: 0;
+
+  flex:
+    1 1 auto;
 }
 
 
@@ -220,17 +234,23 @@ a.writing-author-avatar:hover {
   color:
     #302923;
 
-  font-size: 13px;
+  font-size:
+    13px;
 
-  font-weight: 800;
+  font-weight:
+    800;
 
-  line-height: 1.35;
+  line-height:
+    1.35;
 
-  text-decoration: none;
+  text-decoration:
+    none;
 
-  white-space: nowrap;
+  white-space:
+    nowrap;
 
-  text-overflow: ellipsis;
+  text-overflow:
+    ellipsis;
 
   transition:
     color 0.16s ease;
@@ -251,28 +271,38 @@ a.writing-author-name:hover {
   color:
     #9a9188;
 
-  font-size: 11px;
+  font-size:
+    11px;
 
-  white-space: nowrap;
+  line-height:
+    1.35;
 
-  text-overflow: ellipsis;
+  white-space:
+    nowrap;
+
+  text-overflow:
+    ellipsis;
 }
 
 
 .writing-author-secondary {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
 
   gap: 5px;
 
-  margin-top: 3px;
+  margin-top:
+    3px;
 
   color:
     #91877e;
 
-  font-size: 11px;
+  font-size:
+    11px;
 
-  line-height: 1.35;
+  line-height:
+    1.35;
 }
 
 
@@ -289,7 +319,8 @@ a.writing-author-name:hover {
 .writing-more-menu {
   position: relative;
 
-  flex: 0 0 auto;
+  flex:
+    0 0 auto;
 }
 
 
@@ -305,7 +336,8 @@ a.writing-author-name:hover {
 
   border: none;
 
-  border-radius: 50%;
+  border-radius:
+    50%;
 
   background:
     transparent;
@@ -313,11 +345,13 @@ a.writing-author-name:hover {
   color:
     #8d8379;
 
-  cursor: pointer;
+  cursor:
+    pointer;
 
   transition:
     background-color 0.16s ease,
-    color 0.16s ease;
+    color 0.16s ease,
+    transform 0.16s ease;
 }
 
 
@@ -331,25 +365,38 @@ a.writing-author-name:hover {
 }
 
 
+.writing-more-button:active {
+  transform:
+    scale(0.94);
+}
+
+
 .writing-more-dropdown {
   position: absolute;
 
-  top: calc(100% + 7px);
+  top:
+    calc(
+      100% + 7px
+    );
+
   right: 0;
 
   z-index: 80;
 
-  width: 190px;
+  width:
+    190px;
 
   overflow: hidden;
 
-  padding: 6px;
+  padding:
+    6px;
 
   border:
     1px solid
     #e5d9ca;
 
-  border-radius: 12px;
+  border-radius:
+    12px;
 
   background:
     #fffefa;
@@ -373,7 +420,8 @@ a.writing-author-name:hover {
 .writing-more-dropdown button {
   width: 100%;
 
-  min-height: 39px;
+  min-height:
+    39px;
 
   display: flex;
   align-items: center;
@@ -386,7 +434,8 @@ a.writing-author-name:hover {
 
   border: none;
 
-  border-radius: 8px;
+  border-radius:
+    8px;
 
   background:
     transparent;
@@ -394,15 +443,20 @@ a.writing-author-name:hover {
   color:
     #5d554d;
 
-  font-family: inherit;
+  font-family:
+    inherit;
 
-  font-size: 12px;
+  font-size:
+    12px;
 
-  font-weight: 650;
+  font-weight:
+    650;
 
-  text-align: left;
+  text-align:
+    left;
 
-  cursor: pointer;
+  cursor:
+    pointer;
 
   transition:
     background-color 0.15s ease,
@@ -430,13 +484,15 @@ a.writing-author-name:hover {
 
   gap: 7px;
 
-  margin-top: 17px;
+  margin-top:
+    17px;
 }
 
 
 .writing-language-badge,
 .writing-category-badge {
-  min-height: 25px;
+  min-height:
+    25px;
 
   display: inline-flex;
   align-items: center;
@@ -457,7 +513,11 @@ a.writing-author-name:hover {
   font-weight:
     750;
 
-  line-height: 1;
+  line-height:
+    1;
+
+  white-space:
+    nowrap;
 }
 
 
@@ -494,14 +554,18 @@ a.writing-author-name:hover {
 .writing-card-title-link {
   display: block;
 
-  margin-top: 14px;
+  margin-top:
+    14px;
 
-  text-decoration: none;
+  text-decoration:
+    none;
 }
 
 
 .writing-card-title {
   margin: 0;
+
+  overflow: hidden;
 
   color:
     #28221e;
@@ -518,12 +582,26 @@ a.writing-author-name:hover {
       25px
     );
 
-  font-weight: 700;
+  font-weight:
+    700;
 
-  line-height: 1.3;
+  line-height:
+    1.3;
 
   letter-spacing:
     -0.02em;
+
+  overflow-wrap:
+    anywhere;
+
+  display:
+    -webkit-box;
+
+  -webkit-box-orient:
+    vertical;
+
+  -webkit-line-clamp:
+    3;
 
   transition:
     color 0.17s ease;
@@ -547,6 +625,8 @@ a.writing-author-name:hover {
     0
     0;
 
+  overflow: hidden;
+
   color:
     #625a52;
 
@@ -560,7 +640,16 @@ a.writing-author-name:hover {
     anywhere;
 
   white-space:
-    pre-line;
+    normal;
+
+  display:
+    -webkit-box;
+
+  -webkit-box-orient:
+    vertical;
+
+  -webkit-line-clamp:
+    5;
 }
 
 
@@ -574,12 +663,17 @@ a.writing-author-name:hover {
 
   gap: 6px;
 
-  margin-top: 14px;
+  margin-top:
+    14px;
 }
 
 
 .writing-card-tag {
-  min-height: 27px;
+  min-height:
+    27px;
+
+  max-width:
+    100%;
 
   display: inline-flex;
   align-items: center;
@@ -605,11 +699,26 @@ a.writing-author-name:hover {
   font-weight:
     650;
 
-  text-decoration: none;
+  text-decoration:
+    none;
+
+  overflow:
+    hidden;
 
   transition:
     background-color 0.15s ease,
     color 0.15s ease;
+}
+
+
+.writing-card-tag span {
+  overflow: hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
 }
 
 
@@ -636,7 +745,10 @@ a.writing-author-name:hover {
     18px;
 
   margin-top:
-    17px;
+    auto;
+
+  padding-top:
+    18px;
 
   padding-bottom:
     17px;
@@ -646,6 +758,9 @@ a.writing-author-name:hover {
 
   font-size:
     10.5px;
+
+  line-height:
+    1.4;
 
   border-bottom:
     1px solid
@@ -662,6 +777,9 @@ a.writing-author-name:hover {
 
 
 .writing-card-meta svg {
+  flex:
+    0 0 auto;
+
   color:
     #a18152;
 }
@@ -672,13 +790,11 @@ a.writing-author-name:hover {
 ========================================================= */
 
 .writing-card-footer {
-  min-height: 59px;
+  min-height:
+    58px;
 
   display: flex;
   align-items: center;
-  justify-content: space-between;
-
-  gap: 12px;
 
   margin:
     0
@@ -686,57 +802,88 @@ a.writing-author-name:hover {
 
   padding:
     7px
-    14px
-    7px
-    15px;
+    12px;
 
   border-radius:
     0
     0
-    18px
-    18px;
+    19px
+    19px;
 
   background:
-    rgba(
-      253,
-      250,
-      246,
-      0.64
+    linear-gradient(
+      180deg,
+      rgba(
+        255,
+        253,
+        249,
+        0.82
+      ) 0%,
+      rgba(
+        251,
+        247,
+        241,
+        0.92
+      ) 100%
     );
 }
 
 
+.writing-card-footer--compact {
+  justify-content:
+    center;
+}
+
+
 /* =========================================================
-   SOCIAL ACTIONS
+   SOCIAL ACTION TOOLBAR
 ========================================================= */
 
 .writing-card-actions {
+  width: 100%;
   min-width: 0;
 
-  display: flex;
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      5,
+      minmax(
+        0,
+        1fr
+      )
+    );
+
   align-items: center;
 
-  gap: 2px;
+  gap: 6px;
+}
+
+
+.writing-card-actions--icons {
+  width: 100%;
 }
 
 
 .writing-action-button {
-  min-width: 40px;
-  min-height: 38px;
+  position: relative;
+
+  width: 100%;
+  min-width: 0;
+  height: 40px;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  gap: 5px;
+  padding: 0;
 
-  padding:
-    0
-    9px;
+  border:
+    1px solid
+    transparent;
 
-  border: none;
-
-  border-radius: 9px;
+  border-radius:
+    11px;
 
   background:
     transparent;
@@ -744,56 +891,92 @@ a.writing-author-name:hover {
   color:
     #81776e;
 
-  font-family: inherit;
+  font-family:
+    inherit;
 
-  font-size:
-    11px;
+  line-height:
+    1;
 
-  font-weight:
-    650;
+  text-decoration:
+    none;
 
-  line-height: 1;
+  cursor:
+    pointer;
 
-  text-decoration: none;
-
-  cursor: pointer;
-
-  white-space: nowrap;
+  -webkit-tap-highlight-color:
+    transparent;
 
   transition:
     background-color 0.16s ease,
+    border-color 0.16s ease,
     color 0.16s ease,
+    transform 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+
+.writing-action-button svg {
+  width:
+    20px;
+
+  height:
+    20px;
+
+  flex:
+    0 0 auto;
+
+  pointer-events:
+    none;
+
+  transition:
     transform 0.16s ease;
 }
 
 
 .writing-action-button:hover:not(:disabled) {
   background:
-    #f3ece3;
+    #f4eee7;
 
   color:
     #685944;
+
+  transform:
+    translateY(-1px);
+}
+
+
+.writing-action-button:hover:not(:disabled)
+svg {
+  transform:
+    scale(1.06);
 }
 
 
 .writing-action-button:active:not(:disabled) {
   transform:
-    scale(0.97);
+    scale(0.95);
 }
 
 
 .writing-action-button:disabled {
-  opacity: 0.5;
+  opacity:
+    0.46;
 
-  cursor: default;
+  cursor:
+    default;
 }
 
 
-.writing-action-count {
-  min-width: 8px;
+/*
+  The new WritingCard.jsx is icon-only.
+  These rules also protect the layout if an older JSX version
+  temporarily leaves labels or count spans in the DOM.
+*/
 
-  font-variant-numeric:
-    tabular-nums;
+.writing-action-label,
+.writing-action-count {
+  display:
+    none;
 }
 
 
@@ -801,10 +984,12 @@ a.writing-author-name:hover {
    LIKE
 ========================================================= */
 
-.writing-like-button:hover:not(:disabled),
-.writing-like-button.active {
+.writing-like-button:hover:not(:disabled) {
+  border-color:
+    #f5d7d8;
+
   background:
-    #fff0f0;
+    #fff1f1;
 
   color:
     #b24d52;
@@ -812,8 +997,23 @@ a.writing-author-name:hover {
 
 
 .writing-like-button.active {
-  font-weight:
-    800;
+  border-color:
+    #f1d4d6;
+
+  background:
+    #fff0f1;
+
+  color:
+    #bd4c56;
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(
+      189,
+      76,
+      86,
+      0.035
+    );
 }
 
 
@@ -822,8 +1022,11 @@ a.writing-author-name:hover {
 ========================================================= */
 
 .writing-comment-button:hover {
+  border-color:
+    #d7e7f2;
+
   background:
-    #eef5fa;
+    #eef6fb;
 
   color:
     #477b9e;
@@ -834,8 +1037,10 @@ a.writing-author-name:hover {
    REPOST
 ========================================================= */
 
-.writing-repost-button:hover:not(:disabled),
-.writing-repost-button.active {
+.writing-repost-button:hover:not(:disabled) {
+  border-color:
+    #d7eadf;
+
   background:
     #eef8f2;
 
@@ -845,8 +1050,14 @@ a.writing-author-name:hover {
 
 
 .writing-repost-button.active {
-  font-weight:
-    800;
+  border-color:
+    #d1e7da;
+
+  background:
+    #edf8f1;
+
+  color:
+    #317a52;
 }
 
 
@@ -855,6 +1066,9 @@ a.writing-author-name:hover {
 ========================================================= */
 
 .writing-share-button:hover:not(:disabled) {
+  border-color:
+    #dedff2;
+
   background:
     #f1f2fb;
 
@@ -864,6 +1078,9 @@ a.writing-author-name:hover {
 
 
 .writing-share-button.success {
+  border-color:
+    #d2e7da;
+
   background:
     #eef8f2;
 
@@ -873,6 +1090,9 @@ a.writing-author-name:hover {
 
 
 .writing-share-button.error {
+  border-color:
+    #f0d6d3;
+
   background:
     #fff0ef;
 
@@ -885,8 +1105,10 @@ a.writing-author-name:hover {
    SAVE
 ========================================================= */
 
-.writing-save-button:hover:not(:disabled),
-.writing-save-button.active {
+.writing-save-button:hover:not(:disabled) {
+  border-color:
+    #eadcbf;
+
   background:
     #fbf2df;
 
@@ -896,63 +1118,14 @@ a.writing-author-name:hover {
 
 
 .writing-save-button.active {
-  font-weight:
-    800;
-}
-
-
-/* =========================================================
-   READ MORE
-========================================================= */
-
-.writing-read-link {
-  min-height: 38px;
-
-  flex: 0 0 auto;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 6px;
-
-  padding:
-    0
-    12px;
-
-  border-radius:
-    9px;
-
-  color:
-    #825b20;
-
-  font-size:
-    11px;
-
-  font-weight:
-    800;
-
-  text-decoration:
-    none;
-
-  white-space:
-    nowrap;
-
-  transition:
-    background-color 0.16s ease,
-    gap 0.16s ease,
-    color 0.16s ease;
-}
-
-
-.writing-read-link:hover {
-  gap: 9px;
+  border-color:
+    #e6d6b5;
 
   background:
-    #f2e6d3;
+    #fbf1dc;
 
   color:
-    #654313;
+    #946720;
 }
 
 
@@ -963,7 +1136,6 @@ a.writing-author-name:hover {
 .writing-more-button:focus-visible,
 .writing-more-dropdown button:focus-visible,
 .writing-action-button:focus-visible,
-.writing-read-link:focus-visible,
 .writing-author-avatar:focus-visible,
 .writing-author-name:focus-visible,
 .writing-card-title-link:focus-visible,
@@ -974,7 +1146,7 @@ a.writing-author-name:hover {
       150,
       104,
       34,
-      0.19
+      0.2
     );
 
   outline-offset:
@@ -1015,15 +1187,34 @@ a.writing-author-name:hover {
   max-width: 1150px
 ) {
 
-  .writing-action-label {
-    display: none;
+  .writing-card {
+    padding:
+      19px
+      19px
+      0;
+  }
+
+
+  .writing-card-footer {
+    margin:
+      0
+      -19px;
+
+    padding:
+      7px
+      11px;
+  }
+
+
+  .writing-card-actions {
+    gap:
+      5px;
   }
 
 
   .writing-action-button {
-    padding:
-      0
-      10px;
+    height:
+      39px;
   }
 
 }
@@ -1044,53 +1235,57 @@ a.writing-author-name:hover {
       0;
 
     border-radius:
-      17px;
+      18px;
   }
 
 
   .writing-card-footer {
+    min-height:
+      56px;
+
     margin:
       0
       -18px;
 
     padding:
       7px
-      11px
-      7px
-      12px;
+      10px;
 
     border-radius:
       0
       0
-      16px
-      16px;
+      17px
+      17px;
   }
 
 
   .writing-author-username {
-    display: none;
+    display:
+      none;
   }
 
 
-  .writing-action-label {
-    display: none;
+  .writing-card-actions {
+    gap:
+      5px;
   }
 
 
   .writing-action-button {
-    min-width:
-      37px;
+    height:
+      39px;
 
-    padding:
-      0
-      8px;
+    border-radius:
+      10px;
   }
 
 
-  .writing-read-link {
-    padding:
-      0
-      10px;
+  .writing-action-button svg {
+    width:
+      19px;
+
+    height:
+      19px;
   }
 
 }
@@ -1111,20 +1306,39 @@ a.writing-author-name:hover {
       0;
 
     border-radius:
-      15px;
+      16px;
   }
 
 
   .writing-card:hover {
-    transform: none;
+    transform:
+      none;
+
+    box-shadow:
+      0 5px 22px
+      rgba(
+        67,
+        50,
+        30,
+        0.045
+      );
   }
 
 
   /* HEADER */
 
+  .writing-author-section {
+    gap:
+      9px;
+  }
+
+
   .writing-author-avatar {
-    width: 40px;
-    height: 40px;
+    width:
+      40px;
+
+    height:
+      40px;
 
     flex-basis:
       40px;
@@ -1147,12 +1361,46 @@ a.writing-author-name:hover {
 
 
   .writing-more-button {
-    width: 34px;
-    height: 34px;
+    width:
+      34px;
+
+    height:
+      34px;
+  }
+
+
+  /* BADGES */
+
+  .writing-card-badges {
+    gap:
+      6px;
+
+    margin-top:
+      14px;
+  }
+
+
+  .writing-language-badge,
+  .writing-category-badge {
+    min-height:
+      24px;
+
+    padding:
+      0
+      8px;
+
+    font-size:
+      9.5px;
   }
 
 
   /* TITLE */
+
+  .writing-card-title-link {
+    margin-top:
+      12px;
+  }
+
 
   .writing-card-title {
     font-size:
@@ -1166,11 +1414,25 @@ a.writing-author-name:hover {
   /* PREVIEW */
 
   .writing-card-preview {
+    margin-top:
+      9px;
+
     font-size:
       12.5px;
 
     line-height:
       1.7;
+
+    -webkit-line-clamp:
+      5;
+  }
+
+
+  /* TAGS */
+
+  .writing-card-tags {
+    margin-top:
+      12px;
   }
 
 
@@ -1181,11 +1443,11 @@ a.writing-author-name:hover {
       7px
       13px;
 
-    margin-top:
+    padding-top:
       15px;
 
     padding-bottom:
-      15px;
+      14px;
 
     font-size:
       9.5px;
@@ -1196,91 +1458,40 @@ a.writing-author-name:hover {
 
   .writing-card-footer {
     min-height:
-      57px;
+      56px;
 
     margin:
       0
       -14px;
 
     padding:
-      6px
+      7px
       8px;
-
-    gap: 5px;
 
     border-radius:
       0
       0
-      14px
-      14px;
+      15px
+      15px;
   }
 
 
   .writing-card-actions {
-    flex:
-      1 1 auto;
-
-    justify-content:
-      space-between;
-
-    gap: 0;
+    gap:
+      4px;
   }
 
 
   .writing-action-button {
-    min-width:
-      35px;
+    height:
+      40px;
 
-    min-height:
-      37px;
-
-    padding:
-      0
-      6px;
-
-    gap: 4px;
+    border-radius:
+      10px;
   }
 
 
   .writing-action-button svg {
-    width:
-      17px;
-
-    height:
-      17px;
-  }
-
-
-  .writing-action-count {
-    font-size:
-      10px;
-  }
-
-
-  .writing-action-label {
-    display: none;
-  }
-
-
-  .writing-read-link {
-    min-height:
-      37px;
-
-    padding:
-      0
-      9px;
-
-    font-size:
-      10px;
-  }
-
-
-  .writing-read-link span {
-    display: none;
-  }
-
-
-  .writing-read-link svg {
     width:
       18px;
 
@@ -1317,6 +1528,10 @@ a.writing-author-name:hover {
     margin:
       0
       -12px;
+
+    padding:
+      6px
+      7px;
   }
 
 
@@ -1328,7 +1543,7 @@ a.writing-author-name:hover {
 
   .writing-card-badges {
     margin-top:
-      14px;
+      13px;
   }
 
 
@@ -1352,19 +1567,27 @@ a.writing-author-name:hover {
   }
 
 
-  .writing-action-button {
-    min-width:
-      32px;
-
-    padding:
-      0
-      4px;
+  .writing-card-actions {
+    gap:
+      3px;
   }
 
 
-  .writing-action-count {
-    font-size:
+  .writing-action-button {
+    height:
+      38px;
+
+    border-radius:
       9px;
+  }
+
+
+  .writing-action-button svg {
+    width:
+      17px;
+
+    height:
+      17px;
   }
 
 }
@@ -1384,14 +1607,21 @@ a.writing-author-name:hover {
   .writing-author-name,
   .writing-more-button,
   .writing-action-button,
-  .writing-read-link,
   .writing-card-title {
-    transition: none;
+    transition:
+      none;
+  }
+
+
+  .writing-action-button svg {
+    transition:
+      none;
   }
 
 
   .writing-more-dropdown {
-    animation: none;
+    animation:
+      none;
   }
 
 }
