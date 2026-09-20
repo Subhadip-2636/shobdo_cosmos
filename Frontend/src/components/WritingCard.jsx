@@ -45,6 +45,8 @@ import {
   useLanguage,
 } from "../Language/LanguageContext";
 
+import WritingAudioPlayer from "./WritingAudioPlayer";
+
 import "./WritingCard.css";
 
 
@@ -2783,7 +2785,27 @@ function WritingCard({
 
       </div>
 
+      {/* =================================================
+        AUDIO READER
+      ================================================== */}
 
+      <WritingAudioPlayer
+        writingId={
+          writingId
+        }
+        title={
+          writing?.title ||
+          labels.untitled
+        }
+        content={
+          writing?.content ||
+          ""
+        }
+        writingLanguage={
+          languageCode
+        }
+      />
+      
       {/* =================================================
           SOCIAL ACTIONS — COMPACT ICON-ONLY TOOLBAR
       ================================================== */}

@@ -1,0 +1,952 @@
+/* =========================================================
+   SHOBDO
+   WRITING AUDIO PLAYER
+========================================================= */
+
+
+/* =========================================================
+   ROOT
+========================================================= */
+
+.writing-audio-player {
+  width: 100%;
+
+  margin:
+    14px
+    0;
+
+  color:
+    #4f463e;
+}
+
+
+/* =========================================================
+   COLLAPSED PLAYER
+========================================================= */
+
+.writing-audio-collapsed-button {
+  width: 100%;
+  min-height: 44px;
+
+  display: grid;
+
+  grid-template-columns:
+    auto
+    minmax(0, auto)
+    minmax(70px, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding:
+    8px
+    11px;
+
+  border:
+    1px solid
+    #e8ddd0;
+
+  border-radius:
+    13px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #fffdfa 0%,
+      #faf6f0 100%
+    );
+
+  color:
+    #6f6256;
+
+  font-family: inherit;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 3px 12px
+    rgba(
+      69,
+      49,
+      28,
+      0.035
+    );
+
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+
+.writing-audio-collapsed-button:hover:not(:disabled) {
+  border-color:
+    #d8c5a9;
+
+  background:
+    #fbf3e8;
+
+  color:
+    #7e5922;
+
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 5px 16px
+    rgba(
+      73,
+      52,
+      30,
+      0.065
+    );
+}
+
+
+.writing-audio-collapsed-button:active:not(:disabled) {
+  transform:
+    scale(0.99);
+}
+
+
+.writing-audio-collapsed-button:disabled {
+  opacity: 0.55;
+
+  cursor: default;
+}
+
+
+/* =========================================================
+   ICON
+========================================================= */
+
+.writing-audio-icon {
+  width: 32px;
+  height: 32px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background:
+    #f2e4cf;
+
+  color:
+    #8b6121;
+
+  flex: 0 0 auto;
+}
+
+
+/* =========================================================
+   COLLAPSED COPY
+========================================================= */
+
+.writing-audio-collapsed-copy {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+}
+
+
+.writing-audio-collapsed-copy strong {
+  overflow: hidden;
+
+  font-size: 11.5px;
+
+  font-weight: 800;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+}
+
+
+.writing-audio-collapsed-copy > span {
+  flex: 0 0 auto;
+
+  color:
+    #9b8b7b;
+
+  font-size:
+    9.5px;
+
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   MINI WAVEFORM
+========================================================= */
+
+.writing-audio-mini-wave {
+  min-width: 0;
+  height: 26px;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 2px;
+
+  overflow: hidden;
+}
+
+
+.writing-audio-mini-wave > span {
+  width: 2px;
+
+  height:
+    var(
+      --wave-level,
+      8px
+    );
+
+  min-height: 4px;
+
+  border-radius:
+    999px;
+
+  background:
+    #baa079;
+
+  opacity: 0.65;
+
+  transform-origin:
+    center;
+}
+
+
+/* Animate only while speaking */
+
+.writing-audio-player.is-speaking
+.writing-audio-mini-wave > span {
+  animation:
+    writingAudioWave
+    0.9s
+    ease-in-out
+    infinite;
+
+  animation-delay:
+    calc(
+      var(
+        --wave-index
+      ) *
+      -0.07s
+    );
+}
+
+
+/* =========================================================
+   EXPANDED SHELL
+========================================================= */
+
+.writing-audio-expanded-shell {
+  width: 100%;
+
+  padding:
+    12px;
+
+  border:
+    1px solid
+    #e5d9cb;
+
+  border-radius:
+    15px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #fffefa 0%,
+      #fbf6ef 100%
+    );
+
+  box-shadow:
+    0 5px 18px
+    rgba(
+      69,
+      49,
+      28,
+      0.05
+    );
+}
+
+
+/* =========================================================
+   TOP ROW
+========================================================= */
+
+.writing-audio-top-row {
+  display: grid;
+
+  grid-template-columns:
+    auto
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 11px;
+}
+
+
+/* =========================================================
+   PRIMARY PLAY / PAUSE
+========================================================= */
+
+.writing-audio-primary-button {
+  width: 40px;
+  height: 40px;
+
+  flex: 0 0 auto;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: none;
+
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      135deg,
+      #8e6423,
+      #b1843e
+    );
+
+  color: #ffffff;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 6px 15px
+    rgba(
+      136,
+      91,
+      25,
+      0.2
+    );
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    filter 0.18s ease;
+}
+
+
+.writing-audio-primary-button:hover:not(:disabled) {
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 8px 18px
+    rgba(
+      136,
+      91,
+      25,
+      0.26
+    );
+
+  filter:
+    brightness(1.03);
+}
+
+
+.writing-audio-primary-button:active:not(:disabled) {
+  transform:
+    scale(0.94);
+}
+
+
+.writing-audio-primary-button:disabled {
+  opacity: 0.5;
+
+  cursor: default;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.writing-audio-status {
+  min-width: 0;
+}
+
+
+.writing-audio-status-title {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  color:
+    #685b4d;
+}
+
+
+.writing-audio-status-title svg {
+  color:
+    #9a7133;
+}
+
+
+.writing-audio-status-title strong {
+  font-size:
+    11.5px;
+
+  font-weight:
+    800;
+}
+
+
+/* =========================================================
+   MAIN VISUALIZER
+========================================================= */
+
+.writing-audio-visualizer {
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 2px;
+
+  margin-top:
+    5px;
+
+  overflow: hidden;
+}
+
+
+.writing-audio-visualizer > span {
+  width: 3px;
+
+  height:
+    var(
+      --wave-level,
+      10px
+    );
+
+  min-height:
+    4px;
+
+  border-radius:
+    999px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #b98b45,
+      #8f6526
+    );
+
+  opacity:
+    0.52;
+
+  transform-origin:
+    center;
+
+  transition:
+    opacity 0.18s ease;
+}
+
+
+.writing-audio-player.is-speaking
+.writing-audio-visualizer > span {
+  opacity: 0.9;
+
+  animation:
+    writingAudioWave
+    0.8s
+    ease-in-out
+    infinite;
+
+  animation-delay:
+    calc(
+      var(
+        --wave-index
+      ) *
+      -0.055s
+    );
+}
+
+
+.writing-audio-player.is-paused
+.writing-audio-visualizer > span {
+  opacity: 0.38;
+}
+
+
+/* =========================================================
+   COLLAPSE BUTTON
+========================================================= */
+
+.writing-audio-collapse-button {
+  width: 34px;
+  height: 34px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background:
+    transparent;
+
+  color:
+    #887d72;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
+}
+
+
+.writing-audio-collapse-button:hover {
+  background:
+    #f2e9dd;
+
+  color:
+    #76551f;
+}
+
+
+/* =========================================================
+   PROGRESS
+========================================================= */
+
+.writing-audio-progress-row {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 10px;
+
+  margin-top:
+    11px;
+}
+
+
+.writing-audio-progress-track {
+  position: relative;
+
+  height: 5px;
+
+  overflow: hidden;
+
+  border-radius:
+    999px;
+
+  background:
+    #ece3d8;
+}
+
+
+.writing-audio-progress-fill {
+  position: absolute;
+
+  inset:
+    0
+    auto
+    0
+    0;
+
+  width: 0;
+
+  border-radius:
+    inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      #9d6d26,
+      #c39855
+    );
+
+  transition:
+    width 0.18s linear;
+}
+
+
+.writing-audio-progress-value {
+  min-width: 32px;
+
+  color:
+    #938577;
+
+  font-size:
+    9.5px;
+
+  font-weight:
+    750;
+
+  text-align: right;
+
+  font-variant-numeric:
+    tabular-nums;
+}
+
+
+/* =========================================================
+   CONTROLS
+========================================================= */
+
+.writing-audio-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  margin-top:
+    10px;
+}
+
+
+.writing-audio-controls button {
+  min-width: 36px;
+  height: 34px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding:
+    0
+    10px;
+
+  border:
+    1px solid
+    #e5d9ca;
+
+  border-radius:
+    10px;
+
+  background:
+    #fffdf9;
+
+  color:
+    #776a5d;
+
+  font-family: inherit;
+
+  font-size:
+    10.5px;
+
+  font-weight:
+    800;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+
+.writing-audio-controls button:hover:not(:disabled) {
+  border-color:
+    #d3b990;
+
+  background:
+    #f8efe3;
+
+  color:
+    #805820;
+
+  transform:
+    translateY(-1px);
+}
+
+
+.writing-audio-controls button:active:not(:disabled) {
+  transform:
+    scale(0.95);
+}
+
+
+.writing-audio-controls button:disabled {
+  opacity:
+    0.45;
+
+  cursor:
+    default;
+}
+
+
+.writing-audio-rate-button {
+  min-width:
+    52px !important;
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+.writing-audio-message {
+  margin:
+    9px
+    0
+    0;
+
+  color:
+    #8b7f73;
+
+  font-size:
+    10.5px;
+
+  line-height:
+    1.45;
+
+  text-align:
+    center;
+}
+
+
+.writing-audio-message.error {
+  color:
+    #a14e45;
+}
+
+
+/* =========================================================
+   FOCUS
+========================================================= */
+
+.writing-audio-collapsed-button:focus-visible,
+.writing-audio-primary-button:focus-visible,
+.writing-audio-collapse-button:focus-visible,
+.writing-audio-controls button:focus-visible {
+  outline:
+    3px solid
+    rgba(
+      151,
+      106,
+      35,
+      0.19
+    );
+
+  outline-offset:
+    2px;
+}
+
+
+/* =========================================================
+   WAVE ANIMATION
+========================================================= */
+
+@keyframes writingAudioWave {
+
+  0%,
+  100% {
+    transform:
+      scaleY(0.55);
+  }
+
+  50% {
+    transform:
+      scaleY(1.18);
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+  max-width: 560px
+) {
+
+  .writing-audio-player {
+    margin:
+        12px
+        0;
+   }
+
+
+  .writing-audio-collapsed-button {
+    min-height:
+      42px;
+
+    grid-template-columns:
+      auto
+      minmax(0, 1fr)
+      auto;
+
+    gap:
+      8px;
+
+    padding:
+      7px
+      9px;
+  }
+
+
+  .writing-audio-icon {
+    width:
+      30px;
+
+    height:
+      30px;
+
+    border-radius:
+      9px;
+  }
+
+
+  .writing-audio-mini-wave {
+    display:
+      none;
+  }
+
+
+  .writing-audio-expanded-shell {
+    padding:
+      10px;
+
+    border-radius:
+      13px;
+  }
+
+
+  .writing-audio-top-row {
+    gap:
+      8px;
+  }
+
+
+  .writing-audio-primary-button {
+    width:
+      38px;
+
+    height:
+      38px;
+  }
+
+
+  .writing-audio-visualizer {
+    height:
+      26px;
+
+    gap:
+      1.5px;
+  }
+
+
+  .writing-audio-visualizer > span {
+    width:
+      2px;
+  }
+
+
+  .writing-audio-controls {
+    gap:
+      6px;
+  }
+
+
+  .writing-audio-controls button {
+    height:
+      32px;
+
+    min-width:
+      34px;
+
+    padding:
+      0
+      8px;
+  }
+
+}
+
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (
+  max-width: 390px
+) {
+
+  .writing-audio-expanded-shell {
+    padding:
+      9px;
+  }
+
+
+  .writing-audio-status-title strong {
+    font-size:
+      10.5px;
+  }
+
+
+  .writing-audio-visualizer > span:nth-child(n + 14) {
+    display:
+      none;
+  }
+
+
+  .writing-audio-controls button {
+    padding:
+      0
+      7px;
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+
+  .writing-audio-collapsed-button,
+  .writing-audio-primary-button,
+  .writing-audio-collapse-button,
+  .writing-audio-controls button,
+  .writing-audio-progress-fill {
+    transition:
+      none;
+  }
+
+
+  .writing-audio-mini-wave > span,
+  .writing-audio-visualizer > span {
+    animation:
+      none !important;
+  }
+
+}
