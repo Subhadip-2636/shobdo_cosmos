@@ -13,6 +13,10 @@ import {
   useState,
 } from "react";
 
+import {
+  PageBackgroundProvider,
+} from "./context/PageBackgroundContext";
+
 
 // =========================================================
 // LAYOUTS
@@ -29,6 +33,8 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 import NotificationToast from "./components/NotificationToast";
+import PageBackground from "./components/PageBackground";
+import BackgroundPicker from "./components/BackgroundPicker";
 
 
 // =========================================================
@@ -974,6 +980,9 @@ function App() {
   return (
 
     <BrowserRouter>
+      <PageBackgroundProvider>
+        <PageBackground />
+        <BackgroundPicker />
 
 
       {/* ===================================================
@@ -1532,6 +1541,8 @@ function App() {
         </Routes>
 
       </div>
+
+    </PageBackgroundProvider>
 
     </BrowserRouter>
 

@@ -1,0 +1,1187 @@
+/* =========================================================
+   SHOBDO BACKGROUND PICKER
+   ========================================================= */
+
+
+/* =========================================================
+   FLOATING TRIGGER
+   ========================================================= */
+
+.background-picker-trigger {
+
+  position: fixed;
+
+  right: 22px;
+  bottom: 86px;
+
+  z-index: 1200;
+
+  width: 46px;
+  height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border:
+    1px solid
+    rgba(
+      118,
+      91,
+      48,
+      0.16
+    );
+
+  border-radius: 15px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.94
+    );
+
+  color: #8b6228;
+
+  box-shadow:
+    0 10px 30px
+    rgba(
+      35,
+      27,
+      17,
+      0.12
+    );
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+
+  cursor: pointer;
+
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+
+.background-picker-trigger:hover {
+
+  transform:
+    translateY(-2px);
+
+  background: #ffffff;
+
+  box-shadow:
+    0 16px 38px
+    rgba(
+      35,
+      27,
+      17,
+      0.16
+    );
+}
+
+
+/* =========================================================
+   BACKDROP
+   ========================================================= */
+
+.background-picker-backdrop {
+
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 3000;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  background:
+    rgba(
+      18,
+      16,
+      13,
+      0.36
+    );
+
+  backdrop-filter:
+    blur(8px);
+
+  -webkit-backdrop-filter:
+    blur(8px);
+}
+
+
+/* =========================================================
+   PANEL
+   ========================================================= */
+
+.background-picker-panel {
+
+  width:
+    min(
+      660px,
+      100%
+    );
+
+  max-height:
+    calc(
+      100vh - 40px
+    );
+
+  overflow-y: auto;
+
+  border:
+    1px solid
+    rgba(
+      100,
+      80,
+      50,
+      0.12
+    );
+
+  border-radius: 24px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.97
+    );
+
+  box-shadow:
+    0 30px 90px
+    rgba(
+      26,
+      20,
+      12,
+      0.24
+    );
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.background-picker-header {
+
+  display: flex;
+
+  align-items:
+    flex-start;
+
+  justify-content:
+    space-between;
+
+  gap: 20px;
+
+  padding:
+    24px 26px 20px;
+
+  border-bottom:
+    1px solid
+    rgba(
+      110,
+      90,
+      60,
+      0.10
+    );
+}
+
+
+.background-picker-eyebrow {
+
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #9d7437;
+
+  font-size: 10px;
+
+  font-weight: 800;
+
+  letter-spacing:
+    0.15em;
+}
+
+
+.background-picker-header h2 {
+
+  margin: 0;
+
+  color: #25211c;
+
+  font-size: 22px;
+
+  font-weight: 760;
+}
+
+
+.background-picker-header p {
+
+  margin:
+    6px 0 0;
+
+  color: #777168;
+
+  font-size: 13px;
+}
+
+
+.background-picker-close {
+
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border: 0;
+
+  border-radius: 50%;
+
+  background: #f4f1eb;
+
+  color: #5e584f;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   GRID
+   ========================================================= */
+
+.background-picker-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(
+        0,
+        1fr
+      )
+    );
+
+  gap: 16px;
+
+  padding: 24px;
+}
+
+
+/* =========================================================
+   OPTION
+   ========================================================= */
+
+.background-option {
+
+  padding: 0;
+
+  border: 0;
+
+  background:
+    transparent;
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+
+.background-option-preview {
+
+  position: relative;
+
+  display: block;
+
+  width: 100%;
+
+  aspect-ratio:
+    16 / 10;
+
+  overflow: hidden;
+
+  border:
+    2px solid
+    transparent;
+
+  border-radius: 15px;
+
+  background-position:
+    center;
+
+  background-repeat:
+    no-repeat;
+
+  background-size:
+    cover;
+
+  box-shadow:
+    0 4px 14px
+    rgba(
+      30,
+      25,
+      18,
+      0.08
+    );
+
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+
+.background-option:hover
+.background-option-preview {
+
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 10px 24px
+    rgba(
+      30,
+      25,
+      18,
+      0.14
+    );
+}
+
+
+.background-option.selected
+.background-option-preview {
+
+  border-color:
+    #a87730;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(
+      168,
+      119,
+      48,
+      0.13
+    );
+}
+
+
+/* =========================================================
+   SELECTED CHECK
+   ========================================================= */
+
+.background-option-check {
+
+  position: absolute;
+
+  top: 8px;
+  right: 8px;
+
+  width: 28px;
+  height: 28px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #956828;
+
+  color: #ffffff;
+
+  box-shadow:
+    0 4px 12px
+    rgba(
+      0,
+      0,
+      0,
+      0.18
+    );
+}
+
+
+/* =========================================================
+   OPTION NAME
+   ========================================================= */
+
+.background-option-name {
+
+  display: block;
+
+  margin-top: 8px;
+
+  padding-left: 2px;
+
+  color: #39352f;
+
+  font-size: 13px;
+
+  font-weight: 650;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.background-picker-footer {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content:
+    space-between;
+
+  gap: 12px;
+
+  padding:
+    18px 24px 22px;
+
+  border-top:
+    1px solid
+    rgba(
+      110,
+      90,
+      60,
+      0.10
+    );
+}
+
+
+/* =========================================================
+   FOOTER BUTTONS
+   ========================================================= */
+
+.background-reset-button,
+.background-apply-all-button {
+
+  min-height: 42px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  padding:
+    0 16px;
+
+  border-radius: 12px;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+
+.background-reset-button {
+
+  border:
+    1px solid #e3ddd2;
+
+  background: #ffffff;
+
+  color: #5f584f;
+}
+
+
+.background-reset-button:hover {
+
+  background: #f7f4ef;
+}
+
+
+.background-apply-all-button {
+
+  border: 0;
+
+  background:
+    linear-gradient(
+      135deg,
+      #8a6228,
+      #b5853d
+    );
+
+  color: #ffffff;
+
+  box-shadow:
+    0 5px 16px
+    rgba(
+      145,
+      99,
+      37,
+      0.24
+    );
+}
+
+
+.background-apply-all-button:hover {
+
+  transform:
+    translateY(-1px);
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (
+  max-width: 650px
+) {
+
+  .background-picker-trigger {
+
+    right: 14px;
+
+    bottom: 76px;
+
+    width: 43px;
+    height: 43px;
+
+    border-radius: 13px;
+  }
+
+
+  .background-picker-backdrop {
+
+    align-items:
+      flex-end;
+
+    padding: 0;
+  }
+
+
+  .background-picker-panel {
+
+    width: 100%;
+
+    max-height: 86vh;
+
+    border-radius:
+      24px
+      24px
+      0
+      0;
+  }
+
+
+  .background-picker-grid {
+
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(
+          0,
+          1fr
+        )
+      );
+
+    gap: 14px;
+
+    padding: 18px;
+  }
+
+
+  .background-picker-header {
+
+    padding:
+      20px
+      20px
+      17px;
+  }
+
+
+  .background-picker-footer {
+
+    padding:
+      16px
+      18px
+      calc(
+        16px +
+        env(
+          safe-area-inset-bottom
+        )
+      );
+  }
+
+}
+
+/* =========================================================
+   BACKGROUND IMAGE CONTROLS
+   ========================================================= */
+
+.background-controls {
+  margin:
+    0 24px 22px;
+
+  padding: 18px;
+
+  border:
+    1px solid
+    rgba(
+      110,
+      90,
+      60,
+      0.12
+    );
+
+  border-radius: 16px;
+
+  background:
+    rgba(
+      248,
+      246,
+      241,
+      0.72
+    );
+}
+
+
+/* =========================================================
+   CONTROLS HEADER
+   ========================================================= */
+
+.background-controls-heading {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  margin-bottom: 18px;
+}
+
+
+.background-controls-title {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  color: #332e27;
+
+  font-size: 14px;
+
+  font-weight: 750;
+}
+
+
+.background-controls-note {
+  color: #938b80;
+
+  font-size: 11px;
+
+  font-weight: 650;
+}
+
+
+/* =========================================================
+   CONTROL ROW
+   ========================================================= */
+
+.background-control-row {
+  padding:
+    14px 0;
+}
+
+
+.background-control-row +
+.background-control-row {
+  border-top:
+    1px solid
+    rgba(
+      110,
+      90,
+      60,
+      0.10
+    );
+}
+
+
+/* =========================================================
+   CONTROL LABEL
+   ========================================================= */
+
+.background-control-label {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 14px;
+
+  margin-bottom: 10px;
+}
+
+
+.background-control-label-main {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  color: #514a40;
+
+  font-size: 13px;
+
+  font-weight: 650;
+}
+
+
+.background-control-label strong {
+  min-width: 52px;
+
+  color: #8b6228;
+
+  font-size: 12px;
+
+  font-weight: 800;
+
+  text-align: right;
+}
+
+
+/* =========================================================
+   RANGE INPUT
+   ========================================================= */
+
+.background-range {
+  width: 100%;
+
+  height: 5px;
+
+  margin: 4px 0;
+
+  border-radius: 999px;
+
+  background: #ddd5c9;
+
+  cursor: pointer;
+
+  appearance: none;
+
+  -webkit-appearance: none;
+}
+
+
+/* Chrome / Edge / Safari */
+
+.background-range::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+
+  border:
+    3px solid
+    #ffffff;
+
+  border-radius: 50%;
+
+  background: #9a6c2b;
+
+  box-shadow:
+    0 2px 8px
+    rgba(
+      70,
+      48,
+      20,
+      0.28
+    );
+
+  cursor: grab;
+
+  appearance: none;
+
+  -webkit-appearance: none;
+}
+
+
+.background-range::-webkit-slider-thumb:active {
+  cursor: grabbing;
+
+  transform:
+    scale(1.08);
+}
+
+
+/* Firefox */
+
+.background-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+
+  border:
+    3px solid
+    #ffffff;
+
+  border-radius: 50%;
+
+  background: #9a6c2b;
+
+  box-shadow:
+    0 2px 8px
+    rgba(
+      70,
+      48,
+      20,
+      0.28
+    );
+
+  cursor: grab;
+}
+
+
+/* =========================================================
+   RANGE SCALE
+   ========================================================= */
+
+.background-range-scale {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  margin-top: 7px;
+
+  color: #aaa197;
+
+  font-size: 9px;
+
+  font-weight: 650;
+}
+
+
+/* =========================================================
+   MOBILE CONTROLS
+   ========================================================= */
+
+@media (max-width: 650px) {
+
+  .background-controls {
+    margin:
+      0 18px 18px;
+
+    padding: 16px;
+  }
+
+
+  .background-controls-heading {
+    margin-bottom: 14px;
+  }
+
+
+  .background-control-row {
+    padding:
+      12px 0;
+  }
+
+}
+
+/* =========================================================
+   CUSTOM BACKGROUND UPLOAD
+   ========================================================= */
+
+.background-upload-section {
+  margin:
+    22px 24px 0;
+
+  padding: 17px;
+
+  border:
+    1px solid
+    rgba(
+      112,
+      88,
+      52,
+      0.12
+    );
+
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(249, 246, 240, 0.94),
+      rgba(255, 255, 255, 0.90)
+    );
+}
+
+
+/* =========================================================
+   UPLOAD INFO
+   ========================================================= */
+
+.background-upload-info {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  margin-bottom: 14px;
+}
+
+
+.background-upload-icon {
+  width: 40px;
+  height: 40px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background:
+    rgba(
+      151,
+      105,
+      39,
+      0.10
+    );
+
+  color: #94682c;
+}
+
+
+.background-upload-info h3 {
+  margin: 0;
+
+  color: #332e27;
+
+  font-size: 14px;
+
+  font-weight: 750;
+}
+
+
+.background-upload-info p {
+  margin:
+    3px 0 0;
+
+  color: #8d857a;
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   HIDDEN FILE INPUT
+   ========================================================= */
+
+.background-file-input {
+  display: none;
+}
+
+
+/* =========================================================
+   UPLOAD ACTIONS
+   ========================================================= */
+
+.background-upload-actions {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 9px;
+}
+
+
+.background-upload-button,
+.background-remove-button {
+  min-height: 39px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  padding:
+    0 14px;
+
+  border-radius: 11px;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+
+.background-upload-button {
+  border: 0;
+
+  background:
+    linear-gradient(
+      135deg,
+      #8b6228,
+      #b7853d
+    );
+
+  color: #ffffff;
+
+  box-shadow:
+    0 5px 14px
+    rgba(
+      145,
+      100,
+      37,
+      0.20
+    );
+}
+
+
+.background-upload-button:hover:not(:disabled) {
+  transform:
+    translateY(-1px);
+}
+
+
+.background-upload-button:disabled {
+  opacity: 0.65;
+
+  cursor: wait;
+}
+
+
+.background-remove-button {
+  border:
+    1px solid
+    rgba(
+      168,
+      69,
+      69,
+      0.18
+    );
+
+  background:
+    rgba(
+      255,
+      248,
+      248,
+      0.90
+    );
+
+  color: #a34e4e;
+}
+
+
+.background-remove-button:hover {
+  background:
+    #fff1f1;
+}
+
+
+/* =========================================================
+   UPLOAD HINT
+   ========================================================= */
+
+.background-upload-hint {
+  margin:
+    10px 0 0;
+
+  color: #a49b90;
+
+  font-size: 9px;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   UPLOAD ERROR
+   ========================================================= */
+
+.background-upload-error {
+  margin-top: 10px;
+
+  padding:
+    9px 11px;
+
+  border:
+    1px solid
+    rgba(
+      183,
+      63,
+      63,
+      0.15
+    );
+
+  border-radius: 9px;
+
+  background:
+    rgba(
+      255,
+      238,
+      238,
+      0.88
+    );
+
+  color: #a13e3e;
+
+  font-size: 11px;
+
+  font-weight: 650;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 650px) {
+
+  .background-upload-section {
+    margin:
+      18px
+      18px
+      0;
+
+    padding: 15px;
+  }
+
+
+  .background-upload-actions {
+    width: 100%;
+  }
+
+
+  .background-upload-button,
+  .background-remove-button {
+    flex: 1;
+  }
+
+}
