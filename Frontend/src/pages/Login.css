@@ -1,0 +1,987 @@
+/* =========================================================
+   SHOBDO — PROFESSIONAL LOGIN PAGE
+   ========================================================= */
+
+.shobdo-auth-page {
+  --auth-bg: #f6efe6;
+  --auth-bg-soft: #fbf7f1;
+  --auth-surface: rgba(255, 255, 255, 0.9);
+  --auth-surface-solid: #fffdf9;
+  --auth-text: #26211d;
+  --auth-soft: #70675f;
+  --auth-muted: #9b9189;
+  --auth-border: rgba(85, 63, 44, 0.14);
+  --auth-border-strong: rgba(85, 63, 44, 0.22);
+  --auth-gold: #a8741f;
+  --auth-gold-dark: #7d5618;
+  --auth-gold-soft: #f4e6c8;
+  --auth-purple: #542070;
+  --auth-purple-dark: #331043;
+
+  position: relative;
+  min-height: calc(100vh - 78px);
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 12% 22%,
+      rgba(190, 148, 82, 0.13),
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at 88% 20%,
+      rgba(87, 42, 105, 0.08),
+      transparent 28%
+    ),
+    linear-gradient(
+      135deg,
+      #f6eee4 0%,
+      #fbf8f3 52%,
+      #f1e8dd 100%
+    );
+
+  color: var(--auth-text);
+}
+
+
+/* =========================================================
+   AMBIENT BACKGROUND
+   ========================================================= */
+
+.shobdo-auth-ambient {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 999px;
+  filter: blur(8px);
+  opacity: 0.65;
+}
+
+.shobdo-auth-ambient-left {
+  width: 420px;
+  height: 420px;
+  left: -190px;
+  bottom: -180px;
+  background: radial-gradient(circle, rgba(173, 124, 45, 0.2), transparent 68%);
+}
+
+.shobdo-auth-ambient-right {
+  width: 520px;
+  height: 520px;
+  right: -220px;
+  top: 80px;
+  background: radial-gradient(circle, rgba(86, 39, 108, 0.11), transparent 68%);
+}
+
+
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+
+.shobdo-auth-layout {
+  position: relative;
+  z-index: 1;
+
+  width: min(1480px, calc(100% - 64px));
+  min-height: calc(100vh - 78px);
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(440px, 0.8fr);
+  gap: clamp(48px, 6vw, 110px);
+  align-items: center;
+
+  padding: 54px 0 66px;
+}
+
+
+/* =========================================================
+   INTRO PANEL
+   ========================================================= */
+
+.shobdo-auth-intro {
+  position: relative;
+  min-height: 720px;
+  display: flex;
+  align-items: center;
+  padding: 30px 0 70px;
+}
+
+.shobdo-auth-intro-inner {
+  width: min(740px, 100%);
+  margin: 0 auto;
+}
+
+.shobdo-auth-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 18px;
+
+  color: var(--auth-gold-dark);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.shobdo-auth-intro h1 {
+  margin: 0;
+
+  font-family:
+    "Noto Serif Bengali",
+    "Noto Serif",
+    Georgia,
+    serif;
+
+  font-size: clamp(4.6rem, 7vw, 7.6rem);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+  color: #211c18;
+}
+
+.shobdo-auth-title-stroke {
+  display: block;
+  width: 158px;
+  height: 8px;
+  margin: 18px 0 24px;
+
+  border-radius: 100% 24% 100% 32%;
+  transform: rotate(-4deg);
+
+  background: linear-gradient(90deg, #a66b12, #d6af69);
+  opacity: 0.9;
+}
+
+.shobdo-auth-intro-subtitle {
+  margin: 0 0 19px;
+
+  font-family:
+    "Noto Serif Bengali",
+    Georgia,
+    serif;
+
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  font-weight: 500;
+  line-height: 1.45;
+  color: #3b342e;
+}
+
+.shobdo-auth-intro-description {
+  max-width: 650px;
+  margin: 0 0 32px;
+
+  color: var(--auth-soft);
+  font-size: clamp(1rem, 1.3vw, 1.12rem);
+  line-height: 1.9;
+}
+
+
+/* =========================================================
+   QUOTE
+   ========================================================= */
+
+.shobdo-auth-quote {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+
+  margin: 0 0 38px;
+  padding: 26px 28px;
+
+  border: 1px solid rgba(166, 115, 29, 0.18);
+  border-left: 3px solid var(--auth-gold);
+  border-radius: 4px 18px 18px 4px;
+
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: 0 18px 42px rgba(94, 68, 42, 0.06);
+  backdrop-filter: blur(9px);
+}
+
+.shobdo-auth-quote > svg {
+  flex: 0 0 auto;
+  color: var(--auth-gold);
+}
+
+.shobdo-auth-quote blockquote {
+  margin: 0 0 10px;
+
+  font-family:
+    "Noto Serif Bengali",
+    Georgia,
+    serif;
+
+  font-size: clamp(1.08rem, 1.45vw, 1.32rem);
+  font-style: italic;
+  line-height: 1.72;
+  color: #4d453f;
+}
+
+.shobdo-auth-quote span {
+  color: var(--auth-gold-dark);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+
+/* =========================================================
+   FEATURE ROW
+   ========================================================= */
+
+.shobdo-auth-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 26px;
+}
+
+.shobdo-auth-feature {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+}
+
+.shobdo-auth-feature-icon {
+  width: 54px;
+  height: 54px;
+  margin-bottom: 8px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+  background: linear-gradient(145deg, #fbf0d8, #f0ddb9);
+  color: var(--auth-gold-dark);
+  box-shadow: inset 0 0 0 1px rgba(169, 119, 32, 0.08);
+}
+
+.shobdo-auth-feature strong {
+  font-size: 1rem;
+  color: #312a25;
+}
+
+.shobdo-auth-feature small {
+  max-width: 170px;
+  color: #8b8179;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   DECORATIVE BOOK STACK / NOTE
+   ========================================================= */
+
+.shobdo-auth-book-stack {
+  position: absolute;
+  left: -36px;
+  bottom: -10px;
+
+  display: flex;
+  flex-direction: column;
+  transform: rotate(-1deg);
+  opacity: 0.93;
+  pointer-events: none;
+}
+
+.shobdo-auth-book-stack span {
+  min-width: 132px;
+  padding: 8px 18px;
+
+  border: 1px solid rgba(72, 51, 30, 0.18);
+  border-radius: 4px;
+
+  background: linear-gradient(90deg, #c5954c, #e3bd7b);
+  color: #513b24;
+
+  font-family:
+    "Noto Serif Bengali",
+    Georgia,
+    serif;
+
+  font-size: 0.88rem;
+  box-shadow: 0 4px 9px rgba(67, 48, 27, 0.08);
+}
+
+.shobdo-auth-book-stack span:nth-child(2) {
+  margin-left: 7px;
+}
+
+.shobdo-auth-book-stack span:nth-child(3) {
+  margin-left: -5px;
+}
+
+.shobdo-auth-book-stack span:nth-child(4) {
+  margin-left: 10px;
+}
+
+.shobdo-auth-desk-note {
+  position: absolute;
+  left: 130px;
+  bottom: -20px;
+
+  width: 112px;
+  min-height: 100px;
+  padding: 12px 14px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  border: 1px solid rgba(89, 61, 33, 0.18);
+  border-radius: 12px 12px 22px 22px;
+
+  background: #efe2d0;
+  color: #5d4224;
+
+  box-shadow: 0 12px 26px rgba(74, 52, 30, 0.09);
+  text-align: center;
+  pointer-events: none;
+}
+
+.shobdo-auth-desk-note span {
+  font-family:
+    "Noto Serif Bengali",
+    Georgia,
+    serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   LOGIN CARD
+   ========================================================= */
+
+.shobdo-auth-card {
+  width: 100%;
+  max-width: 540px;
+  justify-self: center;
+
+  padding: clamp(30px, 4vw, 48px);
+
+  border: 1px solid rgba(113, 83, 54, 0.14);
+  border-radius: 28px;
+
+  background:
+    linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.96),
+      rgba(255, 252, 247, 0.92)
+    );
+
+  box-shadow: 0 32px 82px rgba(58, 39, 23, 0.13);
+  backdrop-filter: blur(22px);
+}
+
+.shobdo-auth-card-icon {
+  width: 66px;
+  height: 66px;
+  margin: 0 auto 18px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid rgba(169, 119, 32, 0.32);
+  border-radius: 50%;
+
+  background: linear-gradient(145deg, #fff9ec, #fbefd5);
+  color: var(--auth-gold);
+  box-shadow: 0 12px 30px rgba(169, 119, 32, 0.09);
+}
+
+.shobdo-auth-card-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.shobdo-auth-card-heading > span {
+  margin-bottom: 8px;
+
+  color: var(--auth-gold-dark);
+  font-family: Georgia, serif;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.34em;
+}
+
+.shobdo-auth-card-heading h2 {
+  margin: 0 0 7px;
+
+  font-family:
+    "Noto Serif Bengali",
+    Georgia,
+    serif;
+
+  font-size: clamp(1.85rem, 2.5vw, 2.45rem);
+  line-height: 1.2;
+  color: #231e1a;
+}
+
+.shobdo-auth-card-heading p {
+  margin: 0;
+  color: #8d837b;
+  font-size: 0.95rem;
+}
+
+
+/* =========================================================
+   ERROR / LINK NOTICES
+   ========================================================= */
+
+.shobdo-auth-error,
+.shobdo-auth-link-notice {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 14px;
+  padding: 13px 15px;
+  border-radius: 11px;
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.shobdo-auth-error {
+  border: 1px solid rgba(190, 49, 54, 0.18);
+  background: rgba(190, 49, 54, 0.07);
+  color: #a52c31;
+}
+
+.shobdo-auth-link-notice strong {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.shobdo-auth-link-notice p {
+  margin: 0;
+}
+
+.shobdo-auth-link-notice button {
+  margin-top: 9px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.shobdo-auth-link-notice button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.shobdo-auth-link-notice-facebook {
+  border: 1px solid #d8b36a;
+  background: #fff9ed;
+  color: #77571d;
+}
+
+.shobdo-auth-link-notice-instagram {
+  border: 1px solid #d9a3c7;
+  background: #fff7fb;
+  color: #7a315f;
+}
+
+
+/* =========================================================
+   PROVIDER BUTTONS
+   ========================================================= */
+
+.shobdo-google-login-section,
+.shobdo-auth-provider-block {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.shobdo-google-button-host {
+  width: 100%;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 11px;
+}
+
+.shobdo-google-button-host.is-disabled {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.shobdo-google-button-host > div,
+.shobdo-google-button-host iframe {
+  max-width: 100% !important;
+}
+
+.shobdo-auth-social {
+  width: 100%;
+  min-height: 54px;
+  padding: 10px 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  border: 0;
+  border-radius: 12px;
+
+  font-family: inherit;
+  font-size: 0.98rem;
+  font-weight: 700;
+
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease;
+}
+
+.shobdo-auth-social:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.shobdo-auth-social:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.shobdo-auth-social:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.shobdo-auth-google-loading {
+  border: 1px solid #ded9d3;
+  background: #ffffff;
+  color: #332c27;
+}
+
+.shobdo-auth-facebook {
+  background: linear-gradient(135deg, #1877f2, #1769d9);
+  color: #ffffff;
+  box-shadow: 0 9px 22px rgba(24, 119, 242, 0.18);
+}
+
+.shobdo-auth-facebook-icon {
+  width: 25px;
+  height: 25px;
+  display: inline-grid;
+  place-items: center;
+
+  border-radius: 50%;
+  background: #ffffff;
+  color: #1877f2;
+
+  font-family: Arial, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.shobdo-auth-instagram {
+  background:
+    linear-gradient(
+      105deg,
+      #833ab4 0%,
+      #c13584 35%,
+      #e1306c 65%,
+      #f77737 100%
+    );
+
+  color: #ffffff;
+  box-shadow: 0 9px 22px rgba(193, 53, 132, 0.17);
+}
+
+.shobdo-auth-instagram-note {
+  margin-top: 7px;
+  color: #9a918a;
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.shobdo-auth-provider-status {
+  margin-top: 8px;
+  color: #8f857e;
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   DIVIDER
+   ========================================================= */
+
+.shobdo-auth-divider {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 13px;
+  margin: 26px 0;
+}
+
+.shobdo-auth-divider span {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(139, 120, 103, 0), rgba(139, 120, 103, 0.25));
+}
+
+.shobdo-auth-divider span:last-child {
+  background: linear-gradient(90deg, rgba(139, 120, 103, 0.25), rgba(139, 120, 103, 0));
+}
+
+.shobdo-auth-divider small {
+  color: #9a918a;
+  font-size: 0.8rem;
+}
+
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.shobdo-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.shobdo-auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shobdo-auth-field label {
+  color: #4d443d;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.shobdo-auth-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.shobdo-auth-label-row a {
+  color: var(--auth-gold-dark);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.shobdo-auth-label-row a:hover {
+  text-decoration: underline;
+}
+
+.shobdo-auth-input {
+  min-height: 56px;
+  padding: 0 15px;
+
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  border: 1px solid #dfdad4;
+  border-radius: 11px;
+
+  background: rgba(255, 255, 255, 0.8);
+  color: #9b9189;
+
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.shobdo-auth-input:focus-within {
+  border-color: rgba(82, 33, 111, 0.55);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(82, 33, 111, 0.07);
+}
+
+.shobdo-auth-input input {
+  width: 100%;
+  min-width: 0;
+
+  border: 0;
+  outline: 0;
+  background: transparent;
+
+  color: #302a26;
+  font: inherit;
+  font-size: 0.94rem;
+}
+
+.shobdo-auth-input input::placeholder {
+  color: #b3aaa3;
+}
+
+.shobdo-auth-input input:disabled {
+  cursor: not-allowed;
+}
+
+.shobdo-password-toggle {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: #8b817a;
+  cursor: pointer;
+}
+
+.shobdo-password-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+
+/* =========================================================
+   SUBMIT
+   ========================================================= */
+
+.shobdo-auth-submit {
+  width: 100%;
+  min-height: 56px;
+  margin-top: 4px;
+  padding: 10px 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  border: 0;
+  border-radius: 12px;
+
+  background: linear-gradient(135deg, var(--auth-purple), var(--auth-purple-dark));
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 0.98rem;
+  font-weight: 800;
+
+  cursor: pointer;
+  box-shadow: 0 13px 28px rgba(82, 33, 111, 0.2);
+
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease;
+}
+
+.shobdo-auth-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 33px rgba(82, 33, 111, 0.25);
+}
+
+.shobdo-auth-submit:disabled {
+  cursor: wait;
+  opacity: 0.66;
+}
+
+
+/* =========================================================
+   REGISTER
+   ========================================================= */
+
+.shobdo-auth-bottom {
+  margin-top: 22px;
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  flex-wrap: wrap;
+
+  color: #8c837c;
+  font-size: 0.86rem;
+}
+
+.shobdo-auth-bottom a {
+  color: var(--auth-gold-dark);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.shobdo-auth-bottom a:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================================================
+   SPINNER
+   ========================================================= */
+
+.shobdo-auth-page .spin {
+  animation: shobdo-auth-spin 0.8s linear infinite;
+}
+
+@keyframes shobdo-auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1180px) {
+
+  .shobdo-auth-layout {
+    width: min(1120px, calc(100% - 40px));
+    grid-template-columns: minmax(0, 1fr) minmax(400px, 0.82fr);
+    gap: 44px;
+  }
+
+  .shobdo-auth-book-stack,
+  .shobdo-auth-desk-note {
+    display: none;
+  }
+}
+
+
+@media (max-width: 940px) {
+
+  .shobdo-auth-page {
+    min-height: auto;
+  }
+
+  .shobdo-auth-layout {
+    min-height: auto;
+    grid-template-columns: 1fr;
+    gap: 34px;
+    padding: 40px 0 54px;
+  }
+
+  .shobdo-auth-intro {
+    min-height: auto;
+    padding: 18px 0;
+  }
+
+  .shobdo-auth-intro-inner {
+    width: 100%;
+  }
+
+  .shobdo-auth-intro h1 {
+    font-size: clamp(3.7rem, 12vw, 6rem);
+  }
+
+  .shobdo-auth-card {
+    max-width: none;
+  }
+}
+
+
+@media (max-width: 640px) {
+
+  .shobdo-auth-layout {
+    width: min(100% - 24px, 580px);
+    padding: 28px 0 38px;
+  }
+
+  .shobdo-auth-intro h1 {
+    font-size: 3.8rem;
+  }
+
+  .shobdo-auth-title-stroke {
+    width: 112px;
+  }
+
+  .shobdo-auth-intro-description {
+    line-height: 1.75;
+  }
+
+  .shobdo-auth-quote {
+    gap: 14px;
+    padding: 22px 20px;
+  }
+
+  .shobdo-auth-feature-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .shobdo-auth-feature {
+    display: grid;
+    grid-template-columns: 54px 1fr;
+    column-gap: 14px;
+    align-items: center;
+  }
+
+  .shobdo-auth-feature-icon {
+    grid-row: 1 / 3;
+    margin: 0;
+  }
+
+  .shobdo-auth-feature strong {
+    align-self: end;
+  }
+
+  .shobdo-auth-feature small {
+    max-width: none;
+    align-self: start;
+  }
+
+  .shobdo-auth-card {
+    padding: 28px 18px;
+    border-radius: 22px;
+  }
+
+  .shobdo-auth-card-icon {
+    width: 58px;
+    height: 58px;
+  }
+
+  .shobdo-auth-social,
+  .shobdo-auth-submit {
+    min-height: 52px;
+  }
+
+  .shobdo-auth-input {
+    min-height: 54px;
+  }
+}
+
+
+@media (max-width: 400px) {
+
+  .shobdo-auth-card {
+    padding: 24px 15px;
+  }
+
+  .shobdo-auth-label-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .shobdo-auth-social,
+  .shobdo-auth-submit {
+    transition: none;
+  }
+
+  .shobdo-auth-page .spin {
+    animation-duration: 1.8s;
+  }
+}

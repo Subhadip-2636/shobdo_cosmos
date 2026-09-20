@@ -2,12 +2,17 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   ArrowRight,
+  BookOpen,
   Eye,
   EyeOff,
+  Heart,
   Loader2,
   LockKeyhole,
   Mail,
+  PenLine,
+  Quote,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 
 import {
@@ -42,6 +47,8 @@ import {
 import {
   useLanguage,
 } from "../Language/LanguageContext";
+
+import "./Login.css";
 
 
 // =========================================================
@@ -1273,6 +1280,198 @@ function Login({
       uiLanguage
     ] ||
     SOCIAL_TEXT.en;
+
+
+  // =======================================================
+  // VISUAL COPY
+  // =======================================================
+
+  const visualText =
+    uiLanguage === "bn"
+      ? {
+          eyebrow:
+            "নিরাপদ আবহে",
+
+          heroTitle:
+            "লগইন",
+
+          heroSubtitle:
+            "আপনার SHOBDO অ্যাকাউন্টে প্রবেশ করুন",
+
+          heroDescription:
+            "SHOBDO হলো লেখক, পাঠক এবং চিন্তাশীল মানুষের একটি সৃজনশীল সামাজিক প্ল্যাটফর্ম — যেখানে শব্দের মাধ্যমে মানুষ মানুষের আরও কাছে আসে।",
+
+          featureWrite:
+            "লিখুন",
+
+          featureWriteText:
+            "আপনার ভাবনাকে শব্দ দিন",
+
+          featureRead:
+            "পড়ুন",
+
+          featureReadText:
+            "বৈচিত্র্যময় মানুষের চিন্তা আবিষ্কার করুন",
+
+          featureConnect:
+            "যুক্ত হন",
+
+          featureConnectText:
+            "অনুপ্রেরণাময় সম্প্রদায়ের অংশ হোন",
+
+          cardSubtitle:
+            "আপনার শব্দের জগতে ফিরে আসুন",
+
+          facebookLinkTitle:
+            "Facebook আপনার বর্তমান SHOBDO অ্যাকাউন্টে যুক্ত করুন",
+
+          instagramLinkTitle:
+            "Instagram আপনার বর্তমান SHOBDO অ্যাকাউন্টে যুক্ত করুন",
+
+          cancelFacebook:
+            "Facebook সংযোগ বাতিল করুন",
+
+          cancelInstagram:
+            "Instagram সংযোগ বাতিল করুন",
+
+          wordOne:
+            "কবিতা",
+
+          wordTwo:
+            "গল্প",
+
+          wordThree:
+            "ভাবনা",
+
+          wordFour:
+            "জীবন",
+
+          deskNote:
+            "শব্দ মানুষকে কাছাকাছি আনে",
+        }
+      : uiLanguage === "hi"
+        ? {
+            eyebrow:
+              "शब्दों के लिए सुरक्षित जगह",
+
+            heroTitle:
+              "लॉग इन",
+
+            heroSubtitle:
+              "अपने SHOBDO खाते में प्रवेश करें",
+
+            heroDescription:
+              "SHOBDO लेखकों, पाठकों और विचारशील लोगों के लिए एक रचनात्मक सामाजिक मंच है — जहाँ शब्द लोगों को एक-दूसरे के करीब लाते हैं।",
+
+            featureWrite:
+              "लिखें",
+
+            featureWriteText:
+              "अपने विचारों को शब्द दें",
+
+            featureRead:
+              "पढ़ें",
+
+            featureReadText:
+              "विविध आवाज़ों और विचारों को खोजें",
+
+            featureConnect:
+              "जुड़ें",
+
+            featureConnectText:
+              "एक प्रेरक समुदाय का हिस्सा बनें",
+
+            cardSubtitle:
+              "अपने शब्दों की दुनिया में वापस आएँ",
+
+            facebookLinkTitle:
+              "Facebook को अपने मौजूदा SHOBDO खाते से जोड़ें",
+
+            instagramLinkTitle:
+              "Instagram को अपने मौजूदा SHOBDO खाते से जोड़ें",
+
+            cancelFacebook:
+              "Facebook कनेक्शन रद्द करें",
+
+            cancelInstagram:
+              "Instagram कनेक्शन रद्द करें",
+
+            wordOne:
+              "कविता",
+
+            wordTwo:
+              "कहानी",
+
+            wordThree:
+              "विचार",
+
+            wordFour:
+              "जीवन",
+
+            deskNote:
+              "शब्द लोगों को करीब लाते हैं",
+          }
+        : {
+            eyebrow:
+              "A safe space for words",
+
+            heroTitle:
+              "Log in",
+
+            heroSubtitle:
+              "Enter your SHOBDO account",
+
+            heroDescription:
+              "SHOBDO is a creative social platform for writers, readers and thoughtful people — bringing people closer through words.",
+
+            featureWrite:
+              "Write",
+
+            featureWriteText:
+              "Give your thoughts a voice",
+
+            featureRead:
+              "Read",
+
+            featureReadText:
+              "Discover diverse voices and ideas",
+
+            featureConnect:
+              "Connect",
+
+            featureConnectText:
+              "Become part of an inspiring community",
+
+            cardSubtitle:
+              "Return to your world of words",
+
+            facebookLinkTitle:
+              "Connect Facebook to your existing SHOBDO account",
+
+            instagramLinkTitle:
+              "Connect Instagram to your existing SHOBDO account",
+
+            cancelFacebook:
+              "Cancel Facebook connection",
+
+            cancelInstagram:
+              "Cancel Instagram connection",
+
+            wordOne:
+              "Poetry",
+
+            wordTwo:
+              "Stories",
+
+            wordThree:
+              "Thoughts",
+
+            wordFour:
+              "Life",
+
+            deskNote:
+              "Words bring people closer",
+          };
 
 
   // =======================================================
@@ -2821,12 +3020,21 @@ function Login({
     >
 
       <div
+        className="shobdo-auth-ambient shobdo-auth-ambient-left"
+        aria-hidden="true"
+      />
+
+      <div
+        className="shobdo-auth-ambient shobdo-auth-ambient-right"
+        aria-hidden="true"
+      />
+
+      <div
         className="shobdo-auth-layout"
       >
 
-
         {/* =============================================
-            INTRO
+            INTRO / EDITORIAL PANEL
         ============================================== */}
 
         <section
@@ -2834,61 +3042,166 @@ function Login({
         >
 
           <div
-            className="shobdo-auth-eyebrow"
+            className="shobdo-auth-intro-inner"
           >
 
-            <ShieldCheck
-              size={15}
+            <div
+              className="shobdo-auth-eyebrow"
+            >
+
+              <ShieldCheck
+                size={17}
+              />
+
+              <span>
+                {visualText.eyebrow}
+              </span>
+
+            </div>
+
+
+            <h1>
+              {visualText.heroTitle}
+            </h1>
+
+
+            <span
+              className="shobdo-auth-title-stroke"
+              aria-hidden="true"
             />
 
 
-            <span>
+            <h2
+              className="shobdo-auth-intro-subtitle"
+            >
+              {visualText.heroSubtitle}
+            </h2>
 
-              {t(
-                "login.eyebrow"
-              )}
 
-            </span>
+            <p
+              className="shobdo-auth-intro-description"
+            >
+              {visualText.heroDescription}
+            </p>
+
+
+            <div
+              className="shobdo-auth-quote"
+            >
+
+              <Quote
+                size={38}
+                aria-hidden="true"
+              />
+
+              <div>
+
+                <blockquote>
+
+                  “{translate(
+                    "login.quote",
+                    localText.quote
+                  )}”
+
+                </blockquote>
+
+                <span>
+                  — SHOBDO
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div
+              className="shobdo-auth-feature-grid"
+            >
+
+              <article
+                className="shobdo-auth-feature"
+              >
+
+                <span
+                  className="shobdo-auth-feature-icon"
+                >
+                  <PenLine size={22} />
+                </span>
+
+                <strong>
+                  {visualText.featureWrite}
+                </strong>
+
+                <small>
+                  {visualText.featureWriteText}
+                </small>
+
+              </article>
+
+
+              <article
+                className="shobdo-auth-feature"
+              >
+
+                <span
+                  className="shobdo-auth-feature-icon"
+                >
+                  <BookOpen size={22} />
+                </span>
+
+                <strong>
+                  {visualText.featureRead}
+                </strong>
+
+                <small>
+                  {visualText.featureReadText}
+                </small>
+
+              </article>
+
+
+              <article
+                className="shobdo-auth-feature"
+              >
+
+                <span
+                  className="shobdo-auth-feature-icon"
+                >
+                  <Heart size={22} />
+                </span>
+
+                <strong>
+                  {visualText.featureConnect}
+                </strong>
+
+                <small>
+                  {visualText.featureConnectText}
+                </small>
+
+              </article>
+
+            </div>
 
           </div>
 
 
-          <h1>
-
-            {t(
-              "login.title"
-            )}
-
-          </h1>
-
-
-          <p>
-
-            {t(
-              "login.description"
-            )}
-
-          </p>
+          <div
+            className="shobdo-auth-book-stack"
+            aria-hidden="true"
+          >
+            <span>{visualText.wordOne}</span>
+            <span>{visualText.wordTwo}</span>
+            <span>{visualText.wordThree}</span>
+            <span>{visualText.wordFour}</span>
+          </div>
 
 
           <div
-            className="shobdo-auth-quote"
+            className="shobdo-auth-desk-note"
+            aria-hidden="true"
           >
-
-            <span>
-              SHOBDO
-            </span>
-
-
-            <blockquote>
-
-              “{translate(
-                "login.quote",
-                localText.quote
-              )}”
-
-            </blockquote>
-
+            <PenLine size={18} />
+            <span>{visualText.deskNote}</span>
           </div>
 
         </section>
@@ -2905,11 +3218,7 @@ function Login({
           <div
             className="shobdo-auth-card-icon"
           >
-
-            <LockKeyhole
-              size={22}
-            />
-
+            <LockKeyhole size={24} />
           </div>
 
 
@@ -2921,14 +3230,13 @@ function Login({
               SHOBDO
             </span>
 
-
             <h2>
-
-              {t(
-                "login.loginButton"
-              )}
-
+              {t("login.loginButton")}
             </h2>
+
+            <p>
+              {visualText.cardSubtitle}
+            </p>
 
           </div>
 
@@ -2941,9 +3249,7 @@ function Login({
               className="shobdo-auth-error"
               role="alert"
             >
-
               {error}
-
             </div>
 
           )}
@@ -2954,112 +3260,28 @@ function Login({
           {facebookLinkPending && (
 
             <div
+              className="shobdo-auth-link-notice shobdo-auth-link-notice-facebook"
               role="status"
-              style={{
-
-                width:
-                  "100%",
-
-                boxSizing:
-                  "border-box",
-
-                padding:
-                  "14px 16px",
-
-                marginBottom:
-                  "14px",
-
-                border:
-                  "1px solid #D8B36A",
-
-                borderRadius:
-                  "8px",
-
-                background:
-                  "#FFF9ED",
-
-                color:
-                  "#77571D",
-
-                fontSize:
-                  "0.88rem",
-
-                lineHeight:
-                  1.55,
-
-              }}
             >
 
-              <strong
-                style={{
-
-                  display:
-                    "block",
-
-                  marginBottom:
-                    "5px",
-
-                }}
-              >
-
-                Connect Facebook to your existing SHOBDO account
-
+              <strong>
+                {visualText.facebookLinkTitle}
               </strong>
 
-
-              {
-                localText
-                  .facebookLinkRequired
-              }
-
+              <p>
+                {localText.facebookLinkRequired}
+              </p>
 
               <button
                 type="button"
-
                 onClick={
                   clearPendingFacebookLink
                 }
-
                 disabled={
                   busy
                 }
-
-                style={{
-
-                  display:
-                    "block",
-
-                  marginTop:
-                    "9px",
-
-                  padding:
-                    0,
-
-                  border:
-                    0,
-
-                  background:
-                    "transparent",
-
-                  color:
-                    "inherit",
-
-                  textDecoration:
-                    "underline",
-
-                  cursor:
-                    busy
-                      ? "not-allowed"
-                      : "pointer",
-
-                  font:
-                    "inherit",
-
-                }}
               >
-
-                Cancel Facebook connection
-
+                {visualText.cancelFacebook}
               </button>
 
             </div>
@@ -3072,112 +3294,28 @@ function Login({
           {instagramLinkPending && (
 
             <div
+              className="shobdo-auth-link-notice shobdo-auth-link-notice-instagram"
               role="status"
-              style={{
-
-                width:
-                  "100%",
-
-                boxSizing:
-                  "border-box",
-
-                padding:
-                  "14px 16px",
-
-                marginBottom:
-                  "14px",
-
-                border:
-                  "1px solid #D9A3C7",
-
-                borderRadius:
-                  "8px",
-
-                background:
-                  "#FFF7FB",
-
-                color:
-                  "#7A315F",
-
-                fontSize:
-                  "0.88rem",
-
-                lineHeight:
-                  1.55,
-
-              }}
             >
 
-              <strong
-                style={{
-
-                  display:
-                    "block",
-
-                  marginBottom:
-                    "5px",
-
-                }}
-              >
-
-                Connect Instagram to your existing SHOBDO account
-
+              <strong>
+                {visualText.instagramLinkTitle}
               </strong>
 
-
-              {
-                localText
-                  .instagramLinkRequired
-              }
-
+              <p>
+                {localText.instagramLinkRequired}
+              </p>
 
               <button
                 type="button"
-
                 onClick={
                   clearPendingInstagramConnection
                 }
-
                 disabled={
                   busy
                 }
-
-                style={{
-
-                  display:
-                    "block",
-
-                  marginTop:
-                    "9px",
-
-                  padding:
-                    0,
-
-                  border:
-                    0,
-
-                  background:
-                    "transparent",
-
-                  color:
-                    "inherit",
-
-                  textDecoration:
-                    "underline",
-
-                  cursor:
-                    busy
-                      ? "not-allowed"
-                      : "pointer",
-
-                  font:
-                    "inherit",
-
-                }}
               >
-
-                Cancel Instagram connection
-
+                {visualText.cancelInstagram}
               </button>
 
             </div>
@@ -3189,38 +3327,17 @@ function Login({
 
           <div
             className="shobdo-google-login-section"
-
             aria-label={
-              localText
-                .googleSectionLabel
+              localText.googleSectionLabel
             }
-
-            style={{
-
-              width:
-                "100%",
-
-              marginBottom:
-                "12px",
-
-            }}
           >
 
             {googleLoading ? (
 
               <button
                 type="button"
-
-                className="shobdo-auth-submit"
-
+                className="shobdo-auth-social shobdo-auth-google-loading"
                 disabled
-
-                style={{
-
-                  width:
-                    "100%",
-
-                }}
               >
 
                 <Loader2
@@ -3228,11 +3345,9 @@ function Login({
                   className="spin"
                 />
 
-
-                {
-                  localText
-                    .googleLoading
-                }
+                <span>
+                  {localText.googleLoading}
+                </span>
 
               </button>
 
@@ -3242,75 +3357,28 @@ function Login({
                 ref={
                   googleButtonRef
                 }
-
-                style={{
-
-                  width:
-                    "100%",
-
-                  minHeight:
-                    "44px",
-
-                  display:
-                    "flex",
-
-                  justifyContent:
-                    "center",
-
-                  alignItems:
-                    "center",
-
-                  opacity:
-                    busy
-                      ? 0.6
-                      : 1,
-
-                  pointerEvents:
-                    busy
-                      ? "none"
-                      : "auto",
-
-                }}
+                className={
+                  busy
+                    ? "shobdo-google-button-host is-disabled"
+                    : "shobdo-google-button-host"
+                }
               />
 
             )}
 
 
-            {
-              googleLoadError &&
+            {googleLoadError &&
               !googleReady &&
-              !googleLoading &&
-              (
+              !googleLoading && (
 
                 <div
+                  className="shobdo-auth-provider-status"
                   role="status"
-
-                  style={{
-
-                    marginTop:
-                      "8px",
-
-                    textAlign:
-                      "center",
-
-                    fontSize:
-                      "0.8rem",
-
-                    lineHeight:
-                      1.4,
-
-                    opacity:
-                      0.75,
-
-                  }}
                 >
-
                   {googleLoadError}
-
                 </div>
 
-              )
-            }
+              )}
 
           </div>
 
@@ -3318,163 +3386,59 @@ function Login({
           {/* FACEBOOK */}
 
           <div
-            style={{
-
-              width:
-                "100%",
-
-              marginBottom:
-                "12px",
-
-            }}
+            className="shobdo-auth-provider-block"
           >
 
             <button
               type="button"
-
+              className="shobdo-auth-social shobdo-auth-facebook"
               onClick={
                 handleFacebookLogin
               }
-
               disabled={
                 facebookDisabled
               }
-
-              style={{
-
-                ...facebookButtonStyle,
-
-                cursor:
-                  facebookDisabled
-                    ? "not-allowed"
-                    : "pointer",
-
-                opacity:
-                  facebookDisabled
-                    ? 0.65
-                    : 1,
-
-              }}
             >
 
-              {
-                (
-                  facebookLoading ||
-                  facebookLinking
-                )
-                  ? (
+              {(facebookLoading || facebookLinking)
+                ? (
+                    <Loader2
+                      size={19}
+                      className="spin"
+                    />
+                  )
+                : (
+                    <span
+                      className="shobdo-auth-facebook-icon"
+                      aria-hidden="true"
+                    >
+                      f
+                    </span>
+                  )}
 
-                      <Loader2
-                        size={19}
-                        className="spin"
-                      />
-
-                    )
-                  : (
-
-                      <span
-                        aria-hidden="true"
-
-                        style={{
-
-                          width:
-                            "26px",
-
-                          height:
-                            "26px",
-
-                          borderRadius:
-                            "50%",
-
-                          display:
-                            "inline-flex",
-
-                          alignItems:
-                            "center",
-
-                          justifyContent:
-                            "center",
-
-                          background:
-                            "#FFFFFF",
-
-                          color:
-                            "#1877F2",
-
-                          fontFamily:
-                            "Arial, sans-serif",
-
-                          fontWeight:
-                            800,
-
-                          fontSize:
-                            "19px",
-
-                          lineHeight:
-                            1,
-
-                        }}
-                      >
-
-                        f
-
-                      </span>
-
-                    )
-              }
-
-
-              {
-                facebookLinking
-                  ? localText
-                      .facebookLinking
-
+              <span>
+                {facebookLinking
+                  ? localText.facebookLinking
                   : facebookLoading
-                    ? localText
-                        .facebookLoading
-
-                    : localText
-                        .facebookButton
-              }
+                    ? localText.facebookLoading
+                    : localText.facebookButton}
+              </span>
 
             </button>
 
 
-            {
-              facebookLoadError &&
+            {facebookLoadError &&
               !facebookReady &&
-              !facebookLoading &&
-              (
+              !facebookLoading && (
 
                 <div
+                  className="shobdo-auth-provider-status"
                   role="status"
-
-                  style={{
-
-                    marginTop:
-                      "8px",
-
-                    textAlign:
-                      "center",
-
-                    fontSize:
-                      "0.8rem",
-
-                    lineHeight:
-                      1.4,
-
-                    opacity:
-                      0.75,
-
-                  }}
                 >
-
                   {facebookLoadError}
-
                 </div>
 
-              )
-            }
+              )}
 
           </div>
 
@@ -3482,108 +3446,46 @@ function Login({
           {/* INSTAGRAM */}
 
           <div
-            style={{
-
-              width:
-                "100%",
-
-              marginBottom:
-                "18px",
-
-            }}
+            className="shobdo-auth-provider-block"
           >
 
             <button
               type="button"
-
+              className="shobdo-auth-social shobdo-auth-instagram"
               onClick={
                 handleInstagramLogin
               }
-
               disabled={
                 instagramDisabled
               }
-
-              style={{
-
-                ...instagramButtonStyle,
-
-                cursor:
-                  instagramDisabled
-                    ? "not-allowed"
-                    : "pointer",
-
-                opacity:
-                  instagramDisabled
-                    ? 0.65
-                    : 1,
-
-              }}
             >
 
-              {
-                (
-                  instagramLoading ||
-                  instagramLinking
-                )
-                  ? (
+              {(instagramLoading || instagramLinking)
+                ? (
+                    <Loader2
+                      size={19}
+                      className="spin"
+                    />
+                  )
+                : (
+                    <InstagramIcon />
+                  )}
 
-                      <Loader2
-                        size={19}
-                        className="spin"
-                      />
-
-                    )
-                  : (
-
-                      <InstagramIcon />
-
-                    )
-              }
-
-
-              {
-                instagramLinking
-                  ? localText
-                      .instagramLinking
-
+              <span>
+                {instagramLinking
+                  ? localText.instagramLinking
                   : instagramLoading
-                    ? localText
-                        .instagramLoading
-
-                    : localText
-                        .instagramButton
-              }
+                    ? localText.instagramLoading
+                    : localText.instagramButton}
+              </span>
 
             </button>
 
 
             <div
-              style={{
-
-                marginTop:
-                  "7px",
-
-                textAlign:
-                  "center",
-
-                fontSize:
-                  "0.75rem",
-
-                lineHeight:
-                  1.4,
-
-                opacity:
-                  0.62,
-
-              }}
+              className="shobdo-auth-instagram-note"
             >
-
-              {
-                localText
-                  .instagramProfessionalOnly
-              }
-
+              {localText.instagramProfessionalOnly}
             </div>
 
           </div>
@@ -3597,16 +3499,12 @@ function Login({
 
             <span />
 
-
             <small>
-
               {translate(
                 "login.or",
                 localText.or
               )}
-
             </small>
-
 
             <span />
 
@@ -3617,7 +3515,6 @@ function Login({
 
           <form
             className="shobdo-auth-form"
-
             onSubmit={
               handleSubmit
             }
@@ -3630,11 +3527,7 @@ function Login({
               <label
                 htmlFor="login-email"
               >
-
-                {t(
-                  "login.email"
-                )}
-
+                {t("login.email")}
               </label>
 
 
@@ -3642,51 +3535,32 @@ function Login({
                 className="shobdo-auth-input"
               >
 
-                <Mail
-                  size={17}
-                />
-
+                <Mail size={18} />
 
                 <input
                   id="login-email"
-
                   type="email"
-
                   value={
                     email
                   }
-
                   onChange={
-                    (
-                      event
-                    ) => {
+                    (event) => {
 
                       setEmail(
-                        event
-                          .target
-                          .value
+                        event.target.value
                       );
 
-
-                      setError(
-                        ""
-                      );
+                      setError("");
 
                     }
                   }
-
                   placeholder={
-                    t(
-                      "login.emailPlaceholder"
-                    )
+                    t("login.emailPlaceholder")
                   }
-
                   autoComplete="email"
-
                   disabled={
                     busy
                   }
-
                   required
                 />
 
@@ -3706,28 +3580,18 @@ function Login({
                 <label
                   htmlFor="login-password"
                 >
-
-                  {t(
-                    "login.password"
-                  )}
-
+                  {t("login.password")}
                 </label>
-
 
                 <Link
                   to="/forgot-password"
-
                   tabIndex={
                     busy
                       ? -1
                       : 0
                   }
                 >
-
-                  {t(
-                    "login.forgotPassword"
-                  )}
-
+                  {t("login.forgotPassword")}
                 </Link>
 
               </div>
@@ -3737,106 +3601,61 @@ function Login({
                 className="shobdo-auth-input"
               >
 
-                <LockKeyhole
-                  size={17}
-                />
-
+                <LockKeyhole size={18} />
 
                 <input
                   id="login-password"
-
                   type={
                     showPassword
                       ? "text"
                       : "password"
                   }
-
                   value={
                     password
                   }
-
                   onChange={
-                    (
-                      event
-                    ) => {
+                    (event) => {
 
                       setPassword(
-                        event
-                          .target
-                          .value
+                        event.target.value
                       );
 
-
-                      setError(
-                        ""
-                      );
+                      setError("");
 
                     }
                   }
-
                   placeholder={
-                    t(
-                      "login.passwordPlaceholder"
-                    )
+                    t("login.passwordPlaceholder")
                   }
-
                   autoComplete="current-password"
-
                   disabled={
                     busy
                   }
-
                   required
                 />
 
-
                 <button
                   type="button"
-
                   className="shobdo-password-toggle"
-
                   onClick={
                     () =>
                       setShowPassword(
-                        (
-                          current
-                        ) =>
-                          !current
+                        (current) => !current
                       )
                   }
-
                   disabled={
                     busy
                   }
-
                   aria-label={
                     showPassword
-                      ? t(
-                          "login.hidePassword"
-                        )
-                      : t(
-                          "login.showPassword"
-                        )
+                      ? t("login.hidePassword")
+                      : t("login.showPassword")
                   }
                 >
 
-                  {
-                    showPassword
-                      ? (
-
-                          <EyeOff
-                            size={17}
-                          />
-
-                        )
-                      : (
-
-                          <Eye
-                            size={17}
-                          />
-
-                        )
-                  }
+                  {showPassword
+                    ? <EyeOff size={18} />
+                    : <Eye size={18} />}
 
                 </button>
 
@@ -3847,41 +3666,26 @@ function Login({
 
             <button
               type="submit"
-
               className="shobdo-auth-submit"
-
               disabled={
                 busy
               }
             >
 
-              {
-                (
-                  loading ||
-                  facebookLinking ||
-                  instagramLinking
-                )
-                  ? (
+              {(loading || facebookLinking || instagramLinking)
+                ? (
+                    <Loader2
+                      size={18}
+                      className="spin"
+                    />
+                  )
+                : (
+                    <ArrowRight size={18} />
+                  )}
 
-                      <Loader2
-                        size={18}
-                        className="spin"
-                      />
-
-                    )
-                  : (
-
-                      <ArrowRight
-                        size={18}
-                      />
-
-                    )
-              }
-
-
-              {
-                getPasswordButtonLabel()
-              }
+              <span>
+                {getPasswordButtonLabel()}
+              </span>
 
             </button>
 
@@ -3891,43 +3695,17 @@ function Login({
           {/* REGISTER */}
 
           <div
-            className="shobdo-auth-divider"
-          >
-
-            <span />
-
-
-            <small>
-              SHOBDO
-            </small>
-
-
-            <span />
-
-          </div>
-
-
-          <div
             className="shobdo-auth-bottom"
           >
 
             <span>
-
-              {t(
-                "login.noAccount"
-              )}
-
+              {t("login.noAccount")}
             </span>
-
 
             <Link
               to="/register"
             >
-
-              {t(
-                "login.createAccount"
-              )}
-
+              {t("login.createAccount")}
             </Link>
 
           </div>
