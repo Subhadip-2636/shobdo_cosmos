@@ -1334,24 +1334,31 @@ export default function Home({
             refreshing ||
             feedLoading
           }
+          aria-label={
+            refreshing
+              ? copy.refreshing
+              : copy.refresh
+          }
+          aria-busy={
+            refreshing
+          }
+          title={
+            refreshing
+              ? copy.refreshing
+              : copy.refresh
+          }
         >
 
           <RefreshCw
-            size={17}
+            size={19}
+            strokeWidth={1.9}
+            aria-hidden="true"
             className={
               refreshing
                 ? "home-spin"
                 : ""
             }
           />
-
-          <span>
-            {
-              refreshing
-                ? copy.refreshing
-                : copy.refresh
-            }
-          </span>
 
         </button>
 

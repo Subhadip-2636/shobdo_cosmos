@@ -107,42 +107,56 @@
 
 /* =========================================================
    REFRESH BUTTON
+   Compact icon-only feed control
 ========================================================= */
 
 .home-refresh-button {
-  min-height: 40px;
+  position: relative;
 
-  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
+
+  flex: 0 0 42px;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  gap: 7px;
-
-  padding:
-    0
-    14px;
+  margin-top: 1px;
+  padding: 0;
 
   border:
     1px solid
-    #e6dbce;
+    #e4d8ca;
 
-  border-radius: 12px;
+  border-radius: 50%;
 
   background:
-    #fffdfa;
+    rgba(
+      255,
+      253,
+      250,
+      0.92
+    );
 
   color:
-    #6d6258;
-
-  font-family: inherit;
-
-  font-size: 12px;
-
-  font-weight: 700;
+    #776c61;
 
   cursor: pointer;
+
+  box-shadow:
+    0 4px 14px
+    rgba(
+      74,
+      54,
+      31,
+      0.045
+    );
+
+  -webkit-tap-highlight-color:
+    transparent;
 
   transition:
     background-color 0.18s ease,
@@ -153,34 +167,61 @@
 }
 
 
+.home-refresh-button svg {
+  flex: 0 0 auto;
+
+  transition:
+    transform 0.24s ease;
+}
+
+
 .home-refresh-button:hover:not(:disabled) {
   border-color:
-    #d8c3a3;
+    #d6c09f;
 
   background:
-    #fbf4e9;
+    #f9f1e6;
 
   color:
-    #805d25;
+    #8a6020;
 
   transform:
     translateY(-1px);
 
   box-shadow:
-    0 5px 14px
+    0 7px 18px
     rgba(
       79,
       58,
       29,
-      0.06
+      0.08
     );
 }
 
 
+.home-refresh-button:hover:not(:disabled)
+svg:not(.home-spin) {
+  transform:
+    rotate(38deg);
+}
+
+
+.home-refresh-button:active:not(:disabled) {
+  transform:
+    scale(0.94);
+}
+
+
 .home-refresh-button:disabled {
-  opacity: 0.58;
+  opacity: 0.56;
 
   cursor: default;
+}
+
+
+.home-refresh-button[aria-busy="true"] {
+  color:
+    #8a6020;
 }
 
 
@@ -1516,13 +1557,19 @@
 
   .home-refresh-button {
     width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
 
-    padding: 0;
+    flex-basis: 40px;
+
+    margin-top: 0;
   }
 
 
-  .home-refresh-button span {
-    display: none;
+  .home-refresh-button svg {
+    width: 18px;
+    height: 18px;
   }
 
 
@@ -1718,6 +1765,7 @@
 ) {
 
   .home-refresh-button,
+  .home-refresh-button svg,
   .home-composer-input,
   .home-composer-create,
   .home-composer-actions button,
