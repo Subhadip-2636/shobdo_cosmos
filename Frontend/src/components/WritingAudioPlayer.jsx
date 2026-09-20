@@ -20,63 +20,115 @@ import "./WritingAudioPlayer.css";
 
 
 // =========================================================
-// LANGUAGE CONFIG
+// SHOBDO TTS CONFIGURATION
 // =========================================================
 
 const LANGUAGE_CONFIG = {
+
   bn: {
     locale: "bn-IN",
-    listen: "শুনুন",
-    pause: "বিরতি",
-    resume: "আবার শুনুন",
-    stop: "বন্ধ করুন",
-    restart: "আবার শুরু করুন",
-    speed: "গতি",
-    unsupported:
-      "এই ব্রাউজারে Text-to-Speech সমর্থিত নয়।",
-    unavailable:
-      "এই ভাষার উপযুক্ত কণ্ঠ এই ডিভাইসে পাওয়া যায়নি।",
-    error:
-      "অডিও চালানো যায়নি।",
+
+    listen:
+      "শুনুন",
+
+    pause:
+      "বিরতি",
+
+    resume:
+      "আবার শুনুন",
+
+    stop:
+      "বন্ধ করুন",
+
+    restart:
+      "আবার শুরু করুন",
+
+    speed:
+      "গতি",
+
     listening:
       "পড়া হচ্ছে",
+
+    unsupported:
+      "এই ব্রাউজারে Text-to-Speech সমর্থিত নয়।",
+
+    error:
+      "এই লেখাটি পড়া যায়নি।",
+
+    noVoice:
+      "বাংলা কণ্ঠ পাওয়া যায়নি। ডিভাইসের ডিফল্ট কণ্ঠ ব্যবহার করা হবে।",
   },
+
 
   hi: {
     locale: "hi-IN",
-    listen: "सुनें",
-    pause: "रोकें",
-    resume: "जारी रखें",
-    stop: "बंद करें",
-    restart: "फिर से शुरू करें",
-    speed: "गति",
-    unsupported:
-      "यह ब्राउज़र Text-to-Speech का समर्थन नहीं करता।",
-    unavailable:
-      "इस भाषा के लिए उपयुक्त आवाज़ उपलब्ध नहीं है।",
-    error:
-      "ऑडियो चलाया नहीं जा सका।",
+
+    listen:
+      "सुनें",
+
+    pause:
+      "रोकें",
+
+    resume:
+      "जारी रखें",
+
+    stop:
+      "बंद करें",
+
+    restart:
+      "फिर से शुरू करें",
+
+    speed:
+      "गति",
+
     listening:
       "पढ़ा जा रहा है",
+
+    unsupported:
+      "यह ब्राउज़र Text-to-Speech का समर्थन नहीं करता।",
+
+    error:
+      "इस रचना को पढ़ा नहीं जा सका।",
+
+    noVoice:
+      "हिंदी आवाज़ उपलब्ध नहीं है। डिवाइस की डिफ़ॉल्ट आवाज़ का उपयोग किया जाएगा।",
   },
+
 
   en: {
     locale: "en-IN",
-    listen: "Listen",
-    pause: "Pause",
-    resume: "Resume",
-    stop: "Stop",
-    restart: "Restart",
-    speed: "Speed",
-    unsupported:
-      "Text-to-Speech is not supported by this browser.",
-    unavailable:
-      "A suitable voice is not available on this device.",
-    error:
-      "Unable to play this writing.",
+
+    listen:
+      "Listen",
+
+    pause:
+      "Pause",
+
+    resume:
+      "Resume",
+
+    stop:
+      "Stop",
+
+    restart:
+      "Restart",
+
+    speed:
+      "Speed",
+
     listening:
       "Reading",
+
+    unsupported:
+      "Text-to-Speech is not supported by this browser.",
+
+    error:
+      "Unable to read this writing.",
+
+    noVoice:
+      "A matching voice is unavailable. Your device default voice will be used.",
   },
+
 
   as: {
     locale: "as-IN",
@@ -121,6 +173,7 @@ const LANGUAGE_CONFIG = {
   ur: {
     locale: "ur-IN",
   },
+
 };
 
 
@@ -133,28 +186,155 @@ const SPEED_OPTIONS = [
 
 
 // =========================================================
-// TEXT HELPERS
+// PREFERRED VOICE KEYWORDS
 // =========================================================
 
-function cleanText(
+const PREMIUM_VOICE_KEYWORDS = [
+
+  {
+    keyword:
+      "natural",
+
+    score:
+      180,
+  },
+
+  {
+    keyword:
+      "neural",
+
+    score:
+      170,
+  },
+
+  {
+    keyword:
+      "online",
+
+    score:
+      150,
+  },
+
+  {
+    keyword:
+      "enhanced",
+
+    score:
+      130,
+  },
+
+  {
+    keyword:
+      "premium",
+
+    score:
+      130,
+  },
+
+  {
+    keyword:
+      "google",
+
+    score:
+      110,
+  },
+
+  {
+    keyword:
+      "microsoft",
+
+    score:
+      110,
+  },
+
+  {
+    keyword:
+      "azure",
+
+    score:
+      100,
+  },
+
+];
+
+
+const LOW_QUALITY_VOICE_KEYWORDS = [
+
+  {
+    keyword:
+      "espeak",
+
+    penalty:
+      250,
+  },
+
+  {
+    keyword:
+      "festival",
+
+    penalty:
+      200,
+  },
+
+  {
+    keyword:
+      "compact",
+
+    penalty:
+      80,
+  },
+
+];
+
+
+// =========================================================
+// LANGUAGE HELPERS
+// =========================================================
+
+function normalizeLanguage(
   value
 ) {
 
   return String(
     value || ""
   )
+    .trim()
+    .toLowerCase()
     .replace(
-      /<br\s*\/?>/gi,
-      "\n"
-    )
-    .replace(
-      /<\/p>/gi,
-      "\n"
-    )
-    .replace(
-      /<[^>]*>/g,
-      " "
-    )
+      /_/g,
+      "-"
+    );
+}
+
+
+function getBaseLanguage(
+  value
+) {
+
+  const normalized =
+    normalizeLanguage(
+      value
+    );
+
+
+  return (
+    normalized.split("-")[0] ||
+    "en"
+  );
+}
+
+
+// =========================================================
+// HTML / TEXT CLEANING
+// =========================================================
+
+function decodeBasicEntities(
+  value
+) {
+
+  return String(
+    value || ""
+  )
     .replace(
       /&nbsp;/gi,
       " "
@@ -172,12 +352,56 @@ function cleanText(
       "'"
     )
     .replace(
+      /&lt;/gi,
+      "<"
+    )
+    .replace(
+      /&gt;/gi,
+      ">"
+    );
+}
+
+
+function cleanText(
+  value
+) {
+
+  return decodeBasicEntities(
+    String(
+      value || ""
+    )
+      .replace(
+        /<br\s*\/?>/gi,
+        "\n"
+      )
+      .replace(
+        /<\/p>/gi,
+        "\n"
+      )
+      .replace(
+        /<\/div>/gi,
+        "\n"
+      )
+      .replace(
+        /<\/li>/gi,
+        "\n"
+      )
+      .replace(
+        /<[^>]*>/g,
+        " "
+      )
+  )
+    .replace(
       /\r/g,
       ""
     )
     .replace(
       /[ \t]+/g,
       " "
+    )
+    .replace(
+      / *\n */g,
+      "\n"
     )
     .replace(
       /\n{3,}/g,
@@ -188,7 +412,7 @@ function cleanText(
 
 
 // =========================================================
-// CHUNK LONG WRITINGS
+// LONG TEXT SPLITTER
 // =========================================================
 
 function splitLongPart(
@@ -196,7 +420,7 @@ function splitLongPart(
   maxLength
 ) {
 
-  const result = [];
+  const parts = [];
 
   let remaining =
     String(
@@ -209,40 +433,89 @@ function splitLongPart(
     maxLength
   ) {
 
-    let splitAt =
-      remaining.lastIndexOf(
-        " ",
-        maxLength
-      );
+    let splitIndex =
+      -1;
+
+
+    const punctuationCandidates = [
+      "।",
+      "॥",
+      ".",
+      "!",
+      "?",
+      ",",
+      ";",
+      ":",
+    ];
+
+
+    punctuationCandidates.forEach(
+      (
+        symbol
+      ) => {
+
+        const index =
+          remaining.lastIndexOf(
+            symbol,
+            maxLength
+          );
+
+
+        if (
+          index >
+          splitIndex
+        ) {
+
+          splitIndex =
+            index + 1;
+        }
+
+      }
+    );
 
 
     if (
-      splitAt <
+      splitIndex <
       Math.floor(
-        maxLength * 0.55
+        maxLength * 0.5
       )
     ) {
 
-      splitAt =
+      splitIndex =
+        remaining.lastIndexOf(
+          " ",
+          maxLength
+        );
+    }
+
+
+    if (
+      splitIndex <
+      Math.floor(
+        maxLength * 0.5
+      )
+    ) {
+
+      splitIndex =
         maxLength;
     }
 
 
-    const part =
+    const chunk =
       remaining
         .slice(
           0,
-          splitAt
+          splitIndex
         )
         .trim();
 
 
     if (
-      part
+      chunk
     ) {
 
-      result.push(
-        part
+      parts.push(
+        chunk
       );
     }
 
@@ -250,7 +523,7 @@ function splitLongPart(
     remaining =
       remaining
         .slice(
-          splitAt
+          splitIndex
         )
         .trim();
   }
@@ -260,19 +533,23 @@ function splitLongPart(
     remaining
   ) {
 
-    result.push(
+    parts.push(
       remaining
     );
   }
 
 
-  return result;
+  return parts;
 }
 
 
+// =========================================================
+// SPEECH CHUNKING
+// =========================================================
+
 function chunkText(
   value,
-  maxLength = 220
+  maxLength = 240
 ) {
 
   const text =
@@ -305,23 +582,28 @@ function chunkText(
 
   const chunks = [];
 
-  let current =
+  let currentChunk =
     "";
 
 
-  function pushCurrent() {
+  function pushCurrentChunk() {
+
+    const textToPush =
+      currentChunk.trim();
+
 
     if (
-      current.trim()
+      textToPush
     ) {
 
       chunks.push(
-        current.trim()
+        textToPush
       );
-
-      current =
-        "";
     }
+
+
+    currentChunk =
+      "";
   }
 
 
@@ -335,7 +617,7 @@ function chunkText(
         maxLength
       ) {
 
-        pushCurrent();
+        pushCurrentChunk();
 
 
         splitLongPart(
@@ -346,9 +628,15 @@ function chunkText(
             part
           ) => {
 
-            chunks.push(
+            if (
               part
-            );
+            ) {
+
+              chunks.push(
+                part
+              );
+            }
+
           }
         );
 
@@ -357,25 +645,25 @@ function chunkText(
       }
 
 
-      const candidate =
-        current
-          ? `${current} ${sentence}`
+      const combined =
+        currentChunk
+          ? `${currentChunk} ${sentence}`
           : sentence;
 
 
       if (
-        candidate.length <=
+        combined.length <=
         maxLength
       ) {
 
-        current =
-          candidate;
+        currentChunk =
+          combined;
 
       } else {
 
-        pushCurrent();
+        pushCurrentChunk();
 
-        current =
+        currentChunk =
           sentence;
       }
 
@@ -383,7 +671,7 @@ function chunkText(
   );
 
 
-  pushCurrent();
+  pushCurrentChunk();
 
 
   return chunks;
@@ -391,106 +679,227 @@ function chunkText(
 
 
 // =========================================================
-// VOICE SELECTION
+// VOICE SCORE
 // =========================================================
 
-function normalizeLanguage(
-  value
+function scoreVoice(
+  voice,
+  targetLocale
 ) {
 
-  return String(
-    value || "en"
-  )
-    .trim()
-    .toLowerCase()
-    .replace(
-      "_",
-      "-"
+  if (
+    !voice
+  ) {
+
+    return (
+      Number.NEGATIVE_INFINITY
     );
+  }
+
+
+  const voiceLanguage =
+    normalizeLanguage(
+      voice.lang
+    );
+
+
+  const targetLanguage =
+    normalizeLanguage(
+      targetLocale
+    );
+
+
+  const voiceBaseLanguage =
+    getBaseLanguage(
+      voiceLanguage
+    );
+
+
+  const targetBaseLanguage =
+    getBaseLanguage(
+      targetLanguage
+    );
+
+
+  if (
+    voiceBaseLanguage !==
+    targetBaseLanguage
+  ) {
+
+    return (
+      Number.NEGATIVE_INFINITY
+    );
+  }
+
+
+  let score =
+    0;
+
+
+  // Exact locale is strongly preferred.
+  if (
+    voiceLanguage ===
+    targetLanguage
+  ) {
+
+    score +=
+      1000;
+
+  } else {
+
+    score +=
+      600;
+  }
+
+
+  // Prefer Indian regional locale when SHOBDO asks for India.
+  if (
+    targetLanguage.endsWith(
+      "-in"
+    ) &&
+    voiceLanguage.endsWith(
+      "-in"
+    )
+  ) {
+
+    score +=
+      180;
+  }
+
+
+  const voiceName =
+    String(
+      voice.name || ""
+    ).toLowerCase();
+
+
+  PREMIUM_VOICE_KEYWORDS.forEach(
+    (
+      preference
+    ) => {
+
+      if (
+        voiceName.includes(
+          preference.keyword
+        )
+      ) {
+
+        score +=
+          preference.score;
+      }
+
+    }
+  );
+
+
+  LOW_QUALITY_VOICE_KEYWORDS.forEach(
+    (
+      preference
+    ) => {
+
+      if (
+        voiceName.includes(
+          preference.keyword
+        )
+      ) {
+
+        score -=
+          preference.penalty;
+      }
+
+    }
+  );
+
+
+  // Browser-defined default voice gets a small bonus.
+  if (
+    voice.default
+  ) {
+
+    score +=
+      20;
+  }
+
+
+  /*
+   * Online voices on Windows / Edge / Chrome frequently
+   * provide the highest-quality Microsoft Natural voices.
+   *
+   * Therefore localService=false is not penalised.
+   */
+
+  return score;
 }
 
 
-function getBaseLanguage(
-  value
-) {
+// =========================================================
+// BEST VOICE FINDER
+// =========================================================
 
-  return normalizeLanguage(
-    value
-  ).split("-")[0];
-}
-
-
-function chooseVoice(
+function chooseBestVoice(
   voices,
-  locale
+  targetLocale
 ) {
 
   if (
     !Array.isArray(
       voices
     ) ||
-    voices.length === 0
+    voices.length ===
+      0
   ) {
 
     return null;
   }
 
 
-  const normalizedLocale =
-    normalizeLanguage(
-      locale
-    );
+  const candidates =
+    voices
+      .map(
+        (
+          voice
+        ) => ({
 
+          voice,
 
-  const baseLanguage =
-    getBaseLanguage(
-      normalizedLocale
-    );
+          score:
+            scoreVoice(
+              voice,
+              targetLocale
+            ),
 
-
-  // Exact locale match first.
-  const exact =
-    voices.find(
-      (
-        voice
-      ) =>
-        normalizeLanguage(
-          voice.lang
-        ) ===
-        normalizedLocale
-    );
-
-
-  if (
-    exact
-  ) {
-
-    return exact;
-  }
-
-
-  // Then any voice of the same language.
-  const sameLanguage =
-    voices.find(
-      (
-        voice
-      ) =>
-        getBaseLanguage(
-          voice.lang
-        ) ===
-        baseLanguage
-    );
+        })
+      )
+      .filter(
+        (
+          candidate
+        ) =>
+          Number.isFinite(
+            candidate.score
+          )
+      )
+      .sort(
+        (
+          first,
+          second
+        ) =>
+          second.score -
+          first.score
+      );
 
 
   if (
-    sameLanguage
+    candidates.length ===
+    0
   ) {
 
-    return sameLanguage;
+    return null;
   }
 
 
-  return null;
+  return (
+    candidates[0].voice
+  );
 }
 
 
@@ -499,11 +908,21 @@ function chooseVoice(
 // =========================================================
 
 function WritingAudioPlayer({
+
   writingId,
+
   title = "",
+
   content = "",
+
   writingLanguage = "bn",
+
 }) {
+
+
+  // =======================================================
+  // REFS
+  // =======================================================
 
   const synthesisRef =
     useRef(
@@ -547,13 +966,23 @@ function WritingAudioPlayer({
     );
 
 
+  const startTimerRef =
+    useRef(
+      null
+    );
+
+
   const instanceIdRef =
     useRef(
       Symbol(
-        `shobdo-audio-${writingId || "writing"}`
+        `shobdo-tts-${writingId || "writing"}`
       )
     );
 
+
+  // =======================================================
+  // STATE
+  // =======================================================
 
   const [
     supported,
@@ -568,6 +997,14 @@ function WritingAudioPlayer({
     setVoices,
   ] = useState(
     []
+  );
+
+
+  const [
+    voicesLoaded,
+    setVoicesLoaded,
+  ] = useState(
+    false
   );
 
 
@@ -615,12 +1052,27 @@ function WritingAudioPlayer({
   // LANGUAGE
   // =======================================================
 
-  const languageCode =
+  const normalizedWritingLanguage =
     useMemo(
-      () =>
-        getBaseLanguage(
-          writingLanguage
-        ),
+      () => {
+
+        const base =
+          getBaseLanguage(
+            writingLanguage
+          );
+
+
+        if (
+          base === "od"
+        ) {
+
+          return "or";
+        }
+
+
+        return base;
+
+      },
       [
         writingLanguage,
       ]
@@ -629,27 +1081,53 @@ function WritingAudioPlayer({
 
   const languageConfig =
     LANGUAGE_CONFIG[
-      languageCode
+      normalizedWritingLanguage
     ] ||
     LANGUAGE_CONFIG.en;
 
 
-  const englishLabels =
-    LANGUAGE_CONFIG.en;
-
-
   const labels =
-    languageCode === "bn" ||
-    languageCode === "hi" ||
-    languageCode === "en"
-      ? languageConfig
-      : {
-          ...englishLabels,
+    useMemo(
+      () => {
+
+        const english =
+          LANGUAGE_CONFIG.en;
+
+
+        if (
+          normalizedWritingLanguage ===
+            "bn" ||
+          normalizedWritingLanguage ===
+            "hi" ||
+          normalizedWritingLanguage ===
+            "en"
+        ) {
+
+          return {
+            ...english,
+            ...languageConfig,
+          };
+        }
+
+
+        return {
+
+          ...english,
+
           locale:
             languageConfig.locale ||
             writingLanguage ||
             "en-IN",
+
         };
+
+      },
+      [
+        languageConfig,
+        normalizedWritingLanguage,
+        writingLanguage,
+      ]
+    );
 
 
   const locale =
@@ -659,7 +1137,7 @@ function WritingAudioPlayer({
 
 
   // =======================================================
-  // FULL SPEECH TEXT
+  // TEXT TO READ
   // =======================================================
 
   const speechText =
@@ -703,16 +1181,19 @@ function WritingAudioPlayer({
 
 
   // =======================================================
-  // CURRENT VOICE
+  // SELECT BEST AVAILABLE VOICE
   // =======================================================
 
   const selectedVoice =
     useMemo(
-      () =>
-        chooseVoice(
+      () => {
+
+        return chooseBestVoice(
           voices,
           locale
-        ),
+        );
+
+      },
       [
         voices,
         locale,
@@ -721,7 +1202,7 @@ function WritingAudioPlayer({
 
 
   // =======================================================
-  // LOAD SPEECH ENGINE + VOICES
+  // LOAD BROWSER VOICES
   // =======================================================
 
   useEffect(
@@ -734,7 +1215,7 @@ function WritingAudioPlayer({
           "speechSynthesis" in
           window
         ) ||
-        typeof SpeechSynthesisUtterance ===
+        typeof window.SpeechSynthesisUtterance ===
           "undefined"
       ) {
 
@@ -760,13 +1241,23 @@ function WritingAudioPlayer({
           synthesis.getVoices();
 
 
-        setVoices(
-          Array.isArray(
-            availableVoices
-          )
-            ? availableVoices
-            : []
-        );
+        if (
+          availableVoices.length >
+          0
+        ) {
+
+          setVoices(
+            Array.from(
+              availableVoices
+            )
+          );
+
+
+          setVoicesLoaded(
+            true
+          );
+        }
+
       }
 
 
@@ -779,14 +1270,38 @@ function WritingAudioPlayer({
       );
 
 
-      if (
-        "onvoiceschanged" in
-        synthesis
-      ) {
+      /*
+       * Some Chromium browsers expose voices asynchronously.
+       * These fallback checks improve first-load reliability.
+       */
 
-        synthesis.onvoiceschanged =
-          loadVoices;
-      }
+      const timer1 =
+        window.setTimeout(
+          loadVoices,
+          250
+        );
+
+
+      const timer2 =
+        window.setTimeout(
+          loadVoices,
+          1000
+        );
+
+
+      const timer3 =
+        window.setTimeout(
+          () => {
+
+            loadVoices();
+
+            setVoicesLoaded(
+              true
+            );
+
+          },
+          2000
+        );
 
 
       return () => {
@@ -797,14 +1312,19 @@ function WritingAudioPlayer({
         );
 
 
-        if (
-          synthesis.onvoiceschanged ===
-          loadVoices
-        ) {
+        window.clearTimeout(
+          timer1
+        );
 
-          synthesis.onvoiceschanged =
-            null;
-        }
+
+        window.clearTimeout(
+          timer2
+        );
+
+
+        window.clearTimeout(
+          timer3
+        );
       };
 
     },
@@ -813,7 +1333,33 @@ function WritingAudioPlayer({
 
 
   // =======================================================
-  // STOP
+  // CLEAR START TIMER
+  // =======================================================
+
+  const clearStartTimer =
+    useCallback(
+      () => {
+
+        if (
+          startTimerRef.current
+        ) {
+
+          window.clearTimeout(
+            startTimerRef.current
+          );
+
+
+          startTimerRef.current =
+            null;
+        }
+
+      },
+      []
+    );
+
+
+  // =======================================================
+  // STOP PLAYBACK
   // =======================================================
 
   const stopPlayback =
@@ -824,6 +1370,9 @@ function WritingAudioPlayer({
 
         runIdRef.current +=
           1;
+
+
+        clearStartTimer();
 
 
         const synthesis =
@@ -839,10 +1388,16 @@ function WritingAudioPlayer({
 
             synthesis.cancel();
 
-          } catch {
+          } catch (
+            error
+          ) {
 
-            // Ignore browser cancellation errors.
+            console.debug(
+              "SHOBDO TTS cancel:",
+              error
+            );
           }
+
         }
 
 
@@ -873,19 +1428,20 @@ function WritingAudioPlayer({
         );
 
       },
-      []
+      [
+        clearStartTimer,
+      ]
     );
 
 
   // =======================================================
-  // GLOBAL SHOBDO AUDIO COORDINATION
-  // Only one WritingAudioPlayer speaks at a time.
+  // ONLY ONE SHOBDO POST SPEAKS AT ONCE
   // =======================================================
 
   useEffect(
     () => {
 
-      function handleAnotherPlayerStarted(
+      function handleOtherPlayer(
         event
       ) {
 
@@ -902,14 +1458,17 @@ function WritingAudioPlayer({
           ownsSpeechRef.current
         ) {
 
-          stopPlayback();
+          stopPlayback(
+            true
+          );
         }
+
       }
 
 
       window.addEventListener(
         "shobdo:tts-start",
-        handleAnotherPlayerStarted
+        handleOtherPlayer
       );
 
 
@@ -917,7 +1476,7 @@ function WritingAudioPlayer({
 
         window.removeEventListener(
           "shobdo:tts-start",
-          handleAnotherPlayerStarted
+          handleOtherPlayer
         );
       };
 
@@ -929,7 +1488,7 @@ function WritingAudioPlayer({
 
 
   // =======================================================
-  // SPEAK ONE CHUNK
+  // SPEAK CHUNK
   // =======================================================
 
   const speakChunk =
@@ -958,6 +1517,7 @@ function WritingAudioPlayer({
         }
 
 
+        // Finished complete writing.
         if (
           index >=
           chunks.length
@@ -993,8 +1553,22 @@ function WritingAudioPlayer({
           chunks[index];
 
 
+        if (
+          !text
+        ) {
+
+          speakChunkInternal(
+            runId,
+            index + 1
+          );
+
+
+          return;
+        }
+
+
         const utterance =
-          new SpeechSynthesisUtterance(
+          new window.SpeechSynthesisUtterance(
             text
           );
 
@@ -1021,21 +1595,40 @@ function WritingAudioPlayer({
 
           utterance.voice =
             selectedVoice;
+
+
+          /*
+           * Use the voice's actual locale where available.
+           * This helps Chromium choose the correct speech engine.
+           */
+
+          if (
+            selectedVoice.lang
+          ) {
+
+            utterance.lang =
+              selectedVoice.lang;
+          }
+
         }
-
-
-        chunkIndexRef.current =
-          index;
 
 
         utteranceRef.current =
           utterance;
 
 
+        chunkIndexRef.current =
+          index;
+
+
         setCurrentChunk(
           index + 1
         );
 
+
+        // ---------------------------------------------------
+        // START
+        // ---------------------------------------------------
 
         utterance.onstart =
           () => {
@@ -1052,8 +1645,17 @@ function WritingAudioPlayer({
             setStatus(
               "playing"
             );
+
+
+            setErrorMessage(
+              ""
+            );
           };
 
+
+        // ---------------------------------------------------
+        // END
+        // ---------------------------------------------------
 
         utterance.onend =
           () => {
@@ -1067,12 +1669,20 @@ function WritingAudioPlayer({
             }
 
 
+            utteranceRef.current =
+              null;
+
+
             speakChunkInternal(
               runId,
               index + 1
             );
           };
 
+
+        // ---------------------------------------------------
+        // ERROR
+        // ---------------------------------------------------
 
         utterance.onerror =
           (
@@ -1088,14 +1698,15 @@ function WritingAudioPlayer({
             }
 
 
-            const error =
-              event?.error;
+            const errorType =
+              event?.error ||
+              "";
 
 
             if (
-              error ===
+              errorType ===
                 "interrupted" ||
-              error ===
+              errorType ===
                 "canceled"
             ) {
 
@@ -1105,12 +1716,16 @@ function WritingAudioPlayer({
 
             console.error(
               "SHOBDO TTS ERROR:",
-              error
+              errorType
             );
 
 
             ownsSpeechRef.current =
               false;
+
+
+            utteranceRef.current =
+              null;
 
 
             setStatus(
@@ -1124,9 +1739,35 @@ function WritingAudioPlayer({
           };
 
 
-        synthesis.speak(
-          utterance
-        );
+        try {
+
+          synthesis.speak(
+            utterance
+          );
+
+        } catch (
+          error
+        ) {
+
+          console.error(
+            "SHOBDO TTS SPEAK ERROR:",
+            error
+          );
+
+
+          ownsSpeechRef.current =
+            false;
+
+
+          setStatus(
+            "error"
+          );
+
+
+          setErrorMessage(
+            labels.error
+          );
+        }
 
       },
       [
@@ -1139,13 +1780,13 @@ function WritingAudioPlayer({
 
 
   // =======================================================
-  // START
+  // START PLAYBACK
   // =======================================================
 
   const startPlayback =
     useCallback(
       (
-        startIndex = 0
+        requestedIndex = 0
       ) => {
 
         if (
@@ -1167,6 +1808,9 @@ function WritingAudioPlayer({
 
           return;
         }
+
+
+        clearStartTimer();
 
 
         setErrorMessage(
@@ -1198,16 +1842,20 @@ function WritingAudioPlayer({
         );
 
 
-        const safeStartIndex =
+        const safeIndex =
           Math.min(
             Math.max(
               0,
-              startIndex
+              Number(
+                requestedIndex
+              ) ||
+              0
             ),
             chunks.length - 1
           );
 
 
+        // New playback session.
         runIdRef.current +=
           1;
 
@@ -1216,13 +1864,23 @@ function WritingAudioPlayer({
           runIdRef.current;
 
 
+        /*
+         * speechSynthesis is global for the browser tab.
+         * Cancel anything previously queued.
+         */
+
         try {
 
           synthesis.cancel();
 
-        } catch {
+        } catch (
+          error
+        ) {
 
-          // Ignore.
+          console.debug(
+            "SHOBDO TTS reset:",
+            error
+          );
         }
 
 
@@ -1230,53 +1888,66 @@ function WritingAudioPlayer({
           true;
 
 
+        // Tell every other WritingAudioPlayer to stop.
         window.dispatchEvent(
+
           new CustomEvent(
             "shobdo:tts-start",
             {
+
               detail: {
+
                 instanceId:
                   instanceIdRef.current,
 
                 writingId,
+
               },
+
             }
           )
+
         );
 
 
         /*
-         * A short delay after cancel() is important on Chromium
-         * browsers. Calling speak() immediately after cancel()
-         * can occasionally result in no speech.
+         * Chromium can ignore speak() when called immediately
+         * after cancel(). A small delay makes playback reliable.
          */
-        window.setTimeout(
-          () => {
 
-            if (
-              runId !==
-              runIdRef.current ||
-              !mountedRef.current
-            ) {
+        startTimerRef.current =
+          window.setTimeout(
+            () => {
 
-              return;
-            }
+              startTimerRef.current =
+                null;
 
 
-            speakChunk(
-              runId,
-              safeStartIndex
-            );
+              if (
+                !mountedRef.current ||
+                runId !==
+                  runIdRef.current
+              ) {
 
-          },
-          80
-        );
+                return;
+              }
+
+
+              speakChunk(
+                runId,
+                safeIndex
+              );
+
+            },
+            100
+          );
 
       },
       [
         supported,
         speechText,
         writingId,
+        clearStartTimer,
         speakChunk,
       ]
     );
@@ -1314,10 +1985,16 @@ function WritingAudioPlayer({
 
         return;
 
-      } catch {
+      } catch (
+        error
+      ) {
 
-        // If resume fails, restart the current chunk.
+        console.debug(
+          "SHOBDO TTS resume failed:",
+          error
+        );
       }
+
     }
 
 
@@ -1365,6 +2042,7 @@ function WritingAudioPlayer({
         error
       );
     }
+
   }
 
 
@@ -1374,23 +2052,31 @@ function WritingAudioPlayer({
 
   function handleRestart() {
 
-    stopPlayback();
-
-    window.setTimeout(
-      () => {
-
-        startPlayback(
-          0
-        );
-
-      },
-      60
+    stopPlayback(
+      true
     );
+
+
+    startTimerRef.current =
+      window.setTimeout(
+        () => {
+
+          startTimerRef.current =
+            null;
+
+
+          startPlayback(
+            0
+          );
+
+        },
+        80
+      );
   }
 
 
   // =======================================================
-  // SPEED
+  // SPEED CHANGE
   // =======================================================
 
   function handleSpeedChange(
@@ -1419,30 +2105,37 @@ function WritingAudioPlayer({
 
 
     /*
-     * SpeechSynthesisUtterance.rate cannot reliably be changed
-     * after speaking has begun.
+     * Browser speech rate cannot reliably change in the
+     * middle of the currently spoken utterance.
      *
-     * The new speed therefore applies automatically to the next
-     * sentence/chunk. This avoids abruptly restarting the user's
-     * narration.
+     * Therefore the new speed is applied from the next chunk.
      */
   }
 
 
   // =======================================================
-  // WRITING CHANGED
+  // RESET WHEN WRITING CHANGES
   // =======================================================
 
   useEffect(
     () => {
 
-      stopPlayback();
+      stopPlayback(
+        true
+      );
+
 
       setErrorMessage(
         ""
       );
 
+
       setTotalChunks(
+        0
+      );
+
+
+      setCurrentChunk(
         0
       );
 
@@ -1457,7 +2150,7 @@ function WritingAudioPlayer({
 
 
   // =======================================================
-  // CLEANUP
+  // CLEANUP ON UNMOUNT
   // =======================================================
 
   useEffect(
@@ -1473,36 +2166,110 @@ function WritingAudioPlayer({
           false;
 
 
+        clearStartTimer();
+
+
+        runIdRef.current +=
+          1;
+
+
         if (
           ownsSpeechRef.current
         ) {
-
-          runIdRef.current +=
-            1;
-
 
           try {
 
             synthesisRef.current?.cancel();
 
-          } catch {
+          } catch (
+            error
+          ) {
 
-            // Ignore cleanup errors.
+            console.debug(
+              "SHOBDO TTS cleanup:",
+              error
+            );
           }
 
-
-          ownsSpeechRef.current =
-            false;
         }
+
+
+        ownsSpeechRef.current =
+          false;
+
+
+        utteranceRef.current =
+          null;
       };
 
     },
-    []
+    [
+      clearStartTimer,
+    ]
   );
 
 
   // =======================================================
-  // NOTHING TO READ
+  // DEBUG VOICE INFO
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      if (
+        !voicesLoaded
+      ) {
+
+        return;
+      }
+
+
+      if (
+        selectedVoice
+      ) {
+
+        console.debug(
+          "[SHOBDO TTS]",
+          {
+            writingId,
+            requestedLanguage:
+              writingLanguage,
+            locale,
+            selectedVoice:
+              selectedVoice.name,
+            selectedVoiceLanguage:
+              selectedVoice.lang,
+            localService:
+              selectedVoice.localService,
+          }
+        );
+
+      } else {
+
+        console.debug(
+          "[SHOBDO TTS] No matching voice:",
+          {
+            writingId,
+            requestedLanguage:
+              writingLanguage,
+            locale,
+          }
+        );
+      }
+
+    },
+    [
+      voicesLoaded,
+      selectedVoice,
+      writingId,
+      writingLanguage,
+      locale,
+    ]
+  );
+
+
+  // =======================================================
+  // NO CONTENT
   // =======================================================
 
   if (
@@ -1514,7 +2281,7 @@ function WritingAudioPlayer({
 
 
   // =======================================================
-  // UNSUPPORTED
+  // BROWSER NOT SUPPORTED
   // =======================================================
 
   if (
@@ -1524,7 +2291,10 @@ function WritingAudioPlayer({
     return (
 
       <div
-        className="writing-audio-player writing-audio-player--unsupported"
+        className="
+          writing-audio-player
+          writing-audio-player--unsupported
+        "
         role="status"
       >
 
@@ -1532,6 +2302,7 @@ function WritingAudioPlayer({
           size={17}
           aria-hidden="true"
         />
+
 
         <span>
           {labels.unsupported}
@@ -1544,7 +2315,7 @@ function WritingAudioPlayer({
 
 
   // =======================================================
-  // PRESENTATION
+  // UI STATE
   // =======================================================
 
   const isPlaying =
@@ -1563,7 +2334,8 @@ function WritingAudioPlayer({
 
 
   const progress =
-    totalChunks > 0
+    totalChunks >
+      0
       ? Math.min(
           100,
           Math.max(
@@ -1578,6 +2350,24 @@ function WritingAudioPlayer({
       : 0;
 
 
+  const primaryButtonLabel =
+    isPlaying
+      ? labels.pause
+      : isPaused
+        ? labels.resume
+        : labels.listen;
+
+
+  const selectedVoiceTitle =
+    selectedVoice
+      ? `${selectedVoice.name} · ${selectedVoice.lang}`
+      : labels.listen;
+
+
+  // =======================================================
+  // UI
+  // =======================================================
+
   return (
 
     <section
@@ -1588,7 +2378,8 @@ function WritingAudioPlayer({
           ? "is-active"
           : "",
 
-        status === "error"
+        status ===
+          "error"
           ? "has-error"
           : "",
 
@@ -1599,11 +2390,15 @@ function WritingAudioPlayer({
       aria-label={
         labels.listen
       }
+      title={
+        selectedVoiceTitle
+      }
     >
 
-      {/* ===============================================
-          PRIMARY AUDIO CONTROL
-      ================================================ */}
+
+      {/* =================================================
+          PLAY / PAUSE
+      ================================================== */}
 
       <button
         type="button"
@@ -1614,44 +2409,40 @@ function WritingAudioPlayer({
             : handlePlay
         }
         aria-label={
-          isPlaying
-            ? labels.pause
-            : isPaused
-              ? labels.resume
-              : labels.listen
+          primaryButtonLabel
         }
         title={
-          isPlaying
-            ? labels.pause
-            : isPaused
-              ? labels.resume
-              : labels.listen
+          primaryButtonLabel
         }
       >
 
         {isPlaying
           ? (
+
             <Pause
               size={18}
               strokeWidth={2}
               aria-hidden="true"
             />
+
           )
           : (
+
             <Play
               size={18}
               strokeWidth={2}
               aria-hidden="true"
             />
+
           )
         }
 
       </button>
 
 
-      {/* ===============================================
-          STATUS
-      ================================================ */}
+      {/* =================================================
+          MAIN STATUS
+      ================================================== */}
 
       <div
         className="writing-audio-main"
@@ -1671,12 +2462,14 @@ function WritingAudioPlayer({
               aria-hidden="true"
             />
 
+
             <span>
-              {
-                isActive
-                  ? labels.listening
-                  : labels.listen
+
+              {isActive
+                ? labels.listening
+                : labels.listen
               }
+
             </span>
 
           </span>
@@ -1689,15 +2482,21 @@ function WritingAudioPlayer({
             <span
               className="writing-audio-progress-label"
             >
+
               {currentChunk}
               /
               {totalChunks}
+
             </span>
 
           )}
 
         </div>
 
+
+        {/* ===============================================
+            PROGRESS
+        ================================================ */}
 
         <div
           className="writing-audio-progress"
@@ -1714,13 +2513,19 @@ function WritingAudioPlayer({
         </div>
 
 
+        {/* ===============================================
+            ERROR
+        ================================================ */}
+
         {errorMessage && (
 
           <span
             className="writing-audio-error"
             role="status"
           >
+
             {errorMessage}
+
           </span>
 
         )}
@@ -1728,9 +2533,9 @@ function WritingAudioPlayer({
       </div>
 
 
-      {/* ===============================================
+      {/* =================================================
           SPEED
-      ================================================ */}
+      ================================================== */}
 
       <label
         className="writing-audio-speed"
@@ -1744,6 +2549,7 @@ function WritingAudioPlayer({
           strokeWidth={1.9}
           aria-hidden="true"
         />
+
 
         <select
           value={
@@ -1770,7 +2576,9 @@ function WritingAudioPlayer({
                   value
                 }
               >
+
                 {value}×
+
               </option>
 
             )
@@ -1781,9 +2589,9 @@ function WritingAudioPlayer({
       </label>
 
 
-      {/* ===============================================
+      {/* =================================================
           RESTART
-      ================================================ */}
+      ================================================== */}
 
       {isActive && (
 
@@ -1812,18 +2620,23 @@ function WritingAudioPlayer({
       )}
 
 
-      {/* ===============================================
+      {/* =================================================
           STOP
-      ================================================ */}
+      ================================================== */}
 
       {isActive && (
 
         <button
           type="button"
-          className="writing-audio-icon-button writing-audio-stop"
+          className="
+            writing-audio-icon-button
+            writing-audio-stop
+          "
           onClick={
             () =>
-              stopPlayback()
+              stopPlayback(
+                true
+              )
           }
           aria-label={
             labels.stop
@@ -1844,6 +2657,7 @@ function WritingAudioPlayer({
       )}
 
     </section>
+
   );
 }
 
