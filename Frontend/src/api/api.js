@@ -769,6 +769,68 @@ export async function unpublishWriting(
 
 
 // =========================================================
+// SHARES
+//
+// Persistent public share counter.
+//
+// POST /api/writings/<writing_id>/share
+// =========================================================
+
+export async function recordWritingShare(
+  writingId
+) {
+
+  const id =
+    validateWritingId(
+      writingId
+    );
+
+
+  const data =
+    await apiRequest(
+      `/api/writings/${id}/share`,
+      {
+        method:
+          "POST",
+      }
+    );
+
+
+  const sharesCount =
+    Number(
+      data?.shares_count ??
+      data?.share_count ??
+      0
+    );
+
+
+  return {
+    ...data,
+
+    shares_count:
+      Number.isFinite(
+        sharesCount
+      )
+        ? Math.max(
+            0,
+            sharesCount
+          )
+        : 0,
+
+    share_count:
+      Number.isFinite(
+        sharesCount
+      )
+        ? Math.max(
+            0,
+            sharesCount
+          )
+        : 0,
+  };
+}
+
+
+// =========================================================
 // LIKES
 //
 // Backend:
@@ -2374,6 +2436,11 @@ const writingApi = {
   publishWriting,
 
   unpublishWriting,
+
+
+  // SHARES
+
+  recordWritingShare,
 
 
   // LIKES

@@ -1143,6 +1143,7 @@ def serialize_comment(
 
     }
 
+
 # =========================================================
 # REPOST METADATA
 # =========================================================
@@ -1683,7 +1684,7 @@ def serialize_writing(
         ],
 
         # -------------------------------------------------
-        # LIKES / COMMENTS
+        # LIKES / COMMENTS / SHARES
         # -------------------------------------------------
 
         "likes":
@@ -1694,6 +1695,26 @@ def serialize_writing(
 
         "comments_count":
             comments_count,
+
+        "shares_count":
+            int(
+                getattr(
+                    writing,
+                    "shares_count",
+                    0,
+                )
+                or 0
+            ),
+
+        "share_count":
+            int(
+                getattr(
+                    writing,
+                    "shares_count",
+                    0,
+                )
+                or 0
+            ),
 
         "is_liked":
             is_liked,
@@ -1785,6 +1806,133 @@ def serialize_writing(
             ),
 
     }
+
+
+# =========================================================
+# RECORD WRITING SHARE
+#
+# POST /api/writings/<writing_id>/share
+#
+# Public endpoint because public visitors can share a
+# published writing. The counter is incremented only when
+# the frontend reports a successful native share or copy.
+# =========================================================
+
+@writings_bp.route(
+    "/<int:writing_id>/share",
+    methods=["POST"],
+)
+def record_writing_share(
+    writing_id,
+):
+
+    try:
+
+        # -------------------------------------------------
+        # Atomic increment avoids lost updates when several
+        # people share the same writing at the same time.
+        # -------------------------------------------------
+
+        updated_rows = (
+
+            Writing.query
+
+            .filter(
+                Writing.id
+                ==
+                writing_id,
+
+                Writing.status
+                ==
+                "published",
+
+                Writing.deleted_at.is_(
+                    None
+                ),
+            )
+
+            .update(
+                {
+                    Writing.shares_count:
+                        Writing.shares_count
+                        +
+                        1
+                },
+                synchronize_session=False,
+            )
+        )
+
+
+        if updated_rows != 1:
+
+            db.session.rollback()
+
+            return error_response(
+                "Writing not found.",
+                404,
+            )
+
+
+        db.session.commit()
+
+
+        shares_count = (
+
+            db.session.query(
+                Writing.shares_count
+            )
+
+            .filter(
+                Writing.id
+                ==
+                writing_id
+            )
+
+            .scalar()
+
+            or 0
+        )
+
+
+        shares_count = int(
+            shares_count
+        )
+
+
+        return jsonify({
+
+            "success":
+                True,
+
+            "writing_id":
+                writing_id,
+
+            "shares_count":
+                shares_count,
+
+            # Compatibility alias used by some UI code.
+            "share_count":
+                shares_count,
+
+        }), 200
+
+
+    except Exception as error:
+
+        db.session.rollback()
+
+        print(
+            "RECORD WRITING SHARE ERROR:",
+            repr(
+                error
+            ),
+        )
+
+        return error_response(
+            "Unable to record share.",
+            500,
+        )
+
 
 # =========================================================
 # GET SUPPORTED LANGUAGES

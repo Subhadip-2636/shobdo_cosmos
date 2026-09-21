@@ -128,6 +128,31 @@ class Writing(db.Model):
     )
 
     # =====================================================
+    # PERSISTENT ENGAGEMENT METRICS
+    # =====================================================
+    #
+    # Likes and comments are derived from their relationship
+    # tables.
+    #
+    # Shares are external actions. Therefore they are stored
+    # as a persistent database counter.
+    #
+    # Example:
+    #
+    # shares_count = 0
+    # shares_count = 1
+    # shares_count = 25
+    #
+    # =====================================================
+
+    shares_count = db.Column(
+        db.Integer,
+        nullable=False,
+        default=0,
+        server_default="0",
+    )
+
+    # =====================================================
     # RELATIONSHIPS
     # =====================================================
 
@@ -179,11 +204,19 @@ class Writing(db.Model):
 
     @property
     def is_draft(self):
-        return self.status == "draft"
+        return (
+            self.status
+            ==
+            "draft"
+        )
 
     @property
     def is_published(self):
-        return self.status == "published"
+        return (
+            self.status
+            ==
+            "published"
+        )
 
     # =====================================================
     # ENGAGEMENT COUNTS
@@ -191,11 +224,17 @@ class Writing(db.Model):
 
     @property
     def likes_count(self):
-        return len(self.likes)
+
+        return len(
+            self.likes
+        )
 
     @property
     def comments_count(self):
-        return len(self.comments)
+
+        return len(
+            self.comments
+        )
 
     # =====================================================
     # SERIALIZATION
@@ -206,73 +245,155 @@ class Writing(db.Model):
         return {
 
             # -------------------------------------------------
-            # Writing
+            # WRITING
             # -------------------------------------------------
 
-            "id": self.id,
+            "id":
+                self.id,
 
-            "title": self.title,
+            "title":
+                self.title,
 
-            "content": self.content,
+            "content":
+                self.content,
 
-            "category": self.category,
+            "category":
+                self.category,
 
-            "language": self.language,
+            "language":
+                self.language,
 
-            "status": self.status,
-
-            # -------------------------------------------------
-            # Author
-            # -------------------------------------------------
-
-            "user_id": self.user_id,
-
-            "author": (
-                {
-                    "id": self.author.id,
-                    "name": self.author.name,
-                }
-                if self.author
-                else None
-            ),
+            "status":
+                self.status,
 
             # -------------------------------------------------
-            # Dates
+            # AUTHOR
             # -------------------------------------------------
 
-            "created_at": (
-                self.created_at.isoformat()
-                if self.created_at
-                else None
-            ),
+            "user_id":
+                self.user_id,
 
-            "updated_at": (
-                self.updated_at.isoformat()
-                if self.updated_at
-                else None
-            ),
+            "author":
+                (
+                    {
+                        "id":
+                            self.author.id,
 
-            "published_at": (
-                self.published_at.isoformat()
-                if self.published_at
-                else None
-            ),
+                        "name":
+                            self.author.name,
+
+                        "username":
+                            getattr(
+                                self.author,
+                                "username",
+                                None,
+                            ),
+
+                        "avatar_url":
+                            getattr(
+                                self.author,
+                                "avatar_url",
+                                None,
+                            ),
+                    }
+
+                    if self.author
+
+                    else None
+                ),
 
             # -------------------------------------------------
-            # Engagement
+            # DATES
             # -------------------------------------------------
 
-            "likes_count": self.likes_count,
+            "created_at":
+                (
+                    self.created_at
+                    .isoformat()
 
-            "comments_count": self.comments_count,
+                    if self.created_at
+
+                    else None
+                ),
+
+            "updated_at":
+                (
+                    self.updated_at
+                    .isoformat()
+
+                    if self.updated_at
+
+                    else None
+                ),
+
+            "published_at":
+                (
+                    self.published_at
+                    .isoformat()
+
+                    if self.published_at
+
+                    else None
+                ),
+
+            "deleted_at":
+                (
+                    self.deleted_at
+                    .isoformat()
+
+                    if self.deleted_at
+
+                    else None
+                ),
+
+            "previous_status":
+                self.previous_status,
 
             # -------------------------------------------------
-            # Tags
+            # ENGAGEMENT
+            # -------------------------------------------------
+
+            "likes_count":
+                self.likes_count,
+
+            "comments_count":
+                self.comments_count,
+
+            "shares_count":
+                int(
+                    self.shares_count
+                    or 0
+                ),
+
+            # -------------------------------------------------
+            # COMPATIBILITY ALIAS
+            #
+            # Some frontend code may still look for:
+            #
+            # share_count
+            #
+            # while the preferred field is:
+            #
+            # shares_count
+            # -------------------------------------------------
+
+            "share_count":
+                int(
+                    self.shares_count
+                    or 0
+                ),
+
+            # -------------------------------------------------
+            # TAGS
             # -------------------------------------------------
 
             "tags": [
+
                 tag.to_dict()
-                for tag in self.tags
+
+                for tag
+                in self.tags
+
             ],
         }
 
@@ -283,9 +404,17 @@ class Writing(db.Model):
     def __repr__(self):
 
         return (
+
             f"<Writing "
+
             f"id={self.id} "
+
             f"title={self.title!r} "
+
             f"language={self.language!r} "
-            f"status={self.status!r}>"
+
+            f"status={self.status!r} "
+
+            f"shares_count={self.shares_count}>"
+
         )

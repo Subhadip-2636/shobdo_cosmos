@@ -981,6 +981,52 @@ svg {
 
 
 /* =========================================================
+   VISIBLE ACTION COUNTS
+========================================================= */
+
+.writing-visible-action-count {
+  min-width:
+    12px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  margin-left:
+    7px;
+
+  color:
+    currentColor;
+
+  font-size:
+    13px;
+
+  font-weight:
+    700;
+
+  line-height:
+    1;
+
+  font-variant-numeric:
+    tabular-nums;
+
+  white-space:
+    nowrap;
+
+  pointer-events:
+    none;
+
+  user-select:
+    none;
+}
+
+
+/* =========================================================
    LIKE
 ========================================================= */
 
@@ -1037,6 +1083,25 @@ svg {
    REPOST
 ========================================================= */
 
+.writing-repost-control {
+  position:
+    relative;
+
+  width:
+    100%;
+
+  min-width:
+    0;
+}
+
+
+.writing-repost-control >
+.writing-action-button {
+  width:
+    100%;
+}
+
+
 .writing-repost-button:hover:not(:disabled) {
   border-color:
     #d7eadf;
@@ -1058,6 +1123,332 @@ svg {
 
   color:
     #317a52;
+}
+
+
+.writing-repost-popover {
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  bottom:
+    calc(
+      100% +
+      10px
+    );
+
+  z-index:
+    45;
+
+  width:
+    min(
+      310px,
+      calc(
+        100vw -
+        32px
+      )
+    );
+
+  padding:
+    7px;
+
+  border:
+    1px solid
+    rgba(
+      71,
+      61,
+      49,
+      0.12
+    );
+
+  border-radius:
+    16px;
+
+  background:
+    rgba(
+      255,
+      253,
+      249,
+      0.98
+    );
+
+  box-shadow:
+    0 18px 48px
+    rgba(
+      52,
+      42,
+      31,
+      0.16
+    );
+
+  backdrop-filter:
+    blur(
+      14px
+    );
+
+  transform:
+    translateX(
+      -50%
+    );
+
+  animation:
+    writing-repost-popover-in
+    0.16s
+    ease-out;
+}
+
+
+.writing-repost-popover::after {
+  content:
+    "";
+
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  top:
+    100%;
+
+  width:
+    12px;
+
+  height:
+    12px;
+
+  border-right:
+    1px solid
+    rgba(
+      71,
+      61,
+      49,
+      0.1
+    );
+
+  border-bottom:
+    1px solid
+    rgba(
+      71,
+      61,
+      49,
+      0.1
+    );
+
+  background:
+    #fffdf9;
+
+  transform:
+    translate(
+      -50%,
+      -6px
+    )
+    rotate(
+      45deg
+    );
+}
+
+
+.writing-repost-popover-option {
+  position:
+    relative;
+
+  z-index:
+    1;
+
+  width:
+    100%;
+
+  min-height:
+    64px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    12px;
+
+  padding:
+    10px
+    11px;
+
+  border:
+    0;
+
+  border-radius:
+    12px;
+
+  background:
+    transparent;
+
+  color:
+    #3d352e;
+
+  font:
+    inherit;
+
+  text-align:
+    left;
+
+  cursor:
+    pointer;
+
+  transition:
+    background-color
+    0.16s
+    ease,
+    color
+    0.16s
+    ease;
+}
+
+
+.writing-repost-popover-option:hover:not(:disabled) {
+  background:
+    #f4f8f5;
+}
+
+
+.writing-repost-popover-option:disabled {
+  opacity:
+    0.55;
+
+  cursor:
+    default;
+}
+
+
+.writing-repost-popover-icon {
+  width:
+    38px;
+
+  height:
+    38px;
+
+  flex:
+    0 0
+    38px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border-radius:
+    50%;
+
+  background:
+    #eef8f2;
+
+  color:
+    #347954;
+}
+
+
+.writing-repost-popover-copy {
+  min-width:
+    0;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    4px;
+}
+
+
+.writing-repost-popover-copy strong {
+  color:
+    #352e28;
+
+  font-size:
+    13px;
+
+  font-weight:
+    800;
+
+  line-height:
+    1.25;
+}
+
+
+.writing-repost-popover-copy small {
+  color:
+    #8b8178;
+
+  font-size:
+    10.5px;
+
+  font-weight:
+    500;
+
+  line-height:
+    1.4;
+}
+
+
+.writing-repost-popover-option--remove
+.writing-repost-popover-icon {
+  background:
+    #fff0f0;
+
+  color:
+    #b24d52;
+}
+
+
+.writing-repost-popover-option--remove:hover:not(:disabled) {
+  background:
+    #fff6f5;
+}
+
+
+@keyframes writing-repost-popover-in {
+
+  from {
+    opacity:
+      0;
+
+    transform:
+      translateX(
+        -50%
+      )
+      translateY(
+        6px
+      )
+      scale(
+        0.98
+      );
+  }
+
+  to {
+    opacity:
+      1;
+
+    transform:
+      translateX(
+        -50%
+      )
+      translateY(
+        0
+      )
+      scale(
+        1
+      );
+  }
+
 }
 
 
@@ -1590,6 +1981,27 @@ svg {
       17px;
   }
 
+
+  .writing-visible-action-count {
+    margin-left:
+      5px;
+
+    font-size:
+      11.5px;
+  }
+
+
+  .writing-repost-popover {
+    width:
+      min(
+        286px,
+        calc(
+          100vw -
+          24px
+        )
+      );
+  }
+
 }
 
 
@@ -1619,7 +2031,8 @@ svg {
   }
 
 
-  .writing-more-dropdown {
+  .writing-more-dropdown,
+  .writing-repost-popover {
     animation:
       none;
   }
