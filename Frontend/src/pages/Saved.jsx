@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useState,
 } from "react";
@@ -15,8 +16,25 @@ import {
 
 import WritingCard from "../components/WritingCard";
 
+import {
+  useLanguage,
+} from "../Language/LanguageContext";
+
 
 function Saved() {
+
+  // =====================================================
+  // LANGUAGE
+  // =====================================================
+
+  const {
+    t,
+  } = useLanguage();
+
+
+  // =====================================================
+  // STATE
+  // =====================================================
 
   const [
     writings,
@@ -31,70 +49,80 @@ function Saved() {
 
 
   const [
-    error,
-    setError,
-  ] = useState("");
+    hasError,
+    setHasError,
+  ] = useState(false);
 
 
-  async function loadSavedWritings() {
+  // =====================================================
+  // LOAD SAVED WRITINGS
+  // =====================================================
 
-    setLoading(true);
-    setError("");
+  const loadSavedWritings =
+    useCallback(
+      async () => {
 
+        setLoading(true);
 
-    try {
-
-      const data =
-        await getSavedWritings({
-          page: 1,
-          perPage: 50,
-        });
+        setHasError(false);
 
 
-      const items =
-        Array.isArray(
-          data?.saved_writings
-        )
-          ? data.saved_writings
-          : [];
+        try {
+
+          const data =
+            await getSavedWritings({
+              page: 1,
+              perPage: 50,
+            });
 
 
-      const extractedWritings =
-        items
-          .map(
-            (item) =>
-              item?.writing
-          )
-          .filter(Boolean);
+          const items =
+            Array.isArray(
+              data?.saved_writings
+            )
+              ? data.saved_writings
+              : [];
 
 
-      setWritings(
-        extractedWritings
-      );
+          const extractedWritings =
+            items
+              .map(
+                (item) =>
+                  item?.writing
+              )
+              .filter(Boolean);
 
 
-    } catch (error) {
-
-      console.error(
-        "LOAD SAVED WRITINGS ERROR:",
-        error
-      );
+          setWritings(
+            extractedWritings
+          );
 
 
-      setError(
-        error?.message ||
-        "Unable to load your saved writings."
-      );
+        } catch (error) {
+
+          console.error(
+            "LOAD SAVED WRITINGS ERROR:",
+            error
+          );
 
 
-    } finally {
+          setHasError(true);
 
-      setLoading(false);
 
-    }
+        } finally {
 
-  }
+          setLoading(false);
 
+        }
+
+      },
+      []
+    );
+
+
+  // =====================================================
+  // INITIAL LOAD
+  // =====================================================
 
   useEffect(
     () => {
@@ -102,7 +130,9 @@ function Saved() {
       loadSavedWritings();
 
     },
-    []
+    [
+      loadSavedWritings,
+    ]
   );
 
 
@@ -118,15 +148,25 @@ function Saved() {
 
         <div className="saved-page-container">
 
-          <div className="saved-page-status">
+          <div
+            className="saved-page-status"
+            role="status"
+            aria-live="polite"
+          >
 
             <LoaderCircle
               className="saved-page-spinner"
               size={34}
+              aria-hidden="true"
             />
 
+
             <h2>
-              Loading saved writings...
+              {
+                t(
+                  "savedWritings.loading"
+                )
+              }
             </h2>
 
           </div>
@@ -144,7 +184,7 @@ function Saved() {
   // ERROR
   // =====================================================
 
-  if (error) {
+  if (hasError) {
 
     return (
 
@@ -152,19 +192,34 @@ function Saved() {
 
         <div className="saved-page-container">
 
-          <div className="saved-page-status">
+          <div
+            className="saved-page-status"
+            role="alert"
+          >
 
             <Bookmark
               size={38}
+              aria-hidden="true"
             />
 
+
             <h2>
-              Unable to load saved writings
+              {
+                t(
+                  "savedWritings.loadError"
+                )
+              }
             </h2>
 
+
             <p>
-              {error}
+              {
+                t(
+                  "savedWritings.loadErrorDescription"
+                )
+              }
             </p>
+
 
             <button
               type="button"
@@ -176,9 +231,17 @@ function Saved() {
 
               <RefreshCw
                 size={17}
+                aria-hidden="true"
               />
 
-              Try again
+
+              <span>
+                {
+                  t(
+                    "savedWritings.retry"
+                  )
+                }
+              </span>
 
             </button>
 
@@ -193,6 +256,10 @@ function Saved() {
   }
 
 
+  // =====================================================
+  // MAIN PAGE
+  // =====================================================
+
   return (
 
     <main className="saved-page">
@@ -206,7 +273,10 @@ function Saved() {
 
         <header className="saved-page-header">
 
-          <div className="saved-page-heading-icon">
+          <div
+            className="saved-page-heading-icon"
+            aria-hidden="true"
+          >
 
             <Bookmark
               size={26}
@@ -218,11 +288,24 @@ function Saved() {
           <div>
 
             <h1>
-              Saved Writings
+
+              {
+                t(
+                  "savedWritings.title"
+                )
+              }
+
             </h1>
 
+
             <p>
-              Writings you have bookmarked for later.
+
+              {
+                t(
+                  "savedWritings.subtitle"
+                )
+              }
+
             </p>
 
           </div>
@@ -231,26 +314,43 @@ function Saved() {
 
 
         {/* =============================================
-            EMPTY
+            EMPTY STATE
         ============================================== */}
 
         {
           writings.length === 0
             ? (
 
-                <section className="saved-page-empty">
+                <section
+                  className="saved-page-empty"
+                  aria-live="polite"
+                >
 
                   <Bookmark
                     size={42}
+                    aria-hidden="true"
                   />
 
+
                   <h2>
-                    No saved writings yet
+
+                    {
+                      t(
+                        "savedWritings.emptyTitle"
+                      )
+                    }
+
                   </h2>
 
+
                   <p>
-                    Save poems, stories and articles
-                    and they will appear here.
+
+                    {
+                      t(
+                        "savedWritings.emptyDescription"
+                      )
+                    }
+
                   </p>
 
                 </section>
@@ -260,24 +360,46 @@ function Saved() {
 
                 <>
 
+                  {/* =====================================
+                      SAVED WRITING COUNT
+                  ====================================== */}
+
                   <div className="saved-page-summary">
 
                     <strong>
                       {writings.length}
                     </strong>
 
+
                     <span>
-                      saved {
+
+                      {
                         writings.length === 1
-                          ? "writing"
-                          : "writings"
+                          ? t(
+                              "savedWritings.savedWriting"
+                            )
+                          : t(
+                              "savedWritings.savedWritings"
+                            )
                       }
+
                     </span>
 
                   </div>
 
 
-                  <section className="saved-writings-grid">
+                  {/* =====================================
+                      SAVED WRITINGS
+                  ====================================== */}
+
+                  <section
+                    className="saved-writings-grid"
+                    aria-label={
+                      t(
+                        "savedWritings.title"
+                      )
+                    }
+                  >
 
                     {
                       writings.map(

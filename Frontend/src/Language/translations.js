@@ -971,6 +971,37 @@ signIn: "লগইন করুন",
       },
     },
 
+    savedWritings: {
+  title: "সংরক্ষিত লেখা",
+
+  subtitle:
+    "পরে পড়ার জন্য আপনি যে লেখাগুলি বুকমার্ক করেছেন।",
+
+  loading:
+    "সংরক্ষিত লেখাগুলি লোড হচ্ছে...",
+
+  loadError:
+    "সংরক্ষিত লেখাগুলি লোড করা যায়নি",
+
+  loadErrorDescription:
+    "আপনার সংরক্ষিত লেখাগুলি লোড করার সময় একটি সমস্যা হয়েছে।",
+
+  retry:
+    "আবার চেষ্টা করুন",
+
+  emptyTitle:
+    "এখনও কোনো লেখা সংরক্ষিত নেই",
+
+  emptyDescription:
+    "কবিতা, গল্প ও প্রবন্ধ সংরক্ষণ করুন। সেগুলি এখানে দেখা যাবে।",
+
+  savedWriting:
+    "টি সংরক্ষিত লেখা",
+
+  savedWritings:
+    "টি সংরক্ষিত লেখা",
+},
+
     comments: {
       title: "মন্তব্য",
       singular: "মন্তব্য",
@@ -2390,6 +2421,37 @@ signInDescription:
 signIn: "Sign in",
       },
     },
+
+    savedWritings: {
+  title: "Saved Writings",
+
+  subtitle:
+    "Writings you have bookmarked for later.",
+
+  loading:
+    "Loading saved writings...",
+
+  loadError:
+    "Unable to load saved writings",
+
+  loadErrorDescription:
+    "Something went wrong while loading your saved writings.",
+
+  retry:
+    "Try again",
+
+  emptyTitle:
+    "No saved writings yet",
+
+  emptyDescription:
+    "Save poems, stories and articles and they will appear here.",
+
+  savedWriting:
+    "saved writing",
+
+  savedWritings:
+    "saved writings",
+},
 
     comments: {
       title: "Comments",
@@ -3848,6 +3910,37 @@ signInDescription:
 signIn: "लॉगिन करें",
       },
     },
+
+    savedWritings: {
+  title: "सहेजी गई रचनाएँ",
+
+  subtitle:
+    "वे रचनाएँ जिन्हें आपने बाद में पढ़ने के लिए सहेजा है।",
+
+  loading:
+    "सहेजी गई रचनाएँ लोड हो रही हैं...",
+
+  loadError:
+    "सहेजी गई रचनाएँ लोड नहीं हो सकीं",
+
+  loadErrorDescription:
+    "आपकी सहेजी गई रचनाएँ लोड करते समय कोई समस्या हुई।",
+
+  retry:
+    "फिर से प्रयास करें",
+
+  emptyTitle:
+    "अभी तक कोई रचना सहेजी नहीं गई",
+
+  emptyDescription:
+    "कविताएँ, कहानियाँ और लेख सहेजें। वे यहाँ दिखाई देंगे।",
+
+  savedWriting:
+    "सहेजी गई रचना",
+
+  savedWritings:
+    "सहेजी गई रचनाएँ",
+},
 
     comments: {
       title: "टिप्पणियाँ",
