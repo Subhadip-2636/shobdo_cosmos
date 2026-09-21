@@ -68,6 +68,22 @@ export const PAGE_BACKGROUNDS = [
       "/backgrounds/shobdo-my-writings-bg.mp4",
   },
 
+  {
+    id: "shobdo-saved-writings",
+    name: "SHOBDO Saved Writings",
+    type: "video",
+    value:
+      "/backgrounds/shobdo-saved-writings-bg.mp4",
+  },
+
+  {
+    id: "shobdo-my-profile",
+    name: "SHOBDO Profile",
+    type: "video",
+    value:
+      "/backgrounds/shobdo-my-profile-bg.mp4",
+  },
+
 
   // =======================================================
   // OPTIONAL EXISTING BACKGROUNDS
@@ -131,7 +147,7 @@ export const PAGE_DEFAULT_BACKGROUNDS = {
     "shobdo-my-writings",
 
   saved:
-    "default",
+    "shobdo-saved-writings",
 
   write:
     "default",
@@ -140,7 +156,7 @@ export const PAGE_DEFAULT_BACKGROUNDS = {
     "default",
 
   profile:
-    "default",
+    "shobdo-my-profile",
 
   settings:
     "default",
