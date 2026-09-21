@@ -13,6 +13,7 @@ import {
 import {
   PAGE_BACKGROUNDS,
   getBackgroundPageKey,
+  getDefaultBackgroundId,
 } from "../config/pageBackgrounds";
 
 
@@ -322,7 +323,10 @@ export function PageBackgroundProvider({
   const selectedId =
     selectedBackgrounds[
       pageKey
-    ] || "default";
+    ] ||
+    getDefaultBackgroundId(
+      pageKey
+    );
 
 
   // =======================================================
@@ -562,12 +566,24 @@ export function PageBackgroundProvider({
   function resetBackground() {
 
     setSelectedBackgrounds(
-      (current) => ({
-        ...current,
+      (current) => {
 
-        [pageKey]:
-          "default",
-      })
+        const next = {
+          ...current,
+        };
+
+
+        // Remove the user's override.
+        // The page will automatically return
+        // to its official SHOBDO default.
+        delete next[
+          pageKey
+        ];
+
+
+        return next;
+
+      }
     );
 
 
@@ -582,6 +598,7 @@ export function PageBackgroundProvider({
     );
 
   }
+
 
   // =======================================================
   // SET BACKGROUND VISIBILITY

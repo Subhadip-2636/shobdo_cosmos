@@ -15,18 +15,22 @@ export default function PageBackground() {
 
 
   // =========================================================
-  // VISIBILITY
+  // SETTINGS
   // =========================================================
-  //
-  // Higher visibility:
-  //   weaker white overlay
-  //   wallpaper becomes clearer
-  //
-  // Lower visibility:
-  //   stronger white overlay
-  //   cleaner / softer feed
-  //
-  // =========================================================
+
+  const brightness =
+    Number(
+      currentSettings?.brightness ??
+      100
+    );
+
+
+  const blur =
+    Number(
+      currentSettings?.blur ??
+      0
+    );
+
 
   const visibility =
     Number(
@@ -35,8 +39,15 @@ export default function PageBackground() {
     );
 
 
+  // =========================================================
+  // READABILITY OVERLAY
+  // =========================================================
+
   const overlayOpacity =
-    currentBackground.type === "image"
+    (
+      currentBackground.type === "image" ||
+      currentBackground.type === "video"
+    )
       ? Math.max(
           0,
           Math.min(
@@ -49,37 +60,70 @@ export default function PageBackground() {
 
 
   // =========================================================
-  // BACKGROUND STYLE
+  // FILTER
   // =========================================================
 
-  const backgroundStyle =
+  const mediaFilter =
+    `brightness(${brightness}%) blur(${blur}px)`;
+
+
+  // =========================================================
+  // TYPE
+  // =========================================================
+
+  const backgroundClassName =
+    currentBackground.type === "video"
+      ? "is-video"
+      : currentBackground.type === "image"
+        ? "is-image"
+        : currentBackground.type === "solid"
+          ? "is-solid"
+          : "is-gradient";
+
+
+  // =========================================================
+  // STATIC BASE STYLE
+  // =========================================================
+
+  const containerStyle =
+    currentBackground.type === "gradient" ||
+    currentBackground.type === "solid"
+      ? {
+          background:
+            currentBackground.value,
+        }
+      : undefined;
+
+
+  // =========================================================
+  // STATIC IMAGE STYLE
+  // =========================================================
+
+  const imageStyle =
     currentBackground.type === "image"
       ? {
           backgroundImage:
             `url("${currentBackground.value}")`,
 
           filter:
-            `brightness(${currentSettings.brightness}%) blur(${currentSettings.blur}px)`,
+            mediaFilter,
         }
-      : {
-          background:
-            currentBackground.value,
-
-          filter:
-            "none",
-        };
+      : undefined;
 
 
   // =========================================================
-  // BACKGROUND TYPE
+  // REDUCED MOTION
   // =========================================================
 
-  const backgroundClassName =
-    currentBackground.type === "image"
-      ? "is-image"
-      : currentBackground.type === "solid"
-        ? "is-solid"
-        : "is-gradient";
+  const prefersReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia
+      ? window
+          .matchMedia(
+            "(prefers-reduced-motion: reduce)"
+          )
+          .matches
+      : false;
 
 
   // =========================================================
@@ -93,10 +137,63 @@ export default function PageBackground() {
         `shobdo-page-background ${backgroundClassName}`
       }
       style={
-        backgroundStyle
+        containerStyle
       }
       aria-hidden="true"
     >
+
+      {/* ===================================================
+          STATIC IMAGE
+      ==================================================== */}
+
+      {
+        currentBackground.type === "image" && (
+
+          <div
+            className="shobdo-page-background-media shobdo-page-background-image"
+            style={
+              imageStyle
+            }
+          />
+
+        )
+      }
+
+
+      {/* ===================================================
+          ANIMATED VIDEO
+      ==================================================== */}
+
+      {
+        currentBackground.type === "video" && (
+
+          <video
+            className="shobdo-page-background-media shobdo-page-background-video"
+            src={
+              currentBackground.value
+            }
+            autoPlay={
+              !prefersReducedMotion
+            }
+            loop={
+              !prefersReducedMotion
+            }
+            muted
+            playsInline
+            preload="metadata"
+            style={{
+              filter:
+                mediaFilter,
+            }}
+          />
+
+        )
+      }
+
+
+      {/* ===================================================
+          READABILITY OVERLAY
+      ==================================================== */}
 
       <div
         className="shobdo-page-background-overlay"
