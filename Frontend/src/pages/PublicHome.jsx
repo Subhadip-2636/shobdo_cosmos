@@ -50,20 +50,6 @@ const PUBLIC_WRITING_LIMIT = 6;
 // =========================================================
 // LANGUAGE NAMES
 // =========================================================
-//
-// This is intentionally written in English.
-//
-// Example:
-//
-// en -> English
-// bn -> Bengali
-// hi -> Hindi
-// as -> Assamese
-// or -> Odia
-// ta -> Tamil
-// te -> Telugu
-//
-// =========================================================
 
 const LANGUAGE_NAMES = {
   en: "English",
@@ -552,19 +538,11 @@ const PUBLIC_COPY = {
 // NORMALIZE WRITINGS
 // =========================================================
 
-function normalizeWritings(
-  data
-) {
+function normalizeWritings(data) {
 
-  if (
-    Array.isArray(
-      data
-    )
-  ) {
-
+  if (Array.isArray(data)) {
     return data;
   }
-
 
   const candidates = [
     data?.writings,
@@ -573,22 +551,12 @@ function normalizeWritings(
     data?.data,
   ];
 
+  for (const candidate of candidates) {
 
-  for (
-    const candidate
-    of candidates
-  ) {
-
-    if (
-      Array.isArray(
-        candidate
-      )
-    ) {
-
+    if (Array.isArray(candidate)) {
       return candidate;
     }
   }
-
 
   return [];
 }
@@ -603,7 +571,6 @@ function PublicHome() {
   const navigate =
     useNavigate();
 
-
   const {
     language,
   } = useLanguage();
@@ -616,55 +583,31 @@ function PublicHome() {
   const [
     searchQuery,
     setSearchQuery,
-  ] = useState(
-    ""
-  );
-
+  ] = useState("");
 
   const [
     writings,
     setWritings,
-  ] = useState(
-    []
-  );
-
+  ] = useState([]);
 
   const [
     loading,
     setLoading,
-  ] = useState(
-    true
-  );
-
+  ] = useState(true);
 
   const [
     error,
     setError,
-  ] = useState(
-    ""
-  );
+  ] = useState("");
+
+  const [
+    backgroundVideoFailed,
+    setBackgroundVideoFailed,
+  ] = useState(false);
 
 
   // =======================================================
   // LANGUAGE-AWARE COPY
-  // =======================================================
-  //
-  // Important:
-  //
-  // The description itself always stays in English.
-  // Only the final language name changes.
-  //
-  // English:
-  // "... Indian languages and English."
-  //
-  // Bengali:
-  // "... Indian languages and Bengali."
-  //
-  // Hindi:
-  // "... Indian languages and Hindi."
-  //
-  // etc.
-  //
   // =======================================================
 
   const copy =
@@ -675,15 +618,12 @@ function PublicHome() {
           PUBLIC_COPY[language] ||
           PUBLIC_COPY.en;
 
-
         const selectedLanguageName =
           LANGUAGE_NAMES[language] ||
           "English";
 
-
         const languagesDescription =
           `SHOBDO is being built for literature across Indian languages and ${selectedLanguageName}.`;
-
 
         return {
           ...baseCopy,
@@ -834,15 +774,8 @@ function PublicHome() {
 
   async function loadLatestWritings() {
 
-    setLoading(
-      true
-    );
-
-
-    setError(
-      ""
-    );
-
+    setLoading(true);
+    setError("");
 
     try {
 
@@ -855,22 +788,18 @@ function PublicHome() {
             PUBLIC_WRITING_LIMIT,
         });
 
-
       setWritings(
         normalizeWritings(
           data
         )
       );
 
-    } catch (
-      requestError
-    ) {
+    } catch (requestError) {
 
       console.error(
         "PUBLIC HOME WRITINGS ERROR:",
         requestError
       );
-
 
       setError(
         copy.loadError
@@ -878,9 +807,7 @@ function PublicHome() {
 
     } finally {
 
-      setLoading(
-        false
-      );
+      setLoading(false);
     }
   }
 
@@ -911,10 +838,8 @@ function PublicHome() {
 
     event.preventDefault();
 
-
     const query =
       searchQuery.trim();
-
 
     if (!query) {
 
@@ -924,7 +849,6 @@ function PublicHome() {
 
       return;
     }
-
 
     navigate(
       `/search?q=${encodeURIComponent(
@@ -950,8 +874,76 @@ function PublicHome() {
 
 
       <main
-        className="public-home"
+        className={
+          [
+            "public-home",
+            "public-home-with-video",
+            backgroundVideoFailed
+              ? "public-home-video-fallback"
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" ")
+        }
       >
+
+        {/* =================================================
+            GLOBAL ANIMATED BACKGROUND
+        ================================================== */}
+
+        <div
+          className="public-home-background"
+          aria-hidden="true"
+        >
+
+          {!backgroundVideoFailed && (
+
+            <video
+              className="public-home-background-video"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              poster="/backgrounds/shobdo-literary.jpg"
+              tabIndex={-1}
+              onError={() => {
+                setBackgroundVideoFailed(true);
+              }}
+            >
+
+              <source
+                src="/backgrounds/shobdo-public-page-bg.mp4"
+                type="video/mp4"
+              />
+
+            </video>
+
+          )}
+
+
+          {/* Soft cream layer keeps text readable */}
+
+          <div
+            className="public-home-background-overlay"
+          />
+
+
+          {/* Keeps center cleaner than edges */}
+
+          <div
+            className="public-home-background-focus"
+          />
+
+
+          {/* Very subtle visual finishing layer */}
+
+          <div
+            className="public-home-background-vignette"
+          />
+
+        </div>
+
 
         {/* =================================================
             HERO
@@ -1380,7 +1372,6 @@ function PublicHome() {
                 const Icon =
                   category.icon;
 
-
                 return (
 
                   <Link
@@ -1610,27 +1601,27 @@ function PublicHome() {
           {!loading &&
             error && (
 
-            <div
-              className="public-error"
-            >
-
-              <p>
-                {error}
-              </p>
-
-
-              <button
-                type="button"
-                onClick={
-                  loadLatestWritings
-                }
+              <div
+                className="public-error"
               >
-                {copy.retry}
-              </button>
 
-            </div>
+                <p>
+                  {error}
+                </p>
 
-          )}
+
+                <button
+                  type="button"
+                  onClick={
+                    loadLatestWritings
+                  }
+                >
+                  {copy.retry}
+                </button>
+
+              </div>
+
+            )}
 
 
           {/* EMPTY */}
@@ -1640,21 +1631,21 @@ function PublicHome() {
             writings.length ===
               0 && (
 
-            <div
-              className="public-empty"
-            >
+              <div
+                className="public-empty"
+              >
 
-              <BookOpen
-                size={25}
-              />
+                <BookOpen
+                  size={25}
+                />
 
-              <p>
-                {copy.noWritings}
-              </p>
+                <p>
+                  {copy.noWritings}
+                </p>
 
-            </div>
+              </div>
 
-          )}
+            )}
 
 
           {/* WRITINGS */}
@@ -1664,56 +1655,56 @@ function PublicHome() {
             writings.length >
               0 && (
 
-            <div
-              className="public-writing-list"
-            >
+              <div
+                className="public-writing-list"
+              >
 
-              {writings.map(
-                (
-                  writing
-                ) => (
+                {writings.map(
+                  (
+                    writing
+                  ) => (
 
-                  <WritingCard
-                    key={
-                      writing.id
-                    }
-                    writing={
-                      writing
-                    }
-                  />
+                    <WritingCard
+                      key={
+                        writing.id
+                      }
+                      writing={
+                        writing
+                      }
+                    />
 
-                )
-              )}
+                  )
+                )}
 
-            </div>
+              </div>
 
-          )}
+            )}
 
 
           {!loading &&
             writings.length >
               0 && (
 
-            <div
-              className="public-view-all-wrap"
-            >
-
-              <Link
-                to="/explore"
-                className="public-view-all-button"
+              <div
+                className="public-view-all-wrap"
               >
 
-                {copy.viewAll}
+                <Link
+                  to="/explore"
+                  className="public-view-all-button"
+                >
 
-                <ArrowRight
-                  size={16}
-                />
+                  {copy.viewAll}
 
-              </Link>
+                  <ArrowRight
+                    size={16}
+                  />
 
-            </div>
+                </Link>
 
-          )}
+              </div>
+
+            )}
 
         </section>
 

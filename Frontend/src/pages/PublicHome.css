@@ -2369,3 +2369,349 @@
   }
 
 }
+
+/* =========================================================
+   SHOBDO PUBLIC HOME
+   GLOBAL ANIMATED LITERARY BACKGROUND
+========================================================= */
+
+.public-home-with-video {
+  position: relative;
+  isolation: isolate;
+
+  min-height: 100vh;
+
+  overflow-x: hidden;
+
+  background:
+    #fbf7ef;
+}
+
+
+/* =========================================================
+   BACKGROUND CONTAINER
+========================================================= */
+
+.public-home-background {
+  position: fixed;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  overflow: hidden;
+
+  pointer-events: none;
+
+  z-index: -10;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 253, 247, 0.96),
+      rgba(248, 240, 232, 0.94)
+    ),
+    url("/backgrounds/shobdo-literary.jpg");
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+
+/* =========================================================
+   VIDEO
+========================================================= */
+
+.public-home-background-video {
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  object-position: center;
+
+  pointer-events: none;
+
+  user-select: none;
+
+  -webkit-user-select: none;
+
+  transform: translateZ(0);
+
+  backface-visibility: hidden;
+}
+
+
+/* =========================================================
+   SOFT READABILITY OVERLAY
+========================================================= */
+
+.public-home-background-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 253, 247, 0.22) 0%,
+      rgba(255, 252, 246, 0.08) 25%,
+      rgba(255, 252, 246, 0.11) 60%,
+      rgba(255, 250, 244, 0.24) 100%
+    );
+}
+
+
+/* =========================================================
+   CLEAN CENTRAL READING AREA
+========================================================= */
+
+.public-home-background-focus {
+  position: absolute;
+
+  inset: 0;
+
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(255, 253, 248, 0.34) 0%,
+      rgba(255, 253, 248, 0.18) 34%,
+      rgba(255, 253, 248, 0.04) 64%,
+      transparent 82%
+    );
+}
+
+
+/* =========================================================
+   EDGE DEPTH
+========================================================= */
+
+.public-home-background-vignette {
+  position: absolute;
+
+  inset: 0;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(88, 49, 76, 0.045) 0%,
+      transparent 15%,
+      transparent 85%,
+      rgba(88, 49, 76, 0.045) 100%
+    );
+}
+
+
+/* =========================================================
+   KEEP ALL PAGE CONTENT ABOVE VIDEO
+========================================================= */
+
+.public-home-with-video > section {
+  position: relative;
+
+  z-index: 1;
+}
+
+
+/* =========================================================
+   FALLBACK
+   Used automatically if MP4 fails
+========================================================= */
+
+.public-home-video-fallback
+.public-home-background {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 253, 247, 0.88),
+      rgba(248, 240, 232, 0.86)
+    ),
+    url("/backgrounds/shobdo-literary.jpg");
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+
+/* =========================================================
+   PROFESSIONAL GLASS SURFACES
+   Makes text readable over animation
+========================================================= */
+
+.public-home-with-video
+.public-feature-card,
+
+.public-home-with-video
+.public-category-card,
+
+.public-home-with-video
+.public-language-card {
+  backdrop-filter:
+    blur(12px);
+
+  -webkit-backdrop-filter:
+    blur(12px);
+}
+
+
+/* =========================================================
+   HERO SEARCH
+========================================================= */
+
+.public-home-with-video
+.public-hero-search {
+  backdrop-filter:
+    blur(16px);
+
+  -webkit-backdrop-filter:
+    blur(16px);
+}
+
+
+/* =========================================================
+   WRITING AREA
+========================================================= */
+
+.public-home-with-video
+.public-latest-section {
+  position: relative;
+}
+
+
+/* =========================================================
+   PERFORMANCE
+========================================================= */
+
+.public-home-background-video {
+  will-change: transform;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1024px) {
+
+  .public-home-background-video {
+    object-position:
+      center center;
+  }
+
+  .public-home-background-focus {
+    background:
+      radial-gradient(
+        ellipse at center,
+        rgba(255, 253, 248, 0.42) 0%,
+        rgba(255, 253, 248, 0.22) 42%,
+        rgba(255, 253, 248, 0.05) 72%,
+        transparent 90%
+      );
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 768px) {
+
+  .public-home-background-video {
+    object-position:
+      center center;
+  }
+
+
+  .public-home-background-overlay {
+    background:
+      rgba(
+        255,
+        252,
+        246,
+        0.20
+      );
+  }
+
+
+  .public-home-background-focus {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 253, 248, 0.40),
+        rgba(255, 253, 248, 0.17)
+      );
+  }
+
+
+  .public-home-background-vignette {
+    opacity:
+      0.55;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+
+  .public-home-background-overlay {
+    background:
+      rgba(
+        255,
+        252,
+        246,
+        0.24
+      );
+  }
+
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+   REDUCE MOTION
+========================================================= */
+
+@media (
+  prefers-reduced-motion: reduce
+) {
+
+  .public-home-background-video {
+    display: none;
+  }
+
+
+  .public-home-background {
+    background:
+      linear-gradient(
+        135deg,
+        rgba(255, 253, 247, 0.90),
+        rgba(247, 237, 230, 0.88)
+      ),
+      url("/backgrounds/shobdo-literary.jpg");
+
+    background-size:
+      cover;
+
+    background-position:
+      center;
+  }
+
+}
