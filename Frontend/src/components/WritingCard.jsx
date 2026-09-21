@@ -2849,22 +2849,14 @@ function WritingCard({
                 liked
                   ? labels.unlike
                   : labels.like
-              }${
-                likesCount > 0
-                  ? ` (${likesCount})`
-                  : ""
-              }`
+              } (${likesCount})`
             }
             title={
               `${
                 liked
                   ? labels.unlike
                   : labels.like
-              }${
-                likesCount > 0
-                  ? ` · ${likesCount}`
-                  : ""
-              }`
+              } · ${likesCount}`
             }
           >
 
@@ -2878,6 +2870,27 @@ function WritingCard({
               }
               aria-hidden="true"
             />
+
+            <span
+              className="writing-like-count"
+              aria-hidden="true"
+              style={{
+                marginLeft: "7px",
+                minWidth: "12px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "13px",
+                fontWeight: 700,
+                lineHeight: 1,
+                fontVariantNumeric: "tabular-nums",
+                whiteSpace: "nowrap",
+                pointerEvents: "none",
+                userSelect: "none",
+              }}
+            >
+              {likesCount}
+            </span>
 
           </button>
 
