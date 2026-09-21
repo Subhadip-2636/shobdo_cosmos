@@ -30,9 +30,7 @@
 .home-feed-header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-
-  gap: 24px;
+  justify-content: flex-start;
 
   padding:
     2px
@@ -42,6 +40,7 @@
 
 
 .home-feed-header > div {
+  width: 100%;
   min-width: 0;
 }
 
@@ -102,126 +101,6 @@
   font-size: 14px;
 
   line-height: 1.65;
-}
-
-
-/* =========================================================
-   REFRESH BUTTON
-   Compact icon-only feed control
-========================================================= */
-
-.home-refresh-button {
-  position: relative;
-
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
-  min-height: 42px;
-
-  flex: 0 0 42px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  margin-top: 1px;
-  padding: 0;
-
-  border:
-    1px solid
-    #e4d8ca;
-
-  border-radius: 50%;
-
-  background:
-    rgba(
-      255,
-      253,
-      250,
-      0.92
-    );
-
-  color:
-    #776c61;
-
-  cursor: pointer;
-
-  box-shadow:
-    0 4px 14px
-    rgba(
-      74,
-      54,
-      31,
-      0.045
-    );
-
-  -webkit-tap-highlight-color:
-    transparent;
-
-  transition:
-    background-color 0.18s ease,
-    border-color 0.18s ease,
-    color 0.18s ease,
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
-}
-
-
-.home-refresh-button svg {
-  flex: 0 0 auto;
-
-  transition:
-    transform 0.24s ease;
-}
-
-
-.home-refresh-button:hover:not(:disabled) {
-  border-color:
-    #d6c09f;
-
-  background:
-    #f9f1e6;
-
-  color:
-    #8a6020;
-
-  transform:
-    translateY(-1px);
-
-  box-shadow:
-    0 7px 18px
-    rgba(
-      79,
-      58,
-      29,
-      0.08
-    );
-}
-
-
-.home-refresh-button:hover:not(:disabled)
-svg:not(.home-spin) {
-  transform:
-    rotate(38deg);
-}
-
-
-.home-refresh-button:active:not(:disabled) {
-  transform:
-    scale(0.94);
-}
-
-
-.home-refresh-button:disabled {
-  opacity: 0.56;
-
-  cursor: default;
-}
-
-
-.home-refresh-button[aria-busy="true"] {
-  color:
-    #8a6020;
 }
 
 
@@ -1474,7 +1353,6 @@ svg:not(.home-spin) {
    FOCUS STATES
 ========================================================= */
 
-.home-refresh-button:focus-visible,
 .home-composer-input:focus-visible,
 .home-composer-create:focus-visible,
 .home-composer-actions button:focus-visible,
@@ -1534,8 +1412,6 @@ svg:not(.home-spin) {
   /* HEADER */
 
   .home-feed-header {
-    gap: 12px;
-
     padding:
       3px
       4px
@@ -1552,24 +1428,6 @@ svg:not(.home-spin) {
     font-size: 12px;
 
     line-height: 1.55;
-  }
-
-
-  .home-refresh-button {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
-
-    flex-basis: 40px;
-
-    margin-top: 0;
-  }
-
-
-  .home-refresh-button svg {
-    width: 18px;
-    height: 18px;
   }
 
 
@@ -1764,8 +1622,6 @@ svg:not(.home-spin) {
   reduce
 ) {
 
-  .home-refresh-button,
-  .home-refresh-button svg,
   .home-composer-input,
   .home-composer-create,
   .home-composer-actions button,

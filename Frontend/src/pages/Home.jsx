@@ -145,7 +145,6 @@ function getHasMore({
     return response.has_more;
   }
 
-
   if (
     typeof response?.pagination
       ?.has_next ===
@@ -156,7 +155,6 @@ function getHasMore({
       response.pagination.has_next
     );
   }
-
 
   if (
     Number.isFinite(
@@ -175,7 +173,6 @@ function getHasMore({
     );
   }
 
-
   if (
     Number.isFinite(
       Number(
@@ -191,7 +188,6 @@ function getHasMore({
       )
     );
   }
-
 
   return (
     items.length >=
@@ -251,7 +247,6 @@ function mergeUnique(
   const map =
     new Map();
 
-
   [
     ...current,
     ...incoming,
@@ -266,6 +261,7 @@ function mergeUnique(
         writing?.id ===
         null
       ) {
+
         return;
       }
 
@@ -277,7 +273,6 @@ function mergeUnique(
       );
     }
   );
-
 
   return Array.from(
     map.values()
@@ -292,6 +287,7 @@ function mergeUnique(
 function FeedSkeleton() {
 
   return (
+
     <div
       className="home-feed-skeletons"
       aria-hidden="true"
@@ -362,6 +358,7 @@ function FeedSkeleton() {
       )}
 
     </div>
+
   );
 }
 
@@ -432,12 +429,6 @@ export default function Home({
             publish:
               "তৈরি করুন",
 
-            refresh:
-              "রিফ্রেশ",
-
-            refreshing:
-              "রিফ্রেশ হচ্ছে",
-
             loadMore:
               "আরও দেখুন",
 
@@ -481,7 +472,6 @@ export default function Home({
               "অ্যাকাউন্ট তৈরি করুন",
 
           };
-
         }
 
 
@@ -523,12 +513,6 @@ export default function Home({
 
             publish:
               "बनाएँ",
-
-            refresh:
-              "रीफ़्रेश",
-
-            refreshing:
-              "रीफ़्रेश हो रहा है",
 
             loadMore:
               "और दिखाएँ",
@@ -573,7 +557,6 @@ export default function Home({
               "अकाउंट बनाएँ",
 
           };
-
         }
 
 
@@ -611,12 +594,6 @@ export default function Home({
 
           publish:
             "Create",
-
-          refresh:
-            "Refresh",
-
-          refreshing:
-            "Refreshing",
 
           loadMore:
             "Load more",
@@ -745,12 +722,6 @@ export default function Home({
 
 
   const [
-    refreshing,
-    setRefreshing,
-  ] = useState(false);
-
-
-  const [
     feedError,
     setFeedError,
   ] = useState("");
@@ -821,18 +792,9 @@ export default function Home({
   async function loadPublicFeed({
     page = 1,
     append = false,
-    refresh = false,
   } = {}) {
 
     if (
-      refresh
-    ) {
-
-      setRefreshing(
-        true
-      );
-
-    } else if (
       append
     ) {
 
@@ -845,7 +807,6 @@ export default function Home({
       setFeedLoading(
         true
       );
-
     }
 
 
@@ -900,7 +861,6 @@ export default function Home({
         })
       );
 
-
     } catch (
       error
     ) {
@@ -925,13 +885,7 @@ export default function Home({
       setLoadingMore(
         false
       );
-
-      setRefreshing(
-        false
-      );
-
     }
-
   }
 
 
@@ -942,7 +896,6 @@ export default function Home({
   async function loadFollowingFeed({
     page = 1,
     append = false,
-    refresh = false,
   } = {}) {
 
     if (
@@ -958,14 +911,6 @@ export default function Home({
 
 
     if (
-      refresh
-    ) {
-
-      setRefreshing(
-        true
-      );
-
-    } else if (
       append
     ) {
 
@@ -978,7 +923,6 @@ export default function Home({
       setFeedLoading(
         true
       );
-
     }
 
 
@@ -1038,7 +982,6 @@ export default function Home({
         true
       );
 
-
     } catch (
       error
     ) {
@@ -1076,13 +1019,7 @@ export default function Home({
       setLoadingMore(
         false
       );
-
-      setRefreshing(
-        false
-      );
-
     }
-
   }
 
 
@@ -1127,17 +1064,15 @@ export default function Home({
       await loadFollowingFeed({
         page: 1,
       });
-
     }
-
   }
 
 
   // =======================================================
-  // REFRESH
+  // RETRY FAILED FEED REQUEST
   // =======================================================
 
-  async function handleRefresh() {
+  async function handleRetry() {
 
     if (
       activeFeed ===
@@ -1146,7 +1081,6 @@ export default function Home({
 
       await loadFollowingFeed({
         page: 1,
-        refresh: true,
       });
 
       return;
@@ -1155,9 +1089,7 @@ export default function Home({
 
     await loadPublicFeed({
       page: 1,
-      refresh: true,
     });
-
   }
 
 
@@ -1170,6 +1102,7 @@ export default function Home({
     if (
       loadingMore
     ) {
+
       return;
     }
 
@@ -1182,6 +1115,7 @@ export default function Home({
       if (
         !followingHasMore
       ) {
+
         return;
       }
 
@@ -1205,6 +1139,7 @@ export default function Home({
     if (
       !publicHasMore
     ) {
+
       return;
     }
 
@@ -1219,7 +1154,6 @@ export default function Home({
         true,
 
     });
-
   }
 
 
@@ -1304,11 +1238,13 @@ export default function Home({
           <span
             className="home-feed-eyebrow"
           >
+
             <Sparkles
               size={14}
             />
 
             SHOBDO
+
           </span>
 
 
@@ -1322,45 +1258,6 @@ export default function Home({
           </p>
 
         </div>
-
-
-        <button
-          type="button"
-          className="home-refresh-button"
-          onClick={
-            handleRefresh
-          }
-          disabled={
-            refreshing ||
-            feedLoading
-          }
-          aria-label={
-            refreshing
-              ? copy.refreshing
-              : copy.refresh
-          }
-          aria-busy={
-            refreshing
-          }
-          title={
-            refreshing
-              ? copy.refreshing
-              : copy.refresh
-          }
-        >
-
-          <RefreshCw
-            size={19}
-            strokeWidth={1.9}
-            aria-hidden="true"
-            className={
-              refreshing
-                ? "home-spin"
-                : ""
-            }
-          />
-
-        </button>
 
       </header>
 
@@ -1384,6 +1281,10 @@ export default function Home({
                 `/users/${user.id}`
               }
               className="home-composer-avatar"
+              aria-label={
+                user?.name ||
+                "Profile"
+              }
             >
 
               {user?.avatar_url
@@ -1550,9 +1451,11 @@ export default function Home({
           <div
             className="home-guest-icon"
           >
+
             <PenLine
               size={22}
             />
+
           </div>
 
 
@@ -1714,8 +1617,10 @@ export default function Home({
       ================================================== */}
 
       {feedError && (
+
         <section
           className="home-feed-error"
+          role="alert"
         >
 
           <div>
@@ -1734,7 +1639,7 @@ export default function Home({
           <button
             type="button"
             onClick={
-              handleRefresh
+              handleRetry
             }
           >
 
@@ -1747,6 +1652,7 @@ export default function Home({
           </button>
 
         </section>
+
       )}
 
 
@@ -1758,9 +1664,9 @@ export default function Home({
         currentWritings.length ===
           0 && (
 
-        <FeedSkeleton />
+          <FeedSkeleton />
 
-      )}
+        )}
 
 
       {/* =================================================
@@ -1772,96 +1678,96 @@ export default function Home({
         currentWritings.length ===
           0 && (
 
-        <section
-          className="home-empty-feed"
-        >
-
-          <div
-            className="home-empty-icon"
+          <section
+            className="home-empty-feed"
           >
 
-            {activeFeed ===
-            "following"
-              ? (
-
-                <Users
-                  size={28}
-                />
-
-              )
-              : (
-
-                <BookOpen
-                  size={28}
-                />
-
-              )}
-
-          </div>
-
-
-          <h2>
-
-            {
-              activeFeed ===
-              "following"
-                ? copy.followingEmptyTitle
-                : copy.emptyTitle
-            }
-
-          </h2>
-
-
-          <p>
-
-            {
-              activeFeed ===
-              "following"
-                ? copy.followingEmptyDescription
-                : copy.emptyDescription
-            }
-
-          </p>
-
-
-          <div
-            className="home-empty-actions"
-          >
-
-            <Link
-              to="/explore"
-              className="home-empty-secondary"
-            >
-              {
-                copy.exploreWriters
-              }
-            </Link>
-
-
-            <Link
-              to={
-                user
-                  ? "/write"
-                  : "/login"
-              }
-              className="home-empty-primary"
+            <div
+              className="home-empty-icon"
             >
 
-              <PenLine
-                size={16}
-              />
+              {activeFeed ===
+              "following"
+                ? (
+
+                  <Users
+                    size={28}
+                  />
+
+                )
+                : (
+
+                  <BookOpen
+                    size={28}
+                  />
+
+                )}
+
+            </div>
+
+
+            <h2>
 
               {
-                copy.startWriting
+                activeFeed ===
+                "following"
+                  ? copy.followingEmptyTitle
+                  : copy.emptyTitle
               }
 
-            </Link>
+            </h2>
 
-          </div>
 
-        </section>
+            <p>
 
-      )}
+              {
+                activeFeed ===
+                "following"
+                  ? copy.followingEmptyDescription
+                  : copy.emptyDescription
+              }
+
+            </p>
+
+
+            <div
+              className="home-empty-actions"
+            >
+
+              <Link
+                to="/explore"
+                className="home-empty-secondary"
+              >
+                {
+                  copy.exploreWriters
+                }
+              </Link>
+
+
+              <Link
+                to={
+                  user
+                    ? "/write"
+                    : "/login"
+                }
+                className="home-empty-primary"
+              >
+
+                <PenLine
+                  size={16}
+                />
+
+                {
+                  copy.startWriting
+                }
+
+              </Link>
+
+            </div>
+
+          </section>
+
+        )}
 
 
       {/* =================================================
@@ -1871,36 +1777,36 @@ export default function Home({
       {currentWritings.length >
         0 && (
 
-        <section
-          className="home-writing-feed"
-        >
+          <section
+            className="home-writing-feed"
+          >
 
-          {currentWritings.map(
-            (
-              writing
-            ) => (
+            {currentWritings.map(
+              (
+                writing
+              ) => (
 
-              <div
-                className="home-feed-post"
-                key={
-                  writing.id
-                }
-              >
-
-                <WritingCard
-                  writing={
-                    writing
+                <div
+                  className="home-feed-post"
+                  key={
+                    writing.id
                   }
-                />
+                >
 
-              </div>
+                  <WritingCard
+                    writing={
+                      writing
+                    }
+                  />
 
-            )
-          )}
+                </div>
 
-        </section>
+              )
+            )}
 
-      )}
+          </section>
+
+        )}
 
 
       {/* =================================================
@@ -1913,43 +1819,49 @@ export default function Home({
           0 &&
         currentHasMore && (
 
-        <div
-          className="home-load-more-wrap"
-        >
-
-          <button
-            type="button"
-            className="home-load-more"
-            onClick={
-              handleLoadMore
-            }
-            disabled={
-              loadingMore
-            }
+          <div
+            className="home-load-more-wrap"
           >
 
-            {loadingMore
-              ? (
-                <>
-                  <Loader2
-                    size={17}
-                    className="home-spin"
-                  />
+            <button
+              type="button"
+              className="home-load-more"
+              onClick={
+                handleLoadMore
+              }
+              disabled={
+                loadingMore
+              }
+            >
 
-                  {
-                    copy.loadingMore
-                  }
-                </>
-              )
-              : (
-                copy.loadMore
-              )}
+              {loadingMore
+                ? (
 
-          </button>
+                  <>
 
-        </div>
+                    <Loader2
+                      size={17}
+                      className="home-spin"
+                    />
 
-      )}
+                    {
+                      copy.loadingMore
+                    }
+
+                  </>
+
+                )
+                : (
+
+                  copy.loadMore
+
+                )}
+
+            </button>
+
+          </div>
+
+        )}
 
 
       {/* =================================================
@@ -1961,21 +1873,21 @@ export default function Home({
         currentWritings.length >
           3 && (
 
-        <div
-          className="home-feed-end"
-        >
+          <div
+            className="home-feed-end"
+          >
 
-          <span />
+            <span />
 
-          <p>
-            SHOBDO
-          </p>
+            <p>
+              SHOBDO
+            </p>
 
-          <span />
+            <span />
 
-        </div>
+          </div>
 
-      )}
+        )}
 
     </div>
 
