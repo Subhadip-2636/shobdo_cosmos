@@ -30,6 +30,10 @@ import {
 } from "react-router-dom";
 
 import {
+  useLanguage,
+} from "../Language/LanguageContext";
+
+import {
   publishReel,
   REEL_LANGUAGES,
   validateReelVideo,
@@ -46,51 +50,1078 @@ const MAX_CAPTION_LENGTH =
   5000;
 
 
-const VISIBILITY_OPTIONS = [
+// =========================================================
+// MULTILINGUAL COPY
+// =========================================================
 
-  {
-    value:
-      "public",
+const COPY = {
 
-    label:
+  // =======================================================
+  // ENGLISH
+  // =======================================================
+
+  en: {
+
+    pageTitle:
+      "Create Reel",
+
+    back:
+      "Reels",
+
+    eyebrow:
+      "SHOBDO CREATOR",
+
+    title:
+      "Create a Reel",
+
+    description:
+      "Share poetry, storytelling, readings and creative moments with the SHOBDO community.",
+
+    stepVideo:
+      "Choose your video",
+
+    reel:
+      "REEL",
+
+    uploadTitle:
+      "Upload a short video",
+
+    uploadDescription:
+      "Drag your video here or choose one from your device.",
+
+    chooseVideo:
+      "Choose video",
+
+    supportedFormats:
+      "MP4, WEBM, MOV or M4V · Maximum 100 MB",
+
+    preview:
+      "Preview",
+
+    removeVideo:
+      "Remove video",
+
+    changeVideo:
+      "Choose another video",
+
+    stepDetails:
+      "Reel details",
+
+    caption:
+      "Caption",
+
+    captionPlaceholder:
+      "Tell the story behind this Reel...",
+
+    language:
+      "Language",
+
+    visibility:
+      "Who can watch?",
+
+    public:
       "Public",
 
-    description:
+    publicDescription:
       "Anyone on SHOBDO can watch this Reel.",
 
-    icon:
-      Globe2,
-  },
-
-  {
-    value:
-      "followers",
-
-    label:
+    followers:
       "Followers",
 
-    description:
+    followersDescription:
       "Only people who follow you can watch.",
 
-    icon:
-      Users,
-  },
-
-  {
-    value:
-      "private",
-
-    label:
+    private:
       "Private",
 
-    description:
+    privateDescription:
       "Only you can access this Reel.",
 
-    icon:
-      Lock,
+    allowComments:
+      "Allow comments",
+
+    allowCommentsDescription:
+      "Let viewers respond to this Reel.",
+
+    uploading:
+      "Uploading your Reel",
+
+    keepOpen:
+      "Keep this page open while your video is being uploaded.",
+
+    publicNotice:
+      "Your Reel will appear in the public Reels feed.",
+
+    followersNotice:
+      "This Reel will be limited to your followers.",
+
+    privateNotice:
+      "This Reel will remain private.",
+
+    publish:
+      "Publish Reel",
+
+    publishing:
+      "Publishing...",
+
+    noVideo:
+      "Choose a video before publishing your Reel.",
+
+    captionTooLong:
+      "Caption cannot exceed 5000 characters.",
+
+    publishError:
+      "Unable to publish your Reel.",
+
+    success:
+      "Your Reel was published successfully.",
+
+    loginRequired:
+      "Please log in before creating a Reel.",
+
+    invalidVideo:
+      "Please choose a valid video file.",
+
+    videoTooLarge:
+      "The Reel video is too large. Maximum size is 100 MB.",
+
+    unsupportedVideo:
+      "Only MP4, WEBM, MOV and M4V videos are supported.",
+
+    uploadFailed:
+      "Unable to upload this Reel video.",
+
+    connectionError:
+      "Unable to connect to SHOBDO while uploading the Reel.",
+
   },
 
-];
+
+  // =======================================================
+  // BENGALI
+  // =======================================================
+
+  bn: {
+
+    pageTitle:
+      "রিল তৈরি করুন",
+
+    back:
+      "রিলস",
+
+    eyebrow:
+      "SHOBDO স্রষ্টা",
+
+    title:
+      "একটি রিল তৈরি করুন",
+
+    description:
+      "SHOBDO কমিউনিটির সঙ্গে কবিতা, গল্প, আবৃত্তি এবং সৃজনশীল মুহূর্ত শেয়ার করুন।",
+
+    stepVideo:
+      "আপনার ভিডিও নির্বাচন করুন",
+
+    reel:
+      "রিল",
+
+    uploadTitle:
+      "একটি ছোট ভিডিও আপলোড করুন",
+
+    uploadDescription:
+      "ভিডিওটি এখানে টেনে আনুন অথবা আপনার ডিভাইস থেকে নির্বাচন করুন।",
+
+    chooseVideo:
+      "ভিডিও নির্বাচন করুন",
+
+    supportedFormats:
+      "MP4, WEBM, MOV অথবা M4V · সর্বোচ্চ 100 MB",
+
+    preview:
+      "প্রিভিউ",
+
+    removeVideo:
+      "ভিডিও সরান",
+
+    changeVideo:
+      "অন্য ভিডিও নির্বাচন করুন",
+
+    stepDetails:
+      "রিলের বিস্তারিত",
+
+    caption:
+      "ক্যাপশন",
+
+    captionPlaceholder:
+      "এই রিলের পেছনের গল্পটি লিখুন...",
+
+    language:
+      "ভাষা",
+
+    visibility:
+      "কারা দেখতে পারবেন?",
+
+    public:
+      "সর্বজনীন",
+
+    publicDescription:
+      "SHOBDO-র যে কেউ এই রিল দেখতে পারবেন।",
+
+    followers:
+      "অনুসারীরা",
+
+    followersDescription:
+      "শুধু যারা আপনাকে অনুসরণ করেন তারা দেখতে পারবেন।",
+
+    private:
+      "ব্যক্তিগত",
+
+    privateDescription:
+      "শুধুমাত্র আপনি এই রিল দেখতে পারবেন।",
+
+    allowComments:
+      "মন্তব্যের অনুমতি দিন",
+
+    allowCommentsDescription:
+      "দর্শকদের এই রিলে মন্তব্য করতে দিন।",
+
+    uploading:
+      "আপনার রিল আপলোড হচ্ছে",
+
+    keepOpen:
+      "ভিডিও আপলোড শেষ না হওয়া পর্যন্ত এই পেজটি খোলা রাখুন।",
+
+    publicNotice:
+      "আপনার রিল সর্বজনীন Reels ফিডে দেখা যাবে।",
+
+    followersNotice:
+      "এই রিল শুধুমাত্র আপনার অনুসারীদের জন্য থাকবে।",
+
+    privateNotice:
+      "এই রিল ব্যক্তিগত থাকবে।",
+
+    publish:
+      "রিল প্রকাশ করুন",
+
+    publishing:
+      "প্রকাশ করা হচ্ছে...",
+
+    noVideo:
+      "রিল প্রকাশ করার আগে একটি ভিডিও নির্বাচন করুন।",
+
+    captionTooLong:
+      "ক্যাপশন 5000 অক্ষরের বেশি হতে পারবে না।",
+
+    publishError:
+      "আপনার রিল প্রকাশ করা যায়নি।",
+
+    success:
+      "আপনার রিল সফলভাবে প্রকাশিত হয়েছে।",
+
+    loginRequired:
+      "রিল তৈরি করার আগে লগ ইন করুন।",
+
+    invalidVideo:
+      "একটি বৈধ ভিডিও ফাইল নির্বাচন করুন।",
+
+    videoTooLarge:
+      "রিল ভিডিওটি খুব বড়। সর্বোচ্চ আকার 100 MB।",
+
+    unsupportedVideo:
+      "শুধু MP4, WEBM, MOV এবং M4V ভিডিও সমর্থিত।",
+
+    uploadFailed:
+      "এই রিল ভিডিওটি আপলোড করা যায়নি।",
+
+    connectionError:
+      "রিল আপলোড করার সময় SHOBDO-র সঙ্গে সংযোগ করা যায়নি।",
+
+  },
+
+
+  // =======================================================
+  // HINDI
+  // =======================================================
+
+  hi: {
+
+    pageTitle:
+      "रील बनाएँ",
+
+    back:
+      "रील्स",
+
+    eyebrow:
+      "SHOBDO CREATOR",
+
+    title:
+      "एक रील बनाएँ",
+
+    description:
+      "SHOBDO समुदाय के साथ कविता, कहानी, पाठ और रचनात्मक क्षण साझा करें।",
+
+    stepVideo:
+      "अपना वीडियो चुनें",
+
+    reel:
+      "रील",
+
+    uploadTitle:
+      "एक छोटा वीडियो अपलोड करें",
+
+    uploadDescription:
+      "वीडियो यहाँ खींचें या अपने डिवाइस से चुनें।",
+
+    chooseVideo:
+      "वीडियो चुनें",
+
+    supportedFormats:
+      "MP4, WEBM, MOV या M4V · अधिकतम 100 MB",
+
+    preview:
+      "पूर्वावलोकन",
+
+    removeVideo:
+      "वीडियो हटाएँ",
+
+    changeVideo:
+      "दूसरा वीडियो चुनें",
+
+    stepDetails:
+      "रील विवरण",
+
+    caption:
+      "कैप्शन",
+
+    captionPlaceholder:
+      "इस रील के पीछे की कहानी लिखें...",
+
+    language:
+      "भाषा",
+
+    visibility:
+      "कौन देख सकता है?",
+
+    public:
+      "सार्वजनिक",
+
+    publicDescription:
+      "SHOBDO पर कोई भी इस रील को देख सकता है।",
+
+    followers:
+      "फ़ॉलोअर्स",
+
+    followersDescription:
+      "केवल आपको फ़ॉलो करने वाले लोग देख सकते हैं।",
+
+    private:
+      "निजी",
+
+    privateDescription:
+      "केवल आप इस रील को देख सकते हैं।",
+
+    allowComments:
+      "टिप्पणियों की अनुमति दें",
+
+    allowCommentsDescription:
+      "दर्शकों को इस रील पर प्रतिक्रिया देने दें।",
+
+    uploading:
+      "आपकी रील अपलोड हो रही है",
+
+    keepOpen:
+      "वीडियो अपलोड होने तक इस पेज को खुला रखें।",
+
+    publicNotice:
+      "आपकी रील सार्वजनिक Reels फ़ीड में दिखाई देगी।",
+
+    followersNotice:
+      "यह रील केवल आपके फ़ॉलोअर्स के लिए होगी।",
+
+    privateNotice:
+      "यह रील निजी रहेगी।",
+
+    publish:
+      "रील प्रकाशित करें",
+
+    publishing:
+      "प्रकाशित हो रही है...",
+
+    noVideo:
+      "रील प्रकाशित करने से पहले वीडियो चुनें।",
+
+    captionTooLong:
+      "कैप्शन 5000 अक्षरों से अधिक नहीं हो सकता।",
+
+    publishError:
+      "आपकी रील प्रकाशित नहीं हो सकी।",
+
+    success:
+      "आपकी रील सफलतापूर्वक प्रकाशित हो गई।",
+
+    loginRequired:
+      "रील बनाने से पहले लॉग इन करें।",
+
+    invalidVideo:
+      "कृपया एक मान्य वीडियो फ़ाइल चुनें।",
+
+    videoTooLarge:
+      "रील वीडियो बहुत बड़ा है। अधिकतम आकार 100 MB है।",
+
+    unsupportedVideo:
+      "केवल MP4, WEBM, MOV और M4V वीडियो समर्थित हैं।",
+
+    uploadFailed:
+      "यह रील वीडियो अपलोड नहीं हो सका।",
+
+    connectionError:
+      "रील अपलोड करते समय SHOBDO से कनेक्ट नहीं हो सका।",
+
+  },
+
+
+  // =======================================================
+  // ASSAMESE
+  // =======================================================
+
+  as: {
+
+    pageTitle:
+      "ৰিল তৈয়াৰ কৰক",
+
+    back:
+      "ৰিলছ",
+
+    eyebrow:
+      "SHOBDO সৃষ্টিকৰ্তা",
+
+    title:
+      "এটা ৰিল তৈয়াৰ কৰক",
+
+    description:
+      "SHOBDO সমাজৰ সৈতে কবিতা, গল্প, আবৃত্তি আৰু সৃজনশীল মুহূর্ত ভাগ-বতৰা কৰক।",
+
+    stepVideo:
+      "আপোনাৰ ভিডিঅ' বাছনি কৰক",
+
+    reel:
+      "ৰিল",
+
+    uploadTitle:
+      "এটা সৰু ভিডিঅ' আপলোড কৰক",
+
+    uploadDescription:
+      "ভিডিঅ'টো ইয়ালৈ টানি আনক অথবা আপোনাৰ ডিভাইচৰ পৰা বাছনি কৰক।",
+
+    chooseVideo:
+      "ভিডিঅ' বাছনি কৰক",
+
+    supportedFormats:
+      "MP4, WEBM, MOV বা M4V · সৰ্বাধিক 100 MB",
+
+    preview:
+      "পূৰ্বদৰ্শন",
+
+    removeVideo:
+      "ভিডিঅ' আঁতৰাওক",
+
+    changeVideo:
+      "অন্য ভিডিঅ' বাছনি কৰক",
+
+    stepDetails:
+      "ৰিলৰ বিৱৰণ",
+
+    caption:
+      "কেপচন",
+
+    captionPlaceholder:
+      "এই ৰিলৰ আঁৰৰ গল্প লিখক...",
+
+    language:
+      "ভাষা",
+
+    visibility:
+      "কোনে চাব পাৰিব?",
+
+    public:
+      "সাৰ্বজনীন",
+
+    publicDescription:
+      "SHOBDO-ৰ যিকোনো ব্যক্তিয়ে এই ৰিল চাব পাৰিব।",
+
+    followers:
+      "অনুসৰণকাৰী",
+
+    followersDescription:
+      "কেৱল আপোনাক অনুসৰণ কৰা লোকসকলে চাব পাৰিব।",
+
+    private:
+      "ব্যক্তিগত",
+
+    privateDescription:
+      "কেৱল আপুনি এই ৰিল চাব পাৰিব।",
+
+    allowComments:
+      "মন্তব্যৰ অনুমতি দিয়ক",
+
+    allowCommentsDescription:
+      "দৰ্শকক এই ৰিলত মন্তব্য কৰিবলৈ দিয়ক।",
+
+    uploading:
+      "আপোনাৰ ৰিল আপলোড হৈ আছে",
+
+    keepOpen:
+      "ভিডিঅ' আপলোড শেষ নোহোৱালৈ এই পৃষ্ঠা খোলা ৰাখক।",
+
+    publicNotice:
+      "আপোনাৰ ৰিল সাৰ্বজনীন Reels ফিডত দেখা যাব।",
+
+    followersNotice:
+      "এই ৰিল কেৱল আপোনাৰ অনুসৰণকাৰীৰ বাবে থাকিব।",
+
+    privateNotice:
+      "এই ৰিল ব্যক্তিগত হৈ থাকিব।",
+
+    publish:
+      "ৰিল প্ৰকাশ কৰক",
+
+    publishing:
+      "প্ৰকাশ হৈ আছে...",
+
+    noVideo:
+      "ৰিল প্ৰকাশ কৰাৰ আগতে এটা ভিডিঅ' বাছনি কৰক।",
+
+    captionTooLong:
+      "কেপচন 5000 আখৰৰ অধিক হ'ব নোৱাৰে।",
+
+    publishError:
+      "আপোনাৰ ৰিল প্ৰকাশ কৰিব পৰা নগ'ল।",
+
+    success:
+      "আপোনাৰ ৰিল সফলভাৱে প্ৰকাশিত হৈছে।",
+
+    loginRequired:
+      "ৰিল তৈয়াৰ কৰাৰ আগতে লগ ইন কৰক।",
+
+    invalidVideo:
+      "এটা বৈধ ভিডিঅ' ফাইল বাছনি কৰক।",
+
+    videoTooLarge:
+      "ৰিল ভিডিঅ'টো অতি ডাঙৰ। সৰ্বাধিক আকাৰ 100 MB।",
+
+    unsupportedVideo:
+      "কেৱল MP4, WEBM, MOV আৰু M4V ভিডিঅ' সমৰ্থিত।",
+
+    uploadFailed:
+      "এই ৰিল ভিডিঅ' আপলোড কৰিব পৰা নগ'ল।",
+
+    connectionError:
+      "ৰিল আপলোড কৰাৰ সময়ত SHOBDO-ৰ সৈতে সংযোগ কৰিব পৰা নগ'ল।",
+
+  },
+
+
+  // =======================================================
+  // ODIA
+  // =======================================================
+
+  or: {
+
+    pageTitle:
+      "ରିଲ୍ ତିଆରି କରନ୍ତୁ",
+
+    back:
+      "ରିଲ୍ସ",
+
+    eyebrow:
+      "SHOBDO CREATOR",
+
+    title:
+      "ଏକ ରିଲ୍ ତିଆରି କରନ୍ତୁ",
+
+    description:
+      "SHOBDO ସମୁଦାୟ ସହ କବିତା, କାହାଣୀ, ପାଠ ଏବଂ ସୃଜନଶୀଳ ମୁହୂର୍ତ୍ତ ସେୟାର କରନ୍ତୁ।",
+
+    stepVideo:
+      "ଆପଣଙ୍କ ଭିଡିଓ ବାଛନ୍ତୁ",
+
+    reel:
+      "ରିଲ୍",
+
+    uploadTitle:
+      "ଏକ ଛୋଟ ଭିଡିଓ ଅପଲୋଡ୍ କରନ୍ତୁ",
+
+    uploadDescription:
+      "ଭିଡିଓକୁ ଏଠାକୁ ଡ୍ରାଗ୍ କରନ୍ତୁ କିମ୍ବା ଡିଭାଇସରୁ ବାଛନ୍ତୁ।",
+
+    chooseVideo:
+      "ଭିଡିଓ ବାଛନ୍ତୁ",
+
+    supportedFormats:
+      "MP4, WEBM, MOV କିମ୍ବା M4V · ସର୍ବାଧିକ 100 MB",
+
+    preview:
+      "ପ୍ରିଭ୍ୟୁ",
+
+    removeVideo:
+      "ଭିଡିଓ ହଟାନ୍ତୁ",
+
+    changeVideo:
+      "ଅନ୍ୟ ଭିଡିଓ ବାଛନ୍ତୁ",
+
+    stepDetails:
+      "ରିଲ୍ ବିବରଣୀ",
+
+    caption:
+      "କ୍ୟାପ୍ସନ୍",
+
+    captionPlaceholder:
+      "ଏହି ରିଲ୍ ପଛର କାହାଣୀ ଲେଖନ୍ତୁ...",
+
+    language:
+      "ଭାଷା",
+
+    visibility:
+      "କିଏ ଦେଖିପାରିବ?",
+
+    public:
+      "ସାର୍ବଜନୀନ",
+
+    publicDescription:
+      "SHOBDO-ରେ ସମସ୍ତେ ଏହି ରିଲ୍ ଦେଖିପାରିବେ।",
+
+    followers:
+      "ଅନୁସରଣକାରୀ",
+
+    followersDescription:
+      "କେବଳ ଆପଣଙ୍କୁ ଅନୁସରଣ କରୁଥିବା ଲୋକମାନେ ଦେଖିପାରିବେ।",
+
+    private:
+      "ବ୍ୟକ୍ତିଗତ",
+
+    privateDescription:
+      "କେବଳ ଆପଣ ଏହି ରିଲ୍ ଦେଖିପାରିବେ।",
+
+    allowComments:
+      "ମନ୍ତବ୍ୟକୁ ଅନୁମତି ଦିଅନ୍ତୁ",
+
+    allowCommentsDescription:
+      "ଦର୍ଶକମାନଙ୍କୁ ଏହି ରିଲ୍ ଉପରେ ମନ୍ତବ୍ୟ କରିବାକୁ ଦିଅନ୍ତୁ।",
+
+    uploading:
+      "ଆପଣଙ୍କ ରିଲ୍ ଅପଲୋଡ୍ ହେଉଛି",
+
+    keepOpen:
+      "ଭିଡିଓ ଅପଲୋଡ୍ ଶେଷ ହେବା ପର୍ଯ୍ୟନ୍ତ ଏହି ପୃଷ୍ଠା ଖୋଲା ରଖନ୍ତୁ।",
+
+    publicNotice:
+      "ଆପଣଙ୍କ ରିଲ୍ ସାର୍ବଜନୀନ Reels ଫିଡ୍‌ରେ ଦେଖାଯିବ।",
+
+    followersNotice:
+      "ଏହି ରିଲ୍ କେବଳ ଆପଣଙ୍କ ଅନୁସରଣକାରୀଙ୍କ ପାଇଁ ରହିବ।",
+
+    privateNotice:
+      "ଏହି ରିଲ୍ ବ୍ୟକ୍ତିଗତ ରହିବ।",
+
+    publish:
+      "ରିଲ୍ ପ୍ରକାଶ କରନ୍ତୁ",
+
+    publishing:
+      "ପ୍ରକାଶ ହେଉଛି...",
+
+    noVideo:
+      "ରିଲ୍ ପ୍ରକାଶ କରିବା ପୂର୍ବରୁ ଏକ ଭିଡିଓ ବାଛନ୍ତୁ।",
+
+    captionTooLong:
+      "କ୍ୟାପ୍ସନ୍ 5000 ଅକ୍ଷରରୁ ଅଧିକ ହୋଇପାରିବ ନାହିଁ।",
+
+    publishError:
+      "ଆପଣଙ୍କ ରିଲ୍ ପ୍ରକାଶ କରାଯାଇପାରିଲା ନାହିଁ।",
+
+    success:
+      "ଆପଣଙ୍କ ରିଲ୍ ସଫଳତାର ସହ ପ୍ରକାଶିତ ହୋଇଛି।",
+
+    loginRequired:
+      "ରିଲ୍ ତିଆରି କରିବା ପୂର୍ବରୁ ଲଗ୍ ଇନ୍ କରନ୍ତୁ।",
+
+    invalidVideo:
+      "ଏକ ବୈଧ ଭିଡିଓ ଫାଇଲ୍ ବାଛନ୍ତୁ।",
+
+    videoTooLarge:
+      "ରିଲ୍ ଭିଡିଓଟି ବହୁତ ବଡ଼। ସର୍ବାଧିକ ଆକାର 100 MB।",
+
+    unsupportedVideo:
+      "କେବଳ MP4, WEBM, MOV ଏବଂ M4V ଭିଡିଓ ସମର୍ଥିତ।",
+
+    uploadFailed:
+      "ଏହି ରିଲ୍ ଭିଡିଓ ଅପଲୋଡ୍ କରାଯାଇପାରିଲା ନାହିଁ।",
+
+    connectionError:
+      "ରିଲ୍ ଅପଲୋଡ୍ ସମୟରେ SHOBDO ସହ ସଂଯୋଗ ହୋଇପାରିଲା ନାହିଁ।",
+
+  },
+
+
+  // =======================================================
+  // TAMIL
+  // =======================================================
+
+  ta: {
+
+    pageTitle:
+      "ரீலை உருவாக்குங்கள்",
+
+    back:
+      "ரீல்ஸ்",
+
+    eyebrow:
+      "SHOBDO CREATOR",
+
+    title:
+      "ஒரு ரீலை உருவாக்குங்கள்",
+
+    description:
+      "SHOBDO சமூகத்துடன் கவிதை, கதைகள், வாசிப்புகள் மற்றும் படைப்பாற்றல் தருணங்களை பகிருங்கள்.",
+
+    stepVideo:
+      "உங்கள் வீடியோவைத் தேர்ந்தெடுக்கவும்",
+
+    reel:
+      "ரீல்",
+
+    uploadTitle:
+      "ஒரு குறுகிய வீடியோவை பதிவேற்றுங்கள்",
+
+    uploadDescription:
+      "வீடியோவை இங்கே இழுத்து விடுங்கள் அல்லது உங்கள் சாதனத்திலிருந்து தேர்வு செய்யுங்கள்.",
+
+    chooseVideo:
+      "வீடியோவைத் தேர்வு செய்க",
+
+    supportedFormats:
+      "MP4, WEBM, MOV அல்லது M4V · அதிகபட்சம் 100 MB",
+
+    preview:
+      "முன்னோட்டம்",
+
+    removeVideo:
+      "வீடியோவை அகற்று",
+
+    changeVideo:
+      "வேறு வீடியோவைத் தேர்வு செய்க",
+
+    stepDetails:
+      "ரீல் விவரங்கள்",
+
+    caption:
+      "தலைப்பு",
+
+    captionPlaceholder:
+      "இந்த ரீலின் பின்னணி கதையை எழுதுங்கள்...",
+
+    language:
+      "மொழி",
+
+    visibility:
+      "யார் பார்க்கலாம்?",
+
+    public:
+      "பொது",
+
+    publicDescription:
+      "SHOBDO-வில் யாரும் இந்த ரீலை பார்க்கலாம்.",
+
+    followers:
+      "பின்தொடர்பவர்கள்",
+
+    followersDescription:
+      "உங்களை பின்தொடர்பவர்கள் மட்டுமே பார்க்கலாம்.",
+
+    private:
+      "தனிப்பட்டது",
+
+    privateDescription:
+      "நீங்கள் மட்டும் இந்த ரீலை பார்க்கலாம்.",
+
+    allowComments:
+      "கருத்துகளை அனுமதிக்கவும்",
+
+    allowCommentsDescription:
+      "பார்வையாளர்கள் இந்த ரீலுக்கு பதிலளிக்க அனுமதிக்கவும்.",
+
+    uploading:
+      "உங்கள் ரீல் பதிவேற்றப்படுகிறது",
+
+    keepOpen:
+      "வீடியோ பதிவேற்றம் முடியும் வரை இந்தப் பக்கத்தை திறந்தே வைத்திருங்கள்.",
+
+    publicNotice:
+      "உங்கள் ரீல் பொது Reels feed-ல் தோன்றும்.",
+
+    followersNotice:
+      "இந்த ரீல் உங்கள் பின்தொடர்பவர்களுக்கு மட்டும் இருக்கும்.",
+
+    privateNotice:
+      "இந்த ரீல் தனிப்பட்டதாக இருக்கும்.",
+
+    publish:
+      "ரீலை வெளியிடுங்கள்",
+
+    publishing:
+      "வெளியிடப்படுகிறது...",
+
+    noVideo:
+      "ரீலை வெளியிடுவதற்கு முன் வீடியோவைத் தேர்வு செய்யுங்கள்.",
+
+    captionTooLong:
+      "தலைப்பு 5000 எழுத்துகளை மீறக்கூடாது.",
+
+    publishError:
+      "உங்கள் ரீலை வெளியிட முடியவில்லை.",
+
+    success:
+      "உங்கள் ரீல் வெற்றிகரமாக வெளியிடப்பட்டது.",
+
+    loginRequired:
+      "ரீலை உருவாக்குவதற்கு முன் உள்நுழையவும்.",
+
+    invalidVideo:
+      "சரியான வீடியோ கோப்பைத் தேர்வு செய்யுங்கள்.",
+
+    videoTooLarge:
+      "ரீல் வீடியோ மிகப் பெரியது. அதிகபட்ச அளவு 100 MB.",
+
+    unsupportedVideo:
+      "MP4, WEBM, MOV மற்றும் M4V வீடியோக்கள் மட்டுமே ஆதரிக்கப்படுகின்றன.",
+
+    uploadFailed:
+      "இந்த ரீல் வீடியோவை பதிவேற்ற முடியவில்லை.",
+
+    connectionError:
+      "ரீல் பதிவேற்றும்போது SHOBDO-வை இணைக்க முடியவில்லை.",
+
+  },
+
+
+  // =======================================================
+  // TELUGU
+  // =======================================================
+
+  te: {
+
+    pageTitle:
+      "రీల్ సృష్టించండి",
+
+    back:
+      "రీల్స్",
+
+    eyebrow:
+      "SHOBDO CREATOR",
+
+    title:
+      "ఒక రీల్ సృష్టించండి",
+
+    description:
+      "SHOBDO సమాజంతో కవిత్వం, కథలు, పఠనాలు మరియు సృజనాత్మక క్షణాలను పంచుకోండి.",
+
+    stepVideo:
+      "మీ వీడియోను ఎంచుకోండి",
+
+    reel:
+      "రీల్",
+
+    uploadTitle:
+      "చిన్న వీడియోను అప్‌లోడ్ చేయండి",
+
+    uploadDescription:
+      "వీడియోను ఇక్కడికి డ్రాగ్ చేయండి లేదా మీ పరికరం నుండి ఎంచుకోండి.",
+
+    chooseVideo:
+      "వీడియో ఎంచుకోండి",
+
+    supportedFormats:
+      "MP4, WEBM, MOV లేదా M4V · గరిష్ఠం 100 MB",
+
+    preview:
+      "ప్రివ్యూ",
+
+    removeVideo:
+      "వీడియో తొలగించండి",
+
+    changeVideo:
+      "మరొక వీడియోను ఎంచుకోండి",
+
+    stepDetails:
+      "రీల్ వివరాలు",
+
+    caption:
+      "క్యాప్షన్",
+
+    captionPlaceholder:
+      "ఈ రీల్ వెనుక కథను చెప్పండి...",
+
+    language:
+      "భాష",
+
+    visibility:
+      "ఎవరు చూడగలరు?",
+
+    public:
+      "పబ్లిక్",
+
+    publicDescription:
+      "SHOBDOలో ఎవరైనా ఈ రీల్‌ను చూడగలరు.",
+
+    followers:
+      "ఫాలోవర్లు",
+
+    followersDescription:
+      "మిమ్మల్ని ఫాలో అయ్యే వారు మాత్రమే చూడగలరు.",
+
+    private:
+      "ప్రైవేట్",
+
+    privateDescription:
+      "మీరు మాత్రమే ఈ రీల్‌ను చూడగలరు.",
+
+    allowComments:
+      "వ్యాఖ్యలను అనుమతించండి",
+
+    allowCommentsDescription:
+      "వీక్షకులు ఈ రీల్‌కు స్పందించడానికి అనుమతించండి.",
+
+    uploading:
+      "మీ రీల్ అప్‌లోడ్ అవుతోంది",
+
+    keepOpen:
+      "వీడియో అప్‌లోడ్ పూర్తయ్యే వరకు ఈ పేజీని తెరిచి ఉంచండి.",
+
+    publicNotice:
+      "మీ రీల్ పబ్లిక్ Reels ఫీడ్‌లో కనిపిస్తుంది.",
+
+    followersNotice:
+      "ఈ రీల్ మీ ఫాలోవర్లకు మాత్రమే కనిపిస్తుంది.",
+
+    privateNotice:
+      "ఈ రీల్ ప్రైవేట్‌గా ఉంటుంది.",
+
+    publish:
+      "రీల్ ప్రచురించండి",
+
+    publishing:
+      "ప్రచురిస్తోంది...",
+
+    noVideo:
+      "రీల్ ప్రచురించే ముందు వీడియోను ఎంచుకోండి.",
+
+    captionTooLong:
+      "క్యాప్షన్ 5000 అక్షరాలను మించకూడదు.",
+
+    publishError:
+      "మీ రీల్‌ను ప్రచురించలేకపోయాము.",
+
+    success:
+      "మీ రీల్ విజయవంతంగా ప్రచురించబడింది.",
+
+    loginRequired:
+      "రీల్ సృష్టించే ముందు లాగిన్ అవ్వండి.",
+
+    invalidVideo:
+      "దయచేసి సరైన వీడియో ఫైల్‌ను ఎంచుకోండి.",
+
+    videoTooLarge:
+      "రీల్ వీడియో చాలా పెద్దది. గరిష్ఠ పరిమాణం 100 MB.",
+
+    unsupportedVideo:
+      "MP4, WEBM, MOV మరియు M4V వీడియోలు మాత్రమే మద్దతు ఇస్తాయి.",
+
+    uploadFailed:
+      "ఈ రీల్ వీడియోను అప్‌లోడ్ చేయలేకపోయాము.",
+
+    connectionError:
+      "రీల్ అప్‌లోడ్ చేస్తున్నప్పుడు SHOBDOకు కనెక్ట్ కాలేకపోయాము.",
+
+  },
+
+};
+
+
+// =========================================================
+// CONTENT-LANGUAGE DISPLAY NAMES
+// =========================================================
+
+const LANGUAGE_NAMES = {
+
+  en: {
+    bn: "Bengali",
+    hi: "Hindi",
+    en: "English",
+    as: "Assamese",
+    or: "Odia",
+    ta: "Tamil",
+    te: "Telugu",
+  },
+
+  bn: {
+    bn: "বাংলা",
+    hi: "হিন্দি",
+    en: "ইংরেজি",
+    as: "অসমীয়া",
+    or: "ওড়িয়া",
+    ta: "তামিল",
+    te: "তেলুগু",
+  },
+
+  hi: {
+    bn: "बंगाली",
+    hi: "हिन्दी",
+    en: "अंग्रेज़ी",
+    as: "असमिया",
+    or: "ओड़िया",
+    ta: "तमिल",
+    te: "तेलुगु",
+  },
+
+  as: {
+    bn: "বাংলা",
+    hi: "হিন্দী",
+    en: "ইংৰাজী",
+    as: "অসমীয়া",
+    or: "ওড়িয়া",
+    ta: "তামিল",
+    te: "তেলুগু",
+  },
+
+  or: {
+    bn: "ବଙ୍ଗାଳୀ",
+    hi: "ହିନ୍ଦୀ",
+    en: "ଇଂରାଜୀ",
+    as: "ଆସାମୀୟ",
+    or: "ଓଡ଼ିଆ",
+    ta: "ତାମିଲ",
+    te: "ତେଲୁଗୁ",
+  },
+
+  ta: {
+    bn: "வங்காளம்",
+    hi: "இந்தி",
+    en: "ஆங்கிலம்",
+    as: "அசாமியம்",
+    or: "ஒடியா",
+    ta: "தமிழ்",
+    te: "தெலுங்கு",
+  },
+
+  te: {
+    bn: "బెంగాలీ",
+    hi: "హిందీ",
+    en: "ఇంగ్లీష్",
+    as: "అస్సామీ",
+    or: "ఒడియా",
+    ta: "తమిళం",
+    te: "తెలుగు",
+  },
+
+};
 
 
 // =========================================================
@@ -251,6 +1282,101 @@ function detectAspectRatio(
 
 
 // =========================================================
+// ERROR LOCALIZER
+// =========================================================
+
+function localizeError(
+  error,
+  copy
+) {
+
+  const message =
+    String(
+      error?.message || ""
+    ).toLowerCase();
+
+
+  if (
+    message.includes(
+      "log in"
+    ) ||
+    message.includes(
+      "login"
+    ) ||
+    error?.status === 401
+  ) {
+
+    return copy.loginRequired;
+
+  }
+
+
+  if (
+    message.includes(
+      "100 mb"
+    ) ||
+    message.includes(
+      "too large"
+    ) ||
+    error?.status === 413
+  ) {
+
+    return copy.videoTooLarge;
+
+  }
+
+
+  if (
+    message.includes(
+      "mp4"
+    ) &&
+    message.includes(
+      "webm"
+    )
+  ) {
+
+    return copy.unsupportedVideo;
+
+  }
+
+
+  if (
+    message.includes(
+      "connect"
+    ) ||
+    message.includes(
+      "network"
+    ) ||
+    message.includes(
+      "failed to fetch"
+    )
+  ) {
+
+    return copy.connectionError;
+
+  }
+
+
+  if (
+    message.includes(
+      "upload"
+    )
+  ) {
+
+    return copy.uploadFailed;
+
+  }
+
+
+  return (
+    error?.message ||
+    copy.publishError
+  );
+
+}
+
+
+// =========================================================
 // CREATE REEL PAGE
 // =========================================================
 
@@ -258,6 +1384,20 @@ export default function CreateReel() {
 
   const navigate =
     useNavigate();
+
+
+  const {
+    language:
+      interfaceLanguage,
+  } =
+    useLanguage();
+
+
+  const copy =
+    COPY[
+      interfaceLanguage
+    ] ||
+    COPY.en;
 
 
   const fileInputRef =
@@ -309,10 +1449,16 @@ export default function CreateReel() {
 
 
   const [
-    language,
-    setLanguage,
+    reelLanguage,
+    setReelLanguage,
   ] = useState(
-    "bn"
+    REEL_LANGUAGES.some(
+      (item) =>
+        item.code ===
+        interfaceLanguage
+    )
+      ? interfaceLanguage
+      : "bn"
   );
 
 
@@ -358,6 +1504,103 @@ export default function CreateReel() {
     success,
     setSuccess,
   ] = useState("");
+
+
+  // =======================================================
+  // PAGE TITLE
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      const previousTitle =
+        document.title;
+
+
+      document.title =
+        `${copy.pageTitle} | SHOBDO`;
+
+
+      return () => {
+
+        document.title =
+          previousTitle;
+
+      };
+
+    },
+    [
+      copy.pageTitle,
+    ]
+  );
+
+
+  // =======================================================
+  // VISIBILITY OPTIONS
+  // =======================================================
+
+  const visibilityOptions =
+    useMemo(
+      () => [
+
+        {
+          value:
+            "public",
+
+          label:
+            copy.public,
+
+          description:
+            copy.publicDescription,
+
+          icon:
+            Globe2,
+        },
+
+        {
+          value:
+            "followers",
+
+          label:
+            copy.followers,
+
+          description:
+            copy.followersDescription,
+
+          icon:
+            Users,
+        },
+
+        {
+          value:
+            "private",
+
+          label:
+            copy.private,
+
+          description:
+            copy.privateDescription,
+
+          icon:
+            Lock,
+        },
+
+      ],
+      [
+        copy,
+      ]
+    );
+
+
+  // =======================================================
+  // LANGUAGE DISPLAY NAMES
+  // =======================================================
+
+  const languageNames =
+    LANGUAGE_NAMES[
+      interfaceLanguage
+    ] ||
+    LANGUAGE_NAMES.en;
 
 
   // =======================================================
@@ -460,8 +1703,10 @@ export default function CreateReel() {
 
 
       setError(
-        validationError?.message ||
-        "Unable to use this video."
+        localizeError(
+          validationError,
+          copy
+        )
       );
 
     }
@@ -701,7 +1946,7 @@ export default function CreateReel() {
     ) {
 
       setError(
-        "Choose a video before publishing your Reel."
+        copy.noVideo
       );
 
       return;
@@ -715,7 +1960,7 @@ export default function CreateReel() {
     ) {
 
       setError(
-        `Caption cannot exceed ${MAX_CAPTION_LENGTH} characters.`
+        copy.captionTooLong
       );
 
       return;
@@ -744,7 +1989,8 @@ export default function CreateReel() {
           caption:
             caption.trim(),
 
-          language,
+          language:
+            reelLanguage,
 
           visibility,
 
@@ -775,7 +2021,7 @@ export default function CreateReel() {
 
 
       setSuccess(
-        "Your Reel was published successfully."
+        copy.success
       );
 
 
@@ -834,8 +2080,10 @@ export default function CreateReel() {
 
 
       setError(
-        publishError?.message ||
-        "Unable to publish your Reel."
+        localizeError(
+          publishError,
+          copy
+        )
       );
 
     } finally {
@@ -847,6 +2095,20 @@ export default function CreateReel() {
     }
 
   }
+
+
+  // =======================================================
+  // CURRENT VISIBILITY NOTICE
+  // =======================================================
+
+  const visibilityNotice =
+    visibility ===
+    "public"
+      ? copy.publicNotice
+      : visibility ===
+        "followers"
+        ? copy.followersNotice
+        : copy.privateNotice;
 
 
   // =======================================================
@@ -877,7 +2139,7 @@ export default function CreateReel() {
           />
 
           <span>
-            Reels
+            {copy.back}
           </span>
 
         </Link>
@@ -903,19 +2165,17 @@ export default function CreateReel() {
             <span
               className="create-reel-eyebrow"
             >
-              SHOBDO CREATOR
+              {copy.eyebrow}
             </span>
 
 
             <h1>
-              Create a Reel
+              {copy.title}
             </h1>
 
 
             <p>
-              Share poetry, storytelling,
-              readings and creative moments
-              with the SHOBDO community.
+              {copy.description}
             </p>
 
           </div>
@@ -952,7 +2212,7 @@ export default function CreateReel() {
               () =>
                 setError("")
             }
-            aria-label="Close error"
+            aria-label="Close"
           >
 
             <X
@@ -999,7 +2259,7 @@ export default function CreateReel() {
       >
 
         {/* ===============================================
-            LEFT — VIDEO
+            VIDEO
         ================================================ */}
 
         <section
@@ -1017,7 +2277,7 @@ export default function CreateReel() {
               </span>
 
               <h2>
-                Choose your video
+                {copy.stepVideo}
               </h2>
 
             </div>
@@ -1031,7 +2291,7 @@ export default function CreateReel() {
                 size={15}
               />
 
-              REEL
+              {copy.reel}
 
             </span>
 
@@ -1089,13 +2349,14 @@ export default function CreateReel() {
 
 
                 <h3>
-                  Upload a short video
+                  {copy.uploadTitle}
                 </h3>
 
 
                 <p>
-                  Drag your video here or
-                  choose one from your device.
+                  {
+                    copy.uploadDescription
+                  }
                 </p>
 
 
@@ -1114,13 +2375,15 @@ export default function CreateReel() {
                     size={17}
                   />
 
-                  Choose video
+                  {copy.chooseVideo}
 
                 </button>
 
 
                 <small>
-                  MP4, WEBM, MOV or M4V · Maximum 100 MB
+                  {
+                    copy.supportedFormats
+                  }
                 </small>
 
               </div>
@@ -1161,7 +2424,7 @@ export default function CreateReel() {
                       fill="currentColor"
                     />
 
-                    Preview
+                    {copy.preview}
 
                   </div>
 
@@ -1228,7 +2491,12 @@ export default function CreateReel() {
                     onClick={
                       removeVideo
                     }
-                    aria-label="Remove video"
+                    aria-label={
+                      copy.removeVideo
+                    }
+                    title={
+                      copy.removeVideo
+                    }
                   >
 
                     <X
@@ -1258,7 +2526,9 @@ export default function CreateReel() {
                     size={16}
                   />
 
-                  Choose another video
+                  {
+                    copy.changeVideo
+                  }
 
                 </button>
 
@@ -1283,7 +2553,7 @@ export default function CreateReel() {
 
 
         {/* ===============================================
-            RIGHT — SETTINGS
+            SETTINGS
         ================================================ */}
 
         <section
@@ -1301,7 +2571,7 @@ export default function CreateReel() {
               </span>
 
               <h2>
-                Reel details
+                {copy.stepDetails}
               </h2>
 
             </div>
@@ -1330,7 +2600,7 @@ export default function CreateReel() {
               <label
                 htmlFor="reel-caption"
               >
-                Caption
+                {copy.caption}
               </label>
 
 
@@ -1368,7 +2638,9 @@ export default function CreateReel() {
               maxLength={
                 MAX_CAPTION_LENGTH
               }
-              placeholder="Tell the story behind this Reel..."
+              placeholder={
+                copy.captionPlaceholder
+              }
               disabled={
                 publishing
               }
@@ -1389,7 +2661,7 @@ export default function CreateReel() {
             <label
               htmlFor="reel-language"
             >
-              Language
+              {copy.language}
             </label>
 
 
@@ -1405,7 +2677,7 @@ export default function CreateReel() {
               <select
                 id="reel-language"
                 value={
-                  language
+                  reelLanguage
                 }
                 disabled={
                   publishing
@@ -1414,7 +2686,7 @@ export default function CreateReel() {
                   (
                     event
                   ) =>
-                    setLanguage(
+                    setReelLanguage(
                       event.target.value
                     )
                 }
@@ -1439,9 +2711,18 @@ export default function CreateReel() {
                       }
 
                       {
-                        item.name !==
-                        item.nativeName
-                          ? ` — ${item.name}`
+                        languageNames[
+                          item.code
+                        ] &&
+                        languageNames[
+                          item.code
+                        ] !==
+                          item.nativeName
+                          ? ` — ${
+                              languageNames[
+                                item.code
+                              ]
+                            }`
                           : ""
                       }
 
@@ -1466,7 +2747,7 @@ export default function CreateReel() {
           >
 
             <legend>
-              Who can watch?
+              {copy.visibility}
             </legend>
 
 
@@ -1474,7 +2755,7 @@ export default function CreateReel() {
               className="create-reel-visibility-options"
             >
 
-              {VISIBILITY_OPTIONS.map(
+              {visibilityOptions.map(
                 (
                   option
                 ) => {
@@ -1599,12 +2880,14 @@ export default function CreateReel() {
               <div>
 
                 <strong>
-                  Allow comments
+                  {copy.allowComments}
                 </strong>
 
 
                 <small>
-                  Let viewers respond to this Reel.
+                  {
+                    copy.allowCommentsDescription
+                  }
                 </small>
 
               </div>
@@ -1665,7 +2948,7 @@ export default function CreateReel() {
 
 
                   <span>
-                    Uploading your Reel
+                    {copy.uploading}
                   </span>
 
                 </div>
@@ -1694,10 +2977,7 @@ export default function CreateReel() {
 
 
               <small>
-
-                Keep this page open while
-                your video is being uploaded.
-
+                {copy.keepOpen}
               </small>
 
             </div>
@@ -1723,17 +3003,9 @@ export default function CreateReel() {
 
 
               <span>
-
                 {
-                  visibility ===
-                  "public"
-                    ? "Your Reel will appear in the public Reels feed."
-                    : visibility ===
-                      "followers"
-                      ? "This Reel will be limited to your followers."
-                      : "This Reel will remain private."
+                  visibilityNotice
                 }
-
               </span>
 
             </div>
@@ -1758,7 +3030,9 @@ export default function CreateReel() {
                       className="create-reel-spin"
                     />
 
-                    Publishing...
+                    {
+                      copy.publishing
+                    }
 
                   </>
 
@@ -1771,7 +3045,9 @@ export default function CreateReel() {
                       size={18}
                     />
 
-                    Publish Reel
+                    {
+                      copy.publish
+                    }
 
                   </>
 

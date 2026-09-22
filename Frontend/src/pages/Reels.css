@@ -3379,3 +3379,650 @@ button:disabled {
   }
 
 }
+
+/* =========================================================
+   SHOBDO REELS
+   FULL-SCREEN SOCIAL BACKGROUND MODE
+========================================================= */
+
+
+/* =========================================================
+   FULL VIEWPORT APPLICATION BACKGROUND
+
+   Reels content remains inside SocialLayout,
+   but the page background can now visually span:
+   - left sidebar
+   - center
+   - right sidebar
+========================================================= */
+
+body.shobdo-reels-route-active {
+  min-height:
+    100dvh;
+
+  background:
+    transparent;
+}
+
+
+/* =========================================================
+   SOCIAL LAYOUT — FULL WIDTH
+========================================================= */
+
+body.shobdo-reels-route-active
+.social-layout {
+  width:
+    100%;
+
+  max-width:
+    none;
+
+  min-height:
+    calc(
+      100dvh -
+      64px
+    );
+
+  margin:
+    0;
+
+  padding:
+    24px
+    40px
+    58px;
+
+  background:
+    transparent !important;
+}
+
+
+/* =========================================================
+   DESKTOP COLUMNS
+
+   Similar visual behavior to Saved page.
+========================================================= */
+
+@media (
+  min-width: 1181px
+) {
+
+  body.shobdo-reels-route-active
+  .social-layout {
+    grid-template-columns:
+      280px
+      minmax(
+        0,
+        1fr
+      )
+      310px;
+
+    gap:
+      28px;
+  }
+
+}
+
+
+/* =========================================================
+   MAKE SOCIAL AREAS TRANSPARENT
+========================================================= */
+
+body.shobdo-reels-route-active
+.social-left-sidebar,
+
+body.shobdo-reels-route-active
+.social-right-sidebar,
+
+body.shobdo-reels-route-active
+.social-main-content {
+  background:
+    transparent !important;
+}
+
+
+/* =========================================================
+   LEFT / RIGHT SIDEBAR CONTENT ABOVE BACKGROUND
+========================================================= */
+
+body.shobdo-reels-route-active
+.social-left-inner,
+
+body.shobdo-reels-route-active
+.social-right-inner {
+  position:
+    sticky;
+
+  z-index:
+    20;
+}
+
+
+/* =========================================================
+   RIGHT CARDS GLASS EFFECT
+========================================================= */
+
+body.shobdo-reels-route-active
+.social-side-card {
+  background:
+    rgba(
+      255,
+      253,
+      249,
+      0.82
+    );
+
+  border-color:
+    rgba(
+      181,
+      156,
+      124,
+      0.32
+    );
+
+  backdrop-filter:
+    blur(16px)
+    saturate(1.06);
+
+  -webkit-backdrop-filter:
+    blur(16px)
+    saturate(1.06);
+
+  box-shadow:
+    0
+    12px
+    30px
+    rgba(
+      73,
+      51,
+      28,
+      0.07
+    );
+}
+
+
+/* =========================================================
+   LEFT NAV GLASS HOVER
+========================================================= */
+
+body.shobdo-reels-route-active
+.social-nav-item {
+  backdrop-filter:
+    blur(7px);
+
+  -webkit-backdrop-filter:
+    blur(7px);
+}
+
+
+body.shobdo-reels-route-active
+.social-nav-item-active {
+  background:
+    rgba(
+      245,
+      230,
+      241,
+      0.82
+    );
+
+  border-color:
+    rgba(
+      117,
+      83,
+      111,
+      0.22
+    );
+}
+
+
+/* =========================================================
+   CURRENT USER AREA
+========================================================= */
+
+body.shobdo-reels-route-active
+.social-sidebar-user {
+  background:
+    rgba(
+      255,
+      253,
+      249,
+      0.32
+    );
+
+  backdrop-filter:
+    blur(10px);
+
+  -webkit-backdrop-filter:
+    blur(10px);
+}
+
+
+/* =========================================================
+   REMOVE CENTRAL CARD APPEARANCE
+========================================================= */
+
+body.shobdo-reels-route-active
+.shobdo-reels-state {
+  width:
+    100%;
+
+  max-width:
+    none;
+
+  min-height:
+    calc(
+      100dvh -
+      112px
+    );
+
+  margin:
+    0;
+
+  padding:
+    50px
+    30px;
+
+  border:
+    0;
+
+  border-radius:
+    0;
+
+  background:
+    transparent !important;
+
+  box-shadow:
+    none;
+}
+
+
+/* =========================================================
+   EMPTY REELS HERO
+========================================================= */
+
+body.shobdo-reels-route-active
+.shobdo-reels-empty-state {
+  min-height:
+    calc(
+      100dvh -
+      112px
+    );
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+}
+
+
+/* =========================================================
+   REELS FEED — USE FULL CENTRAL HEIGHT
+========================================================= */
+
+body.shobdo-reels-route-active
+.shobdo-reels-page {
+  width:
+    100%;
+
+  max-width:
+    none;
+
+  height:
+    calc(
+      100dvh -
+      112px
+    );
+
+  min-height:
+    620px;
+
+  margin:
+    0;
+
+  border:
+    0;
+
+  border-radius:
+    18px;
+
+  box-shadow:
+    0
+    14px
+    38px
+    rgba(
+      40,
+      26,
+      38,
+      0.12
+    );
+}
+
+
+body.shobdo-reels-route-active
+.shobdo-reel {
+  min-height:
+    calc(
+      100dvh -
+      112px
+    );
+}
+
+
+/* =========================================================
+   HERO TEXT
+========================================================= */
+
+body.shobdo-reels-route-active
+.shobdo-reels-state h1 {
+  max-width:
+    760px;
+
+  font-size:
+    clamp(
+      34px,
+      4.4vw,
+      58px
+    );
+
+  line-height:
+    1.08;
+}
+
+
+body.shobdo-reels-route-active
+.shobdo-reels-state p {
+  max-width:
+    660px;
+
+  font-size:
+    15px;
+
+  line-height:
+    1.7;
+}
+
+
+/* =========================================================
+   EMPTY ICON
+========================================================= */
+
+body.shobdo-reels-route-active
+.shobdo-reels-empty-icon {
+  width:
+    78px;
+
+  height:
+    78px;
+
+  border-radius:
+    23px;
+
+  box-shadow:
+    0
+    18px
+    45px
+    rgba(
+      79,
+      44,
+      73,
+      0.2
+    );
+}
+
+
+/* =========================================================
+   CTA
+========================================================= */
+
+body.shobdo-reels-route-active
+.shobdo-reels-create-button {
+  min-height:
+    50px;
+
+  padding:
+    0
+    26px;
+
+  font-size:
+    13px;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (
+  max-width: 1180px
+) {
+
+  body.shobdo-reels-route-active
+  .social-layout {
+    width:
+      100%;
+
+    padding:
+      20px
+      22px
+      50px;
+
+    background:
+      transparent !important;
+  }
+
+}
+
+
+/* =========================================================
+   ICON-RAIL TABLET
+========================================================= */
+
+@media (
+  max-width: 900px
+) {
+
+  body.shobdo-reels-route-active
+  .social-layout {
+    padding:
+      18px
+      14px
+      45px;
+  }
+
+
+  body.shobdo-reels-route-active
+  .shobdo-reels-state {
+    min-height:
+      calc(
+        100dvh -
+        105px
+      );
+  }
+
+
+  body.shobdo-reels-route-active
+  .shobdo-reels-page {
+    height:
+      calc(
+        100dvh -
+        105px
+      );
+  }
+
+
+  body.shobdo-reels-route-active
+  .shobdo-reel {
+    min-height:
+      calc(
+        100dvh -
+        105px
+      );
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+
+   Desktop sidebar disappears normally.
+   Bottom navigation remains visible.
+========================================================= */
+
+@media (
+  max-width: 700px
+) {
+
+  body.shobdo-reels-route-active
+  .social-layout {
+    display:
+      block;
+
+    width:
+      100%;
+
+    min-height:
+      100dvh;
+
+    margin:
+      0;
+
+    padding:
+      0
+      0
+      calc(
+        72px +
+        env(
+          safe-area-inset-bottom
+        )
+      );
+  }
+
+
+  body.shobdo-reels-route-active
+  .social-main-content {
+    width:
+      100%;
+
+    max-width:
+      none;
+  }
+
+
+  body.shobdo-reels-route-active
+  .shobdo-reels-state {
+    width:
+      100%;
+
+    min-height:
+      calc(
+        100dvh -
+        128px
+      );
+
+    padding:
+      35px
+      18px
+      42px;
+
+    border-radius:
+      0;
+  }
+
+
+  body.shobdo-reels-route-active
+  .shobdo-reels-page {
+    width:
+      100%;
+
+    height:
+      calc(
+        100dvh -
+        128px
+      );
+
+    min-height:
+      520px;
+
+    border-radius:
+      0;
+
+    box-shadow:
+      none;
+  }
+
+
+  body.shobdo-reels-route-active
+  .shobdo-reel {
+    height:
+      calc(
+        100dvh -
+        128px
+      );
+
+    min-height:
+      520px;
+  }
+
+
+  body.shobdo-reels-route-active
+  .shobdo-reels-state h1 {
+    font-size:
+      clamp(
+        29px,
+        9vw,
+        40px
+      );
+  }
+
+
+  body.shobdo-reels-route-active
+  .shobdo-reels-state p {
+    font-size:
+      12px;
+  }
+
+}
+
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (
+  max-width: 420px
+) {
+
+  body.shobdo-reels-route-active
+  .shobdo-reels-state {
+    padding-left:
+      14px;
+
+    padding-right:
+      14px;
+  }
+
+
+  body.shobdo-reels-route-active
+  .shobdo-reels-empty-icon {
+    width:
+      64px;
+
+    height:
+      64px;
+
+    border-radius:
+      19px;
+  }
+
+
+  body.shobdo-reels-route-active
+  .shobdo-reels-state h1 {
+    font-size:
+      29px;
+  }
+
+}
