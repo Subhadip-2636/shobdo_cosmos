@@ -49,6 +49,7 @@ import PublicHome from "./pages/PublicHome";
 // =========================================================
 
 import Reels from "./pages/Reels";
+import CreateReel from "./pages/CreateReel";
 
 
 // =========================================================
@@ -365,8 +366,7 @@ function HomeRoute({
 //   SocialLayout
 //      └── Reels through <Outlet />
 //
-// This keeps /reels public while preserving the authenticated
-// SHOBDO social shell for signed-in users.
+// /reels/create is protected separately.
 //
 // =========================================================
 
@@ -1049,419 +1049,343 @@ function App() {
   return (
 
     <BrowserRouter>
+
       <PageBackgroundProvider>
+
         <PageBackground />
+
         <BackgroundPicker />
 
 
-      {/* ===================================================
-          SCROLL TO TOP
-      ==================================================== */}
+        {/* =================================================
+            SCROLL TO TOP
+        ================================================== */}
 
-      <ScrollToTop />
+        <ScrollToTop />
 
 
-      {/* ===================================================
-          REAL-TIME NOTIFICATION TOAST
-      ==================================================== */}
+        {/* =================================================
+            REAL-TIME NOTIFICATION TOAST
+        ================================================== */}
 
-      <NotificationToast
-        notification={
-          realtimeNotification
-        }
-        onClose={
-          () => {
-
-            setRealtimeNotification(
-              null
-            );
-
+        <NotificationToast
+          notification={
+            realtimeNotification
           }
-        }
-      />
+          onClose={
+            () => {
 
+              setRealtimeNotification(
+                null
+              );
 
-      {/* ===================================================
-          APPLICATION
-      ==================================================== */}
-
-      <div className="app-shell">
-
-
-        {/* ===============================================
-            GLOBAL NAVBAR
-        ================================================ */}
-
-        <Navbar
-          user={
-            user
-          }
-          setUser={
-            setUser
+            }
           }
         />
 
 
-        {/* ===============================================
-            ROUTER
-        ================================================ */}
+        {/* =================================================
+            APPLICATION
+        ================================================== */}
 
-        <Routes>
+        <div
+          className="app-shell"
+        >
 
 
-          {/* =================================================
-              HOME
+          {/* ===============================================
+              GLOBAL NAVBAR
+          ================================================ */}
 
-              Guest:
-                Public landing website
+          <Navbar
+            user={
+              user
+            }
+            setUser={
+              setUser
+            }
+          />
 
-              Logged in:
-                Social feed
-          ================================================== */}
 
-          <Route
-            path="/"
-            element={
-              <HomeRoute
-                user={
-                  user
-                }
-                authLoading={
-                  authLoading
+          {/* ===============================================
+              ROUTER
+          ================================================ */}
+
+          <Routes>
+
+
+            {/* =============================================
+                HOME
+
+                Guest:
+                  Public landing website
+
+                Logged in:
+                  Social feed
+            ============================================== */}
+
+            <Route
+              path="/"
+              element={
+                <HomeRoute
+                  user={
+                    user
+                  }
+                  authLoading={
+                    authLoading
+                  }
+                />
+              }
+            >
+
+              <Route
+                index
+                element={
+                  <Home
+                    user={
+                      user
+                    }
+                    writings={
+                      writings
+                    }
+                    loading={
+                      writingsLoading
+                    }
+                  />
                 }
               />
-            }
-          >
+
+            </Route>
+
+
+            {/* =============================================
+                REELS
+
+                /reels
+                  Public feed
+
+                /reels/:reelId
+                  Shareable public Reel
+
+                /reels/create
+                  Protected creator studio
+            ============================================== */}
 
             <Route
-              index
+              path="/reels"
               element={
-                <Home
+                <ReelsRoute
                   user={
                     user
                   }
-                  writings={
-                    writings
-                  }
-                  loading={
-                    writingsLoading
+                  authLoading={
+                    authLoading
                   }
                 />
               }
-            />
+            >
 
-          </Route>
+              {/* ===========================================
+                  REELS FEED
+              ============================================ */}
 
-
-          {/* =================================================
-              REELS
-
-              Guest:
-                public Reels experience
-
-              Logged in:
-                Reels inside SocialLayout
-          ================================================== */}
-
-          <Route
-            path="/reels"
-            element={
-              <ReelsRoute
-                user={
-                  user
-                }
-                authLoading={
-                  authLoading
+              <Route
+                index
+                element={
+                  <Reels
+                    user={
+                      user
+                    }
+                  />
                 }
               />
-            }
-          >
-
-            <Route
-              index
-              element={
-                <Reels />
-              }
-            />
 
 
-            <Route
-              path=":reelId"
-              element={
-                <Reels />
-              }
-            />
+              {/* ===========================================
+                  CREATE REEL
 
-          </Route>
+                  Static route is intentionally defined
+                  before :reelId.
 
+                  Guest:
+                    Redirect to /login
 
-          {/* =================================================
-              PUBLIC BROWSING ROUTES
+                  Logged in:
+                    CreateReel inside SocialLayout
+              ============================================ */}
 
-              Guests:
-                clean public website
+              <Route
+                path="create"
+                element={
+                  <PrivateRoute
+                    user={
+                      user
+                    }
+                    authLoading={
+                      authLoading
+                    }
+                  >
 
-              Logged-in:
-                SocialLayout
-          ================================================== */}
+                    <CreateReel />
 
-          <Route
-            element={
-              <BrowseLayout
-                user={
-                  user
-                }
-                authLoading={
-                  authLoading
+                  </PrivateRoute>
                 }
               />
-            }
-          >
 
 
-            {/* =============================================
-                EXPLORE
-            ============================================== */}
+              {/* ===========================================
+                  SHARED / SINGLE REEL
+              ============================================ */}
 
-            <Route
-              path="/explore"
-              element={
-                <Explore />
-              }
-            />
-
-
-            {/* =============================================
-                GLOBAL SEARCH
-            ============================================== */}
-
-            <Route
-              path="/search"
-              element={
-                <SearchPage />
-              }
-            />
-
-
-            {/* =============================================
-                HASHTAG / TAG
-
-                Examples:
-                  /tag/কবিতা
-                  /tag/Poetry
-                  /tag/प्रकृति
-            ============================================== */}
-
-            <Route
-              path="/tag/:tagName"
-              element={
-                <TagPage />
-              }
-            />
-
-
-            {/* =============================================
-                PUBLIC WRITING DETAILS
-            ============================================== */}
-
-            <Route
-              path="/writings/:id"
-              element={
-                <WritingDetails />
-              }
-            />
-
-
-            {/* =============================================
-                PUBLIC WRITER PROFILE
-            ============================================== */}
-
-            <Route
-              path="/users/:id"
-              element={
-                <WriterProfile />
-              }
-            />
-
-
-            {/* =============================================
-                WRITER PROFILE ALIAS FOR REELS
-            ============================================== */}
-
-            <Route
-              path="/writer/:id"
-              element={
-                <WriterProfile />
-              }
-            />
-
-
-            {/* =============================================
-                FOLLOWERS
-            ============================================== */}
-
-            <Route
-              path="/users/:id/followers"
-              element={
-                <ConnectionsPage
-                  mode="followers"
-                />
-              }
-            />
-
-
-            {/* =============================================
-                FOLLOWING
-            ============================================== */}
-
-            <Route
-              path="/users/:id/following"
-              element={
-                <ConnectionsPage
-                  mode="following"
-                />
-              }
-            />
-
-
-          </Route>
-
-
-          {/* =================================================
-              AUTHENTICATED SOCIAL APPLICATION
-          ================================================== */}
-
-          <Route
-            element={
-
-              <PrivateRoute
-                user={
-                  user
+              <Route
+                path=":reelId"
+                element={
+                  <Reels
+                    user={
+                      user
+                    }
+                  />
                 }
-                authLoading={
-                  authLoading
+              />
+
+            </Route>
+
+
+            {/* =============================================
+                PUBLIC BROWSING ROUTES
+
+                Guest:
+                  Clean public website
+
+                Logged in:
+                  SocialLayout
+            ============================================== */}
+
+            <Route
+              element={
+                <BrowseLayout
+                  user={
+                    user
+                  }
+                  authLoading={
+                    authLoading
+                  }
+                />
+              }
+            >
+
+
+              {/* ===========================================
+                  EXPLORE
+              ============================================ */}
+
+              <Route
+                path="/explore"
+                element={
+                  <Explore />
                 }
-              >
+              />
 
-                <SocialLayout
-                  user={
-                    user
-                  }
-                />
 
-              </PrivateRoute>
+              {/* ===========================================
+                  GLOBAL SEARCH
+              ============================================ */}
 
-            }
-          >
+              <Route
+                path="/search"
+                element={
+                  <SearchPage />
+                }
+              />
+
+
+              {/* ===========================================
+                  HASHTAG / TAG
+              ============================================ */}
+
+              <Route
+                path="/tag/:tagName"
+                element={
+                  <TagPage />
+                }
+              />
+
+
+              {/* ===========================================
+                  PUBLIC WRITING DETAILS
+              ============================================ */}
+
+              <Route
+                path="/writings/:id"
+                element={
+                  <WritingDetails />
+                }
+              />
+
+
+              {/* ===========================================
+                  PUBLIC WRITER PROFILE
+              ============================================ */}
+
+              <Route
+                path="/users/:id"
+                element={
+                  <WriterProfile />
+                }
+              />
+
+
+              {/* ===========================================
+                  WRITER PROFILE ALIAS FOR REELS
+              ============================================ */}
+
+              <Route
+                path="/writer/:id"
+                element={
+                  <WriterProfile />
+                }
+              />
+
+
+              {/* ===========================================
+                  FOLLOWERS
+              ============================================ */}
+
+              <Route
+                path="/users/:id/followers"
+                element={
+                  <ConnectionsPage
+                    mode="followers"
+                  />
+                }
+              />
+
+
+              {/* ===========================================
+                  FOLLOWING
+              ============================================ */}
+
+              <Route
+                path="/users/:id/following"
+                element={
+                  <ConnectionsPage
+                    mode="following"
+                  />
+                }
+              />
+
+
+            </Route>
 
 
             {/* =============================================
-                WRITE
+                AUTHENTICATED SOCIAL APPLICATION
             ============================================== */}
 
             <Route
-              path="/write"
               element={
-                <Write
-                  user={
-                    user
-                  }
-                  onWritingCreated={
-                    handleWritingChanged
-                  }
-                />
-              }
-            />
 
-
-            {/* =============================================
-                EDIT WRITING
-            ============================================== */}
-
-            <Route
-              path="/write/:id"
-              element={
-                <Write
-                  user={
-                    user
-                  }
-                  onWritingCreated={
-                    handleWritingChanged
-                  }
-                />
-              }
-            />
-
-
-            {/* =============================================
-                MY WRITINGS
-            ============================================== */}
-
-            <Route
-              path="/my-writings"
-              element={
-                <MyWritings />
-              }
-            />
-
-
-            {/* =============================================
-                SAVED WRITINGS
-            ============================================== */}
-
-            <Route
-              path="/saved"
-              element={
-                <Saved />
-              }
-            />
-
-
-            {/* =============================================
-                NOTIFICATIONS
-            ============================================== */}
-
-            <Route
-              path="/notifications"
-              element={
-                <Notifications />
-              }
-            />
-
-
-            {/* =============================================
-                EDIT PROFILE
-            ============================================== */}
-
-            <Route
-              path="/profile/edit"
-              element={
-                <EditProfile
-                  user={
-                    user
-                  }
-                  onProfileUpdated={
-                    loadCurrentUser
-                  }
-                />
-              }
-            />
-
-
-          </Route>
-
-
-          {/* =================================================
-              LOGIN
-          ================================================== */}
-
-          <Route
-            path="/login"
-            element={
-
-              <StandalonePage>
-
-                <PublicOnlyRoute
+                <PrivateRoute
                   user={
                     user
                   }
@@ -1470,202 +1394,333 @@ function App() {
                   }
                 >
 
-                  <Login
-                    onLogin={
-                      handleAuthSuccess
+                  <SocialLayout
+                    user={
+                      user
                     }
                   />
 
-                </PublicOnlyRoute>
+                </PrivateRoute>
 
-              </StandalonePage>
-
-            }
-          />
+              }
+            >
 
 
-          {/* =================================================
-              REGISTER
-          ================================================== */}
+              {/* ===========================================
+                  WRITE
+              ============================================ */}
 
-          <Route
-            path="/register"
-            element={
-
-              <StandalonePage>
-
-                <PublicOnlyRoute
-                  user={
-                    user
-                  }
-                  authLoading={
-                    authLoading
-                  }
-                >
-
-                  <Register
-                    onRegister={
-                      handleAuthSuccess
+              <Route
+                path="/write"
+                element={
+                  <Write
+                    user={
+                      user
+                    }
+                    onWritingCreated={
+                      handleWritingChanged
                     }
                   />
-
-                </PublicOnlyRoute>
-
-              </StandalonePage>
-
-            }
-          />
+                }
+              />
 
 
-          {/* =================================================
-              FORGOT PASSWORD
-          ================================================== */}
+              {/* ===========================================
+                  EDIT WRITING
+              ============================================ */}
 
-          <Route
-            path="/forgot-password"
-            element={
-
-              <StandalonePage>
-
-                <PublicOnlyRoute
-                  user={
-                    user
-                  }
-                  authLoading={
-                    authLoading
-                  }
-                >
-
-                  <ForgotPassword />
-
-                </PublicOnlyRoute>
-
-              </StandalonePage>
-
-            }
-          />
+              <Route
+                path="/write/:id"
+                element={
+                  <Write
+                    user={
+                      user
+                    }
+                    onWritingCreated={
+                      handleWritingChanged
+                    }
+                  />
+                }
+              />
 
 
-          {/* =================================================
-              RESET PASSWORD
-          ================================================== */}
+              {/* ===========================================
+                  MY WRITINGS
+              ============================================ */}
 
-          <Route
-            path="/reset-password/:token"
-            element={
-
-              <StandalonePage>
-
-                <PublicOnlyRoute
-                  user={
-                    user
-                  }
-                  authLoading={
-                    authLoading
-                  }
-                >
-
-                  <ResetPassword />
-
-                </PublicOnlyRoute>
-
-              </StandalonePage>
-
-            }
-          />
+              <Route
+                path="/my-writings"
+                element={
+                  <MyWritings />
+                }
+              />
 
 
-          {/* =================================================
-              ABOUT
-          ================================================== */}
+              {/* ===========================================
+                  SAVED WRITINGS
+              ============================================ */}
 
-          <Route
-            path="/about"
-            element={
-
-              <StandalonePage>
-
-                <About />
-
-              </StandalonePage>
-
-            }
-          />
+              <Route
+                path="/saved"
+                element={
+                  <Saved />
+                }
+              />
 
 
-          {/* =================================================
-              PRIVACY
-          ================================================== */}
+              {/* ===========================================
+                  NOTIFICATIONS
+              ============================================ */}
 
-          <Route
-            path="/privacy"
-            element={
-
-              <StandalonePage>
-
-                <Privacy />
-
-              </StandalonePage>
-
-            }
-          />
+              <Route
+                path="/notifications"
+                element={
+                  <Notifications />
+                }
+              />
 
 
-          {/* =================================================
-              TERMS
-          ================================================== */}
+              {/* ===========================================
+                  EDIT PROFILE
+              ============================================ */}
 
-          <Route
-            path="/terms"
-            element={
-
-              <StandalonePage>
-
-                <Terms />
-
-              </StandalonePage>
-
-            }
-          />
-
-
-          {/* =================================================
-              DATA DELETION
-          ================================================== */}
-
-          <Route
-            path="/data-deletion"
-            element={
-
-              <StandalonePage>
-
-                <DataDeletion />
-
-              </StandalonePage>
-
-            }
-          />
+              <Route
+                path="/profile/edit"
+                element={
+                  <EditProfile
+                    user={
+                      user
+                    }
+                    onProfileUpdated={
+                      loadCurrentUser
+                    }
+                  />
+                }
+              />
 
 
-          {/* =================================================
-              404
-          ================================================== */}
-
-          <Route
-            path="*"
-            element={
-              <StandalonePage>
-                <NotFound />
-              </StandalonePage>
-            }
-          />
+            </Route>
 
 
-        </Routes>
+            {/* =============================================
+                LOGIN
+            ============================================== */}
 
-      </div>
+            <Route
+              path="/login"
+              element={
 
-    </PageBackgroundProvider>
+                <StandalonePage>
+
+                  <PublicOnlyRoute
+                    user={
+                      user
+                    }
+                    authLoading={
+                      authLoading
+                    }
+                  >
+
+                    <Login
+                      onLogin={
+                        handleAuthSuccess
+                      }
+                    />
+
+                  </PublicOnlyRoute>
+
+                </StandalonePage>
+
+              }
+            />
+
+
+            {/* =============================================
+                REGISTER
+            ============================================== */}
+
+            <Route
+              path="/register"
+              element={
+
+                <StandalonePage>
+
+                  <PublicOnlyRoute
+                    user={
+                      user
+                    }
+                    authLoading={
+                      authLoading
+                    }
+                  >
+
+                    <Register
+                      onRegister={
+                        handleAuthSuccess
+                      }
+                    />
+
+                  </PublicOnlyRoute>
+
+                </StandalonePage>
+
+              }
+            />
+
+
+            {/* =============================================
+                FORGOT PASSWORD
+            ============================================== */}
+
+            <Route
+              path="/forgot-password"
+              element={
+
+                <StandalonePage>
+
+                  <PublicOnlyRoute
+                    user={
+                      user
+                    }
+                    authLoading={
+                      authLoading
+                    }
+                  >
+
+                    <ForgotPassword />
+
+                  </PublicOnlyRoute>
+
+                </StandalonePage>
+
+              }
+            />
+
+
+            {/* =============================================
+                RESET PASSWORD
+            ============================================== */}
+
+            <Route
+              path="/reset-password/:token"
+              element={
+
+                <StandalonePage>
+
+                  <PublicOnlyRoute
+                    user={
+                      user
+                    }
+                    authLoading={
+                      authLoading
+                    }
+                  >
+
+                    <ResetPassword />
+
+                  </PublicOnlyRoute>
+
+                </StandalonePage>
+
+              }
+            />
+
+
+            {/* =============================================
+                ABOUT
+            ============================================== */}
+
+            <Route
+              path="/about"
+              element={
+
+                <StandalonePage>
+
+                  <About />
+
+                </StandalonePage>
+
+              }
+            />
+
+
+            {/* =============================================
+                PRIVACY
+            ============================================== */}
+
+            <Route
+              path="/privacy"
+              element={
+
+                <StandalonePage>
+
+                  <Privacy />
+
+                </StandalonePage>
+
+              }
+            />
+
+
+            {/* =============================================
+                TERMS
+            ============================================== */}
+
+            <Route
+              path="/terms"
+              element={
+
+                <StandalonePage>
+
+                  <Terms />
+
+                </StandalonePage>
+
+              }
+            />
+
+
+            {/* =============================================
+                DATA DELETION
+            ============================================== */}
+
+            <Route
+              path="/data-deletion"
+              element={
+
+                <StandalonePage>
+
+                  <DataDeletion />
+
+                </StandalonePage>
+
+              }
+            />
+
+
+            {/* =============================================
+                404
+            ============================================== */}
+
+            <Route
+              path="*"
+              element={
+
+                <StandalonePage>
+
+                  <NotFound />
+
+                </StandalonePage>
+
+              }
+            />
+
+
+          </Routes>
+
+        </div>
+
+      </PageBackgroundProvider>
 
     </BrowserRouter>
 
