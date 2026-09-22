@@ -598,12 +598,19 @@ def create_app():
 
     # =====================================================
     # FILE UPLOADS
+    #
+    # Global request ceiling:
+    #
+    # - Writing OCR / artwork / PDF routes keep their own
+    #   stricter validation limits.
+    # - Video uploads can be up to 100 MB.
+    # - 110 MB leaves room for multipart/form-data overhead.
     # =====================================================
 
     app.config[
         "MAX_CONTENT_LENGTH"
     ] = (
-        12
+        110
         *
         1024
         *
@@ -796,6 +803,10 @@ def create_app():
         Artwork,
     )
 
+    from models.video import (
+        Video,
+    )
+
     from models.saved_writing import (
         SavedWriting,
     )
@@ -813,6 +824,7 @@ def create_app():
         Notification,
         Document,
         Artwork,
+        Video,
         SavedWriting,
         Repost,
 
@@ -869,6 +881,10 @@ def create_app():
 
     from routes.artwork_routes import (
         artwork_bp,
+    )
+
+    from routes.video_routes import (
+        video_bp,
     )
 
     from routes.saved_routes import (
@@ -986,6 +1002,21 @@ def create_app():
 
 
     # =====================================================
+    # REGISTER VIDEOS
+    #
+    # video_bp already contains:
+    #
+    #     url_prefix="/api/videos"
+    #
+    # Therefore no additional prefix is added here.
+    # =====================================================
+
+    app.register_blueprint(
+        video_bp
+    )
+
+
+    # =====================================================
     # REGISTER SAVED
     # =====================================================
 
@@ -1084,7 +1115,7 @@ def create_app():
                 "running",
 
             "version":
-                "1.2.0",
+                "1.3.0",
 
             "realtime":
                 True,
@@ -1112,6 +1143,9 @@ def create_app():
 
             "documents":
                 "/api/documents",
+
+            "videos":
+                "/api/videos",
 
             "trending":
                 "/api/trending/topics",
@@ -1147,6 +1181,9 @@ def create_app():
                 "enabled",
 
             "trending":
+                "enabled",
+
+            "videos":
                 "enabled",
 
             "hashtags":
@@ -1333,7 +1370,9 @@ def create_app():
             "message":
                 (
                     "Uploaded file is too large. "
-                    "Maximum file size is 10 MB."
+                    "Videos can be up to 100 MB; "
+                    "other upload types may have "
+                    "smaller route-specific limits."
                 ),
 
         }), 413

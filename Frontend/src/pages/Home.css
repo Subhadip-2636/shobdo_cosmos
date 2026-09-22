@@ -353,6 +353,7 @@
 
 /* =========================================================
    COMPOSER ACTIONS
+   WRITING / POETRY / ARTWORK / VIDEO / DOCUMENT
 ========================================================= */
 
 .home-composer-actions {
@@ -360,30 +361,40 @@
 
   grid-template-columns:
     repeat(
-      4,
+      5,
       minmax(0, 1fr)
     );
 
   border-top:
     1px solid
     #eee7df;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.26
+    );
 }
 
 
 .home-composer-actions button {
+  position: relative;
+
   min-width: 0;
 
-  min-height: 48px;
+  min-height: 52px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  gap: 7px;
+  gap: 6px;
 
   padding:
     0
-    10px;
+    7px;
 
   border: none;
 
@@ -399,15 +410,18 @@
 
   font-family: inherit;
 
-  font-size: 12px;
+  font-size: 11.5px;
 
-  font-weight: 650;
+  font-weight: 700;
 
   cursor: pointer;
 
+  white-space: nowrap;
+
   transition:
     background-color 0.16s ease,
-    color 0.16s ease;
+    color 0.16s ease,
+    transform 0.16s ease;
 }
 
 
@@ -418,10 +432,75 @@
 
 .home-composer-actions button:hover {
   background:
-    #fbf5eb;
+    linear-gradient(
+      180deg,
+      #fffaf2,
+      #fbf3e7
+    );
 
   color:
     #8b6221;
+}
+
+
+.home-composer-actions button:active {
+  transform:
+    scale(0.985);
+}
+
+
+.home-composer-actions button svg {
+  width: 17px;
+  height: 17px;
+
+  flex: 0 0 auto;
+
+  stroke-width: 1.8;
+
+  transition:
+    transform 0.16s ease,
+    color 0.16s ease;
+}
+
+
+.home-composer-actions button:hover svg {
+  transform:
+    translateY(-1px);
+}
+
+
+.home-composer-actions button span {
+  min-width: 0;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   VIDEO ACTION
+   FOURTH COMPOSER BUTTON
+========================================================= */
+
+.home-composer-actions button:nth-child(4) {
+  color:
+    #78685d;
+}
+
+
+.home-composer-actions button:nth-child(4):hover {
+  background:
+    linear-gradient(
+      180deg,
+      #fff8ef,
+      #f8efe1
+    );
+
+  color:
+    #9a6821;
 }
 
 
@@ -740,8 +819,8 @@
 
 
 /*
-  WritingCard might contain its own max-width.
-  Override it inside the Home feed.
+   WritingCard might contain its own max-width.
+   Override it inside the Home feed.
 */
 
 .home-feed-post > article,
@@ -1388,6 +1467,22 @@
     padding-right: 14px;
   }
 
+
+  .home-composer-actions button {
+    gap: 5px;
+
+    padding-left: 5px;
+    padding-right: 5px;
+
+    font-size: 11px;
+  }
+
+
+  .home-composer-actions button svg {
+    width: 16px;
+    height: 16px;
+  }
+
 }
 
 
@@ -1409,7 +1504,9 @@
   }
 
 
-  /* HEADER */
+  /* =====================================================
+     HEADER
+  ===================================================== */
 
   .home-feed-header {
     padding:
@@ -1431,7 +1528,9 @@
   }
 
 
-  /* COMPOSER */
+  /* =====================================================
+     COMPOSER
+  ===================================================== */
 
   .home-composer {
     border-radius: 15px;
@@ -1476,8 +1575,21 @@
   }
 
 
+  /* =====================================================
+     FIVE COMPOSER ACTIONS
+  ===================================================== */
+
+  .home-composer-actions {
+    grid-template-columns:
+      repeat(
+        5,
+        minmax(0, 1fr)
+      );
+  }
+
+
   .home-composer-actions button {
-    min-height: 48px;
+    min-height: 54px;
 
     flex-direction: column;
 
@@ -1485,9 +1597,11 @@
 
     padding:
       5px
-      4px;
+      2px;
 
-    font-size: 10px;
+    font-size: 9px;
+
+    font-weight: 700;
   }
 
 
@@ -1497,7 +1611,14 @@
   }
 
 
-  /* TOOLBAR */
+  .home-composer-actions button span {
+    max-width: 100%;
+  }
+
+
+  /* =====================================================
+     TOOLBAR
+  ===================================================== */
 
   .home-feed-toolbar {
     top: 62px;
@@ -1521,7 +1642,9 @@
   }
 
 
-  /* GUEST */
+  /* =====================================================
+     GUEST
+  ===================================================== */
 
   .home-guest-card {
     grid-template-columns:
@@ -1545,7 +1668,9 @@
   }
 
 
-  /* ERROR */
+  /* =====================================================
+     ERROR
+  ===================================================== */
 
   .home-feed-error {
     align-items: flex-start;
@@ -1554,7 +1679,9 @@
   }
 
 
-  /* EMPTY */
+  /* =====================================================
+     EMPTY
+  ===================================================== */
 
   .home-empty-feed {
     padding:
@@ -1594,12 +1721,38 @@
   }
 
 
+  /* =====================================================
+     COMPACT FACEBOOK-STYLE CREATION BAR
+  ===================================================== */
+
+  .home-composer-actions button {
+    min-height: 52px;
+
+    gap: 3px;
+
+    padding:
+      5px
+      1px;
+
+    font-size: 8.5px;
+  }
+
+
+  .home-composer-actions button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+
   .home-composer-actions button span {
-    max-width: 68px;
+    width: 100%;
+    max-width: 62px;
 
     overflow: hidden;
 
     white-space: nowrap;
+
+    text-align: center;
 
     text-overflow: ellipsis;
   }
@@ -1608,6 +1761,73 @@
   .home-feed-error {
     padding:
       14px;
+  }
+
+}
+
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (
+  max-width: 360px
+) {
+
+  .home-social-feed {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+
+  .home-composer-main {
+    grid-template-columns:
+      36px
+      minmax(0, 1fr);
+
+    gap: 7px;
+
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+
+
+  .home-composer-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+
+  .home-composer-input {
+    min-height: 38px;
+
+    padding:
+      0
+      11px;
+
+    font-size: 11px;
+  }
+
+
+  .home-composer-actions button {
+    min-height: 50px;
+
+    padding:
+      4px
+      1px;
+
+    font-size: 8px;
+  }
+
+
+  .home-composer-actions button svg {
+    width: 15px;
+    height: 15px;
+  }
+
+
+  .home-composer-actions button span {
+    max-width: 54px;
   }
 
 }
@@ -1625,6 +1845,7 @@
   .home-composer-input,
   .home-composer-create,
   .home-composer-actions button,
+  .home-composer-actions button svg,
   .home-feed-tabs button,
   .home-load-more,
   .home-guest-actions a {

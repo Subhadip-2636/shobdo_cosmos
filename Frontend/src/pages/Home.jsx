@@ -13,6 +13,7 @@ import {
   RefreshCw,
   Sparkles,
   Users,
+  Video,
 } from "lucide-react";
 
 import {
@@ -257,9 +258,9 @@ function mergeUnique(
 
       if (
         writing?.id ===
-        undefined ||
+          undefined ||
         writing?.id ===
-        null
+          null
       ) {
 
         return;
@@ -423,6 +424,9 @@ export default function Home({
             artwork:
               "শিল্পকর্ম",
 
+            video:
+              "ভিডিও",
+
             document:
               "ডকুমেন্ট",
 
@@ -508,6 +512,9 @@ export default function Home({
             artwork:
               "कला",
 
+            video:
+              "वीडियो",
+
             document:
               "दस्तावेज़",
 
@@ -588,6 +595,9 @@ export default function Home({
 
           artwork:
             "Artwork",
+
+          video:
+            "Video",
 
           document:
             "Document",
@@ -1355,6 +1365,8 @@ export default function Home({
             className="home-composer-actions"
           >
 
+            {/* WRITING */}
+
             <button
               type="button"
               onClick={
@@ -1375,6 +1387,8 @@ export default function Home({
 
             </button>
 
+
+            {/* POETRY */}
 
             <button
               type="button"
@@ -1397,6 +1411,8 @@ export default function Home({
             </button>
 
 
+            {/* ARTWORK */}
+
             <button
               type="button"
               onClick={
@@ -1417,6 +1433,31 @@ export default function Home({
 
             </button>
 
+
+            {/* VIDEO */}
+
+            <button
+              type="button"
+              onClick={
+                () =>
+                  navigate(
+                    "/write?mode=video"
+                  )
+              }
+            >
+
+              <Video
+                size={17}
+              />
+
+              <span>
+                {copy.video}
+              </span>
+
+            </button>
+
+
+            {/* DOCUMENT */}
 
             <button
               type="button"

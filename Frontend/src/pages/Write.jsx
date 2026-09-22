@@ -29,6 +29,7 @@ import {
   Send,
   Trash2,
   Upload,
+  Video,
   X,
 } from "lucide-react";
 
@@ -104,6 +105,45 @@ const ARTWORK_EXTENSIONS = [
   ".jpeg",
   ".png",
   ".webp",
+];
+
+
+const MAX_VIDEO_FILE_SIZE =
+  100 * 1024 * 1024;
+
+
+const VIDEO_FILE_TYPES = [
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+  "video/x-m4v",
+];
+
+
+const VIDEO_EXTENSIONS = [
+  ".mp4",
+  ".webm",
+  ".mov",
+  ".m4v",
+];
+
+
+const VIDEO_CATEGORIES = [
+  "Spoken Word",
+  "Poetry Performance",
+  "Storytelling",
+  "Reading",
+  "Literary Discussion",
+  "Creative Video",
+  "Other",
+];
+
+
+const PUBLISH_MODES = [
+  "writing",
+  "document",
+  "artwork",
+  "video",
 ];
 
 
@@ -420,6 +460,89 @@ function isAllowedArtworkFile(
       extension
     )
   );
+}
+
+
+function isAllowedVideoFile(
+  file
+) {
+
+  if (!file) {
+    return false;
+  }
+
+  const extension =
+    getFileExtension(
+      file.name
+    );
+
+  return (
+    VIDEO_FILE_TYPES.includes(
+      file.type
+    ) ||
+    VIDEO_EXTENSIONS.includes(
+      extension
+    )
+  );
+}
+
+
+function formatDuration(
+  seconds
+) {
+
+  const safeSeconds =
+    Number.isFinite(
+      Number(seconds)
+    )
+      ? Math.max(
+          0,
+          Math.floor(
+            Number(seconds)
+          )
+        )
+      : 0;
+
+  const hours =
+    Math.floor(
+      safeSeconds / 3600
+    );
+
+  const minutes =
+    Math.floor(
+      (
+        safeSeconds % 3600
+      ) / 60
+    );
+
+  const remainingSeconds =
+    safeSeconds % 60;
+
+  if (hours > 0) {
+    return [
+      hours,
+      String(minutes).padStart(
+        2,
+        "0"
+      ),
+      String(
+        remainingSeconds
+      ).padStart(
+        2,
+        "0"
+      ),
+    ].join(":");
+  }
+
+  return [
+    minutes,
+    String(
+      remainingSeconds
+    ).padStart(
+      2,
+      "0"
+    ),
+  ].join(":");
 }
 
 
@@ -943,6 +1066,295 @@ async function createArtworkRequest({
 
 
 // =========================================================
+// VIDEO API
+// =========================================================
+
+function createVideoRequest({
+  file,
+  title,
+  description,
+  category,
+  language,
+  visibility,
+  status,
+  duration,
+  authErrorMessage,
+  requestErrorMessage,
+  onProgress,
+}) {
+
+  const token =
+    getToken();
+
+  if (!token) {
+    return Promise.reject(
+      new Error(
+        authErrorMessage ||
+        "Please log in before publishing a video."
+      )
+    );
+  }
+
+  if (!file) {
+    return Promise.reject(
+      new Error(
+        "Please select a video first."
+      )
+    );
+  }
+
+  const formData =
+    new FormData();
+
+  formData.append(
+    "video",
+    file
+  );
+
+  formData.append(
+    "title",
+    title || ""
+  );
+
+  formData.append(
+    "description",
+    description || ""
+  );
+
+  formData.append(
+    "category",
+    category || "Creative Video"
+  );
+
+  formData.append(
+    "language",
+    language || "bn"
+  );
+
+  formData.append(
+    "visibility",
+    visibility || "public"
+  );
+
+  formData.append(
+    "status",
+    status || "published"
+  );
+
+  if (
+    Number.isFinite(
+      Number(duration)
+    ) &&
+    Number(duration) > 0
+  ) {
+
+    formData.append(
+      "duration_seconds",
+      String(
+        Math.round(
+          Number(duration)
+        )
+      )
+    );
+  }
+
+  return new Promise(
+    (
+      resolve,
+      reject
+    ) => {
+
+      const request =
+        new XMLHttpRequest();
+
+      request.open(
+        "POST",
+        `${API_URL}/videos`
+      );
+
+      request.setRequestHeader(
+        "Authorization",
+        `Bearer ${token}`
+      );
+
+      request.upload.onprogress =
+        (
+          event
+        ) => {
+
+          if (
+            !event.lengthComputable
+          ) {
+            return;
+          }
+
+          const progress =
+            Math.min(
+              100,
+              Math.max(
+                0,
+                Math.round(
+                  (
+                    event.loaded /
+                    event.total
+                  ) * 100
+                )
+              )
+            );
+
+          if (
+            typeof onProgress ===
+            "function"
+          ) {
+            onProgress(
+              progress
+            );
+          }
+        };
+
+      request.onerror =
+        () => {
+
+          reject(
+            new Error(
+              "Unable to connect to the SHOBDO server while uploading the video."
+            )
+          );
+        };
+
+      request.onabort =
+        () => {
+
+          reject(
+            new Error(
+              "Video upload was cancelled."
+            )
+          );
+        };
+
+      request.onload =
+        () => {
+
+          let data = null;
+
+          try {
+
+            data =
+              request.responseText
+                ? JSON.parse(
+                    request.responseText
+                  )
+                : null;
+
+          } catch {
+
+            data = {
+              message:
+                request.responseText ||
+                "",
+            };
+          }
+
+          if (
+            request.status >= 200 &&
+            request.status < 300
+          ) {
+
+            if (
+              typeof onProgress ===
+              "function"
+            ) {
+              onProgress(
+                100
+              );
+            }
+
+            resolve(
+              data
+            );
+
+            return;
+          }
+
+          let message =
+            data?.message ||
+            data?.error ||
+            data?.detail ||
+            "";
+
+          if (
+            request.status === 400 &&
+            !message
+          ) {
+            message =
+              "The video information is invalid.";
+          }
+
+          if (
+            request.status === 401
+          ) {
+            message =
+              message ||
+              "Your login session has expired. Please log in again.";
+          }
+
+          if (
+            request.status === 403
+          ) {
+            message =
+              message ||
+              "You do not have permission to publish this video.";
+          }
+
+          if (
+            request.status === 404
+          ) {
+            message =
+              "Video publishing API was not found. Make sure the /api/videos backend route is registered.";
+          }
+
+          if (
+            request.status === 413
+          ) {
+            message =
+              "The video file is too large for the server.";
+          }
+
+          if (
+            request.status >= 500
+          ) {
+            message =
+              message ||
+              "The server could not publish the video. Please check the backend logs.";
+          }
+
+          const requestError =
+            new Error(
+              message ||
+              requestErrorMessage ||
+              `Unable to publish video. Server returned ${request.status}.`
+            );
+
+          requestError.status =
+            request.status;
+
+          requestError.data =
+            data;
+
+          reject(
+            requestError
+          );
+        };
+
+      request.send(
+        formData
+      );
+    }
+  );
+}
+
+
+// =========================================================
 // WRITE PAGE
 // =========================================================
 
@@ -1009,10 +1421,40 @@ function Write({
       setPublishMode(
         "writing"
       );
+
+      return;
     }
+
+    const searchParams =
+      new URLSearchParams(
+        location.search
+      );
+
+    const requestedMode =
+      searchParams.get(
+        "mode"
+      );
+
+    if (
+      PUBLISH_MODES.includes(
+        requestedMode
+      )
+    ) {
+
+      setPublishMode(
+        requestedMode
+      );
+
+      return;
+    }
+
+    setPublishMode(
+      "writing"
+    );
 
   }, [
     isEditMode,
+    location.search,
   ]);
 
 
@@ -1124,6 +1566,49 @@ function Write({
   ] = useState(
     "কবিতা"
   );
+
+
+  useEffect(() => {
+
+    if (isEditMode) {
+      return;
+    }
+
+    const searchParams =
+      new URLSearchParams(
+        location.search
+      );
+
+    const requestedMode =
+      searchParams.get(
+        "mode"
+      );
+
+    const requestedCategory =
+      searchParams.get(
+        "category"
+      );
+
+    if (
+      (
+        !requestedMode ||
+        requestedMode ===
+          "writing"
+      ) &&
+      CATEGORIES.includes(
+        requestedCategory
+      )
+    ) {
+
+      setCategory(
+        requestedCategory
+      );
+    }
+
+  }, [
+    isEditMode,
+    location.search,
+  ]);
 
 
   const [
@@ -3709,6 +4194,650 @@ function rememberWritingTitle(
 
 
   // =======================================================
+  // VIDEO STATE
+  // =======================================================
+
+  const videoInputRef =
+    useRef(null);
+
+
+  const [
+    videoFile,
+    setVideoFile,
+  ] = useState(null);
+
+
+  const [
+    videoDragging,
+    setVideoDragging,
+  ] = useState(false);
+
+
+  const [
+    videoTitle,
+    setVideoTitle,
+  ] = useState("");
+
+
+  const [
+    videoDescription,
+    setVideoDescription,
+  ] = useState("");
+
+
+  const [
+    videoCategory,
+    setVideoCategory,
+  ] = useState(
+    "Spoken Word"
+  );
+
+
+  const [
+    videoLanguage,
+    setVideoLanguage,
+  ] = useState(
+    () =>
+      getDefaultWritingLanguage(
+        uiLanguage
+      )
+  );
+
+
+  const [
+    videoVisibility,
+    setVideoVisibility,
+  ] = useState(
+    "public"
+  );
+
+
+  const [
+    videoPublishing,
+    setVideoPublishing,
+  ] = useState(
+    false
+  );
+
+
+  const [
+    videoUploadProgress,
+    setVideoUploadProgress,
+  ] = useState(0);
+
+
+  const [
+    videoDuration,
+    setVideoDuration,
+  ] = useState(0);
+
+
+  const [
+    lastPublishedVideo,
+    setLastPublishedVideo,
+  ] = useState(null);
+
+
+  useEffect(() => {
+
+    const hasStartedVideo =
+      Boolean(
+        videoFile ||
+        videoTitle.trim() ||
+        videoDescription.trim()
+      );
+
+    if (hasStartedVideo) {
+      return;
+    }
+
+    setVideoLanguage(
+      getDefaultWritingLanguage(
+        uiLanguage
+      )
+    );
+
+  }, [
+    uiLanguage,
+    videoFile,
+    videoTitle,
+    videoDescription,
+  ]);
+
+
+  const videoPreviewUrl =
+    useMemo(
+      () => {
+
+        if (!videoFile) {
+          return "";
+        }
+
+        return URL.createObjectURL(
+          videoFile
+        );
+      },
+      [
+        videoFile,
+      ]
+    );
+
+
+  useEffect(() => {
+
+    return () => {
+
+      if (
+        videoPreviewUrl
+      ) {
+
+        URL.revokeObjectURL(
+          videoPreviewUrl
+        );
+      }
+    };
+
+  }, [
+    videoPreviewUrl,
+  ]);
+
+
+  function validateVideoFile(
+    file
+  ) {
+
+    setError("");
+    setSuccess("");
+
+    if (!file) {
+      return;
+    }
+
+    if (
+      !isAllowedVideoFile(
+        file
+      )
+    ) {
+
+      setVideoFile(
+        null
+      );
+
+      setVideoDuration(
+        0
+      );
+
+      setVideoUploadProgress(
+        0
+      );
+
+      setError(
+        t(
+          "write.videoInvalidFile",
+          "Only MP4, WEBM, MOV and M4V video files can be published."
+        )
+      );
+
+      return;
+    }
+
+    if (
+      file.size >
+      MAX_VIDEO_FILE_SIZE
+    ) {
+
+      setVideoFile(
+        null
+      );
+
+      setVideoDuration(
+        0
+      );
+
+      setVideoUploadProgress(
+        0
+      );
+
+      setError(
+        t(
+          "write.videoFileTooLarge",
+          "Video size cannot exceed 100 MB."
+        )
+      );
+
+      return;
+    }
+
+    setVideoFile(
+      file
+    );
+
+    setVideoDuration(
+      0
+    );
+
+    setVideoUploadProgress(
+      0
+    );
+
+    if (
+      !videoTitle.trim()
+    ) {
+
+      const titleFromFile =
+        file.name
+          .replace(
+            /\.(mp4|webm|mov|m4v)$/i,
+            ""
+          )
+          .replace(
+            /[_-]+/g,
+            " "
+          )
+          .trim();
+
+      setVideoTitle(
+        titleFromFile.slice(
+          0,
+          200
+        )
+      );
+    }
+  }
+
+
+  function handleVideoFileChange(
+    event
+  ) {
+
+    validateVideoFile(
+      event.target.files?.[0]
+    );
+
+    event.target.value =
+      "";
+  }
+
+
+  function handleVideoDragOver(
+    event
+  ) {
+
+    event.preventDefault();
+
+    setVideoDragging(
+      true
+    );
+  }
+
+
+  function handleVideoDragLeave(
+    event
+  ) {
+
+    event.preventDefault();
+
+    setVideoDragging(
+      false
+    );
+  }
+
+
+  function handleVideoDrop(
+    event
+  ) {
+
+    event.preventDefault();
+
+    setVideoDragging(
+      false
+    );
+
+    validateVideoFile(
+      event.dataTransfer
+        .files?.[0]
+    );
+  }
+
+
+  function removeVideoFile() {
+
+    setVideoFile(
+      null
+    );
+
+    setVideoDuration(
+      0
+    );
+
+    setVideoUploadProgress(
+      0
+    );
+
+    setError("");
+    setSuccess("");
+
+    if (
+      videoInputRef.current
+    ) {
+
+      videoInputRef.current.value =
+        "";
+    }
+  }
+
+
+  async function submitVideo(
+    status = "published"
+  ) {
+
+    setError("");
+    setSuccess("");
+
+    if (!user) {
+
+      setError(
+        t(
+          "write.videoLoginRequired",
+          "Please log in before publishing a video."
+        )
+      );
+
+      return;
+    }
+
+    if (!videoFile) {
+
+      setError(
+        t(
+          "write.videoFileRequired",
+          "Select a video first."
+        )
+      );
+
+      return;
+    }
+
+    if (
+      !isAllowedVideoFile(
+        videoFile
+      )
+    ) {
+
+      setError(
+        t(
+          "write.videoInvalidFile",
+          "Only MP4, WEBM, MOV and M4V video files can be published."
+        )
+      );
+
+      return;
+    }
+
+    if (
+      videoFile.size >
+      MAX_VIDEO_FILE_SIZE
+    ) {
+
+      setError(
+        t(
+          "write.videoFileTooLarge",
+          "Video size cannot exceed 100 MB."
+        )
+      );
+
+      return;
+    }
+
+    const cleanTitle =
+      videoTitle.trim();
+
+    if (!cleanTitle) {
+
+      setError(
+        t(
+          "write.videoTitleRequired",
+          "Video title is required."
+        )
+      );
+
+      return;
+    }
+
+    if (
+      cleanTitle.length >
+      200
+    ) {
+
+      setError(
+        t(
+          "write.videoTitleTooLong",
+          "Video title cannot exceed 200 characters."
+        )
+      );
+
+      return;
+    }
+
+    const cleanDescription =
+      videoDescription.trim();
+
+    if (
+      cleanDescription.length >
+      5000
+    ) {
+
+      setError(
+        t(
+          "write.videoDescriptionTooLong",
+          "Video caption cannot exceed 5000 characters."
+        )
+      );
+
+      return;
+    }
+
+    try {
+
+      setVideoPublishing(
+        true
+      );
+
+      setVideoUploadProgress(
+        0
+      );
+
+      const response =
+        await createVideoRequest({
+
+          file:
+            videoFile,
+
+          title:
+            cleanTitle,
+
+          description:
+            cleanDescription,
+
+          category:
+            videoCategory,
+
+          language:
+            videoLanguage,
+
+          visibility:
+            videoVisibility,
+
+          status,
+
+          duration:
+            videoDuration,
+
+          authErrorMessage:
+            t(
+              "write.videoLoginRequired",
+              "Please log in before publishing a video."
+            ),
+
+          requestErrorMessage:
+            t(
+              "write.videoPublishFailed",
+              "Unable to publish video."
+            ),
+
+          onProgress:
+            setVideoUploadProgress,
+        });
+
+
+      const savedVideo =
+        response?.video ||
+        response?.data?.video ||
+        response?.data ||
+        response;
+
+
+      if (!savedVideo) {
+
+        throw new Error(
+          t(
+            "write.videoResponseMissing",
+            "The server accepted the video but did not return video information."
+          )
+        );
+      }
+
+
+      setLastPublishedVideo(
+        savedVideo
+      );
+
+
+      setSuccess(
+        status ===
+          "published"
+          ? t(
+              "write.videoPublished",
+              "Video published successfully."
+            )
+          : t(
+              "write.videoDraftSaved",
+              "Video saved as draft."
+            )
+      );
+
+
+      if (
+        typeof onPublished ===
+          "function" &&
+        status ===
+          "published"
+      ) {
+
+        onPublished(
+          savedVideo
+        );
+      }
+
+
+      setVideoFile(
+        null
+      );
+
+      if (
+        videoInputRef.current
+      ) {
+
+        videoInputRef.current.value =
+          "";
+      }
+
+      setVideoTitle(
+        ""
+      );
+
+      setVideoDescription(
+        ""
+      );
+
+      setVideoCategory(
+        "Spoken Word"
+      );
+
+      setVideoLanguage(
+        getDefaultWritingLanguage(
+          uiLanguage
+        )
+      );
+
+      setVideoVisibility(
+        "public"
+      );
+
+      setVideoDuration(
+        0
+      );
+
+      setVideoUploadProgress(
+        0
+      );
+
+
+    } catch (
+      requestError
+    ) {
+
+      console.error(
+        "VIDEO PUBLISH ERROR:",
+        requestError
+      );
+
+      if (
+        requestError?.status ===
+        401
+      ) {
+
+        localStorage.removeItem(
+          "shobdo_token"
+        );
+      }
+
+      setError(
+        requestError?.message ||
+        t(
+          "write.videoPublishFailed",
+          "Unable to publish video."
+        )
+      );
+
+    } finally {
+
+      setVideoPublishing(
+        false
+      );
+    }
+  }
+
+
+  async function handleVideoSubmit(
+    event
+  ) {
+
+    event.preventDefault();
+
+    if (
+      videoPublishing
+    ) {
+      return;
+    }
+
+    await submitVideo(
+      "published"
+    );
+  }
+
+
+  // =======================================================
   // COUNTS
   // =======================================================
 
@@ -3848,6 +4977,13 @@ function rememberWritingTitle(
                 size={25}
               />
 
+            ) : publishMode ===
+              "video" ? (
+
+              <Video
+                size={25}
+              />
+
             ) : (
 
               <PenLine
@@ -3890,7 +5026,7 @@ function rememberWritingTitle(
 
               {t(
                 "write.creatorSubtitleWithArtwork",
-                "Share original writing, PDF documents or visual artwork with the SHOBDO community."
+                "Share original writing, PDF documents, visual artwork or videos with the SHOBDO community."
               )}
 
             </p>
@@ -4113,6 +5249,61 @@ function rememberWritingTitle(
                     {t(
                       "write.artworkModeReadyDescription",
                       "Paintings, sketches, photography and digital art"
+                    )}
+
+                  </small>
+
+                </span>
+
+              </button>
+
+
+              <button
+                type="button"
+                role="tab"
+                aria-selected={
+                  publishMode ===
+                  "video"
+                }
+                className={
+                  publishMode ===
+                  "video"
+                    ? "publish-type-tab active"
+                    : "publish-type-tab"
+                }
+                onClick={() =>
+                  changeMode(
+                    "video"
+                  )
+                }
+              >
+
+                <span className="publish-type-icon">
+
+                  <Video
+                    size={22}
+                  />
+
+                </span>
+
+
+                <span>
+
+                  <strong>
+
+                    {t(
+                      "write.videoMode",
+                      "Video"
+                    )}
+
+                  </strong>
+
+
+                  <small>
+
+                    {t(
+                      "write.videoModeDescription",
+                      "Readings, performances, stories and literary videos"
                     )}
 
                   </small>
@@ -5170,6 +6361,1027 @@ function rememberWritingTitle(
               </button>
 
             </div>
+
+          </form>
+
+        )}
+
+
+        {/* ================================================= */}
+        {/* VIDEO MODE                                        */}
+        {/* ================================================= */}
+
+        {publishMode ===
+        "video" && (
+
+          <form
+            className="write-form-card document-publish-form"
+            onSubmit={
+              handleVideoSubmit
+            }
+          >
+
+            <StatusMessages />
+
+
+            {/* ============================================= */}
+            {/* VIDEO UPLOAD                                  */}
+            {/* ============================================= */}
+
+            <div className="write-section">
+
+              <div className="write-section-heading">
+
+                <div>
+
+                  <span className="write-step">
+
+                    {t(
+                      "write.videoUploadStep",
+                      "01"
+                    )}
+
+                  </span>
+
+
+                  <h2>
+
+                    {t(
+                      "write.videoUploadTitle",
+                      "Upload your video"
+                    )}
+
+                  </h2>
+
+                </div>
+
+
+                <span className="document-format-badge">
+
+                  <Video
+                    size={15}
+                  />
+
+                  VIDEO
+
+                </span>
+
+              </div>
+
+
+              <p className="scan-description">
+
+                {t(
+                  "write.videoUploadDescription",
+                  "Share readings, spoken word, performances, storytelling and other literary videos with the SHOBDO community."
+                )}
+
+              </p>
+
+
+              {!videoFile ? (
+
+                <div
+                  className={
+                    videoDragging
+                      ? "document-drop-zone dragging"
+                      : "document-drop-zone"
+                  }
+                  onDragOver={
+                    handleVideoDragOver
+                  }
+                  onDragLeave={
+                    handleVideoDragLeave
+                  }
+                  onDrop={
+                    handleVideoDrop
+                  }
+                >
+
+                  <input
+                    ref={
+                      videoInputRef
+                    }
+                    type="file"
+                    id="publish-video"
+                    className="scan-file-input"
+                    accept=".mp4,.webm,.mov,.m4v,video/mp4,video/webm,video/quicktime,video/x-m4v"
+                    onChange={
+                      handleVideoFileChange
+                    }
+                  />
+
+
+                  <div className="document-upload-icon">
+
+                    <Video
+                      size={30}
+                    />
+
+                  </div>
+
+
+                  <h3>
+
+                    {t(
+                      "write.dropVideoTitle",
+                      "Drop your video here"
+                    )}
+
+                  </h3>
+
+
+                  <p>
+
+                    {t(
+                      "write.dropVideoDescription",
+                      "Upload a video from your device and preview it before publishing."
+                    )}
+
+                  </p>
+
+
+                  <button
+                    type="button"
+                    className="scan-select-button"
+                    disabled={
+                      videoPublishing
+                    }
+                    onClick={() =>
+                      videoInputRef
+                        .current
+                        ?.click()
+                    }
+                  >
+
+                    <Upload
+                      size={18}
+                    />
+
+
+                    {t(
+                      "write.chooseVideo",
+                      "Choose Video"
+                    )}
+
+                  </button>
+
+
+                  <small>
+
+                    {t(
+                      "write.videoRequirements",
+                      "MP4, WEBM, MOV or M4V • Maximum 100 MB"
+                    )}
+
+                  </small>
+
+                </div>
+
+              ) : (
+
+                <>
+
+                  <div className="document-selected-card">
+
+                    <div className="document-selected-icon">
+
+                      <Video
+                        size={30}
+                      />
+
+                    </div>
+
+
+                    <div className="document-selected-info">
+
+                      <strong>
+                        {videoFile.name}
+                      </strong>
+
+
+                      <span>
+
+                        {
+                          formatFileSize(
+                            videoFile.size
+                          )
+                        }
+
+                        {videoDuration > 0 && (
+                          <>
+                            {" • "}
+                            {
+                              formatDuration(
+                                videoDuration
+                              )
+                            }
+                          </>
+                        )}
+
+                        {" • "}
+
+                        {t(
+                          "write.readyToPublish",
+                          "Ready to publish"
+                        )}
+
+                      </span>
+
+                    </div>
+
+
+                    <button
+                      type="button"
+                      className="remove-file-button"
+                      aria-label={
+                        t(
+                          "write.removeVideo",
+                          "Remove selected video"
+                        )
+                      }
+                      disabled={
+                        videoPublishing
+                      }
+                      onClick={
+                        removeVideoFile
+                      }
+                    >
+
+                      <Trash2
+                        size={19}
+                      />
+
+                    </button>
+
+                  </div>
+
+
+                  {videoPreviewUrl && (
+
+                    <div className="document-preview">
+
+                      <div className="document-preview-header">
+
+                        <div>
+
+                          <Video
+                            size={18}
+                          />
+
+
+                          <span>
+
+                            {t(
+                              "write.videoPreview",
+                              "Video Preview"
+                            )}
+
+                          </span>
+
+                        </div>
+
+                      </div>
+
+
+                      <video
+                        src={
+                          videoPreviewUrl
+                        }
+                        controls
+                        playsInline
+                        preload="metadata"
+                        onLoadedMetadata={
+                          (
+                            event
+                          ) => {
+
+                            const duration =
+                              event.currentTarget
+                                .duration;
+
+                            if (
+                              Number.isFinite(
+                                duration
+                              )
+                            ) {
+
+                              setVideoDuration(
+                                duration
+                              );
+                            }
+                          }
+                        }
+                        style={{
+                          display:
+                            "block",
+                          width:
+                            "100%",
+                          maxHeight:
+                            "620px",
+                          borderRadius:
+                            "16px",
+                          background:
+                            "#111111",
+                        }}
+                      />
+
+                    </div>
+
+                  )}
+
+
+                  <button
+                    type="button"
+                    className="scan-select-button"
+                    style={{
+                      marginTop:
+                        "14px",
+                    }}
+                    disabled={
+                      videoPublishing
+                    }
+                    onClick={() =>
+                      videoInputRef
+                        .current
+                        ?.click()
+                    }
+                  >
+
+                    <Upload
+                      size={18}
+                    />
+
+                    {t(
+                      "write.replaceVideo",
+                      "Replace Video"
+                    )}
+
+                  </button>
+
+                </>
+
+              )}
+
+            </div>
+
+
+            {/* ============================================= */}
+            {/* VIDEO INFORMATION                             */}
+            {/* ============================================= */}
+
+            <div className="write-section">
+
+              <div className="write-section-heading">
+
+                <div>
+
+                  <span className="write-step">
+
+                    {t(
+                      "write.videoInfoStep",
+                      "02"
+                    )}
+
+                  </span>
+
+
+                  <h2>
+
+                    {t(
+                      "write.videoInfoTitle",
+                      "Video information"
+                    )}
+
+                  </h2>
+
+                </div>
+
+              </div>
+
+
+              <div className="write-field">
+
+                <label htmlFor="video-title">
+
+                  {t(
+                    "write.videoTitleLabel",
+                    "Video title"
+                  )}
+
+                  <span aria-hidden="true">
+                    *
+                  </span>
+
+                </label>
+
+
+                <input
+                  id="video-title"
+                  type="text"
+                  maxLength={200}
+                  value={
+                    videoTitle
+                  }
+                  placeholder={
+                    t(
+                      "write.videoTitlePlaceholder",
+                      "Give your video a clear title"
+                    )
+                  }
+                  disabled={
+                    videoPublishing
+                  }
+                  onChange={
+                    (
+                      event
+                    ) =>
+                      setVideoTitle(
+                        event.target
+                          .value
+                      )
+                  }
+                />
+
+
+                <div className="field-meta">
+
+                  <span>
+
+                    {t(
+                      "write.videoTitleHelp",
+                      "This title will appear with the video in the SHOBDO feed."
+                    )}
+
+                  </span>
+
+
+                  <span>
+                    {videoTitle.length}/200
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              <div className="document-field-grid">
+
+                <div className="write-field">
+
+                  <label htmlFor="video-category">
+
+                    {t(
+                      "write.videoCategoryLabel",
+                      "Category"
+                    )}
+
+                  </label>
+
+
+                  <select
+                    id="video-category"
+                    value={
+                      videoCategory
+                    }
+                    disabled={
+                      videoPublishing
+                    }
+                    onChange={
+                      (
+                        event
+                      ) =>
+                        setVideoCategory(
+                          event.target
+                            .value
+                        )
+                    }
+                  >
+
+                    {VIDEO_CATEGORIES.map(
+                      (
+                        item
+                      ) => (
+
+                        <option
+                          key={item}
+                          value={item}
+                        >
+                          {item}
+                        </option>
+
+                      )
+                    )}
+
+                  </select>
+
+                </div>
+
+
+                <div className="write-field">
+
+                  <label htmlFor="video-language">
+
+                    {t(
+                      "write.videoLanguageLabel",
+                      "Video language"
+                    )}
+
+                  </label>
+
+
+                  <select
+                    id="video-language"
+                    value={
+                      videoLanguage
+                    }
+                    disabled={
+                      videoPublishing
+                    }
+                    onChange={
+                      (
+                        event
+                      ) =>
+                        setVideoLanguage(
+                          event.target
+                            .value
+                        )
+                    }
+                  >
+
+                    {DOCUMENT_LANGUAGES.map(
+                      (
+                        language
+                      ) => (
+
+                        <option
+                          key={
+                            language.code
+                          }
+                          value={
+                            language.code
+                          }
+                        >
+                          {language.label}
+                        </option>
+
+                      )
+                    )}
+
+                  </select>
+
+                </div>
+
+              </div>
+
+
+              <div className="write-field">
+
+                <label htmlFor="video-description">
+
+                  {t(
+                    "write.videoDescriptionLabel",
+                    "Caption / description"
+                  )}
+
+                </label>
+
+
+                <textarea
+                  id="video-description"
+                  value={
+                    videoDescription
+                  }
+                  rows={6}
+                  maxLength={5000}
+                  placeholder={
+                    t(
+                      "write.videoDescriptionPlaceholder",
+                      "Write a caption, context or description for your video..."
+                    )
+                  }
+                  disabled={
+                    videoPublishing
+                  }
+                  onChange={
+                    (
+                      event
+                    ) =>
+                      setVideoDescription(
+                        event.target
+                          .value
+                      )
+                  }
+                />
+
+
+                <div className="field-meta">
+
+                  <span>
+
+                    {t(
+                      "write.videoDescriptionHelp",
+                      "Optional. Add context so viewers know what the video is about."
+                    )}
+
+                  </span>
+
+
+                  <span>
+                    {videoDescription.length}/5000
+                  </span>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* ============================================= */}
+            {/* VIDEO SETTINGS                                */}
+            {/* ============================================= */}
+
+            <div className="write-section">
+
+              <div className="write-section-heading">
+
+                <div>
+
+                  <span className="write-step">
+
+                    {t(
+                      "write.videoSettingsStep",
+                      "03"
+                    )}
+
+                  </span>
+
+
+                  <h2>
+
+                    {t(
+                      "write.videoSettingsTitle",
+                      "Publishing settings"
+                    )}
+
+                  </h2>
+
+                </div>
+
+              </div>
+
+
+              <div className="document-settings-grid">
+
+                <label
+                  className={
+                    videoVisibility ===
+                    "public"
+                      ? "document-setting-card active"
+                      : "document-setting-card"
+                  }
+                >
+
+                  <input
+                    type="radio"
+                    name="video-visibility"
+                    value="public"
+                    checked={
+                      videoVisibility ===
+                      "public"
+                    }
+                    disabled={
+                      videoPublishing
+                    }
+                    onChange={() =>
+                      setVideoVisibility(
+                        "public"
+                      )
+                    }
+                  />
+
+
+                  <BookOpen
+                    size={21}
+                  />
+
+
+                  <span>
+
+                    <strong>
+
+                      {t(
+                        "write.visibilityPublic",
+                        "Public"
+                      )}
+
+                    </strong>
+
+
+                    <small>
+
+                      {t(
+                        "write.videoVisibilityPublicDescription",
+                        "Anyone can discover and watch this video."
+                      )}
+
+                    </small>
+
+                  </span>
+
+                </label>
+
+
+                <label
+                  className={
+                    videoVisibility ===
+                    "unlisted"
+                      ? "document-setting-card active"
+                      : "document-setting-card"
+                  }
+                >
+
+                  <input
+                    type="radio"
+                    name="video-visibility"
+                    value="unlisted"
+                    checked={
+                      videoVisibility ===
+                      "unlisted"
+                    }
+                    disabled={
+                      videoPublishing
+                    }
+                    onChange={() =>
+                      setVideoVisibility(
+                        "unlisted"
+                      )
+                    }
+                  />
+
+
+                  <Lock
+                    size={21}
+                  />
+
+
+                  <span>
+
+                    <strong>
+
+                      {t(
+                        "write.visibilityUnlisted",
+                        "Unlisted"
+                      )}
+
+                    </strong>
+
+
+                    <small>
+
+                      {t(
+                        "write.videoVisibilityUnlistedDescription",
+                        "Accessible by direct link but not publicly listed."
+                      )}
+
+                    </small>
+
+                  </span>
+
+                </label>
+
+              </div>
+
+            </div>
+
+
+            {/* ============================================= */}
+            {/* UPLOAD PROGRESS                               */}
+            {/* ============================================= */}
+
+            {videoPublishing && (
+
+              <div
+                className="write-section"
+                aria-live="polite"
+              >
+
+                <div
+                  style={{
+                    display:
+                      "flex",
+                    alignItems:
+                      "center",
+                    justifyContent:
+                      "space-between",
+                    gap:
+                      "12px",
+                    marginBottom:
+                      "10px",
+                  }}
+                >
+
+                  <strong>
+
+                    {t(
+                      "write.videoUploading",
+                      "Uploading video"
+                    )}
+
+                  </strong>
+
+
+                  <span>
+                    {videoUploadProgress}%
+                  </span>
+
+                </div>
+
+
+                <div
+                  style={{
+                    width:
+                      "100%",
+                    height:
+                      "10px",
+                    overflow:
+                      "hidden",
+                    borderRadius:
+                      "999px",
+                    background:
+                      "#eee8e0",
+                  }}
+                >
+
+                  <div
+                    style={{
+                      width:
+                        `${videoUploadProgress}%`,
+                      height:
+                        "100%",
+                      borderRadius:
+                        "999px",
+                      background:
+                        "linear-gradient(90deg, #946820, #b08743)",
+                      transition:
+                        "width 180ms ease",
+                    }}
+                  />
+
+                </div>
+
+              </div>
+
+            )}
+
+
+            {/* ============================================= */}
+            {/* VIDEO ACTIONS                                 */}
+            {/* ============================================= */}
+
+            <div className="write-form-actions">
+
+              <button
+                type="button"
+                className="draft-button"
+                disabled={
+                  videoPublishing ||
+                  !videoFile
+                }
+                onClick={() =>
+                  submitVideo(
+                    "draft"
+                  )
+                }
+              >
+
+                {videoPublishing ? (
+
+                  <LoaderCircle
+                    className="spin"
+                    size={19}
+                  />
+
+                ) : (
+
+                  <Save
+                    size={19}
+                  />
+
+                )}
+
+
+                {t(
+                  "write.saveVideoDraft",
+                  "Save Video Draft"
+                )}
+
+              </button>
+
+
+              <button
+                type="submit"
+                className="publish-button"
+                disabled={
+                  videoPublishing ||
+                  !videoFile
+                }
+              >
+
+                {videoPublishing ? (
+
+                  <LoaderCircle
+                    className="spin"
+                    size={20}
+                  />
+
+                ) : (
+
+                  <Send
+                    size={19}
+                  />
+
+                )}
+
+
+                {videoPublishing
+                  ? t(
+                      "write.publishingVideo",
+                      "Publishing video..."
+                    )
+                  : t(
+                      "write.publishVideo",
+                      "Publish Video"
+                    )}
+
+              </button>
+
+            </div>
+
+
+            {/* ============================================= */}
+            {/* LAST PUBLISHED VIDEO                          */}
+            {/* ============================================= */}
+
+            {lastPublishedVideo && (
+
+              <div className="document-published-result">
+
+                <CheckCircle2
+                  size={22}
+                />
+
+
+                <div>
+
+                  <strong>
+                    {lastPublishedVideo.title}
+                  </strong>
+
+
+                  <span>
+
+                    {t(
+                      "write.videoStored",
+                      "Your video was stored successfully."
+                    )}
+
+                  </span>
+
+                </div>
+
+
+                {(
+                  lastPublishedVideo
+                    .video_url ||
+                  lastPublishedVideo
+                    .file_url
+                ) && (
+
+                  <a
+                    href={
+                      lastPublishedVideo
+                        .video_url ||
+                      lastPublishedVideo
+                        .file_url
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+
+                    {t(
+                      "write.viewVideo",
+                      "View video"
+                    )}
+
+                  </a>
+
+                )}
+
+              </div>
+
+            )}
 
           </form>
 
