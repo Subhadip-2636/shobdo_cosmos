@@ -557,6 +557,196 @@
 
 
 /* =========================================================
+   REELS BUTTON
+========================================================= */
+
+.shobdo-reels-button {
+  isolation:
+    isolate;
+
+  overflow:
+    hidden;
+}
+
+
+.shobdo-reels-button::before {
+  content:
+    "";
+
+  position:
+    absolute;
+
+  inset:
+    4px;
+
+  z-index:
+    -1;
+
+  border-radius:
+    9px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(
+        111,
+        61,
+        104,
+        0
+      ),
+      rgba(
+        111,
+        61,
+        104,
+        0
+      )
+    );
+
+  opacity:
+    0;
+
+  transform:
+    scale(0.82);
+
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    background 0.18s ease;
+}
+
+
+.shobdo-reels-button svg {
+  transition:
+    transform 0.18s ease,
+    filter 0.18s ease;
+}
+
+
+.shobdo-reels-button:hover {
+  border-color:
+    #dac9d7;
+
+  background:
+    linear-gradient(
+      145deg,
+      #fbf5fa,
+      #f6edf4
+    );
+
+  color:
+    #714369;
+}
+
+
+.shobdo-reels-button:hover::before {
+  opacity:
+    1;
+
+  transform:
+    scale(1);
+
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      rgba(
+        128,
+        74,
+        119,
+        0.12
+      ),
+      transparent 70%
+    );
+}
+
+
+.shobdo-reels-button:hover svg {
+  transform:
+    translateY(-1px)
+    rotate(-2deg);
+}
+
+
+.shobdo-reels-button.active {
+  border-color:
+    #cdb2c8;
+
+  background:
+    linear-gradient(
+      145deg,
+      #6d4167,
+      #4f304d
+    );
+
+  color:
+    #ffffff;
+
+  box-shadow:
+    0
+    6px
+    16px
+    rgba(
+      79,
+      48,
+      77,
+      0.18
+    );
+}
+
+
+.shobdo-reels-button.active::before {
+  opacity:
+    1;
+
+  transform:
+    scale(1);
+
+  background:
+    radial-gradient(
+      circle at 30% 25%,
+      rgba(
+        255,
+        255,
+        255,
+        0.18
+      ),
+      transparent 64%
+    );
+}
+
+
+.shobdo-reels-button.active svg {
+  filter:
+    drop-shadow(
+      0
+      2px
+      4px
+      rgba(
+        0,
+        0,
+        0,
+        0.16
+      )
+    );
+}
+
+
+.shobdo-reels-button.active:hover {
+  border-color:
+    #c4a5be;
+
+  background:
+    linear-gradient(
+      145deg,
+      #74466e,
+      #543350
+    );
+
+  color:
+    #ffffff;
+}
+
+
+/* =========================================================
    NOTIFICATION BADGE
 ========================================================= */
 
@@ -2164,6 +2354,22 @@ svg:last-child {
   }
 
 
+  /* REELS */
+
+  .shobdo-reels-button.active {
+    box-shadow:
+      0
+      4px
+      12px
+      rgba(
+        79,
+        48,
+        77,
+        0.16
+      );
+  }
+
+
   /* PROFILE */
 
   .shobdo-profile-trigger {
@@ -2452,7 +2658,8 @@ svg:last-child {
   .shobdo-navbar-brand:hover
   .shobdo-navbar-logo,
   .shobdo-login-button:hover,
-  .shobdo-register-button:hover {
+  .shobdo-register-button:hover,
+  .shobdo-reels-button:hover svg {
     transform:
       none;
   }
@@ -2473,6 +2680,8 @@ svg:last-child {
   .shobdo-navbar-logo,
   .shobdo-navbar-search,
   .shobdo-navbar-icon-button,
+  .shobdo-reels-button::before,
+  .shobdo-reels-button svg,
   .shobdo-language-button,
   .shobdo-profile-trigger,
   .shobdo-profile-menu-item,

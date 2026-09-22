@@ -305,11 +305,6 @@ def get_allowed_origins():
 
     # -----------------------------------------------------
     # EXTRA FRONTEND ORIGINS
-    #
-    # Example:
-    #
-    # CORS_ORIGINS=
-    # https://example.com,https://www.example.com
     # -----------------------------------------------------
 
     extra_origins = (
@@ -351,8 +346,6 @@ def create_app():
 
     # =====================================================
     # REVERSE PROXY
-    #
-    # Cloudflare + Render sit in front of Flask.
     # =====================================================
 
     app.wsgi_app = ProxyFix(
@@ -599,12 +592,10 @@ def create_app():
     # =====================================================
     # FILE UPLOADS
     #
-    # Global request ceiling:
-    #
-    # - Writing OCR / artwork / PDF routes keep their own
-    #   stricter validation limits.
-    # - Video uploads can be up to 100 MB.
-    # - 110 MB leaves room for multipart/form-data overhead.
+    # - Writing/OCR/artwork/PDF routes can keep smaller
+    #   route-specific limits.
+    # - Videos and Reels can use uploads up to 100 MB.
+    # - 110 MB leaves multipart overhead.
     # =====================================================
 
     app.config[
@@ -775,7 +766,7 @@ def create_app():
     # =====================================================
     # DATABASE MODELS
     #
-    # Import all models so SQLAlchemy / Alembic knows them.
+    # Import every model so SQLAlchemy and Alembic know it.
     # =====================================================
 
     from models.user import (
@@ -807,6 +798,10 @@ def create_app():
         Video,
     )
 
+    from models.reel import (
+        Reel,
+    )
+
     from models.saved_writing import (
         SavedWriting,
     )
@@ -825,6 +820,7 @@ def create_app():
         Document,
         Artwork,
         Video,
+        Reel,
         SavedWriting,
         Repost,
 
@@ -885,6 +881,10 @@ def create_app():
 
     from routes.video_routes import (
         video_bp,
+    )
+
+    from routes.reel_routes import (
+        reel_bp,
     )
 
     from routes.saved_routes import (
@@ -1004,15 +1004,26 @@ def create_app():
     # =====================================================
     # REGISTER VIDEOS
     #
-    # video_bp already contains:
+    # video_bp already contains its /api/videos prefix.
+    # =====================================================
+
+    app.register_blueprint(
+        video_bp
+    )
+
+
+    # =====================================================
+    # REGISTER REELS
     #
-    #     url_prefix="/api/videos"
+    # reel_bp already contains:
+    #
+    #     url_prefix="/api/reels"
     #
     # Therefore no additional prefix is added here.
     # =====================================================
 
     app.register_blueprint(
-        video_bp
+        reel_bp
     )
 
 
@@ -1088,6 +1099,9 @@ def create_app():
             "health":
                 "/api/health",
 
+            "reels":
+                "/api/reels",
+
             "trending":
                 "/api/trending/topics",
 
@@ -1115,7 +1129,7 @@ def create_app():
                 "running",
 
             "version":
-                "1.3.0",
+                "1.4.0",
 
             "realtime":
                 True,
@@ -1128,6 +1142,9 @@ def create_app():
 
             "writings":
                 "/api/writings",
+
+            "reels":
+                "/api/reels",
 
             "search":
                 "/api/search",
@@ -1184,6 +1201,9 @@ def create_app():
                 "enabled",
 
             "videos":
+                "enabled",
+
+            "reels":
                 "enabled",
 
             "hashtags":

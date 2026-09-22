@@ -2,6 +2,7 @@ import {
   Bell,
   Bookmark,
   Check,
+  Clapperboard,
   ChevronDown,
   Feather,
   FileText,
@@ -338,6 +339,14 @@ function Navbar({
         "खोज बंद करें"
       ),
 
+    reels:
+      translate(
+        "navbar.reels",
+        "রিলস",
+        "Reels",
+        "रील्स"
+      ),
+
     notifications:
       translate(
         "navbar.notifications",
@@ -450,6 +459,17 @@ function Navbar({
     user?.id
       ? `/users/${user.id}`
       : "/login";
+
+
+  const reelsActive =
+    (
+      location.pathname ===
+        "/reels"
+      ||
+      location.pathname.startsWith(
+        "/reels/"
+      )
+    );
 
 
   const notificationBadge =
@@ -1346,7 +1366,47 @@ function Navbar({
           className="shobdo-navbar-actions"
         >
 
-          {/* MOBILE SEARCH */}
+          {/* =================================================
+              REELS
+          ================================================== */}
+
+          <Link
+            to="/reels"
+            className={
+              reelsActive
+                ? "shobdo-navbar-icon-button shobdo-reels-button active"
+                : "shobdo-navbar-icon-button shobdo-reels-button"
+            }
+            aria-label={
+              labels.reels
+            }
+            aria-current={
+              reelsActive
+                ? "page"
+                : undefined
+            }
+            title={
+              labels.reels
+            }
+          >
+
+            <Clapperboard
+              size={19}
+              strokeWidth={1.9}
+            />
+
+            <span
+              className="shobdo-sr-only"
+            >
+              {labels.reels}
+            </span>
+
+          </Link>
+
+
+          {/* =================================================
+              MOBILE SEARCH
+          ================================================== */}
 
           <button
             type="button"
@@ -1369,7 +1429,9 @@ function Navbar({
           </button>
 
 
-          {/* NOTIFICATIONS */}
+          {/* =================================================
+              NOTIFICATIONS
+          ================================================== */}
 
           {user && (
 
@@ -1419,7 +1481,9 @@ function Navbar({
           )}
 
 
-          {/* LANGUAGE */}
+          {/* =================================================
+              LANGUAGE
+          ================================================== */}
 
           <div
             className="shobdo-navbar-dropdown"
@@ -1581,7 +1645,9 @@ function Navbar({
           </div>
 
 
-          {/* AUTHENTICATED PROFILE */}
+          {/* =================================================
+              AUTHENTICATED PROFILE
+          ================================================== */}
 
           {user
             ? (

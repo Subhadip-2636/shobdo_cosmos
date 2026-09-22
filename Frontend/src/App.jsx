@@ -45,6 +45,13 @@ import PublicHome from "./pages/PublicHome";
 
 
 // =========================================================
+// PUBLIC / SOCIAL REELS
+// =========================================================
+
+import Reels from "./pages/Reels";
+
+
+// =========================================================
 // MAIN PAGES
 // =========================================================
 
@@ -342,6 +349,68 @@ function HomeRoute({
 
     </>
 
+  );
+
+}
+
+
+// =========================================================
+// REELS ROUTE
+// =========================================================
+//
+// Guest:
+//   Public immersive Reels experience
+//
+// Logged in:
+//   SocialLayout
+//      └── Reels through <Outlet />
+//
+// This keeps /reels public while preserving the authenticated
+// SHOBDO social shell for signed-in users.
+//
+// =========================================================
+
+function ReelsRoute({
+  user,
+  authLoading,
+}) {
+
+  // -------------------------------------------------------
+  // AUTH STATE IS STILL BEING RESOLVED
+  // -------------------------------------------------------
+
+  if (authLoading) {
+
+    return (
+      <RouteLoading />
+    );
+
+  }
+
+
+  // -------------------------------------------------------
+  // LOGGED-IN SOCIAL REELS
+  // -------------------------------------------------------
+
+  if (user) {
+
+    return (
+
+      <SocialLayout
+        user={user}
+      />
+
+    );
+
+  }
+
+
+  // -------------------------------------------------------
+  // PUBLIC REELS
+  // -------------------------------------------------------
+
+  return (
+    <Outlet />
   );
 
 }
@@ -1085,6 +1154,48 @@ function App() {
 
 
           {/* =================================================
+              REELS
+
+              Guest:
+                public Reels experience
+
+              Logged in:
+                Reels inside SocialLayout
+          ================================================== */}
+
+          <Route
+            path="/reels"
+            element={
+              <ReelsRoute
+                user={
+                  user
+                }
+                authLoading={
+                  authLoading
+                }
+              />
+            }
+          >
+
+            <Route
+              index
+              element={
+                <Reels />
+              }
+            />
+
+
+            <Route
+              path=":reelId"
+              element={
+                <Reels />
+              }
+            />
+
+          </Route>
+
+
+          {/* =================================================
               PUBLIC BROWSING ROUTES
 
               Guests:
@@ -1167,6 +1278,18 @@ function App() {
 
             <Route
               path="/users/:id"
+              element={
+                <WriterProfile />
+              }
+            />
+
+
+            {/* =============================================
+                WRITER PROFILE ALIAS FOR REELS
+            ============================================== */}
+
+            <Route
+              path="/writer/:id"
               element={
                 <WriterProfile />
               }

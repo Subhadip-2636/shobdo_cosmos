@@ -1,0 +1,850 @@
+/* =========================================================
+   SHOBDO PUBLIC REELS
+   ========================================================= */
+
+.shobdo-reels-page {
+  width: 100%;
+  height: 100dvh;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  scroll-snap-type: y mandatory;
+  overscroll-behavior-y: contain;
+
+  background:
+    radial-gradient(
+      circle at 50% 12%,
+      rgba(94, 60, 120, 0.18),
+      transparent 35%
+    ),
+    #08070a;
+
+  scrollbar-width: none;
+}
+
+
+.shobdo-reels-page::-webkit-scrollbar {
+  display: none;
+}
+
+
+/* =========================================================
+   REEL
+   ========================================================= */
+
+.shobdo-reel {
+  position: relative;
+
+  width: 100%;
+  height: 100dvh;
+
+  min-height: 640px;
+
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  background: #000;
+
+  color: #fff;
+}
+
+
+.shobdo-reel-video-button {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  padding: 0;
+  border: 0;
+
+  background: transparent;
+
+  cursor: pointer;
+}
+
+
+.shobdo-reel-video {
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+
+  background: #000;
+}
+
+
+.shobdo-reel-gradient {
+  position: absolute;
+  inset: 0;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0.05) 22%,
+      rgba(0, 0, 0, 0.04) 52%,
+      rgba(0, 0, 0, 0.86) 100%
+    );
+}
+
+
+/* =========================================================
+   TOP BAR
+   ========================================================= */
+
+.shobdo-reel-topbar {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  z-index: 15;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding:
+    max(18px, env(safe-area-inset-top))
+    24px
+    18px;
+}
+
+
+.shobdo-reel-topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  font-size: 22px;
+  font-weight: 800;
+
+  letter-spacing: -0.02em;
+}
+
+
+.shobdo-reel-logo-mark {
+  width: 34px;
+  height: 34px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 11px;
+
+  background:
+    rgba(255, 255, 255, 0.14);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.16);
+
+  backdrop-filter: blur(14px);
+
+  font-family: Georgia, serif;
+  font-weight: 700;
+}
+
+
+.shobdo-reel-login {
+  min-height: 38px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 18px;
+
+  border-radius: 999px;
+
+  background: #fff;
+  color: #171219;
+
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 800;
+
+  box-shadow:
+    0 8px 24px
+    rgba(0, 0, 0, 0.22);
+
+  transition:
+    transform 160ms ease,
+    opacity 160ms ease;
+}
+
+
+.shobdo-reel-login:hover {
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   CENTER PLAY
+   ========================================================= */
+
+.shobdo-reel-center-play {
+  position: absolute;
+
+  top: 50%;
+  left: 50%;
+
+  z-index: 14;
+
+  width: 72px;
+  height: 72px;
+
+  display: grid;
+  place-items: center;
+
+  transform:
+    translate(-50%, -50%);
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.16);
+
+  border-radius: 50%;
+
+  background:
+    rgba(15, 12, 18, 0.52);
+
+  color: #fff;
+
+  backdrop-filter: blur(16px);
+
+  cursor: pointer;
+
+  box-shadow:
+    0 18px 45px
+    rgba(0, 0, 0, 0.28);
+}
+
+
+/* =========================================================
+   SOUND
+   ========================================================= */
+
+.shobdo-reel-sound {
+  position: absolute;
+
+  top: 84px;
+  right: 24px;
+
+  z-index: 15;
+
+  width: 42px;
+  height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.14);
+
+  border-radius: 50%;
+
+  background:
+    rgba(10, 9, 12, 0.5);
+
+  color: #fff;
+
+  backdrop-filter: blur(14px);
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
+
+.shobdo-reel-actions {
+  position: absolute;
+
+  right: 22px;
+  bottom: 108px;
+
+  z-index: 15;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 17px;
+}
+
+
+.shobdo-reel-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 5px;
+
+  padding: 0;
+
+  border: 0;
+
+  background: transparent;
+
+  color: #fff;
+
+  text-decoration: none;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+
+.shobdo-reel-action-circle {
+  width: 48px;
+  height: 48px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background:
+    rgba(20, 16, 23, 0.54);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.12);
+
+  backdrop-filter: blur(14px);
+
+  transition:
+    transform 150ms ease,
+    background 150ms ease;
+}
+
+
+.shobdo-reel-action:hover
+.shobdo-reel-action-circle {
+  transform: scale(1.07);
+
+  background:
+    rgba(35, 26, 42, 0.76);
+}
+
+
+/* =========================================================
+   REEL INFO
+   ========================================================= */
+
+.shobdo-reel-info {
+  position: absolute;
+
+  left: 24px;
+  right: 100px;
+  bottom: 34px;
+
+  z-index: 15;
+
+  max-width: 720px;
+}
+
+
+.shobdo-reel-author-row {
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+
+  margin-bottom: 13px;
+}
+
+
+.shobdo-reel-author {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 10px;
+
+  min-width: 0;
+
+  color: #fff;
+
+  text-decoration: none;
+}
+
+
+.shobdo-reel-avatar {
+  width: 44px;
+  height: 44px;
+
+  flex: 0 0 44px;
+
+  border-radius: 50%;
+
+  object-fit: cover;
+
+  border:
+    2px solid
+    rgba(255, 255, 255, 0.88);
+
+  box-shadow:
+    0 5px 18px
+    rgba(0, 0, 0, 0.32);
+}
+
+
+.shobdo-reel-avatar-fallback {
+  display: grid;
+  place-items: center;
+
+  background:
+    linear-gradient(
+      145deg,
+      #6c3d75,
+      #a97891
+    );
+
+  font-size: 13px;
+  font-weight: 900;
+}
+
+
+.shobdo-reel-author-name {
+  max-width: 240px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 15px;
+  font-weight: 800;
+}
+
+
+.shobdo-reel-follow {
+  min-height: 34px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 16px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.72);
+
+  border-radius: 999px;
+
+  color: #fff;
+
+  text-decoration: none;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  backdrop-filter: blur(10px);
+}
+
+
+.shobdo-reel-caption {
+  max-width: 650px;
+
+  margin:
+    0 0 10px;
+
+  font-size: 15px;
+  line-height: 1.55;
+
+  color:
+    rgba(255, 255, 255, 0.96);
+
+  text-shadow:
+    0 2px 12px
+    rgba(0, 0, 0, 0.55);
+}
+
+
+.shobdo-reel-meta {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  color:
+    rgba(255, 255, 255, 0.76);
+
+  font-size: 12px;
+  font-weight: 650;
+}
+
+
+.shobdo-reel-language {
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 25px;
+
+  padding: 0 9px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, 0.14);
+
+  color: #fff;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  backdrop-filter: blur(10px);
+}
+
+
+/* =========================================================
+   DESKTOP NAVIGATION
+   ========================================================= */
+
+.shobdo-reel-navigation {
+  position: absolute;
+
+  top: 50%;
+  right: 92px;
+
+  z-index: 15;
+
+  transform:
+    translateY(-50%);
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+
+.shobdo-reel-navigation button {
+  width: 44px;
+  height: 44px;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.12);
+
+  border-radius: 50%;
+
+  background:
+    rgba(12, 10, 14, 0.48);
+
+  color: #fff;
+
+  backdrop-filter: blur(14px);
+
+  cursor: pointer;
+}
+
+
+.shobdo-reel-navigation button:disabled {
+  opacity: 0.28;
+
+  cursor: default;
+}
+
+
+/* =========================================================
+   PROGRESS
+   ========================================================= */
+
+.shobdo-reel-progress {
+  position: absolute;
+
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  z-index: 20;
+
+  height: 3px;
+
+  background:
+    rgba(255, 255, 255, 0.16);
+}
+
+
+.shobdo-reel-progress-value {
+  height: 100%;
+
+  background: #fff;
+
+  transition:
+    width 100ms linear;
+}
+
+
+/* =========================================================
+   PAGE STATES
+   ========================================================= */
+
+.shobdo-reels-state {
+  min-height: 100dvh;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 40px 20px;
+
+  text-align: center;
+
+  background:
+    radial-gradient(
+      circle at top,
+      rgba(111, 72, 125, 0.11),
+      transparent 35%
+    ),
+    #f8f5f1;
+
+  color: #261e29;
+}
+
+
+.shobdo-reels-state h1 {
+  margin:
+    18px 0 10px;
+
+  font-size:
+    clamp(
+      28px,
+      5vw,
+      46px
+    );
+
+  letter-spacing:
+    -0.045em;
+}
+
+
+.shobdo-reels-state p {
+  max-width: 560px;
+
+  margin: 0;
+
+  color: #716775;
+
+  line-height: 1.65;
+}
+
+
+.shobdo-reels-spinner {
+  animation:
+    shobdoReelsSpin
+    900ms linear infinite;
+}
+
+
+@keyframes shobdoReelsSpin {
+
+  to {
+    transform:
+      rotate(360deg);
+  }
+
+}
+
+
+.shobdo-reels-empty-icon {
+  width: 72px;
+  height: 72px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 22px;
+
+  color: #fff;
+
+  background:
+    linear-gradient(
+      145deg,
+      #5d3767,
+      #99677f
+    );
+
+  box-shadow:
+    0 20px 55px
+    rgba(88, 51, 99, 0.2);
+}
+
+
+.shobdo-reels-retry,
+.shobdo-reels-home-link {
+  min-height: 44px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-top: 22px;
+
+  padding: 0 20px;
+
+  border: 0;
+  border-radius: 999px;
+
+  background: #5e3968;
+  color: #fff;
+
+  text-decoration: none;
+
+  font: inherit;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (
+  min-width: 900px
+) {
+
+  .shobdo-reel-video {
+    width: min(
+      100%,
+      760px
+    );
+
+    margin: 0 auto;
+
+    object-fit: cover;
+
+    border-radius: 18px;
+  }
+
+
+  .shobdo-reel-video-button {
+    display: flex;
+    justify-content: center;
+
+    padding:
+      12px 0;
+  }
+
+}
+
+
+@media (
+  max-width: 760px
+) {
+
+  .shobdo-reel {
+    min-height: 100dvh;
+  }
+
+
+  .shobdo-reel-topbar {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+
+  .shobdo-reel-topbar-title {
+    font-size: 19px;
+  }
+
+
+  .shobdo-reel-login {
+    min-height: 36px;
+
+    padding:
+      0 14px;
+  }
+
+
+  .shobdo-reel-sound {
+    top: 77px;
+    right: 14px;
+  }
+
+
+  .shobdo-reel-actions {
+    right: 11px;
+    bottom: 96px;
+
+    gap: 14px;
+  }
+
+
+  .shobdo-reel-action-circle {
+    width: 44px;
+    height: 44px;
+  }
+
+
+  .shobdo-reel-info {
+    left: 15px;
+    right: 72px;
+    bottom: 28px;
+  }
+
+
+  .shobdo-reel-caption {
+    font-size: 14px;
+  }
+
+
+  .shobdo-reel-navigation {
+    display: none;
+  }
+
+}
+
+
+@media (
+  max-width: 420px
+) {
+
+  .shobdo-reel-avatar {
+    width: 39px;
+    height: 39px;
+
+    flex-basis: 39px;
+  }
+
+
+  .shobdo-reel-author-name {
+    max-width: 135px;
+  }
+
+
+  .shobdo-reel-follow {
+    padding:
+      0 12px;
+  }
+
+
+  .shobdo-reel-actions {
+    bottom: 88px;
+  }
+
+}
