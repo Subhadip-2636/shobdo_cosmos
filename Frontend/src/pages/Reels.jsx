@@ -40,83 +40,117 @@ import "./Reels.css";
 // HELPERS
 // =========================================================
 
-function formatCount(
-  value
-) {
-
+function formatCount(value) {
   const number =
     Number(value) || 0;
 
-
-  if (
-    number >=
-    1_000_000
-  ) {
-
+  if (number >= 1_000_000) {
     return `${(
-      number /
-      1_000_000
+      number / 1_000_000
     ).toFixed(1)}M`;
-
   }
 
-
-  if (
-    number >=
-    1_000
-  ) {
-
+  if (number >= 1_000) {
     return `${(
-      number /
-      1_000
+      number / 1_000
     ).toFixed(1)}K`;
-
   }
 
-
-  return String(
-    number
-  );
-
+  return String(number);
 }
 
 
 // =========================================================
 
-function getInitials(
-  name
-) {
-
+function getInitials(name) {
   const safeName =
     String(
       name || "Writer"
     ).trim();
 
-
-  if (
-    !safeName
-  ) {
-
+  if (!safeName) {
     return "W";
-
   }
-
 
   return safeName
     .split(/\s+/)
-    .slice(
-      0,
-      2
-    )
+    .slice(0, 2)
     .map(
-      (
-        part
-      ) =>
+      (part) =>
         part[0]
     )
     .join("")
     .toUpperCase();
+}
 
+
+// =========================================================
+// SHOBDO REELS ANIMATED BACKGROUND
+// =========================================================
+
+function ReelsAnimatedBackground() {
+  return (
+    <div
+      className="shobdo-reels-animated-background"
+      aria-hidden="true"
+    >
+      <video
+        className="shobdo-reels-background-video"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        poster="/backgrounds/shobdo-literary.jpg"
+        tabIndex={-1}
+      >
+        <source
+          src="/backgrounds/shobdo-reels-bg.mp4"
+          type="video/mp4"
+        />
+      </video>
+
+
+      {/* Soft readability layer */}
+
+      <div
+        className="shobdo-reels-background-overlay"
+      />
+
+
+      {/* Keeps the main center content calm */}
+
+      <div
+        className="shobdo-reels-background-focus"
+      />
+
+
+      {/* Subtle cinematic edge depth */}
+
+      <div
+        className="shobdo-reels-background-vignette"
+      />
+    </div>
+  );
+}
+
+
+// =========================================================
+// PAGE SHELL
+// =========================================================
+
+function ReelsPageShell({
+  children,
+}) {
+  return (
+    <div
+      className="shobdo-reels-shell"
+    >
+      <ReelsAnimatedBackground />
+
+      {children}
+    </div>
+  );
 }
 
 
@@ -134,10 +168,8 @@ function ReelItem({
   hasPrevious,
   hasNext,
 }) {
-
   const videoRef =
     useRef(null);
-
 
   const itemRef =
     useRef(null);
@@ -146,25 +178,19 @@ function ReelItem({
   const [
     muted,
     setMuted,
-  ] = useState(
-    true
-  );
+  ] = useState(true);
 
 
   const [
     playing,
     setPlaying,
-  ] = useState(
-    false
-  );
+  ] = useState(false);
 
 
   const [
     progress,
     setProgress,
-  ] = useState(
-    0
-  );
+  ] = useState(0);
 
 
   // =======================================================
@@ -173,40 +199,24 @@ function ReelItem({
 
   useEffect(
     () => {
-
       const element =
         itemRef.current;
 
-
-      if (
-        !element
-      ) {
-
+      if (!element) {
         return undefined;
-
       }
-
 
       const observer =
         new IntersectionObserver(
-          (
-            [
-              entry,
-            ]
-          ) => {
-
+          ([entry]) => {
             if (
               entry.isIntersecting &&
-              entry.intersectionRatio >=
-                0.65
+              entry.intersectionRatio >= 0.65
             ) {
-
               onVisible(
                 reel.id
               );
-
             }
-
           },
           {
             threshold: [
@@ -215,18 +225,13 @@ function ReelItem({
           }
         );
 
-
       observer.observe(
         element
       );
 
-
       return () => {
-
         observer.disconnect();
-
       };
-
     },
     [
       onVisible,
@@ -241,67 +246,45 @@ function ReelItem({
 
   useEffect(
     () => {
-
       const video =
         videoRef.current;
 
-
-      if (
-        !video
-      ) {
-
+      if (!video) {
         return;
-
       }
 
-
-      if (
-        active
-      ) {
-
+      if (active) {
         const playPromise =
           video.play();
-
 
         if (
           playPromise &&
           typeof playPromise.catch ===
             "function"
         ) {
-
           playPromise
             .then(
               () => {
-
                 setPlaying(
                   true
                 );
-
               }
             )
             .catch(
               () => {
-
                 setPlaying(
                   false
                 );
-
               }
             );
-
         }
-
       } else {
-
         video.pause();
-
 
         setPlaying(
           false
         );
-
       }
-
     },
     [
       active,
@@ -314,50 +297,33 @@ function ReelItem({
   // =======================================================
 
   function togglePlay() {
-
     const video =
       videoRef.current;
 
-
-    if (
-      !video
-    ) {
-
+    if (!video) {
       return;
-
     }
 
-
-    if (
-      video.paused
-    ) {
-
+    if (video.paused) {
       video
         .play()
         .then(
           () => {
-
             setPlaying(
               true
             );
-
           }
         )
         .catch(
           () => {}
         );
-
     } else {
-
       video.pause();
-
 
       setPlaying(
         false
       );
-
     }
-
   }
 
 
@@ -368,28 +334,21 @@ function ReelItem({
   function toggleMute(
     event
   ) {
-
     event.stopPropagation();
-
 
     const nextMuted =
       !muted;
-
 
     setMuted(
       nextMuted
     );
 
-
     if (
       videoRef.current
     ) {
-
       videoRef.current.muted =
         nextMuted;
-
     }
-
   }
 
 
@@ -400,10 +359,8 @@ function ReelItem({
   function handleTimeUpdate(
     event
   ) {
-
     const video =
       event.currentTarget;
-
 
     if (
       !video.duration ||
@@ -411,15 +368,12 @@ function ReelItem({
         video.duration
       )
     ) {
-
       setProgress(
         0
       );
 
       return;
-
     }
-
 
     setProgress(
       (
@@ -428,7 +382,6 @@ function ReelItem({
       ) *
         100
     );
-
   }
 
 
@@ -439,22 +392,16 @@ function ReelItem({
   async function handleShare(
     event
   ) {
-
     event.stopPropagation();
-
 
     const reelUrl =
       `${window.location.origin}/reels/${reel.id}`;
 
-
     try {
-
       if (
         navigator.share
       ) {
-
         await navigator.share({
-
           title:
             "SHOBDO Reel",
 
@@ -464,30 +411,21 @@ function ReelItem({
 
           url:
             reelUrl,
-
         });
 
-
         return;
-
       }
-
 
       await navigator.clipboard.writeText(
         reelUrl
       );
 
-
       window.alert(
         "Reel link copied."
       );
-
     } catch {
-
       // Share sheet cancelled.
-
     }
-
   }
 
 
@@ -527,7 +465,6 @@ function ReelItem({
   // =======================================================
 
   return (
-
     <article
       className="shobdo-reel"
       ref={
@@ -617,7 +554,6 @@ function ReelItem({
             শ
           </span>
 
-
           <span>
             Reels
           </span>
@@ -627,30 +563,24 @@ function ReelItem({
 
         {user
           ? (
-
             <Link
               to="/reels/create"
               className="shobdo-reel-create-top"
             >
-
               <Plus
                 size={16}
               />
 
               Create
-
             </Link>
-
           )
           : (
-
             <Link
               to="/login"
               className="shobdo-reel-login"
             >
               Log in
             </Link>
-
           )}
 
       </div>
@@ -670,12 +600,10 @@ function ReelItem({
           }
           aria-label="Play Reel"
         >
-
           <Play
             size={32}
             fill="currentColor"
           />
-
         </button>
 
       )}
@@ -697,7 +625,6 @@ function ReelItem({
             : "Mute"
         }
       >
-
         {muted
           ? (
             <VolumeX
@@ -709,7 +636,6 @@ function ReelItem({
               size={20}
             />
           )}
-
       </button>
 
 
@@ -733,15 +659,9 @@ function ReelItem({
             (
               event
             ) => {
-
-              if (
-                user
-              ) {
-
+              if (user) {
                 event.preventDefault();
-
               }
-
             }
           }
         >
@@ -753,7 +673,6 @@ function ReelItem({
               size={25}
             />
           </span>
-
 
           <span>
             {
@@ -778,15 +697,9 @@ function ReelItem({
             (
               event
             ) => {
-
-              if (
-                user
-              ) {
-
+              if (user) {
                 event.preventDefault();
-
               }
-
             }
           }
         >
@@ -798,7 +711,6 @@ function ReelItem({
               size={25}
             />
           </span>
-
 
           <span>
             {
@@ -823,15 +735,9 @@ function ReelItem({
             (
               event
             ) => {
-
-              if (
-                user
-              ) {
-
+              if (user) {
                 event.preventDefault();
-
               }
-
             }
           }
         >
@@ -843,7 +749,6 @@ function ReelItem({
               size={24}
             />
           </span>
-
 
           <span>
             {
@@ -872,7 +777,6 @@ function ReelItem({
               size={24}
             />
           </span>
-
 
           <span>
             {
@@ -925,7 +829,6 @@ function ReelItem({
 
             {avatar
               ? (
-
                 <img
                   src={
                     avatar
@@ -933,22 +836,17 @@ function ReelItem({
                   alt=""
                   className="shobdo-reel-avatar"
                 />
-
               )
               : (
-
                 <div
                   className="shobdo-reel-avatar shobdo-reel-avatar-fallback"
                 >
-
                   {
                     getInitials(
                       creatorName
                     )
                   }
-
                 </div>
-
               )}
 
 
@@ -965,16 +863,13 @@ function ReelItem({
           Number(user.id) ===
             Number(reel.user_id)
             ? (
-
               <span
                 className="shobdo-reel-own-badge"
               >
                 Your Reel
               </span>
-
             )
             : (
-
               <Link
                 to={
                   user
@@ -985,7 +880,6 @@ function ReelItem({
               >
                 Follow
               </Link>
-
             )}
 
         </div>
@@ -1009,19 +903,16 @@ function ReelItem({
           <span
             className="shobdo-reel-language"
           >
-
             {
               String(
                 reel.language ||
                 "bn"
               ).toUpperCase()
             }
-
           </span>
 
 
           <span>
-
             {
               formatCount(
                 reel.views_count
@@ -1030,7 +921,6 @@ function ReelItem({
 
             {" "}
             views
-
           </span>
 
         </div>
@@ -1055,21 +945,16 @@ function ReelItem({
             (
               event
             ) => {
-
               event.stopPropagation();
 
-
               onPrevious();
-
             }
           }
           aria-label="Previous Reel"
         >
-
           <ChevronUp
             size={25}
           />
-
         </button>
 
 
@@ -1082,21 +967,16 @@ function ReelItem({
             (
               event
             ) => {
-
               event.stopPropagation();
 
-
               onNext();
-
             }
           }
           aria-label="Next Reel"
         >
-
           <ChevronDown
             size={25}
           />
-
         </button>
 
       </div>
@@ -1109,7 +989,6 @@ function ReelItem({
       <div
         className="shobdo-reel-progress"
       >
-
         <div
           className="shobdo-reel-progress-value"
           style={{
@@ -1117,13 +996,10 @@ function ReelItem({
               `${progress}%`,
           }}
         />
-
       </div>
 
     </article>
-
   );
-
 }
 
 
@@ -1134,7 +1010,6 @@ function ReelItem({
 export default function Reels({
   user,
 }) {
-
   const {
     reelId,
   } = useParams();
@@ -1153,33 +1028,25 @@ export default function Reels({
   const [
     reels,
     setReels,
-  ] = useState(
-    []
-  );
+  ] = useState([]);
 
 
   const [
     loading,
     setLoading,
-  ] = useState(
-    true
-  );
+  ] = useState(true);
 
 
   const [
     error,
     setError,
-  ] = useState(
-    ""
-  );
+  ] = useState("");
 
 
   const [
     activeReelId,
     setActiveReelId,
-  ] = useState(
-    null
-  );
+  ] = useState(null);
 
 
   // =======================================================
@@ -1189,23 +1056,22 @@ export default function Reels({
   const loadReels =
     useCallback(
       async () => {
-
         setLoading(
           true
         );
-
 
         setError(
           ""
         );
 
-
         try {
-
           const data =
             await getReels({
-              page: 1,
-              perPage: 30,
+              page:
+                1,
+
+              perPage:
+                30,
             });
 
 
@@ -1213,7 +1079,9 @@ export default function Reels({
             Array.isArray(
               data?.reels
             )
-              ? data.reels
+              ? [
+                  ...data.reels,
+                ]
               : [];
 
 
@@ -1221,10 +1089,7 @@ export default function Reels({
           // OPEN SHARED REEL FIRST
           // -------------------------------------------------
 
-          if (
-            reelId
-          ) {
-
+          if (reelId) {
             const requestedId =
               Number(
                 reelId
@@ -1244,9 +1109,9 @@ export default function Reels({
 
 
             if (
-              requestedIndex > 0
+              requestedIndex >
+              0
             ) {
-
               const [
                 requestedReel,
               ] =
@@ -1260,9 +1125,7 @@ export default function Reels({
                 requestedReel,
                 ...items,
               ];
-
             }
-
           }
 
 
@@ -1272,24 +1135,25 @@ export default function Reels({
 
 
           if (
-            items.length > 0
+            items.length >
+            0
           ) {
-
             setActiveReelId(
               items[0].id
             );
-
+          } else {
+            setActiveReelId(
+              null
+            );
           }
 
         } catch (
           loadError
         ) {
-
           console.error(
             "LOAD REELS ERROR:",
             loadError
           );
-
 
           setError(
             loadError?.message ||
@@ -1297,13 +1161,10 @@ export default function Reels({
           );
 
         } finally {
-
           setLoading(
             false
           );
-
         }
-
       },
       [
         reelId,
@@ -1311,11 +1172,13 @@ export default function Reels({
     );
 
 
+  // =======================================================
+  // INITIAL LOAD
+  // =======================================================
+
   useEffect(
     () => {
-
       loadReels();
-
     },
     [
       loadReels,
@@ -1329,29 +1192,21 @@ export default function Reels({
 
   useEffect(
     () => {
-
       function handlePublished() {
-
         loadReels();
-
       }
-
 
       window.addEventListener(
         "shobdo:reel-published",
         handlePublished
       );
 
-
       return () => {
-
         window.removeEventListener(
           "shobdo:reel-published",
           handlePublished
         );
-
       };
-
     },
     [
       loadReels,
@@ -1368,7 +1223,6 @@ export default function Reels({
       (
         id
       ) => {
-
         setActiveReelId(
           id
         );
@@ -1386,9 +1240,7 @@ export default function Reels({
               id
             )
         ) {
-
           return;
-
         }
 
 
@@ -1404,7 +1256,6 @@ export default function Reels({
         ).catch(
           () => {}
         );
-
       },
       []
     );
@@ -1417,22 +1268,17 @@ export default function Reels({
   function scrollToIndex(
     index
   ) {
-
     if (
       index < 0 ||
       index >=
         reels.length
     ) {
-
       return;
-
     }
 
 
     const reel =
-      reels[
-        index
-      ];
+      reels[index];
 
 
     const element =
@@ -1444,63 +1290,48 @@ export default function Reels({
 
 
     element?.scrollIntoView({
-
       behavior:
         "smooth",
 
       block:
         "start",
-
     });
-
   }
-
-
-  const activeIndex =
-    reels.findIndex(
-      (
-        reel
-      ) =>
-        reel.id ===
-        activeReelId
-    );
 
 
   // =======================================================
   // LOADING
   // =======================================================
 
-  if (
-    loading
-  ) {
-
+  if (loading) {
     return (
+      <ReelsPageShell>
 
-      <main
-        className="shobdo-reels-state"
-      >
+        <main
+          className="shobdo-reels-state shobdo-reels-loading-state"
+        >
 
-        <LoaderCircle
-          className="shobdo-reels-spinner"
-          size={36}
-        />
-
-
-        <h1>
-          Loading Reels
-        </h1>
+          <LoaderCircle
+            className="shobdo-reels-spinner"
+            size={36}
+          />
 
 
-        <p>
-          Discover stories, poetry,
-          performances and creative voices
-          from the SHOBDO community.
-        </p>
+          <h1>
+            Loading Reels
+          </h1>
 
-      </main>
 
+          <p>
+            Discover stories, poetry,
+            performances and creative voices
+            from the SHOBDO community.
+          </p>
+
+        </main>
+
+      </ReelsPageShell>
     );
-
   }
 
 
@@ -1508,40 +1339,47 @@ export default function Reels({
   // ERROR
   // =======================================================
 
-  if (
-    error
-  ) {
-
+  if (error) {
     return (
+      <ReelsPageShell>
 
-      <main
-        className="shobdo-reels-state"
-      >
-
-        <h1>
-          Reels are unavailable
-        </h1>
-
-
-        <p>
-          {error}
-        </p>
-
-
-        <button
-          type="button"
-          onClick={
-            loadReels
-          }
-          className="shobdo-reels-retry"
+        <main
+          className="shobdo-reels-state shobdo-reels-error-state"
         >
-          Try again
-        </button>
 
-      </main>
+          <div
+            className="shobdo-reels-empty-icon"
+          >
+            <Clapperboard
+              size={32}
+            />
+          </div>
 
+
+          <h1>
+            Reels are unavailable
+          </h1>
+
+
+          <p>
+            {error}
+          </p>
+
+
+          <button
+            type="button"
+            onClick={
+              loadReels
+            }
+            className="shobdo-reels-retry"
+          >
+            Try again
+          </button>
+
+        </main>
+
+      </ReelsPageShell>
     );
-
   }
 
 
@@ -1550,213 +1388,206 @@ export default function Reels({
   // =======================================================
 
   if (
-    reels.length === 0
+    reels.length ===
+    0
   ) {
-
     return (
+      <ReelsPageShell>
 
-      <main
-        className="shobdo-reels-state shobdo-reels-empty-state"
-      >
-
-        <div
-          className="shobdo-reels-empty-icon"
+        <main
+          className="shobdo-reels-state shobdo-reels-empty-state"
         >
 
-          <Clapperboard
-            size={34}
-          />
-
-        </div>
-
-
-        {user
-          ? (
-
-            <>
-
-              <span
-                className="shobdo-reels-empty-eyebrow"
-              >
-                SHOBDO REELS
-              </span>
+          <div
+            className="shobdo-reels-empty-icon"
+          >
+            <Clapperboard
+              size={34}
+            />
+          </div>
 
 
-              <h1>
-                Your stories deserve a stage.
-              </h1>
+          {user
+            ? (
+              <>
+
+                <span
+                  className="shobdo-reels-empty-eyebrow"
+                >
+                  SHOBDO REELS
+                </span>
 
 
-              <p>
-
-                Publish poetry recitations,
-                storytelling, literary
-                performances and short
-                creative videos.
-
-              </p>
+                <h1>
+                  Your stories deserve a stage.
+                </h1>
 
 
-              <Link
-                to="/reels/create"
-                className="shobdo-reels-create-button"
-              >
+                <p>
+                  Publish poetry recitations,
+                  storytelling, literary
+                  performances and short
+                  creative videos.
+                </p>
 
-                <Upload
-                  size={18}
-                />
-
-                Create your first Reel
-
-              </Link>
-
-
-              <small
-                className="shobdo-reels-empty-note"
-              >
-                MP4, WEBM, MOV or M4V · Up to 100 MB
-              </small>
-
-            </>
-
-          )
-          : (
-
-            <>
-
-              <h1>
-                Reels are coming to SHOBDO
-              </h1>
-
-
-              <p>
-
-                Short literary videos,
-                poetry recitations,
-                storytelling and creative
-                voices will appear here.
-
-              </p>
-
-
-              <div
-                className="shobdo-reels-empty-actions"
-              >
 
                 <Link
-                  to="/login"
+                  to="/reels/create"
                   className="shobdo-reels-create-button"
                 >
-
-                  <Video
+                  <Upload
                     size={18}
                   />
 
-                  Log in to create a Reel
-
+                  Create your first Reel
                 </Link>
 
 
-                <Link
-                  to="/"
-                  className="shobdo-reels-home-link"
+                <small
+                  className="shobdo-reels-empty-note"
                 >
-                  Explore SHOBDO
-                </Link>
+                  MP4, WEBM, MOV or M4V · Up to 100 MB
+                </small>
 
-              </div>
+              </>
+            )
+            : (
+              <>
 
-            </>
+                <span
+                  className="shobdo-reels-empty-eyebrow"
+                >
+                  SHOBDO REELS
+                </span>
 
-          )}
 
-      </main>
+                <h1>
+                  Reels are coming to SHOBDO
+                </h1>
 
+
+                <p>
+                  Short literary videos,
+                  poetry recitations,
+                  storytelling and creative
+                  voices will appear here.
+                </p>
+
+
+                <div
+                  className="shobdo-reels-empty-actions"
+                >
+
+                  <Link
+                    to="/login"
+                    className="shobdo-reels-create-button"
+                  >
+                    <Video
+                      size={18}
+                    />
+
+                    Log in to create a Reel
+                  </Link>
+
+
+                  <Link
+                    to="/"
+                    className="shobdo-reels-home-link"
+                  >
+                    Explore SHOBDO
+                  </Link>
+
+                </div>
+
+              </>
+            )}
+
+        </main>
+
+      </ReelsPageShell>
     );
-
   }
 
 
   // =======================================================
-  // REELS
+  // REELS FEED
   // =======================================================
 
   return (
+    <ReelsPageShell>
 
-    <main
-      ref={
-        containerRef
-      }
-      className="shobdo-reels-page"
-    >
+      <main
+        ref={
+          containerRef
+        }
+        className="shobdo-reels-page"
+      >
 
-      {reels.map(
-        (
-          reel,
-          index
-        ) => (
+        {reels.map(
+          (
+            reel,
+            index
+          ) => (
 
-          <ReelItem
-            key={
-              reel.id
-            }
-            reel={
-              reel
-            }
-            user={
-              user
-            }
-            active={
-              reel.id ===
-              activeReelId
-            }
-            onVisible={
-              handleVisible
-            }
-            hasPrevious={
-              index > 0
-            }
-            hasNext={
-              index <
-              reels.length - 1
-            }
-            onPrevious={
-              () =>
-                scrollToIndex(
-                  index - 1
-                )
-            }
-            onNext={
-              () =>
-                scrollToIndex(
-                  index + 1
-                )
-            }
-          />
+            <ReelItem
+              key={
+                reel.id
+              }
+              reel={
+                reel
+              }
+              user={
+                user
+              }
+              active={
+                reel.id ===
+                activeReelId
+              }
+              onVisible={
+                handleVisible
+              }
+              hasPrevious={
+                index > 0
+              }
+              hasNext={
+                index <
+                reels.length - 1
+              }
+              onPrevious={
+                () =>
+                  scrollToIndex(
+                    index - 1
+                  )
+              }
+              onNext={
+                () =>
+                  scrollToIndex(
+                    index + 1
+                  )
+              }
+            />
 
-        )
-      )}
+          )
+        )}
 
 
-      {user && (
+        {user && (
 
-        <Link
-          to="/reels/create"
-          className="shobdo-reels-floating-create"
-          aria-label="Create Reel"
-          title="Create Reel"
-        >
+          <Link
+            to="/reels/create"
+            className="shobdo-reels-floating-create"
+            aria-label="Create Reel"
+            title="Create Reel"
+          >
+            <Plus
+              size={23}
+            />
+          </Link>
 
-          <Plus
-            size={23}
-          />
+        )}
 
-        </Link>
+      </main>
 
-      )}
-
-    </main>
-
+    </ReelsPageShell>
   );
-
 }

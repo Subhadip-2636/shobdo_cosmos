@@ -1121,3 +1121,545 @@
   }
 
 }
+
+/* =========================================================
+   SHOBDO REELS
+   PREMIUM ANIMATED LITERARY BACKGROUND
+========================================================= */
+
+
+/* =========================================================
+   ROOT SHELL
+========================================================= */
+
+.shobdo-reels-shell {
+  position: relative;
+
+  isolation: isolate;
+
+  width: 100%;
+  min-height: 100vh;
+
+  overflow: hidden;
+
+  background: transparent;
+}
+
+
+/* =========================================================
+   GLOBAL ANIMATED BACKGROUND
+========================================================= */
+
+.shobdo-reels-animated-background {
+  position: fixed;
+
+  inset: 0;
+
+  width: 100vw;
+  height: 100vh;
+
+  overflow: hidden;
+
+  pointer-events: none;
+
+  z-index: 0;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fffaf2 0%,
+      #fbf4ed 42%,
+      #f8eee9 100%
+    );
+}
+
+
+/* =========================================================
+   BACKGROUND VIDEO
+========================================================= */
+
+.shobdo-reels-background-video {
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  object-position:
+    center center;
+
+  pointer-events: none;
+
+  user-select: none;
+
+  -webkit-user-select: none;
+
+  transform: translateZ(0);
+
+  backface-visibility: hidden;
+
+  will-change: transform;
+}
+
+
+/* =========================================================
+   READABILITY OVERLAY
+========================================================= */
+
+.shobdo-reels-background-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(
+        255,
+        252,
+        246,
+        0.12
+      )
+        0%,
+
+      rgba(
+        255,
+        251,
+        246,
+        0.05
+      )
+        30%,
+
+      rgba(
+        255,
+        250,
+        244,
+        0.07
+      )
+        68%,
+
+      rgba(
+        255,
+        248,
+        241,
+        0.16
+      )
+        100%
+    );
+}
+
+
+/* =========================================================
+   CLEAN CENTRAL CONTENT AREA
+
+   This prevents books / film strips / particles
+   in the video from fighting with the Reels content.
+========================================================= */
+
+.shobdo-reels-background-focus {
+  position: absolute;
+
+  inset: 0;
+
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      ellipse
+      at center,
+
+      rgba(
+        255,
+        253,
+        249,
+        0.38
+      )
+        0%,
+
+      rgba(
+        255,
+        253,
+        249,
+        0.22
+      )
+        30%,
+
+      rgba(
+        255,
+        252,
+        248,
+        0.08
+      )
+        55%,
+
+      transparent
+        78%
+    );
+}
+
+
+/* =========================================================
+   CINEMATIC EDGE DEPTH
+========================================================= */
+
+.shobdo-reels-background-vignette {
+  position: absolute;
+
+  inset: 0;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      90deg,
+
+      rgba(
+        92,
+        50,
+        82,
+        0.045
+      )
+        0%,
+
+      transparent
+        15%,
+
+      transparent
+        85%,
+
+      rgba(
+        92,
+        50,
+        82,
+        0.045
+      )
+        100%
+    );
+}
+
+
+/* =========================================================
+   KEEP ACTUAL REELS CONTENT ABOVE BACKGROUND
+========================================================= */
+
+.shobdo-reels-shell >
+.shobdo-reels-state,
+
+.shobdo-reels-shell >
+.shobdo-reels-page {
+  position: relative;
+
+  z-index: 1;
+}
+
+
+/* =========================================================
+   IMPORTANT
+
+   Existing Reels CSS may currently paint a solid
+   cream background over the page.
+
+   These rules allow our video to show through.
+========================================================= */
+
+.shobdo-reels-shell
+.shobdo-reels-state {
+  background:
+    transparent !important;
+}
+
+
+.shobdo-reels-shell
+.shobdo-reels-page {
+  background:
+    transparent !important;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+
+   Preserve readability while exposing the animation.
+========================================================= */
+
+.shobdo-reels-shell
+.shobdo-reels-empty-state {
+  position: relative;
+
+  background:
+    transparent !important;
+}
+
+
+/* =========================================================
+   EMPTY CONTENT TEXT READABILITY
+========================================================= */
+
+.shobdo-reels-empty-state h1 {
+  position: relative;
+
+  text-shadow:
+    0 2px 18px
+    rgba(
+      255,
+      251,
+      245,
+      0.72
+    );
+}
+
+
+.shobdo-reels-empty-state > p {
+  position: relative;
+
+  text-shadow:
+    0 1px 12px
+    rgba(
+      255,
+      252,
+      248,
+      0.8
+    );
+}
+
+
+/* =========================================================
+   ICON GLASS EFFECT
+========================================================= */
+
+.shobdo-reels-empty-state
+.shobdo-reels-empty-icon {
+  backdrop-filter:
+    blur(12px);
+
+  -webkit-backdrop-filter:
+    blur(12px);
+}
+
+
+/* =========================================================
+   CREATE BUTTON
+
+   Give a little more depth against the animated scene.
+========================================================= */
+
+.shobdo-reels-empty-state
+.shobdo-reels-create-button {
+  position: relative;
+
+  box-shadow:
+    0 12px 30px
+    rgba(
+      86,
+      48,
+      81,
+      0.16
+    );
+
+  backdrop-filter:
+    blur(10px);
+
+  -webkit-backdrop-filter:
+    blur(10px);
+}
+
+
+/* =========================================================
+   LOADING STATE
+========================================================= */
+
+.shobdo-reels-loading-state {
+  background:
+    transparent !important;
+}
+
+
+/* =========================================================
+   ERROR STATE
+========================================================= */
+
+.shobdo-reels-error-state {
+  background:
+    transparent !important;
+}
+
+
+/* =========================================================
+   REEL FEED
+
+   Actual Reel video remains visually dominant.
+========================================================= */
+
+.shobdo-reels-page
+.shobdo-reel {
+  position: relative;
+
+  z-index: 2;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+  max-width: 768px
+) {
+
+  .shobdo-reels-background-video {
+    object-position:
+      center center;
+  }
+
+
+  .shobdo-reels-background-overlay {
+    background:
+      rgba(
+        255,
+        251,
+        245,
+        0.16
+      );
+  }
+
+
+  .shobdo-reels-background-focus {
+    background:
+      radial-gradient(
+        ellipse
+        at center,
+
+        rgba(
+          255,
+          253,
+          249,
+          0.35
+        )
+          0%,
+
+        rgba(
+          255,
+          253,
+          249,
+          0.18
+        )
+          45%,
+
+        rgba(
+          255,
+          253,
+          249,
+          0.04
+        )
+          75%,
+
+        transparent
+          100%
+      );
+  }
+
+
+  .shobdo-reels-background-vignette {
+    opacity:
+      0.6;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (
+  max-width: 480px
+) {
+
+  .shobdo-reels-background-overlay {
+    background:
+      rgba(
+        255,
+        251,
+        245,
+        0.20
+      );
+  }
+
+
+  .shobdo-reels-background-focus {
+    background:
+      linear-gradient(
+        180deg,
+
+        rgba(
+          255,
+          253,
+          248,
+          0.28
+        ),
+
+        rgba(
+          255,
+          253,
+          248,
+          0.10
+        )
+      );
+  }
+
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+   USER REQUESTED REDUCED MOTION
+========================================================= */
+
+@media (
+  prefers-reduced-motion: reduce
+) {
+
+  .shobdo-reels-background-video {
+    display: none;
+  }
+
+
+  .shobdo-reels-animated-background {
+    background:
+      linear-gradient(
+        135deg,
+
+        rgba(
+          255,
+          253,
+          247,
+          0.94
+        ),
+
+        rgba(
+          245,
+          234,
+          229,
+          0.92
+        )
+      ),
+      url(
+        "/backgrounds/shobdo-literary.jpg"
+      );
+
+    background-size:
+      cover;
+
+    background-position:
+      center;
+
+    background-repeat:
+      no-repeat;
+  }
+
+}
