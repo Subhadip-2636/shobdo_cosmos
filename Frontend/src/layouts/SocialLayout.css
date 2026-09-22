@@ -356,6 +356,59 @@
 
 
 /* =========================================================
+   REELS NAV ACCENT
+========================================================= */
+
+.social-nav-item[href="/reels"]
+.social-nav-icon {
+  color:
+    #75536f;
+}
+
+
+.social-nav-item[href="/reels"].social-nav-item-active {
+  border-color:
+    #dfcbdc;
+
+  background:
+    linear-gradient(
+      90deg,
+      #f2e6f0,
+      #faf2f7
+    );
+
+  color:
+    #65435f;
+}
+
+
+.social-nav-item[href="/reels"].social-nav-item-active::before {
+  background:
+    #75536f;
+}
+
+
+@media (
+  hover: hover
+) and (
+  pointer: fine
+) {
+
+  .social-nav-item[href="/reels"]:hover {
+    border-color:
+      #e5d3e1;
+
+    background:
+      #faf3f8;
+
+    color:
+      #6d4967;
+  }
+
+}
+
+
+/* =========================================================
    NAV ICON
 ========================================================= */
 
@@ -2293,6 +2346,12 @@ span:last-child {
 ========================================================= */
 
 .social-mobile-nav {
+  --social-brand:
+    #8d6527;
+
+  --social-page-bg:
+    #f8f5ef;
+
   display:
     none;
 }
@@ -2581,7 +2640,7 @@ span:last-child {
       );
 
     font-size:
-      7px;
+      6.5px;
   }
 
 
@@ -2814,7 +2873,7 @@ span:last-child {
 
     grid-template-columns:
       repeat(
-        5,
+        6,
         minmax(
           0,
           1fr
@@ -2827,7 +2886,7 @@ span:last-child {
     padding:
       5px
       max(
-        7px,
+        4px,
         env(
           safe-area-inset-left
         )
@@ -2839,7 +2898,7 @@ span:last-child {
         )
       )
       max(
-        7px,
+        4px,
         env(
           safe-area-inset-right
         )
@@ -2925,7 +2984,7 @@ span:last-child {
       none;
 
     font-size:
-      8.5px;
+      7.8px;
 
     font-weight:
       650;
@@ -2999,6 +3058,37 @@ span:last-child {
 
 
   /* =====================================================
+     MOBILE REELS ACCENT
+  ====================================================== */
+
+  .social-mobile-link[href="/reels"]
+  .social-mobile-icon-wrap {
+    color:
+      #75536f;
+  }
+
+
+  .social-mobile-link[href="/reels"].social-mobile-link-active {
+    color:
+      #684663;
+
+    background:
+      rgba(
+        117,
+        83,
+        111,
+        0.07
+      );
+  }
+
+
+  .social-mobile-link[href="/reels"].social-mobile-link-active::before {
+    background:
+      #75536f;
+  }
+
+
+  /* =====================================================
      MOBILE ICON
   ====================================================== */
 
@@ -3007,10 +3097,10 @@ span:last-child {
       relative;
 
     width:
-      26px;
+      25px;
 
     height:
-      26px;
+      25px;
 
     display:
       grid;
@@ -3022,10 +3112,10 @@ span:last-child {
 
   .social-mobile-icon-wrap svg {
     width:
-      21px;
+      20px;
 
     height:
-      21px;
+      20px;
 
     stroke-width:
       1.9;
@@ -3098,10 +3188,10 @@ span:last-child {
       relative;
 
     width:
-      48px;
+      46px;
 
     height:
-      48px;
+      46px;
 
     margin:
       0 auto;
@@ -3201,16 +3291,16 @@ span:last-child {
       50px;
 
     font-size:
-      8px;
+      7.4px;
   }
 
 
   .social-mobile-create {
     width:
-      47px;
+      45px;
 
     height:
-      47px;
+      45px;
   }
 
 }
@@ -3251,7 +3341,7 @@ span:last-child {
       2px;
 
     font-size:
-      7.5px;
+      6.9px;
 
     border-radius:
       10px;
@@ -3260,28 +3350,28 @@ span:last-child {
 
   .social-mobile-icon-wrap {
     width:
-      24px;
+      23px;
 
     height:
-      24px;
+      23px;
   }
 
 
   .social-mobile-icon-wrap svg {
     width:
-      20px;
+      19px;
 
     height:
-      20px;
+      19px;
   }
 
 
   .social-mobile-create {
     width:
-      45px;
+      43px;
 
     height:
-      45px;
+      43px;
 
     border-radius:
       14px;
@@ -3343,7 +3433,7 @@ span:last-child {
 
   .social-mobile-link {
     font-size:
-      7px;
+      6.5px;
   }
 
 
@@ -3358,10 +3448,10 @@ span:last-child {
 
   .social-mobile-create {
     width:
-      44px;
+      42px;
 
     height:
-      44px;
+      42px;
   }
 
 }
@@ -3397,7 +3487,7 @@ span:last-child {
       47px;
 
     font-size:
-      6.7px;
+      6.2px;
   }
 
 
@@ -3421,10 +3511,10 @@ span:last-child {
 
   .social-mobile-create {
     width:
-      42px;
+      40px;
 
     height:
-      42px;
+      40px;
 
     border-radius:
       13px;
@@ -3477,7 +3567,7 @@ span:last-child {
       45px;
 
     font-size:
-      6.2px;
+      5.8px;
   }
 
 
@@ -3488,7 +3578,7 @@ span:last-child {
     .social-mobile-badge
   ) {
     max-width:
-      52px;
+      46px;
 
     overflow:
       hidden;
@@ -3509,10 +3599,10 @@ span:last-child {
 
   .social-mobile-create {
     width:
-      40px;
+      38px;
 
     height:
-      40px;
+      38px;
 
     border-radius:
       12px;

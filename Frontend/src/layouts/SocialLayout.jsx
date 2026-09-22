@@ -8,6 +8,7 @@ import {
   Bell,
   Bookmark,
   BookOpen,
+  Clapperboard,
   Compass,
   Feather,
   Home,
@@ -386,6 +387,14 @@ export default function SocialLayout({
         "অন্বেষণ",
         "Explore",
         "एक्सप्लोर"
+      ),
+
+    reels:
+      translate(
+        "navbar.reels",
+        "রিলস",
+        "Reels",
+        "रील्स"
       ),
 
     search:
@@ -1352,6 +1361,15 @@ export default function SocialLayout({
                 icon={Compass}
                 label={
                   labels.explore
+                }
+              />
+
+
+              <SidebarLink
+                to="/reels"
+                icon={Clapperboard}
+                label={
+                  labels.reels
                 }
               />
 
@@ -2408,6 +2426,15 @@ export default function SocialLayout({
           icon={Compass}
           label={
             labels.explore
+          }
+        />
+
+
+        <MobileNavLink
+          to="/reels"
+          icon={Clapperboard}
+          label={
+            labels.reels
           }
         />
 
