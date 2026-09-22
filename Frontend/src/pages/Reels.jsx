@@ -6,10 +6,6 @@ import {
 } from "react";
 
 import {
-  createPortal,
-} from "react-dom";
-
-import {
   Bookmark,
   ChevronDown,
   ChevronUp,
@@ -63,9 +59,7 @@ const COPY = {
   // =======================================================
 
   bn: {
-
-    reels:
-      "রিলস",
+    reels: "রিলস",
 
     loadingTitle:
       "রিলস লোড হচ্ছে",
@@ -162,7 +156,6 @@ const COPY = {
 
     copied:
       "রিলের লিংক কপি হয়েছে।",
-
   },
 
 
@@ -171,9 +164,7 @@ const COPY = {
   // =======================================================
 
   en: {
-
-    reels:
-      "Reels",
+    reels: "Reels",
 
     loadingTitle:
       "Loading Reels",
@@ -270,7 +261,6 @@ const COPY = {
 
     copied:
       "Reel link copied.",
-
   },
 
 
@@ -279,9 +269,7 @@ const COPY = {
   // =======================================================
 
   hi: {
-
-    reels:
-      "रील्स",
+    reels: "रील्स",
 
     loadingTitle:
       "रील्स लोड हो रही हैं",
@@ -378,7 +366,6 @@ const COPY = {
 
     copied:
       "रील लिंक कॉपी हो गया।",
-
   },
 
 };
@@ -439,8 +426,7 @@ function getInitials(
     String(
       name ||
       "Writer"
-    )
-      .trim();
+    ).trim();
 
 
   if (
@@ -454,10 +440,8 @@ function getInitials(
 
   return safeName
     .split(/\s+/)
-    .slice(
-      0,
-      2
-    )
+    .filter(Boolean)
+    .slice(0, 2)
     .map(
       (
         part
@@ -471,36 +455,100 @@ function getInitials(
 
 
 // =========================================================
-// GLOBAL REELS BACKGROUND
+// FULL-SCREEN REELS BACKGROUND
 //
-// Important:
-// We render directly into document.body using createPortal.
+// IMPORTANT:
 //
-// Therefore the video is NOT restricted to the center
-// SocialLayout column.
+// Do NOT portal this to document.body.
 //
-// It visually covers:
-//
-// left sidebar
-// center content
-// right sidebar
-//
-// while all SHOBDO UI remains above it.
+// SHOBDO already has a global PageBackground component.
+// Keeping this inside the application tree lets its z-index
+// sit ABOVE the ordinary PageBackground but BELOW the Reels
+// interface.
 // =========================================================
 
 function ReelsBackground() {
 
-  if (
-    typeof document ===
-    "undefined"
-  ) {
+  const videoRef =
+    useRef(null);
 
-    return null;
+
+  useEffect(
+    () => {
+
+      const video =
+        videoRef.current;
+
+
+      if (
+        !video
+      ) {
+
+        return;
+
+      }
+
+
+      video.muted =
+        true;
+
+
+      const playPromise =
+        video.play();
+
+
+      if (
+        playPromise &&
+        typeof playPromise.catch ===
+          "function"
+      ) {
+
+        playPromise.catch(
+          () => {}
+        );
+
+      }
+
+    },
+    []
+  );
+
+
+  function ensurePlayback() {
+
+    const video =
+      videoRef.current;
+
+
+    if (
+      !video
+    ) {
+
+      return;
+
+    }
+
+
+    video.muted =
+      true;
+
+
+    if (
+      video.paused
+    ) {
+
+      video
+        .play()
+        .catch(
+          () => {}
+        );
+
+    }
 
   }
 
 
-  return createPortal(
+  return (
 
     <div
       className="shobdo-reels-animated-background"
@@ -508,23 +556,24 @@ function ReelsBackground() {
     >
 
       <video
+        ref={videoRef}
         className="shobdo-reels-background-video"
+        src={
+          REELS_BACKGROUND_VIDEO
+        }
         autoPlay
         muted
         loop
         playsInline
         preload="auto"
         tabIndex={-1}
-      >
-
-        <source
-          src={
-            REELS_BACKGROUND_VIDEO
-          }
-          type="video/mp4"
-        />
-
-      </video>
+        onLoadedData={
+          ensurePlayback
+        }
+        onCanPlay={
+          ensurePlayback
+        }
+      />
 
 
       <div
@@ -541,9 +590,7 @@ function ReelsBackground() {
         className="shobdo-reels-background-vignette"
       />
 
-    </div>,
-
-    document.body
+    </div>
 
   );
 
@@ -551,7 +598,7 @@ function ReelsBackground() {
 
 
 // =========================================================
-// PAGE SHELL
+// REELS SCENE
 // =========================================================
 
 function ReelsScene({
@@ -560,20 +607,22 @@ function ReelsScene({
 
   return (
 
-    <>
+    <div
+      className="shobdo-reels-shell"
+    >
 
       <ReelsBackground />
 
 
       <div
-        className="shobdo-reels-shell"
+        className="shobdo-reels-content-layer"
       >
 
         {children}
 
       </div>
 
-    </>
+    </div>
 
   );
 
@@ -636,7 +685,7 @@ function ReelItem({
 
 
   // =======================================================
-  // VISIBILITY
+  // INTERSECTION OBSERVER
   // =======================================================
 
   useEffect(
@@ -657,7 +706,6 @@ function ReelItem({
 
       const observer =
         new IntersectionObserver(
-
           (
             [entry]
           ) => {
@@ -675,13 +723,11 @@ function ReelItem({
             }
 
           },
-
           {
             threshold: [
               0.65,
             ],
           }
-
         );
 
 
@@ -705,7 +751,7 @@ function ReelItem({
 
 
   // =======================================================
-  // ACTIVE AUTOPLAY
+  // ACTIVE REEL AUTOPLAY
   // =======================================================
 
   useEffect(
@@ -728,37 +774,30 @@ function ReelItem({
         active
       ) {
 
-        const playPromise =
-          video.play();
+        video.muted =
+          muted;
 
 
-        if (
-          playPromise &&
-          typeof playPromise.catch ===
-            "function"
-        ) {
+        video
+          .play()
+          .then(
+            () => {
 
-          playPromise
-            .then(
-              () => {
+              setPlaying(
+                true
+              );
 
-                setPlaying(
-                  true
-                );
+            }
+          )
+          .catch(
+            () => {
 
-              }
-            )
-            .catch(
-              () => {
+              setPlaying(
+                false
+              );
 
-                setPlaying(
-                  false
-                );
-
-              }
-            );
-
-        }
+            }
+          );
 
       } else {
 
@@ -774,6 +813,7 @@ function ReelItem({
     },
     [
       active,
+      muted,
     ]
   );
 
@@ -863,7 +903,7 @@ function ReelItem({
 
 
   // =======================================================
-  // PROGRESS
+  // VIDEO PROGRESS
   // =======================================================
 
   function handleTimeUpdate(
@@ -891,13 +931,11 @@ function ReelItem({
 
 
     setProgress(
-
       (
         video.currentTime /
         video.duration
       ) *
         100
-
     );
 
   }
@@ -925,7 +963,6 @@ function ReelItem({
       ) {
 
         await navigator.share({
-
           title:
             "SHOBDO Reel",
 
@@ -935,7 +972,6 @@ function ReelItem({
 
           url:
             reelUrl,
-
         });
 
 
@@ -944,20 +980,26 @@ function ReelItem({
       }
 
 
-      await navigator
-        .clipboard
-        .writeText(
-          reelUrl
+      if (
+        navigator.clipboard
+      ) {
+
+        await navigator
+          .clipboard
+          .writeText(
+            reelUrl
+          );
+
+
+        window.alert(
+          copy.copied
         );
 
-
-      window.alert(
-        copy.copied
-      );
+      }
 
     } catch {
 
-      // Sharing cancelled.
+      // User cancelled sharing.
 
     }
 
@@ -977,6 +1019,7 @@ function ReelItem({
   const creatorName =
     creator.name ||
     creator.full_name ||
+    creator.display_name ||
     reel.user_name ||
     `Writer ${
       reel.user_id ||
@@ -998,6 +1041,18 @@ function ReelItem({
       : "/reels";
 
 
+  const isOwnReel =
+    Boolean(
+      user &&
+      Number(
+        user.id
+      ) ===
+        Number(
+          reel.user_id
+        )
+    );
+
+
   // =======================================================
   // UI
   // =======================================================
@@ -1015,7 +1070,7 @@ function ReelItem({
     >
 
       {/* =================================================
-          VIDEO
+          REEL VIDEO
       ================================================== */}
 
       <button
@@ -1069,10 +1124,6 @@ function ReelItem({
       </button>
 
 
-      {/* =================================================
-          VIDEO GRADIENT
-      ================================================== */}
-
       <div
         className="shobdo-reel-gradient"
         aria-hidden="true"
@@ -1080,7 +1131,7 @@ function ReelItem({
 
 
       {/* =================================================
-          TOPBAR
+          TOP BAR
       ================================================== */}
 
       <div
@@ -1145,7 +1196,7 @@ function ReelItem({
 
 
       {/* =================================================
-          CENTER PLAY
+          CENTER PLAY BUTTON
       ================================================== */}
 
       {!playing && (
@@ -1208,7 +1259,7 @@ function ReelItem({
 
 
       {/* =================================================
-          ACTIONS
+          ACTION BAR
       ================================================== */}
 
       <aside
@@ -1247,20 +1298,18 @@ function ReelItem({
           >
 
             <Heart
-              size={25}
+              size={24}
             />
 
           </span>
 
 
           <span>
-
             {
               formatCount(
                 reel.likes_count
               )
             }
-
           </span>
 
         </Link>
@@ -1298,20 +1347,18 @@ function ReelItem({
           >
 
             <MessageCircle
-              size={25}
+              size={24}
             />
 
           </span>
 
 
           <span>
-
             {
               formatCount(
                 reel.comments_count
               )
             }
-
           </span>
 
         </Link>
@@ -1349,20 +1396,18 @@ function ReelItem({
           >
 
             <Bookmark
-              size={24}
+              size={23}
             />
 
           </span>
 
 
           <span>
-
             {
               formatCount(
                 reel.saves_count
               )
             }
-
           </span>
 
         </Link>
@@ -1384,20 +1429,18 @@ function ReelItem({
           >
 
             <Share2
-              size={24}
+              size={23}
             />
 
           </span>
 
 
           <span>
-
             {
               formatCount(
                 reel.shares_count
               )
             }
-
           </span>
 
         </button>
@@ -1416,7 +1459,7 @@ function ReelItem({
           >
 
             <MoreHorizontal
-              size={25}
+              size={24}
             />
 
           </span>
@@ -1427,7 +1470,7 @@ function ReelItem({
 
 
       {/* =================================================
-          INFORMATION
+          CREATOR / CAPTION
       ================================================== */}
 
       <div
@@ -1487,13 +1530,7 @@ function ReelItem({
           </Link>
 
 
-          {user &&
-          Number(
-            user.id
-          ) ===
-            Number(
-              reel.user_id
-            )
+          {isOwnReel
             ? (
 
               <span
@@ -1585,7 +1622,7 @@ function ReelItem({
 
 
       {/* =================================================
-          DESKTOP NAVIGATION
+          DESKTOP PREVIOUS / NEXT
       ================================================== */}
 
       <div
@@ -1604,7 +1641,6 @@ function ReelItem({
 
               event.stopPropagation();
 
-
               onPrevious();
 
             }
@@ -1615,7 +1651,7 @@ function ReelItem({
         >
 
           <ChevronUp
-            size={25}
+            size={24}
           />
 
         </button>
@@ -1633,7 +1669,6 @@ function ReelItem({
 
               event.stopPropagation();
 
-
               onNext();
 
             }
@@ -1644,7 +1679,7 @@ function ReelItem({
         >
 
           <ChevronDown
-            size={25}
+            size={24}
           />
 
         </button>
@@ -1743,40 +1778,40 @@ export default function Reels({
 
 
   // =======================================================
-  // GLOBAL REELS MODE
+  // GLOBAL REELS ROUTE MODE
   // =======================================================
 
   useEffect(
     () => {
 
-      document.body
-        .classList
-        .add(
-          "shobdo-reels-route-active"
-        );
+      const body =
+        document.body;
 
 
-      document.documentElement
-        .classList
-        .add(
-          "shobdo-reels-route-active"
-        );
+      const html =
+        document.documentElement;
+
+
+      body.classList.add(
+        "shobdo-reels-route-active"
+      );
+
+
+      html.classList.add(
+        "shobdo-reels-route-active"
+      );
 
 
       return () => {
 
-        document.body
-          .classList
-          .remove(
-            "shobdo-reels-route-active"
-          );
+        body.classList.remove(
+          "shobdo-reels-route-active"
+        );
 
 
-        document.documentElement
-          .classList
-          .remove(
-            "shobdo-reels-route-active"
-          );
+        html.classList.remove(
+          "shobdo-reels-route-active"
+        );
 
       };
 
@@ -1836,13 +1871,11 @@ export default function Reels({
 
           const data =
             await getReels({
-
               page:
                 1,
 
               perPage:
                 30,
-
             });
 
 
@@ -1857,7 +1890,7 @@ export default function Reels({
 
 
           // -------------------------------------------------
-          // MOVE REQUESTED REEL TO FIRST POSITION
+          // Deep link support inside loaded feed.
           // -------------------------------------------------
 
           if (
@@ -1875,12 +1908,10 @@ export default function Reels({
                 (
                   reel
                 ) =>
-
                   Number(
                     reel.id
                   ) ===
                   requestedId
-
               );
 
 
@@ -1899,11 +1930,8 @@ export default function Reels({
 
 
               items = [
-
                 requestedReel,
-
                 ...items,
-
               ];
 
             }
@@ -1932,10 +1960,8 @@ export default function Reels({
 
 
           setError(
-
             loadError?.message ||
             copy.unavailableDescription
-
           );
 
         } finally {
@@ -1967,7 +1993,7 @@ export default function Reels({
 
 
   // =======================================================
-  // REFRESH AFTER PUBLISH
+  // REFRESH AFTER NEW REEL
   // =======================================================
 
   useEffect(
@@ -2003,17 +2029,17 @@ export default function Reels({
 
 
   // =======================================================
-  // ACTIVE REEL
+  // ACTIVE / VIEW REGISTRATION
   // =======================================================
 
   const handleVisible =
     useCallback(
       (
-        id
+        reelIdValue
       ) => {
 
         setActiveReelId(
-          id
+          reelIdValue
         );
 
 
@@ -2021,7 +2047,7 @@ export default function Reels({
           viewedReelsRef
             .current
             .has(
-              id
+              reelIdValue
             )
         ) {
 
@@ -2033,12 +2059,12 @@ export default function Reels({
         viewedReelsRef
           .current
           .add(
-            id
+            reelIdValue
           );
 
 
         registerReelView(
-          id
+          reelIdValue
         )
           .catch(
             () => {}
@@ -2050,7 +2076,7 @@ export default function Reels({
 
 
   // =======================================================
-  // SCROLL TO REEL
+  // SCROLL
   // =======================================================
 
   function scrollToIndex(
@@ -2085,13 +2111,11 @@ export default function Reels({
 
     element
       ?.scrollIntoView({
-
         behavior:
           "smooth",
 
         block:
           "start",
-
       });
 
   }
@@ -2115,25 +2139,21 @@ export default function Reels({
 
           <LoaderCircle
             className="shobdo-reels-spinner"
-            size={36}
+            size={38}
           />
 
 
           <h1>
-
             {
               copy.loadingTitle
             }
-
           </h1>
 
 
           <p>
-
             {
               copy.loadingDescription
             }
-
           </p>
 
         </main>
@@ -2161,26 +2181,28 @@ export default function Reels({
           className="shobdo-reels-state shobdo-reels-error-state"
         >
 
-          <Clapperboard
-            size={38}
-          />
+          <div
+            className="shobdo-reels-empty-icon"
+          >
+
+            <Clapperboard
+              size={34}
+            />
+
+          </div>
 
 
           <h1>
-
             {
               copy.unavailableTitle
             }
-
           </h1>
 
 
           <p>
-
             {
               error
             }
-
           </p>
 
 
@@ -2208,7 +2230,7 @@ export default function Reels({
 
 
   // =======================================================
-  // EMPTY STATE
+  // EMPTY
   // =======================================================
 
   if (
@@ -2229,10 +2251,21 @@ export default function Reels({
           >
 
             <Clapperboard
-              size={34}
+              size={35}
             />
 
           </div>
+
+
+          <span
+            className="shobdo-reels-empty-eyebrow"
+          >
+
+            {
+              copy.eyebrow
+            }
+
+          </span>
 
 
           {user
@@ -2240,32 +2273,17 @@ export default function Reels({
 
               <>
 
-                <span
-                  className="shobdo-reels-empty-eyebrow"
-                >
-
-                  {
-                    copy.eyebrow
-                  }
-
-                </span>
-
-
                 <h1>
-
                   {
                     copy.emptyTitle
                   }
-
                 </h1>
 
 
                 <p>
-
                   {
                     copy.emptyDescription
                   }
-
                 </p>
 
 
@@ -2277,7 +2295,6 @@ export default function Reels({
                   <Upload
                     size={18}
                   />
-
 
                   {
                     copy.createFirst
@@ -2303,32 +2320,17 @@ export default function Reels({
 
               <>
 
-                <span
-                  className="shobdo-reels-empty-eyebrow"
-                >
-
-                  {
-                    copy.eyebrow
-                  }
-
-                </span>
-
-
                 <h1>
-
                   {
                     copy.guestTitle
                   }
-
                 </h1>
 
 
                 <p>
-
                   {
                     copy.guestDescription
                   }
-
                 </p>
 
 
@@ -2344,7 +2346,6 @@ export default function Reels({
                     <Video
                       size={18}
                     />
-
 
                     {
                       copy.loginToCreate
