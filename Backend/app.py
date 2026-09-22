@@ -903,6 +903,8 @@ def create_app():
         repost_bp,
     )
 
+    from routes.audio_summary_routes import audio_summary_bp
+
 
     # =====================================================
     # REGISTER AUTH
@@ -1060,6 +1062,11 @@ def create_app():
 
     app.register_blueprint(
         repost_bp
+    )
+
+    app.register_blueprint(
+        audio_summary_bp,
+        url_prefix="/api/writings",
     )
 
 

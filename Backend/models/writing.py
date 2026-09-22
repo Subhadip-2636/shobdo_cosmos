@@ -198,6 +198,18 @@ class Writing(db.Model):
         lazy="select",
     )
 
+    # -----------------------------------------------------
+    # Multilingual Audio Summaries
+    # -----------------------------------------------------
+
+    audio_summaries = db.relationship(
+        "WritingAudioSummary",
+        back_populates="writing",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        lazy="select",
+    )
+
     # =====================================================
     # HELPERS
     # =====================================================

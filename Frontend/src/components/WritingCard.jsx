@@ -14,11 +14,14 @@ import {
   Copy,
   Globe2,
   Hash,
+  Headphones,
   Heart,
+  LoaderCircle,
   MessageCircle,
   MoreHorizontal,
   Repeat2,
   Share2,
+  Sparkles,
   User,
 } from "lucide-react";
 
@@ -39,6 +42,12 @@ import {
 } from "../api/api";
 
 import {
+  generateAudioSummary,
+  getAudioSummaryLanguages,
+  getCachedAudioSummary,
+} from "../api/audioSummary";
+
+import {
   getLanguageLabel,
 } from "../config/languages";
 
@@ -46,10 +55,93 @@ import {
   useLanguage,
 } from "../Language/LanguageContext";
 
-import WritingAudioPlayer
-  from "./WritingAudioPlayer";
-
 import "./WritingCard.css";
+
+
+// =========================================================
+// SHARED AUDIO-LANGUAGE CACHE
+// =========================================================
+//
+// The language list is identical for every WritingCard.
+//
+// Without this cache, a feed containing 20 cards could make
+// 20 identical requests to:
+//
+// /api/writings/audio-summary/languages
+//
+// This keeps it to one request for the current page session.
+//
+// IMPORTANT:
+// This caches only the list of available languages.
+// It does NOT cache or remember the listener's selected
+// language.
+//
+// Every WritingCard still starts independently with:
+// "Choose language".
+//
+// =========================================================
+
+let sharedAudioLanguages = null;
+
+let sharedAudioLanguagesPromise = null;
+
+
+async function loadSharedAudioLanguages() {
+
+  if (
+    Array.isArray(
+      sharedAudioLanguages
+    )
+  ) {
+
+    return sharedAudioLanguages;
+  }
+
+
+  if (
+    sharedAudioLanguagesPromise
+  ) {
+
+    return sharedAudioLanguagesPromise;
+  }
+
+
+  sharedAudioLanguagesPromise =
+    getAudioSummaryLanguages()
+      .then(
+        (
+          languages
+        ) => {
+
+          sharedAudioLanguages =
+            Array.isArray(
+              languages
+            )
+              ? languages
+              : [];
+
+
+          return sharedAudioLanguages;
+
+        }
+      )
+      .catch(
+        (
+          error
+        ) => {
+
+          sharedAudioLanguagesPromise =
+            null;
+
+
+          throw error;
+
+        }
+      );
+
+
+  return sharedAudioLanguagesPromise;
+}
 
 
 // =========================================================
@@ -64,6 +156,7 @@ function safeNumber(
     Number(
       value
     );
+
 
   return Number.isFinite(
     number
@@ -91,6 +184,7 @@ function getInitials(
 
 
   if (!text) {
+
     return "";
   }
 
@@ -178,6 +272,7 @@ async function copyText(
       text
     );
 
+
     return true;
   }
 
@@ -262,6 +357,219 @@ async function copyText(
 
 
 // =========================================================
+// AUDIO SUMMARY INLINE STYLES
+// =========================================================
+//
+// Kept here intentionally so the feature works immediately
+// without requiring WritingCard.css changes.
+//
+// We can move these into WritingCard.css after everything is
+// confirmed working.
+//
+// =========================================================
+
+const audioStyles = {
+
+  shell: {
+    marginTop: "14px",
+    marginBottom: "14px",
+    border:
+      "1px solid rgba(114, 78, 145, 0.16)",
+    borderRadius: "16px",
+    overflow: "hidden",
+    background:
+      "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(249,245,252,0.96))",
+    boxShadow:
+      "0 7px 24px rgba(72, 40, 92, 0.05)",
+  },
+
+  toggle: {
+    width: "100%",
+    border: "0",
+    background: "transparent",
+    padding: "13px 14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent:
+      "space-between",
+    gap: "12px",
+    cursor: "pointer",
+    color: "inherit",
+    font: "inherit",
+  },
+
+  toggleMain: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    minWidth: 0,
+  },
+
+  iconBubble: {
+    width: "34px",
+    height: "34px",
+    borderRadius: "11px",
+    display: "grid",
+    placeItems: "center",
+    flexShrink: 0,
+    background:
+      "rgba(112, 63, 148, 0.10)",
+    color: "#71428f",
+  },
+
+  toggleText: {
+    minWidth: 0,
+    textAlign: "left",
+  },
+
+  title: {
+    display: "block",
+    fontSize: "14px",
+    lineHeight: 1.3,
+    fontWeight: 700,
+  },
+
+  subtitle: {
+    display: "block",
+    marginTop: "2px",
+    fontSize: "12px",
+    lineHeight: 1.35,
+    opacity: 0.66,
+  },
+
+  badge: {
+    flexShrink: 0,
+    fontSize: "10px",
+    lineHeight: 1,
+    fontWeight: 700,
+    letterSpacing: "0.04em",
+    textTransform: "uppercase",
+    padding: "6px 8px",
+    borderRadius: "999px",
+    background:
+      "rgba(112, 63, 148, 0.09)",
+    color: "#71428f",
+  },
+
+  body: {
+    padding:
+      "0 14px 14px",
+  },
+
+  divider: {
+    height: "1px",
+    background:
+      "rgba(114, 78, 145, 0.11)",
+    marginBottom: "13px",
+  },
+
+  label: {
+    display: "block",
+    marginBottom: "6px",
+    fontSize: "12px",
+    fontWeight: 700,
+    opacity: 0.72,
+  },
+
+  select: {
+    width: "100%",
+    minHeight: "42px",
+    padding:
+      "0 12px",
+    border:
+      "1px solid rgba(114, 78, 145, 0.20)",
+    borderRadius: "11px",
+    background: "#fff",
+    color: "inherit",
+    font: "inherit",
+    fontSize: "13px",
+    outline: "none",
+  },
+
+  status: {
+    marginTop: "11px",
+    padding: "10px 11px",
+    borderRadius: "11px",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    fontSize: "12px",
+    lineHeight: 1.45,
+    background:
+      "rgba(112, 63, 148, 0.065)",
+  },
+
+  error: {
+    marginTop: "11px",
+    padding: "10px 11px",
+    borderRadius: "11px",
+    fontSize: "12px",
+    lineHeight: 1.45,
+    background:
+      "rgba(196, 54, 67, 0.07)",
+    color: "#a82b3b",
+  },
+
+  button: {
+    marginTop: "11px",
+    width: "100%",
+    minHeight: "42px",
+    border: "0",
+    borderRadius: "11px",
+    padding: "0 14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent:
+      "center",
+    gap: "8px",
+    cursor: "pointer",
+    font: "inherit",
+    fontSize: "13px",
+    fontWeight: 700,
+    background:
+      "linear-gradient(135deg, #71428f, #8f5aa8)",
+    color: "#fff",
+  },
+
+  buttonDisabled: {
+    opacity: 0.6,
+    cursor: "not-allowed",
+  },
+
+  player: {
+    width: "100%",
+    marginTop: "11px",
+    height: "42px",
+  },
+
+  summaryDetails: {
+    marginTop: "9px",
+    fontSize: "12px",
+    lineHeight: 1.55,
+  },
+
+  summaryText: {
+    margin:
+      "8px 0 0",
+    padding: "10px 11px",
+    borderRadius: "10px",
+    background:
+      "rgba(255,255,255,0.75)",
+    whiteSpace: "pre-wrap",
+  },
+
+  footerNote: {
+    margin:
+      "9px 0 0",
+    fontSize: "11px",
+    lineHeight: 1.4,
+    opacity: 0.58,
+  },
+
+};
+
+
+// =========================================================
 // WRITING CARD
 // =========================================================
 
@@ -275,7 +583,8 @@ function WritingCard({
 
   const {
     t,
-    language,
+    language:
+      uiLanguage,
   } = useLanguage();
 
 
@@ -294,6 +603,12 @@ function WritingCard({
   const repostMenuRef =
     useRef(
       null
+    );
+
+
+  const audioRequestIdRef =
+    useRef(
+      0
     );
 
 
@@ -327,12 +642,11 @@ function WritingCard({
     } catch {
 
       // Local fallback below.
-
     }
 
 
     if (
-      language ===
+      uiLanguage ===
       "bn"
     ) {
 
@@ -341,7 +655,7 @@ function WritingCard({
 
 
     if (
-      language ===
+      uiLanguage ===
       "hi"
     ) {
 
@@ -379,9 +693,9 @@ function WritingCard({
       ),
 
     writer:
-      language === "bn"
+      uiLanguage === "bn"
         ? "লেখক"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "लेखक"
           : "Writer",
 
@@ -410,123 +724,256 @@ function WritingCard({
       ),
 
     like:
-      language === "bn"
+      uiLanguage === "bn"
         ? "পছন্দ করুন"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "पसंद करें"
           : "Like",
 
     unlike:
-      language === "bn"
+      uiLanguage === "bn"
         ? "পছন্দ সরান"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "पसंद हटाएँ"
           : "Unlike",
 
     comment:
-      language === "bn"
+      uiLanguage === "bn"
         ? "মন্তব্য"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "टिप्पणी"
           : "Comment",
 
     repost:
-      language === "bn"
+      uiLanguage === "bn"
         ? "রিপোস্ট"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "रीपोस्ट"
           : "Repost",
 
     unrepost:
-      language === "bn"
+      uiLanguage === "bn"
         ? "রিপোস্ট সরান"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "रीपोस्ट हटाएँ"
           : "Remove repost",
 
     repostWriting:
-      language === "bn"
+      uiLanguage === "bn"
         ? "রিপোস্ট করুন"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "रीपोस्ट करें"
           : "Repost",
 
     repostDescription:
-      language === "bn"
+      uiLanguage === "bn"
         ? "এই লেখাটি আপনার রিপোস্টে দেখাবে"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "यह रचना आपके रीपोस्ट में दिखाई देगी"
           : "Show this writing in your reposts",
 
     removeRepostDescription:
-      language === "bn"
+      uiLanguage === "bn"
         ? "আপনার রিপোস্ট থেকে এই লেখাটি সরান"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "इस रचना को अपने रीपोस्ट से हटाएँ"
           : "Remove this writing from your reposts",
 
     share:
-      language === "bn"
+      uiLanguage === "bn"
         ? "শেয়ার"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "शेयर"
           : "Share",
 
     shared:
-      language === "bn"
+      uiLanguage === "bn"
         ? "শেয়ার হয়েছে"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "शेयर किया गया"
           : "Shared",
 
     copied:
-      language === "bn"
+      uiLanguage === "bn"
         ? "লিংক কপি হয়েছে"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "लिंक कॉपी हो गया"
           : "Link copied",
 
     shareFailed:
-      language === "bn"
+      uiLanguage === "bn"
         ? "শেয়ার করা যায়নি"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "शेयर नहीं हो सका"
           : "Unable to share",
 
     save:
-      language === "bn"
+      uiLanguage === "bn"
         ? "সংরক্ষণ"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "सहेजें"
           : "Save",
 
     removeSaved:
-      language === "bn"
+      uiLanguage === "bn"
         ? "সংরক্ষিত তালিকা থেকে সরান"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "सहेजी गई सूची से हटाएँ"
           : "Remove from saved",
 
     more:
-      language === "bn"
+      uiLanguage === "bn"
         ? "আরও অপশন"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "अधिक विकल्प"
           : "More options",
 
     openPost:
-      language === "bn"
+      uiLanguage === "bn"
         ? "লেখাটি খুলুন"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "रचना खोलें"
           : "Open post",
 
     copyLink:
-      language === "bn"
+      uiLanguage === "bn"
         ? "লিংক কপি করুন"
-        : language === "hi"
+        : uiLanguage === "hi"
           ? "लिंक कॉपी करें"
           : "Copy link",
+
+    audioSummary:
+      uiLanguage === "bn"
+        ? "AI অডিও সারাংশ"
+        : uiLanguage === "hi"
+          ? "AI ऑडियो सारांश"
+          : "AI Audio Summary",
+
+    audioDescription:
+      uiLanguage === "bn"
+        ? "আপনার পছন্দের ভাষায় লেখাটির সংক্ষিপ্ত সারাংশ শুনুন"
+        : uiLanguage === "hi"
+          ? "अपनी पसंद की भाषा में रचना का संक्षिप्त सारांश सुनें"
+          : "Listen to a short summary in your preferred language",
+
+    chooseLanguage:
+      uiLanguage === "bn"
+        ? "অডিওর ভাষা বেছে নিন"
+        : uiLanguage === "hi"
+          ? "ऑडियो की भाषा चुनें"
+          : "Choose audio language",
+
+    chooseLanguageOption:
+      uiLanguage === "bn"
+        ? "ভাষা নির্বাচন করুন"
+        : uiLanguage === "hi"
+          ? "भाषा चुनें"
+          : "Choose language",
+
+    loadingLanguages:
+      uiLanguage === "bn"
+        ? "ভাষার তালিকা লোড হচ্ছে..."
+        : uiLanguage === "hi"
+          ? "भाषाएँ लोड हो रही हैं..."
+          : "Loading languages...",
+
+    checkingAudio:
+      uiLanguage === "bn"
+        ? "আগে থেকে তৈরি অডিও খোঁজা হচ্ছে..."
+        : uiLanguage === "hi"
+          ? "पहले से बना ऑडियो खोजा जा रहा है..."
+          : "Checking for an existing audio summary...",
+
+    audioReady:
+      uiLanguage === "bn"
+        ? "অডিও সারাংশ প্রস্তুত"
+        : uiLanguage === "hi"
+          ? "ऑडियो सारांश तैयार है"
+          : "Audio summary is ready",
+
+    cachedAudio:
+      uiLanguage === "bn"
+        ? "আগে তৈরি করা অডিও পাওয়া গেছে"
+        : uiLanguage === "hi"
+          ? "पहले से बनाया गया ऑडियो मिल गया"
+          : "Existing audio summary found",
+
+    generateAudio:
+      uiLanguage === "bn"
+        ? "অডিও সারাংশ তৈরি করুন"
+        : uiLanguage === "hi"
+          ? "ऑडियो सारांश बनाएं"
+          : "Generate audio summary",
+
+    generatingAudio:
+      uiLanguage === "bn"
+        ? "AI অডিও সারাংশ তৈরি করছে..."
+        : uiLanguage === "hi"
+          ? "AI ऑडियो सारांश बना रहा है..."
+          : "AI is generating the audio summary...",
+
+    noCachedAudio:
+      uiLanguage === "bn"
+        ? "এই ভাষায় এখনও অডিও তৈরি হয়নি।"
+        : uiLanguage === "hi"
+          ? "इस भाषा में अभी ऑडियो नहीं बनाया गया है।"
+          : "No audio has been generated in this language yet.",
+
+    viewSummary:
+      uiLanguage === "bn"
+        ? "সারাংশের লেখা দেখুন"
+        : uiLanguage === "hi"
+          ? "सारांश का टेक्स्ट देखें"
+          : "View summary text",
+
+    generatedWithAI:
+      uiLanguage === "bn"
+        ? "Gemini AI দ্বারা তৈরি সংক্ষিপ্ত অডিও সারাংশ"
+        : uiLanguage === "hi"
+          ? "Gemini AI द्वारा बनाया गया संक्षिप्त ऑडियो सारांश"
+          : "Short audio summary generated with Gemini AI",
+
+    audioUnavailable:
+      uiLanguage === "bn"
+        ? "এই ভাষায় অডিও এখনও উপলভ্য নয়"
+        : uiLanguage === "hi"
+          ? "इस भाषा में ऑडियो अभी उपलब्ध नहीं है"
+          : "Audio is not available in this language yet",
+
+    audioLoadFailed:
+      uiLanguage === "bn"
+        ? "অডিও সারাংশ লোড করা যায়নি।"
+        : uiLanguage === "hi"
+          ? "ऑडियो सारांश लोड नहीं हो सका।"
+          : "Unable to load the audio summary.",
+
+    audioGenerationFailed:
+      uiLanguage === "bn"
+        ? "অডিও সারাংশ তৈরি করা যায়নি। আবার চেষ্টা করুন।"
+        : uiLanguage === "hi"
+          ? "ऑडियो सारांश नहीं बन सका। फिर से कोशिश करें।"
+          : "Unable to generate the audio summary. Please try again.",
+
+    loginForAudio:
+      uiLanguage === "bn"
+        ? "নতুন অডিও সারাংশ তৈরি করতে লগ ইন করুন।"
+        : uiLanguage === "hi"
+          ? "नया ऑडियो सारांश बनाने के लिए लॉग इन करें।"
+          : "Log in to generate a new audio summary.",
+
+    retry:
+      uiLanguage === "bn"
+        ? "আবার চেষ্টা করুন"
+        : uiLanguage === "hi"
+          ? "फिर कोशिश करें"
+          : "Try again",
+
+    comingSoon:
+      uiLanguage === "bn"
+        ? "শীঘ্রই"
+        : uiLanguage === "hi"
+          ? "जल्द उपलब्ध"
+          : "Coming soon",
 
   };
 
@@ -700,6 +1147,81 @@ function WritingCard({
 
 
   // =======================================================
+  // AUDIO SUMMARY STATE
+  // =======================================================
+
+  const [
+    audioPanelOpen,
+    setAudioPanelOpen,
+  ] = useState(
+    false
+  );
+
+
+  const [
+    audioLanguages,
+    setAudioLanguages,
+  ] = useState(
+    []
+  );
+
+
+  const [
+    audioLanguagesLoading,
+    setAudioLanguagesLoading,
+  ] = useState(
+    false
+  );
+
+
+  const [
+    selectedAudioLanguage,
+    setSelectedAudioLanguage,
+  ] = useState(
+    ""
+  );
+
+
+  // idle
+  // checking
+  // missing
+  // generating
+  // ready
+  // error
+
+  const [
+    audioStatus,
+    setAudioStatus,
+  ] = useState(
+    "idle"
+  );
+
+
+  const [
+    audioSummary,
+    setAudioSummary,
+  ] = useState(
+    null
+  );
+
+
+  const [
+    audioError,
+    setAudioError,
+  ] = useState(
+    ""
+  );
+
+
+  const [
+    audioWasCached,
+    setAudioWasCached,
+  ] = useState(
+    false
+  );
+
+
+  // =======================================================
   // SYNC LIKE STATE
   // =======================================================
 
@@ -835,6 +1357,60 @@ function WritingCard({
 
 
   // =======================================================
+  // RESET AUDIO WHEN CARD CHANGES
+  // =======================================================
+  //
+  // This is important when React reuses the component.
+  //
+  // No listener language is carried from one WritingCard
+  // writing to another.
+  //
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      audioRequestIdRef.current +=
+        1;
+
+
+      setAudioPanelOpen(
+        false
+      );
+
+
+      setSelectedAudioLanguage(
+        ""
+      );
+
+
+      setAudioStatus(
+        "idle"
+      );
+
+
+      setAudioSummary(
+        null
+      );
+
+
+      setAudioError(
+        ""
+      );
+
+
+      setAudioWasCached(
+        false
+      );
+
+    },
+    [
+      writingId,
+    ]
+  );
+
+
+  // =======================================================
   // LOAD SAVED STATUS
   // =======================================================
 
@@ -859,6 +1435,7 @@ function WritingCard({
               true
             );
           }
+
 
           return;
         }
@@ -949,6 +1526,118 @@ function WritingCard({
     [
       hasWritingId,
       writingId,
+    ]
+  );
+
+
+  // =======================================================
+  // LOAD AUDIO LANGUAGE LIST
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      let cancelled =
+        false;
+
+
+      if (
+        !audioPanelOpen
+      ) {
+
+        return undefined;
+      }
+
+
+      if (
+        audioLanguages.length >
+        0
+      ) {
+
+        return undefined;
+      }
+
+
+      async function loadLanguages() {
+
+        setAudioLanguagesLoading(
+          true
+        );
+
+
+        setAudioError(
+          ""
+        );
+
+
+        try {
+
+          const languages =
+            await loadSharedAudioLanguages();
+
+
+          if (
+            cancelled
+          ) {
+
+            return;
+          }
+
+
+          setAudioLanguages(
+            languages
+          );
+
+        } catch (
+          error
+        ) {
+
+          if (
+            cancelled
+          ) {
+
+            return;
+          }
+
+
+          console.error(
+            "AUDIO LANGUAGE LOAD ERROR:",
+            error
+          );
+
+
+          setAudioError(
+            error?.message ||
+            labels.audioLoadFailed
+          );
+
+        } finally {
+
+          if (
+            !cancelled
+          ) {
+
+            setAudioLanguagesLoading(
+              false
+            );
+          }
+        }
+      }
+
+
+      loadLanguages();
+
+
+      return () => {
+
+        cancelled =
+          true;
+      };
+
+    },
+    [
+      audioPanelOpen,
+      audioLanguages.length,
     ]
   );
 
@@ -1189,14 +1878,14 @@ function WritingCard({
   // LANGUAGE / CATEGORY
   // =======================================================
 
-  const languageCode =
+  const writingLanguageCode =
     writing?.language ||
     "bn";
 
 
   const languageLabel =
     getLanguageLabel(
-      languageCode
+      writingLanguageCode
     );
 
 
@@ -1263,7 +1952,8 @@ function WritingCard({
 
 
         if (
-          collected.length === 0 &&
+          collected.length ===
+            0 &&
           Array.isArray(
             writing?.hashtags
           )
@@ -1507,9 +2197,9 @@ function WritingCard({
 
       return new Intl.DateTimeFormat(
 
-        language === "bn"
+        uiLanguage === "bn"
           ? "bn-IN"
-          : language === "hi"
+          : uiLanguage === "hi"
             ? "hi-IN"
             : "en-IN",
 
@@ -1651,11 +2341,13 @@ function WritingCard({
 
 
     if (
-      valueNumber === 0
+      valueNumber ===
+      0
     ) {
 
       if (
-        language === "bn"
+        uiLanguage ===
+        "bn"
       ) {
 
         return "এইমাত্র";
@@ -1663,7 +2355,8 @@ function WritingCard({
 
 
       if (
-        language === "hi"
+        uiLanguage ===
+        "hi"
       ) {
 
         return "अभी";
@@ -1678,9 +2371,9 @@ function WritingCard({
 
       return new Intl.RelativeTimeFormat(
 
-        language === "bn"
+        uiLanguage === "bn"
           ? "bn"
-          : language === "hi"
+          : uiLanguage === "hi"
             ? "hi"
             : "en",
 
@@ -1716,6 +2409,460 @@ function WritingCard({
 
 
   // =======================================================
+  // AUDIO HELPERS
+  // =======================================================
+
+  const selectedAudioLanguageConfig =
+    useMemo(
+      () => {
+
+        return (
+          audioLanguages.find(
+            (
+              item
+            ) =>
+              item?.code ===
+              selectedAudioLanguage
+          ) ||
+          null
+        );
+
+      },
+      [
+        audioLanguages,
+        selectedAudioLanguage,
+      ]
+    );
+
+
+  // =======================================================
+  // AUDIO PANEL TOGGLE
+  // =======================================================
+
+  function handleAudioPanelToggle(
+    event
+  ) {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+
+    setAudioPanelOpen(
+      (
+        current
+      ) =>
+        !current
+    );
+  }
+
+
+  // =======================================================
+  // AUDIO LANGUAGE CHANGE
+  // =======================================================
+
+  async function handleAudioLanguageChange(
+    event
+  ) {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+
+    const nextLanguage =
+      String(
+        event.target.value ||
+        ""
+      )
+        .trim()
+        .toLowerCase();
+
+
+    audioRequestIdRef.current +=
+      1;
+
+
+    const requestId =
+      audioRequestIdRef.current;
+
+
+    setSelectedAudioLanguage(
+      nextLanguage
+    );
+
+
+    setAudioSummary(
+      null
+    );
+
+
+    setAudioError(
+      ""
+    );
+
+
+    setAudioWasCached(
+      false
+    );
+
+
+    if (
+      !nextLanguage
+    ) {
+
+      setAudioStatus(
+        "idle"
+      );
+
+
+      return;
+    }
+
+
+    const config =
+      audioLanguages.find(
+        (
+          item
+        ) =>
+          item?.code ===
+          nextLanguage
+      );
+
+
+    if (
+      config &&
+      config.tts_supported ===
+        false
+    ) {
+
+      setAudioStatus(
+        "error"
+      );
+
+
+      setAudioError(
+        `${config.native_name || config.name}: ${labels.audioUnavailable}`
+      );
+
+
+      return;
+    }
+
+
+    setAudioStatus(
+      "checking"
+    );
+
+
+    try {
+
+      const result =
+        await getCachedAudioSummary(
+          writingId,
+          nextLanguage
+        );
+
+
+      if (
+        requestId !==
+        audioRequestIdRef.current
+      ) {
+
+        return;
+      }
+
+
+      if (
+        result?.cached &&
+        result?.audio_summary?.audio_url
+      ) {
+
+        setAudioSummary(
+          result.audio_summary
+        );
+
+
+        setAudioWasCached(
+          true
+        );
+
+
+        setAudioStatus(
+          "ready"
+        );
+
+
+        return;
+      }
+
+
+      setAudioStatus(
+        "missing"
+      );
+
+    } catch (
+      error
+    ) {
+
+      if (
+        requestId !==
+        audioRequestIdRef.current
+      ) {
+
+        return;
+      }
+
+
+      console.error(
+        "CHECK AUDIO SUMMARY ERROR:",
+        error
+      );
+
+
+      setAudioError(
+        error?.message ||
+        labels.audioLoadFailed
+      );
+
+
+      setAudioStatus(
+        "error"
+      );
+    }
+  }
+
+
+  // =======================================================
+  // GENERATE AUDIO SUMMARY
+  // =======================================================
+
+  async function handleGenerateAudioSummary(
+    event
+  ) {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+
+    if (
+      !hasWritingId ||
+      !selectedAudioLanguage ||
+      audioStatus ===
+        "generating"
+    ) {
+
+      return;
+    }
+
+
+    if (
+      selectedAudioLanguageConfig &&
+      selectedAudioLanguageConfig
+        .tts_supported ===
+        false
+    ) {
+
+      setAudioError(
+        labels.audioUnavailable
+      );
+
+
+      setAudioStatus(
+        "error"
+      );
+
+
+      return;
+    }
+
+
+    if (
+      !getToken()
+    ) {
+
+      setAudioError(
+        labels.loginForAudio
+      );
+
+
+      navigate(
+        "/login"
+      );
+
+
+      return;
+    }
+
+
+    audioRequestIdRef.current +=
+      1;
+
+
+    const requestId =
+      audioRequestIdRef.current;
+
+
+    setAudioStatus(
+      "generating"
+    );
+
+
+    setAudioSummary(
+      null
+    );
+
+
+    setAudioError(
+      ""
+    );
+
+
+    setAudioWasCached(
+      false
+    );
+
+
+    try {
+
+      const result =
+        await generateAudioSummary(
+          writingId,
+          selectedAudioLanguage
+        );
+
+
+      if (
+        requestId !==
+        audioRequestIdRef.current
+      ) {
+
+        return;
+      }
+
+
+      const summary =
+        result?.audio_summary;
+
+
+      if (
+        !summary?.audio_url
+      ) {
+
+        throw new Error(
+          labels.audioGenerationFailed
+        );
+      }
+
+
+      setAudioSummary(
+        summary
+      );
+
+
+      setAudioWasCached(
+        Boolean(
+          result?.cached
+        )
+      );
+
+
+      setAudioStatus(
+        "ready"
+      );
+
+    } catch (
+      error
+    ) {
+
+      if (
+        requestId !==
+        audioRequestIdRef.current
+      ) {
+
+        return;
+      }
+
+
+      console.error(
+        "GENERATE AUDIO SUMMARY ERROR:",
+        error
+      );
+
+
+      if (
+        Number(
+          error?.status
+        ) ===
+        401
+      ) {
+
+        setAudioError(
+          labels.loginForAudio
+        );
+
+
+        navigate(
+          "/login"
+        );
+
+
+        return;
+      }
+
+
+      setAudioError(
+        error?.message ||
+        labels.audioGenerationFailed
+      );
+
+
+      setAudioStatus(
+        "error"
+      );
+    }
+  }
+
+
+  // =======================================================
+  // RETRY AUDIO
+  // =======================================================
+
+  async function handleRetryAudio(
+    event
+  ) {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+
+    if (
+      !selectedAudioLanguage
+    ) {
+
+      setAudioStatus(
+        "idle"
+      );
+
+
+      setAudioError(
+        ""
+      );
+
+
+      return;
+    }
+
+
+    await handleGenerateAudioSummary(
+      event
+    );
+  }
+
+
+  // =======================================================
   // LIKE
   // =======================================================
 
@@ -1744,6 +2891,7 @@ function WritingCard({
       navigate(
         "/login"
       );
+
 
       return;
     }
@@ -1890,6 +3038,7 @@ function WritingCard({
         "/login"
       );
 
+
       return;
     }
 
@@ -1992,6 +3141,7 @@ function WritingCard({
         "/login"
       );
 
+
       return;
     }
 
@@ -2041,6 +3191,7 @@ function WritingCard({
         "/login"
       );
 
+
       return;
     }
 
@@ -2053,6 +3204,7 @@ function WritingCard({
       setRepostMenuOpen(
         false
       );
+
 
       return;
     }
@@ -2297,12 +3449,6 @@ function WritingCard({
       error
     ) {
 
-      /*
-       * Sharing may already have succeeded.
-       * Do not show a false share failure merely because
-       * persistence of the analytics counter failed.
-       */
-
       console.warn(
         "RECORD WRITING SHARE ERROR:",
         error
@@ -2392,9 +3538,9 @@ function WritingCard({
 
 
     const shareText =
-      language === "bn"
+      uiLanguage === "bn"
         ? `${authorName}-এর "${shareTitle}" লেখাটি SHOBDO-তে পড়ুন।`
-        : language === "hi"
+        : uiLanguage === "hi"
           ? `${authorName} की "${shareTitle}" रचना SHOBDO पर पढ़ें।`
           : `Read "${shareTitle}" by ${authorName} on SHOBDO.`;
 
@@ -2403,10 +3549,6 @@ function WritingCard({
       "sharing"
     );
 
-
-    // -----------------------------------------------------
-    // NATIVE WEB SHARE
-    // -----------------------------------------------------
 
     if (
       typeof navigator !==
@@ -2457,15 +3599,12 @@ function WritingCard({
             "idle"
           );
 
+
           return;
         }
       }
     }
 
-
-    // -----------------------------------------------------
-    // DESKTOP / FALLBACK COPY
-    // -----------------------------------------------------
 
     try {
 
@@ -3020,25 +4159,453 @@ function WritingCard({
 
 
       {/* =================================================
-          AUDIO READER
+          AI MULTILINGUAL AUDIO SUMMARY
       ================================================== */}
 
-      <WritingAudioPlayer
-        writingId={
-          writingId
+      <section
+        style={
+          audioStyles.shell
         }
-        title={
-          writing?.title ||
-          labels.untitled
+        aria-label={
+          labels.audioSummary
         }
-        content={
-          writing?.content ||
-          ""
-        }
-        writingLanguage={
-          languageCode
-        }
-      />
+      >
+
+        <button
+          type="button"
+          style={
+            audioStyles.toggle
+          }
+          onClick={
+            handleAudioPanelToggle
+          }
+          aria-expanded={
+            audioPanelOpen
+          }
+        >
+
+          <span
+            style={
+              audioStyles.toggleMain
+            }
+          >
+
+            <span
+              style={
+                audioStyles.iconBubble
+              }
+            >
+
+              <Headphones
+                size={18}
+                strokeWidth={1.9}
+              />
+
+            </span>
+
+
+            <span
+              style={
+                audioStyles.toggleText
+              }
+            >
+
+              <span
+                style={
+                  audioStyles.title
+                }
+              >
+                {labels.audioSummary}
+              </span>
+
+              <span
+                style={
+                  audioStyles.subtitle
+                }
+              >
+                {labels.audioDescription}
+              </span>
+
+            </span>
+
+          </span>
+
+
+          <span
+            style={
+              audioStyles.badge
+            }
+          >
+            AI
+          </span>
+
+        </button>
+
+
+        {audioPanelOpen && (
+
+          <div
+            style={
+              audioStyles.body
+            }
+          >
+
+            <div
+              style={
+                audioStyles.divider
+              }
+            />
+
+
+            <label>
+
+              <span
+                style={
+                  audioStyles.label
+                }
+              >
+                {labels.chooseLanguage}
+              </span>
+
+
+              <select
+                value={
+                  selectedAudioLanguage
+                }
+                onChange={
+                  handleAudioLanguageChange
+                }
+                disabled={
+                  audioLanguagesLoading ||
+                  audioStatus ===
+                    "generating"
+                }
+                style={
+                  audioStyles.select
+                }
+              >
+
+                <option
+                  value=""
+                >
+                  {
+                    audioLanguagesLoading
+                      ? labels.loadingLanguages
+                      : labels.chooseLanguageOption
+                  }
+                </option>
+
+
+                {audioLanguages.map(
+                  (
+                    item
+                  ) => (
+
+                    <option
+                      key={
+                        item.code
+                      }
+                      value={
+                        item.code
+                      }
+                      disabled={
+                        item.tts_supported ===
+                        false
+                      }
+                    >
+                      {
+                        `${item.native_name || item.name} — ${item.name}${
+                          item.tts_supported === false
+                            ? ` (${labels.comingSoon})`
+                            : ""
+                        }`
+                      }
+                    </option>
+
+                  )
+                )}
+
+              </select>
+
+            </label>
+
+
+            {/* ===========================================
+                CHECKING CACHE
+            ============================================ */}
+
+            {audioStatus ===
+              "checking" && (
+
+              <div
+                style={
+                  audioStyles.status
+                }
+              >
+
+                <LoaderCircle
+                  size={16}
+                  className="spin"
+                />
+
+                <span>
+                  {labels.checkingAudio}
+                </span>
+
+              </div>
+
+            )}
+
+
+            {/* ===========================================
+                NOT GENERATED YET
+            ============================================ */}
+
+            {audioStatus ===
+              "missing" && (
+
+              <>
+
+                <div
+                  style={
+                    audioStyles.status
+                  }
+                >
+
+                  <Sparkles
+                    size={16}
+                  />
+
+                  <span>
+                    {labels.noCachedAudio}
+                  </span>
+
+                </div>
+
+
+                <button
+                  type="button"
+                  style={
+                    audioStyles.button
+                  }
+                  onClick={
+                    handleGenerateAudioSummary
+                  }
+                >
+
+                  <Sparkles
+                    size={16}
+                  />
+
+                  <span>
+                    {labels.generateAudio}
+                  </span>
+
+                </button>
+
+              </>
+
+            )}
+
+
+            {/* ===========================================
+                GENERATING
+            ============================================ */}
+
+            {audioStatus ===
+              "generating" && (
+
+              <>
+
+                <div
+                  style={
+                    audioStyles.status
+                  }
+                >
+
+                  <LoaderCircle
+                    size={16}
+                    className="spin"
+                  />
+
+                  <span>
+                    {labels.generatingAudio}
+                  </span>
+
+                </div>
+
+
+                <button
+                  type="button"
+                  disabled
+                  style={{
+                    ...audioStyles.button,
+                    ...audioStyles.buttonDisabled,
+                  }}
+                >
+
+                  <LoaderCircle
+                    size={16}
+                    className="spin"
+                  />
+
+                  <span>
+                    {labels.generatingAudio}
+                  </span>
+
+                </button>
+
+              </>
+
+            )}
+
+
+            {/* ===========================================
+                READY
+            ============================================ */}
+
+            {audioStatus ===
+              "ready" &&
+              audioSummary?.audio_url && (
+
+              <>
+
+                <div
+                  style={
+                    audioStyles.status
+                  }
+                >
+
+                  <Check
+                    size={16}
+                  />
+
+                  <span>
+                    {
+                      audioWasCached
+                        ? labels.cachedAudio
+                        : labels.audioReady
+                    }
+                  </span>
+
+                </div>
+
+
+                <audio
+                  key={
+                    audioSummary.audio_url
+                  }
+                  controls
+                  preload="metadata"
+                  src={
+                    audioSummary.audio_url
+                  }
+                  style={
+                    audioStyles.player
+                  }
+                >
+                  Your browser does not support
+                  the audio element.
+                </audio>
+
+
+                {audioSummary?.summary_text && (
+
+                  <details
+                    style={
+                      audioStyles.summaryDetails
+                    }
+                  >
+
+                    <summary>
+                      {labels.viewSummary}
+                    </summary>
+
+
+                    <p
+                      style={
+                        audioStyles.summaryText
+                      }
+                    >
+                      {
+                        audioSummary.summary_text
+                      }
+                    </p>
+
+                  </details>
+
+                )}
+
+
+                <p
+                  style={
+                    audioStyles.footerNote
+                  }
+                >
+                  {labels.generatedWithAI}
+                </p>
+
+              </>
+
+            )}
+
+
+            {/* ===========================================
+                ERROR
+            ============================================ */}
+
+            {audioStatus ===
+              "error" && (
+
+              <>
+
+                <div
+                  style={
+                    audioStyles.error
+                  }
+                >
+                  {
+                    audioError ||
+                    labels.audioLoadFailed
+                  }
+                </div>
+
+
+                {selectedAudioLanguage &&
+                  selectedAudioLanguageConfig
+                    ?.tts_supported !== false && (
+
+                  <button
+                    type="button"
+                    style={
+                      audioStyles.button
+                    }
+                    onClick={
+                      handleRetryAudio
+                    }
+                  >
+
+                    <Sparkles
+                      size={16}
+                    />
+
+                    <span>
+                      {labels.retry}
+                    </span>
+
+                  </button>
+
+                )}
+
+              </>
+
+            )}
+
+          </div>
+
+        )}
+
+      </section>
 
 
       {/* =================================================
@@ -3053,9 +4620,9 @@ function WritingCard({
           className="writing-card-actions writing-card-actions--icons"
           role="group"
           aria-label={
-            language === "bn"
+            uiLanguage === "bn"
               ? "লেখার কার্যক্রম"
-              : language === "hi"
+              : uiLanguage === "hi"
                 ? "रचना क्रियाएँ"
                 : "Writing actions"
           }
