@@ -31,6 +31,11 @@ from services.profile_image_storage import (
     delete_profile_avatar,
 )
 
+from services.cover_photo_storage import (
+    upload_profile_cover,
+    delete_profile_cover,
+)
+
 
 # ============================================================
 # BLUEPRINT
@@ -155,6 +160,29 @@ def public_user_dict(user):
                 user,
                 "avatar_url",
                 None,
+            ),
+
+        "cover_photo_url":
+            getattr(
+                user,
+                "cover_photo_url",
+                None,
+            ),
+
+        "cover_photo_position_y":
+            int(
+                getattr(
+                    user,
+                    "cover_photo_position_y",
+                    50,
+                )
+                if getattr(
+                    user,
+                    "cover_photo_position_y",
+                    None,
+                )
+                is not None
+                else 50
             ),
 
         "location":
@@ -1629,6 +1657,673 @@ def remove_my_avatar():
             "message"
         ] = (
             "Profile image was removed "
+            "from your SHOBDO profile, "
+            "but storage cleanup did not "
+            "complete successfully."
+        )
+
+
+    return jsonify(
+        response
+    ), 200
+
+
+
+# ============================================================
+# UPLOAD / REPLACE PROFILE COVER
+#
+# POST /api/users/me/cover
+#
+# multipart/form-data
+# field: cover
+# ============================================================
+
+
+@user_bp.route(
+    "/me/cover",
+    methods=["POST"],
+)
+@jwt_required()
+def upload_my_cover():
+
+    current_user_id = (
+        get_current_user_id()
+    )
+
+
+    if current_user_id is None:
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Invalid authentication identity."
+        }), 401
+
+
+    user = get_active_user(
+        current_user_id
+    )
+
+
+    if not user:
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Authenticated user not found."
+        }), 404
+
+
+    cover = request.files.get(
+        "cover"
+    )
+
+
+    if cover is None:
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Cover photo is required."
+        }), 400
+
+
+    if not (
+        cover.filename
+        or ""
+    ).strip():
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Please select a cover photo."
+        }), 400
+
+
+    # ========================================================
+    # READ FILE
+    # ========================================================
+
+    try:
+
+        file_bytes = cover.read()
+
+
+    except Exception as error:
+
+        print(
+            "COVER PHOTO FILE READ ERROR:",
+            error,
+        )
+
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Unable to read cover photo."
+        }), 400
+
+
+    # ========================================================
+    # STORAGE UPLOAD
+    # ========================================================
+
+    try:
+
+        upload_result = (
+            upload_profile_cover(
+                user_id=
+                    user.id,
+
+                file_bytes=
+                    file_bytes,
+
+                content_type=
+                    cover.mimetype,
+            )
+        )
+
+
+    except ValueError as error:
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                str(
+                    error
+                )
+        }), 400
+
+
+    except RuntimeError as error:
+
+        print(
+            "COVER PHOTO STORAGE ERROR:",
+            error,
+        )
+
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Unable to upload cover photo."
+        }), 500
+
+
+    except Exception as error:
+
+        print(
+            "UNEXPECTED COVER PHOTO UPLOAD ERROR:",
+            repr(
+                error
+            ),
+        )
+
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Unable to upload cover photo."
+        }), 500
+
+
+    # ========================================================
+    # CLOUDINARY RESULT
+    # ========================================================
+
+    cover_photo_url = (
+        str(
+            upload_result.get(
+                "cover_photo_url"
+            )
+            or ""
+        )
+        .strip()
+    )
+
+
+    cover_public_id = (
+        str(
+            upload_result.get(
+                "public_id"
+            )
+            or ""
+        )
+        .strip()
+    )
+
+
+    if not cover_photo_url:
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                (
+                    "Cover photo upload returned "
+                    "no image URL."
+                )
+        }), 500
+
+
+    # ========================================================
+    # SAVE PROFILE
+    # ========================================================
+
+    try:
+
+        user.set_cover_photo(
+            cover_photo_url,
+            public_id=
+                cover_public_id
+                or None,
+            position_y=
+                50,
+        )
+
+
+        db.session.commit()
+
+
+    except Exception as error:
+
+        db.session.rollback()
+
+
+        print(
+            "COVER PHOTO DATABASE ERROR:",
+            repr(
+                error
+            ),
+        )
+
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                (
+                    "Cover photo was uploaded, "
+                    "but the profile could not "
+                    "be updated."
+                )
+        }), 500
+
+
+    return jsonify({
+        "success":
+            True,
+
+        "message":
+            "Cover photo updated successfully.",
+
+        "cover_photo_url":
+            user.cover_photo_url,
+
+        "cover_photo_position_y":
+            int(
+                user.cover_photo_position_y
+                if user.cover_photo_position_y
+                is not None
+                else 50
+            ),
+
+        "user":
+            public_user_dict(
+                user
+            ),
+    }), 200
+
+
+# ============================================================
+# UPDATE COVER PHOTO POSITION
+#
+# PATCH /api/users/me/cover/position
+#
+# JSON:
+# {
+#     "position_y": 50
+# }
+#
+# 0   = top
+# 50  = center
+# 100 = bottom
+# ============================================================
+
+
+@user_bp.route(
+    "/me/cover/position",
+    methods=["PATCH"],
+)
+@jwt_required()
+def update_my_cover_position():
+
+    current_user_id = (
+        get_current_user_id()
+    )
+
+
+    if current_user_id is None:
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Invalid authentication identity."
+        }), 401
+
+
+    user = get_active_user(
+        current_user_id
+    )
+
+
+    if not user:
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Authenticated user not found."
+        }), 404
+
+
+    if not (
+        getattr(
+            user,
+            "cover_photo_url",
+            None,
+        )
+        or ""
+    ).strip():
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Upload a cover photo first."
+        }), 400
+
+
+    data = (
+        request.get_json(
+            silent=True
+        )
+        or {}
+    )
+
+
+    if not isinstance(
+        data,
+        dict,
+    ):
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Invalid request body."
+        }), 400
+
+
+    if "position_y" not in data:
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Cover photo position is required."
+        }), 400
+
+
+    try:
+
+        user.set_cover_photo_position(
+            data.get(
+                "position_y"
+            )
+        )
+
+
+    except ValueError as error:
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                str(
+                    error
+                )
+        }), 400
+
+
+    try:
+
+        db.session.commit()
+
+
+    except Exception as error:
+
+        db.session.rollback()
+
+
+        print(
+            "COVER POSITION DATABASE ERROR:",
+            repr(
+                error
+            ),
+        )
+
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Unable to update cover photo position."
+        }), 500
+
+
+    return jsonify({
+        "success":
+            True,
+
+        "message":
+            "Cover photo position updated successfully.",
+
+        "cover_photo_url":
+            user.cover_photo_url,
+
+        "cover_photo_position_y":
+            int(
+                user.cover_photo_position_y
+                if user.cover_photo_position_y
+                is not None
+                else 50
+            ),
+
+        "user":
+            public_user_dict(
+                user
+            ),
+    }), 200
+
+
+# ============================================================
+# REMOVE PROFILE COVER
+#
+# DELETE /api/users/me/cover
+# ============================================================
+
+
+@user_bp.route(
+    "/me/cover",
+    methods=["DELETE"],
+)
+@jwt_required()
+def remove_my_cover():
+
+    current_user_id = (
+        get_current_user_id()
+    )
+
+
+    if current_user_id is None:
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Invalid authentication identity."
+        }), 401
+
+
+    user = get_active_user(
+        current_user_id
+    )
+
+
+    if not user:
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Authenticated user not found."
+        }), 404
+
+
+    current_cover_url = (
+        str(
+            getattr(
+                user,
+                "cover_photo_url",
+                None,
+            )
+            or ""
+        )
+        .strip()
+    )
+
+
+    if not current_cover_url:
+
+        return jsonify({
+            "success":
+                True,
+
+            "message":
+                "Cover photo is already removed.",
+
+            "cover_photo_url":
+                None,
+
+            "cover_photo_position_y":
+                50,
+
+            "user":
+                public_user_dict(
+                    user
+                ),
+        }), 200
+
+
+    cover_public_id = (
+        str(
+            getattr(
+                user,
+                "cover_photo_public_id",
+                None,
+            )
+            or ""
+        )
+        .strip()
+    )
+
+
+    # ========================================================
+    # DATABASE IS SOURCE OF TRUTH
+    # ========================================================
+
+    user.clear_cover_photo()
+
+
+    try:
+
+        db.session.commit()
+
+
+    except Exception as error:
+
+        db.session.rollback()
+
+
+        print(
+            "REMOVE COVER DATABASE ERROR:",
+            repr(
+                error
+            ),
+        )
+
+
+        return jsonify({
+            "success":
+                False,
+
+            "message":
+                "Unable to update profile."
+        }), 500
+
+
+    # ========================================================
+    # STORAGE CLEANUP
+    # ========================================================
+
+    storage_cleanup_succeeded = True
+
+
+    try:
+
+        delete_profile_cover(
+            user_id=
+                user.id,
+
+            public_id=
+                cover_public_id
+                or None,
+        )
+
+
+    except Exception as error:
+
+        storage_cleanup_succeeded = (
+            False
+        )
+
+
+        print(
+            "REMOVE COVER STORAGE ERROR:",
+            repr(
+                error
+            ),
+        )
+
+
+    response = {
+        "success":
+            True,
+
+        "message":
+            "Cover photo removed successfully.",
+
+        "cover_photo_url":
+            None,
+
+        "cover_photo_position_y":
+            50,
+
+        "user":
+            public_user_dict(
+                user
+            ),
+
+        "storage_cleanup_succeeded":
+            storage_cleanup_succeeded,
+    }
+
+
+    if not storage_cleanup_succeeded:
+
+        response[
+            "message"
+        ] = (
+            "Cover photo was removed "
             "from your SHOBDO profile, "
             "but storage cleanup did not "
             "complete successfully."

@@ -47,11 +47,7 @@
 ========================================================= */
 
 .writer-profile-shell {
-  width:
-    min(
-      100%,
-      940px
-    );
+  width: min(100%, 940px);
 
   min-width: 0;
 
@@ -65,7 +61,7 @@
 
 
 /* =========================================================
-   LOADING / ERROR STATE
+   LOADING / ERROR
 ========================================================= */
 
 .writer-profile-state {
@@ -98,7 +94,8 @@
       #fffaf4
     );
 
-  color: var(--writer-text-muted);
+  color:
+    var(--writer-text-muted);
 
   text-align: center;
 
@@ -126,7 +123,8 @@
     0
     0;
 
-  color: var(--writer-text);
+  color:
+    var(--writer-text);
 
   font-family:
     Georgia,
@@ -167,7 +165,7 @@
 
   border:
     1px solid
-    #8d6326;
+    var(--writer-brand);
 
   border-radius: 10px;
 
@@ -203,7 +201,8 @@
 
   border-radius: 22px;
 
-  background: var(--writer-card);
+  background:
+    var(--writer-card);
 
   box-shadow:
     0
@@ -219,7 +218,7 @@
 
 
 /* =========================================================
-   COVER
+   PROFILE COVER
 ========================================================= */
 
 .writer-social-cover {
@@ -255,6 +254,12 @@
       #302923,
       #49392b
     );
+
+  background-size: cover;
+
+  background-repeat: no-repeat;
+
+  background-position: center 50%;
 }
 
 
@@ -279,6 +284,8 @@
     );
 
   border-radius: 50%;
+
+  pointer-events: none;
 }
 
 
@@ -303,6 +310,66 @@
     );
 
   border-radius: 50%;
+
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   CUSTOM COVER PHOTO
+========================================================= */
+
+.writer-social-cover.has-cover-photo {
+  background-color: #342b24;
+}
+
+
+.writer-social-cover.has-cover-photo::before {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  width: auto;
+  height: auto;
+
+  border: 0;
+
+  border-radius: 0;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(
+        20,
+        15,
+        11,
+        0.07
+      ),
+      rgba(
+        20,
+        15,
+        11,
+        0.01
+      )
+      46%,
+      rgba(
+        20,
+        15,
+        11,
+        0.19
+      )
+    );
+
+  pointer-events: none;
+
+  z-index: 1;
+}
+
+
+.writer-social-cover.has-cover-photo::after {
+  display: none;
 }
 
 
@@ -311,6 +378,8 @@
 
   right: 30px;
   bottom: 20px;
+
+  z-index: 2;
 
   color:
     rgba(
@@ -332,6 +401,130 @@
   letter-spacing: 0.14em;
 
   user-select: none;
+
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   COVER EDIT BUTTON
+========================================================= */
+
+.writer-cover-edit-button {
+  position: absolute;
+
+  top: 14px;
+  right: 14px;
+
+  z-index: 5;
+
+  min-height: 38px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 6px;
+
+  padding:
+    0
+    12px;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.32
+    );
+
+  border-radius: 10px;
+
+  background:
+    rgba(
+      27,
+      22,
+      18,
+      0.72
+    );
+
+  color: #ffffff;
+
+  font-family: inherit;
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  backdrop-filter:
+    blur(10px);
+
+  -webkit-backdrop-filter:
+    blur(10px);
+
+  box-shadow:
+    0
+    5px
+    16px
+    rgba(
+      0,
+      0,
+      0,
+      0.18
+    );
+
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+
+.writer-cover-edit-button:hover:not(:disabled) {
+  transform:
+    translateY(-1px);
+
+  border-color:
+    rgba(
+      255,
+      255,
+      255,
+      0.55
+    );
+
+  background:
+    rgba(
+      27,
+      22,
+      18,
+      0.86
+    );
+
+  box-shadow:
+    0
+    7px
+    19px
+    rgba(
+      0,
+      0,
+      0,
+      0.22
+    );
+}
+
+
+.writer-cover-edit-button:disabled {
+  opacity: 0.5;
+
+  cursor: default;
+
+  transform: none;
 }
 
 
@@ -369,7 +562,7 @@
 
 
 /* =========================================================
-   MAIN AVATAR
+   AVATAR
 ========================================================= */
 
 .writer-profile-avatar {
@@ -425,7 +618,7 @@
       0.17
     );
 
-  z-index: 2;
+  z-index: 3;
 }
 
 
@@ -526,7 +719,8 @@
 
 
 .writer-follow-button:hover:not(:disabled) {
-  transform: translateY(-1px);
+  transform:
+    translateY(-1px);
 
   box-shadow:
     0
@@ -572,7 +766,7 @@
 }
 
 
-.writer-profile-edit-button:hover {
+.writer-profile-edit-button:hover:not(:disabled) {
   background: #f8f0e5;
 
   border-color: #c9a979;
@@ -590,7 +784,7 @@
 }
 
 
-.writer-profile-share-button:hover {
+.writer-profile-share-button:hover:not(:disabled) {
   border-color: #d2bea3;
 
   background: #faf3e9;
@@ -737,7 +931,8 @@
 
 .writer-profile-meta > span svg,
 .writer-profile-meta > a svg {
-  flex: 0 0 auto;
+  flex:
+    0 0 auto;
 
   color: #9a733d;
 }
@@ -864,7 +1059,7 @@
 
 
 /* =========================================================
-   EDIT HEADING
+   EDIT PROFILE HEADER
 ========================================================= */
 
 .writer-profile-edit-heading {
@@ -939,7 +1134,7 @@
 
 
 /* =========================================================
-   PHOTO EDITOR
+   AVATAR EDITOR
 ========================================================= */
 
 .writer-profile-photo-editor {
@@ -956,10 +1151,9 @@
 
   gap: 21px;
 
-  margin-bottom: 23px;
+  margin-bottom: 18px;
 
-  padding:
-    18px;
+  padding: 18px;
 
   border:
     1px solid
@@ -1058,7 +1252,7 @@
 
 
 /* =========================================================
-   PHOTO BUTTONS
+   PHOTO / COVER BUTTONS
 ========================================================= */
 
 .writer-profile-photo-buttons {
@@ -1101,6 +1295,11 @@
   font-weight: 800;
 
   cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 
@@ -1154,13 +1353,13 @@
 }
 
 
-.writer-profile-photo-remove-button:hover:not(:disabled) {
-  background: #fbecea;
+.writer-profile-photo-upload-button:hover:not(:disabled) {
+  background: #76501d;
 }
 
 
-.writer-profile-photo-upload-button:hover:not(:disabled) {
-  background: #76501d;
+.writer-profile-photo-remove-button:hover:not(:disabled) {
+  background: #fbecea;
 }
 
 
@@ -1218,11 +1417,393 @@
 
 
 .writer-profile-selected-file span {
-  flex: 0 0 auto;
+  flex:
+    0 0 auto;
 
   color: #9a9087;
 
   font-size: 8px;
+}
+
+
+/* =========================================================
+   COVER EDITOR
+========================================================= */
+
+.writer-profile-cover-editor {
+  display: grid;
+
+  grid-template-columns:
+    minmax(
+      240px,
+      330px
+    )
+    minmax(
+      0,
+      1fr
+    );
+
+  align-items: center;
+
+  gap: 21px;
+
+  margin-bottom: 23px;
+
+  padding: 18px;
+
+  border:
+    1px solid
+    #e9ded2;
+
+  border-radius: 15px;
+
+  background: #fbf7f1;
+}
+
+
+.writer-profile-cover-preview {
+  position: relative;
+
+  width: 100%;
+
+  min-width: 0;
+
+  min-height: 112px;
+
+  aspect-ratio: 3 / 1;
+
+  overflow: hidden;
+
+  display: grid;
+
+  place-items: center;
+
+  border:
+    3px solid
+    #fffdfa;
+
+  border-radius: 13px;
+
+  background:
+    radial-gradient(
+      circle at 78% 25%,
+      rgba(
+        245,
+        221,
+        177,
+        0.2
+      ),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 12% 110%,
+      rgba(
+        235,
+        202,
+        151,
+        0.15
+      ),
+      transparent 40%
+    ),
+    linear-gradient(
+      135deg,
+      #302923,
+      #49392b
+    );
+
+  background-size: cover;
+
+  background-repeat: no-repeat;
+
+  color:
+    rgba(
+      255,
+      245,
+      228,
+      0.25
+    );
+
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+
+  font-size:
+    clamp(
+      19px,
+      3vw,
+      30px
+    );
+
+  font-weight: 700;
+
+  letter-spacing: 0.13em;
+
+  text-align: center;
+
+  box-shadow:
+    0
+    5px
+    17px
+    rgba(
+      46,
+      33,
+      20,
+      0.1
+    );
+}
+
+
+.writer-profile-cover-preview::after {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(
+        20,
+        15,
+        11,
+        0.02
+      ),
+      rgba(
+        20,
+        15,
+        11,
+        0.13
+      )
+    );
+
+  pointer-events: none;
+}
+
+
+.writer-profile-cover-preview > span {
+  position: relative;
+
+  z-index: 1;
+
+  user-select: none;
+}
+
+
+.writer-profile-cover-controls {
+  min-width: 0;
+}
+
+
+/* =========================================================
+   COVER POSITION
+========================================================= */
+
+.writer-cover-position-editor {
+  max-width: 540px;
+
+  margin-top: 14px;
+
+  padding:
+    13px
+    14px;
+
+  border:
+    1px solid
+    #e4d6c6;
+
+  border-radius: 12px;
+
+  background: #fffdfa;
+}
+
+
+.writer-cover-position-heading {
+  display: flex;
+
+  align-items: flex-start;
+
+  justify-content: space-between;
+
+  gap: 15px;
+
+  margin-bottom: 11px;
+}
+
+
+.writer-cover-position-heading > div {
+  min-width: 0;
+}
+
+
+.writer-cover-position-heading strong {
+  display: block;
+
+  color: #4b4036;
+
+  font-size: 9.5px;
+
+  font-weight: 850;
+}
+
+
+.writer-cover-position-heading p {
+  max-width: 430px;
+
+  margin:
+    3px
+    0
+    0;
+
+  color: #91877e;
+
+  font-size: 8.5px;
+
+  line-height: 1.5;
+}
+
+
+.writer-cover-position-heading > span {
+  flex:
+    0 0 auto;
+
+  min-width: 42px;
+
+  min-height: 26px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding:
+    0
+    8px;
+
+  border:
+    1px solid
+    #dfd0bd;
+
+  border-radius: 999px;
+
+  background: #f8efe3;
+
+  color: #805c28;
+
+  font-size: 8.5px;
+
+  font-weight: 850;
+}
+
+
+.writer-cover-position-editor input[type="range"] {
+  width: 100%;
+
+  height: 22px;
+
+  display: block;
+
+  margin: 0;
+
+  accent-color:
+    var(--writer-brand);
+
+  cursor: pointer;
+}
+
+
+.writer-cover-position-editor input[type="range"]:disabled {
+  opacity: 0.5;
+
+  cursor: default;
+}
+
+
+.writer-cover-position-save-button {
+  min-height: 35px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 5px;
+
+  margin-top: 10px;
+
+  padding:
+    0
+    11px;
+
+  border:
+    1px solid
+    var(--writer-brand);
+
+  border-radius: 9px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #8d6326,
+      #a97d3a
+    );
+
+  color: #ffffff;
+
+  font-family: inherit;
+
+  font-size: 8.5px;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  box-shadow:
+    0
+    4px
+    12px
+    rgba(
+      132,
+      89,
+      27,
+      0.13
+    );
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
+}
+
+
+.writer-cover-position-save-button:hover:not(:disabled) {
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0
+    6px
+    15px
+    rgba(
+      132,
+      89,
+      27,
+      0.19
+    );
+}
+
+
+.writer-cover-position-save-button:disabled {
+  opacity: 0.48;
+
+  cursor: default;
+
+  transform: none;
+
+  box-shadow: none;
 }
 
 
@@ -1311,8 +1892,7 @@
 .writer-profile-form-grid textarea {
   min-height: 110px;
 
-  padding:
-    11px;
+  padding: 11px;
 
   resize: vertical;
 
@@ -1386,7 +1966,8 @@
 
 
 .writer-profile-username-input > span {
-  flex: 0 0 auto;
+  flex:
+    0 0 auto;
 
   padding-left: 11px;
 
@@ -1418,7 +1999,7 @@
 
 
 /* =========================================================
-   FORM MESSAGE
+   FORM MESSAGES
 ========================================================= */
 
 .writer-profile-form-error,
@@ -1575,7 +2156,7 @@
 
 
 /* =========================================================
-   PROFILE TABS
+   TABS
 ========================================================= */
 
 .writer-profile-tabs {
@@ -1593,8 +2174,7 @@
 
   margin-top: 15px;
 
-  padding:
-    6px;
+  padding: 6px;
 
   border:
     1px solid
@@ -1610,9 +2190,11 @@
       0.94
     );
 
-  backdrop-filter: blur(14px);
+  backdrop-filter:
+    blur(14px);
 
-  -webkit-backdrop-filter: blur(14px);
+  -webkit-backdrop-filter:
+    blur(14px);
 
   box-shadow:
     0
@@ -1755,7 +2337,8 @@
 
 
 .writer-writing-count {
-  flex: 0 0 auto;
+  flex:
+    0 0 auto;
 
   padding:
     6px
@@ -1895,6 +2478,9 @@
 .writer-profile-writing-card:hover {
   border-color: #d7c2a5;
 
+  transform:
+    translateY(-1px);
+
   box-shadow:
     0
     8px
@@ -1905,8 +2491,6 @@
       25,
       0.05
     );
-
-  transform: translateY(-1px);
 }
 
 
@@ -2125,6 +2709,7 @@
   white-space: pre-line;
 
   -webkit-box-orient: vertical;
+
   -webkit-line-clamp: 5;
 }
 
@@ -2199,7 +2784,7 @@
 
 
 /* =========================================================
-   ABOUT TAB
+   ABOUT
 ========================================================= */
 
 .writer-profile-about {
@@ -2290,7 +2875,7 @@
 
 
 /* =========================================================
-   ABOUT INFORMATION
+   ABOUT INFO
 ========================================================= */
 
 .writer-about-info-list {
@@ -2383,7 +2968,7 @@
 
 
 /* =========================================================
-   ABOUT SIDEBAR
+   ACTIVITY SIDEBAR
 ========================================================= */
 
 .writer-about-sidebar {
@@ -2494,7 +3079,8 @@
 @keyframes writerProfileSpin {
 
   to {
-    transform: rotate(360deg);
+    transform:
+      rotate(360deg);
   }
 
 }
@@ -2510,6 +3096,7 @@
 
   .writer-profile-shell {
     padding-left: 13px;
+
     padding-right: 13px;
   }
 
@@ -2560,6 +3147,21 @@
     border-right: 0;
   }
 
+
+  .writer-profile-cover-editor {
+    grid-template-columns:
+      minmax(
+        210px,
+        285px
+      )
+      minmax(
+        0,
+        1fr
+      );
+
+    gap: 17px;
+  }
+
 }
 
 
@@ -2579,8 +3181,6 @@
   }
 
 
-  /* COVER */
-
   .writer-social-profile-card {
     border-radius: 17px;
   }
@@ -2593,13 +3193,27 @@
 
   .writer-cover-word {
     right: 15px;
+
     bottom: 13px;
 
     font-size: 34px;
   }
 
 
-  /* CONTENT */
+  .writer-cover-edit-button {
+    top: 10px;
+
+    right: 10px;
+
+    min-height: 35px;
+
+    padding:
+      0
+      10px;
+
+    font-size: 8.5px;
+  }
+
 
   .writer-social-profile-content {
     padding:
@@ -2630,8 +3244,6 @@
   }
 
 
-  /* ACTIONS */
-
   .writer-profile-actions {
     gap: 5px;
 
@@ -2657,8 +3269,6 @@
   }
 
 
-  /* IDENTITY */
-
   .writer-social-identity {
     margin-top: 10px;
   }
@@ -2673,8 +3283,6 @@
     font-size: 10.5px;
   }
 
-
-  /* STATS */
 
   .writer-social-stats {
     width: 100%;
@@ -2700,8 +3308,6 @@
     text-align: center;
   }
 
-
-  /* EDIT */
 
   .writer-profile-edit-panel {
     padding: 17px;
@@ -2731,7 +3337,60 @@
 
   .writer-profile-selected-file {
     margin-left: auto;
+
     margin-right: auto;
+  }
+
+
+  .writer-profile-cover-editor {
+    grid-template-columns: 1fr;
+
+    justify-items: stretch;
+
+    gap: 16px;
+
+    text-align: center;
+  }
+
+
+  .writer-profile-cover-preview {
+    width: 100%;
+
+    max-width: 520px;
+
+    min-height: 105px;
+
+    margin:
+      0
+      auto;
+  }
+
+
+  .writer-profile-cover-controls {
+    width: 100%;
+  }
+
+
+  .writer-profile-cover-controls
+  .writer-profile-photo-buttons {
+    justify-content: center;
+  }
+
+
+  .writer-profile-cover-controls
+  .writer-profile-selected-file {
+    margin-left: auto;
+
+    margin-right: auto;
+  }
+
+
+  .writer-cover-position-editor {
+    margin-left: auto;
+
+    margin-right: auto;
+
+    text-align: left;
   }
 
 
@@ -2745,8 +3404,6 @@
   }
 
 
-  /* TABS */
-
   .writer-profile-tabs {
     top: 61px;
 
@@ -2758,8 +3415,6 @@
     flex: 1;
   }
 
-
-  /* SECTION */
 
   .writer-profile-section-heading {
     align-items: flex-start;
@@ -2774,8 +3429,6 @@
     padding: 14px;
   }
 
-
-  /* ABOUT */
 
   .writer-activity-card {
     grid-template-columns: 1fr;
@@ -2810,12 +3463,33 @@
 
   .writer-profile-shell {
     padding-left: 7px;
+
     padding-right: 7px;
   }
 
 
   .writer-social-cover {
     height: 112px;
+  }
+
+
+  .writer-cover-edit-button {
+    width: 36px;
+
+    min-width: 36px;
+
+    height: 36px;
+
+    min-height: 36px;
+
+    padding: 0;
+
+    border-radius: 10px;
+  }
+
+
+  .writer-cover-edit-button span {
+    display: none;
   }
 
 
@@ -2862,6 +3536,35 @@
   }
 
 
+  .writer-profile-cover-editor {
+    padding: 14px;
+  }
+
+
+  .writer-profile-cover-preview {
+    min-height: 92px;
+
+    border-width: 2px;
+
+    border-radius: 11px;
+  }
+
+
+  .writer-cover-position-heading {
+    gap: 9px;
+  }
+
+
+  .writer-cover-position-heading p {
+    font-size: 8px;
+  }
+
+
+  .writer-cover-position-save-button {
+    width: 100%;
+  }
+
+
   .writer-profile-edit-actions {
     width: 100%;
   }
@@ -2890,7 +3593,15 @@
 
   .writer-social-profile-content {
     padding-left: 12px;
+
     padding-right: 12px;
+  }
+
+
+  .writer-cover-edit-button {
+    top: 8px;
+
+    right: 8px;
   }
 
 
@@ -2901,12 +3612,37 @@
 
   .writer-social-stat {
     padding-left: 5px;
+
     padding-right: 5px;
   }
 
 
   .writer-social-stat strong {
     font-size: 13px;
+  }
+
+
+  .writer-profile-cover-editor {
+    padding:
+      12px
+      10px;
+  }
+
+
+  .writer-cover-position-editor {
+    padding:
+      11px
+      10px;
+  }
+
+
+  .writer-cover-position-heading {
+    flex-direction: column;
+  }
+
+
+  .writer-cover-position-heading > span {
+    align-self: flex-start;
   }
 
 
@@ -2934,7 +3670,7 @@
 
 
 /* =========================================================
-   TOUCH
+   TOUCH DEVICES
 ========================================================= */
 
 @media (
@@ -2944,7 +3680,9 @@
 ) {
 
   .writer-follow-button:hover,
-  .writer-profile-writing-card:hover {
+  .writer-profile-writing-card:hover,
+  .writer-cover-edit-button:hover:not(:disabled),
+  .writer-cover-position-save-button:hover:not(:disabled) {
     transform: none;
   }
 
@@ -2966,7 +3704,13 @@
   .writer-social-stat,
   .writer-profile-writing-card,
   .writer-writing-content-link h3,
-  .writer-about-info-list > div {
+  .writer-about-info-list > div,
+  .writer-cover-edit-button,
+  .writer-cover-position-save-button,
+  .writer-profile-photo-select-button,
+  .writer-profile-photo-upload-button,
+  .writer-profile-photo-cancel-button,
+  .writer-profile-photo-remove-button {
     transition: none;
   }
 

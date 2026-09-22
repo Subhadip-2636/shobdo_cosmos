@@ -1600,6 +1600,252 @@ export const removeProfileAvatar =
 
 
 // =========================================================
+// VALIDATE PROFILE COVER
+// =========================================================
+
+export function validateProfileCover(
+  file
+) {
+
+  if (
+    !(file instanceof File)
+  ) {
+
+    throw new Error(
+      "Please select a valid cover photo."
+    );
+
+  }
+
+
+  const maximumFileSize =
+    10 *
+    1024 *
+    1024;
+
+
+  if (
+    file.size === 0
+  ) {
+
+    throw new Error(
+      "The selected cover photo is empty."
+    );
+
+  }
+
+
+  if (
+    file.size >
+    maximumFileSize
+  ) {
+
+    throw new Error(
+      "Cover photo cannot exceed 10 MB."
+    );
+
+  }
+
+
+  const allowedTypes = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/webp",
+  ];
+
+
+  const allowedExtensions = [
+    "jpg",
+    "jpeg",
+    "png",
+    "webp",
+  ];
+
+
+  const extension =
+    file.name
+      ?.split(".")
+      .pop()
+      ?.toLowerCase();
+
+
+  if (
+    !allowedTypes.includes(
+      file.type
+    ) &&
+    !allowedExtensions.includes(
+      extension
+    )
+  ) {
+
+    throw new Error(
+      "Only JPG, JPEG, PNG and WEBP cover photos are supported."
+    );
+
+  }
+
+
+  return true;
+}
+
+
+// =========================================================
+// UPLOAD / REPLACE PROFILE COVER
+//
+// POST /api/users/me/cover
+// multipart/form-data
+// field: cover
+// =========================================================
+
+export async function uploadMyProfileCover(
+  file
+) {
+
+  validateProfileCover(
+    file
+  );
+
+
+  const formData =
+    new FormData();
+
+
+  formData.append(
+    "cover",
+    file
+  );
+
+
+  return apiRequest(
+    "/api/users/me/cover",
+    {
+      method:
+        "POST",
+
+      body:
+        formData,
+
+      isFormData:
+        true,
+    }
+  );
+}
+
+
+// =========================================================
+// UPDATE PROFILE COVER POSITION
+//
+// PATCH /api/users/me/cover/position
+//
+// 0   = top
+// 50  = center
+// 100 = bottom
+// =========================================================
+
+export async function updateMyProfileCoverPosition(
+  positionY
+) {
+
+  const normalizedPosition =
+    Number(
+      positionY
+    );
+
+
+  if (
+    !Number.isFinite(
+      normalizedPosition
+    )
+  ) {
+
+    throw new Error(
+      "Cover photo position must be a number."
+    );
+
+  }
+
+
+  const roundedPosition =
+    Math.round(
+      normalizedPosition
+    );
+
+
+  if (
+    roundedPosition < 0 ||
+    roundedPosition > 100
+  ) {
+
+    throw new Error(
+      "Cover photo position must be between 0 and 100."
+    );
+
+  }
+
+
+  return apiRequest(
+    "/api/users/me/cover/position",
+    {
+      method:
+        "PATCH",
+
+      body: {
+        position_y:
+          roundedPosition,
+      },
+    }
+  );
+}
+
+
+// =========================================================
+// REMOVE PROFILE COVER
+// =========================================================
+
+export async function removeMyProfileCover() {
+
+  return apiRequest(
+    "/api/users/me/cover",
+    {
+      method:
+        "DELETE",
+    }
+  );
+}
+
+
+// =========================================================
+// PROFILE COVER COMPATIBILITY EXPORTS
+// =========================================================
+
+export const uploadProfileCover =
+  uploadMyProfileCover;
+
+
+export const updateProfileCoverPosition =
+  updateMyProfileCoverPosition;
+
+
+export const removeProfileCover =
+  removeMyProfileCover;
+
+
+// Friendly aliases for components that use "CoverPhoto" naming.
+
+export const uploadMyCoverPhoto =
+  uploadMyProfileCover;
+
+
+export const updateMyCoverPosition =
+  updateMyProfileCoverPosition;
+
+
+export const deleteMyCoverPhoto =
+  removeMyProfileCover;
+
+
+// =========================================================
 // GET PUBLIC WRITER PROFILE
 // =========================================================
 
@@ -2493,6 +2739,26 @@ const writingApi = {
   uploadProfileAvatar,
 
   removeProfileAvatar,
+
+  validateProfileCover,
+
+  uploadMyProfileCover,
+
+  updateMyProfileCoverPosition,
+
+  removeMyProfileCover,
+
+  uploadProfileCover,
+
+  updateProfileCoverPosition,
+
+  removeProfileCover,
+
+  uploadMyCoverPhoto,
+
+  updateMyCoverPosition,
+
+  deleteMyCoverPhoto,
 
   getWriterProfile,
 

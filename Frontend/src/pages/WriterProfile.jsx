@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   ArrowUpRight,
@@ -29,14 +23,12 @@ import {
   X,
 } from "lucide-react";
 
-
 import {
   Link,
   useLocation,
   useNavigate,
   useParams,
 } from "react-router-dom";
-
 
 import {
   followUser,
@@ -45,26 +37,24 @@ import {
   getWriterProfile,
   getWriterWritings,
   removeMyProfileAvatar,
+  removeMyProfileCover,
   unfollowUser,
   updateMyProfile,
+  updateMyProfileCoverPosition,
   uploadMyProfileAvatar,
+  uploadMyProfileCover,
   validateProfileAvatar,
+  validateProfileCover,
 } from "../api/api";
-
 
 import {
   useLanguage,
 } from "../Language/LanguageContext";
 
-
 import SEO from "../components/SEO";
 
 import "./WriterProfile.css";
 
-
-// =========================================================
-// MULTILINGUAL PROFILE COPY
-// =========================================================
 
 const PROFILE_COPY = {
 
@@ -222,6 +212,69 @@ const PROFILE_COPY = {
 
     photoRemoveError:
       "Unable to remove profile photo.",
+
+    coverPhoto:
+      "Cover photo",
+
+    coverDescription:
+      "JPG, PNG or WEBP. Maximum file size 10 MB. Recommended ratio: 3:1.",
+
+    chooseCover:
+      "Choose Cover",
+
+    changeCover:
+      "Change Cover",
+
+    uploadCover:
+      "Upload Cover",
+
+    removeCover:
+      "Remove Cover",
+
+    removeCoverConfirm:
+      "Remove your current cover photo?",
+
+    coverUpdated:
+      "Cover photo updated successfully.",
+
+    coverRemoved:
+      "Cover photo removed.",
+
+    invalidCover:
+      "Invalid cover photo.",
+
+    coverUploadError:
+      "Unable to upload cover photo.",
+
+    coverRemoveError:
+      "Unable to remove cover photo.",
+
+    coverPosition:
+      "Cover position",
+
+    coverPositionHelp:
+      "Move the slider to choose which vertical part of the cover stays visible.",
+
+    saveCoverPosition:
+      "Save Position",
+
+    savingPosition:
+      "Saving position...",
+
+    coverPositionSaved:
+      "Cover position updated successfully.",
+
+    coverPositionError:
+      "Unable to update cover position.",
+
+    selectedCover:
+      "Selected cover preview",
+
+    currentCover:
+      "Current cover photo",
+
+    defaultCover:
+      "Default SHOBDO cover",
 
     name:
       "Name",
@@ -435,6 +488,69 @@ const PROFILE_COPY = {
     photoRemoveError:
       "প্রোফাইল ছবি সরানো যায়নি।",
 
+    coverPhoto:
+      "কভার ছবি",
+
+    coverDescription:
+      "JPG, PNG অথবা WEBP। সর্বোচ্চ ফাইল সাইজ ১০ MB। প্রস্তাবিত অনুপাত ৩:১।",
+
+    chooseCover:
+      "কভার নির্বাচন করুন",
+
+    changeCover:
+      "কভার পরিবর্তন করুন",
+
+    uploadCover:
+      "কভার আপলোড করুন",
+
+    removeCover:
+      "কভার সরান",
+
+    removeCoverConfirm:
+      "আপনার বর্তমান কভার ছবি সরাতে চান?",
+
+    coverUpdated:
+      "কভার ছবি সফলভাবে আপডেট হয়েছে।",
+
+    coverRemoved:
+      "কভার ছবি সরানো হয়েছে।",
+
+    invalidCover:
+      "কভার ছবিটি সঠিক নয়।",
+
+    coverUploadError:
+      "কভার ছবি আপলোড করা যায়নি।",
+
+    coverRemoveError:
+      "কভার ছবি সরানো যায়নি।",
+
+    coverPosition:
+      "কভারের অবস্থান",
+
+    coverPositionHelp:
+      "কভারের কোন উল্লম্ব অংশটি দৃশ্যমান থাকবে তা বেছে নিতে স্লাইডার সরান।",
+
+    saveCoverPosition:
+      "অবস্থান সংরক্ষণ করুন",
+
+    savingPosition:
+      "অবস্থান সংরক্ষণ হচ্ছে...",
+
+    coverPositionSaved:
+      "কভারের অবস্থান সফলভাবে আপডেট হয়েছে।",
+
+    coverPositionError:
+      "কভারের অবস্থান আপডেট করা যায়নি।",
+
+    selectedCover:
+      "নির্বাচিত কভারের প্রিভিউ",
+
+    currentCover:
+      "বর্তমান কভার ছবি",
+
+    defaultCover:
+      "ডিফল্ট SHOBDO কভার",
+
     name:
       "নাম",
 
@@ -647,6 +763,69 @@ const PROFILE_COPY = {
     photoRemoveError:
       "प्रोफ़ाइल फ़ोटो हटाई नहीं जा सकी।",
 
+    coverPhoto:
+      "कवर फ़ोटो",
+
+    coverDescription:
+      "JPG, PNG या WEBP। अधिकतम फ़ाइल आकार 10 MB। अनुशंसित अनुपात 3:1।",
+
+    chooseCover:
+      "कवर चुनें",
+
+    changeCover:
+      "कवर बदलें",
+
+    uploadCover:
+      "कवर अपलोड करें",
+
+    removeCover:
+      "कवर हटाएँ",
+
+    removeCoverConfirm:
+      "क्या आप अपनी वर्तमान कवर फ़ोटो हटाना चाहते हैं?",
+
+    coverUpdated:
+      "कवर फ़ोटो सफलतापूर्वक अपडेट हुई।",
+
+    coverRemoved:
+      "कवर फ़ोटो हटा दी गई।",
+
+    invalidCover:
+      "अमान्य कवर फ़ोटो।",
+
+    coverUploadError:
+      "कवर फ़ोटो अपलोड नहीं हो सकी।",
+
+    coverRemoveError:
+      "कवर फ़ोटो हटाई नहीं जा सकी।",
+
+    coverPosition:
+      "कवर स्थिति",
+
+    coverPositionHelp:
+      "कवर का कौन-सा ऊर्ध्वाधर हिस्सा दिखाई दे, यह चुनने के लिए स्लाइडर चलाएँ।",
+
+    saveCoverPosition:
+      "स्थिति सहेजें",
+
+    savingPosition:
+      "स्थिति सहेजी जा रही है...",
+
+    coverPositionSaved:
+      "कवर स्थिति सफलतापूर्वक अपडेट हुई।",
+
+    coverPositionError:
+      "कवर स्थिति अपडेट नहीं हो सकी।",
+
+    selectedCover:
+      "चुनी गई कवर फ़ोटो का पूर्वावलोकन",
+
+    currentCover:
+      "वर्तमान कवर फ़ोटो",
+
+    defaultCover:
+      "डिफ़ॉल्ट SHOBDO कवर",
+
     name:
       "नाम",
 
@@ -706,10 +885,6 @@ const PROFILE_COPY = {
 };
 
 
-// =========================================================
-// CATEGORY LABELS
-// =========================================================
-
 const CATEGORY_LABELS = {
 
   en: {
@@ -741,10 +916,6 @@ const CATEGORY_LABELS = {
 
 };
 
-
-// =========================================================
-// WRITING LANGUAGE LABELS
-// =========================================================
 
 const WRITING_LANGUAGE_LABELS = {
 
@@ -780,10 +951,6 @@ const WRITING_LANGUAGE_LABELS = {
 
 };
 
-
-// =========================================================
-// HELPERS
-// =========================================================
 
 function safeNumber(
   value
@@ -1082,10 +1249,6 @@ function getWritingLanguageLabel(
 }
 
 
-// =========================================================
-// WRITER PROFILE
-// =========================================================
-
 function WriterProfile() {
 
   const {
@@ -1119,6 +1282,12 @@ function WriterProfile() {
     );
 
 
+  const coverInputRef =
+    useRef(
+      null
+    );
+
+
   const userId =
     Number(
       id
@@ -1138,10 +1307,6 @@ function WriterProfile() {
       getToken()
     );
 
-
-  // =======================================================
-  // PROFILE STATE
-  // =======================================================
 
   const [
     profile,
@@ -1230,10 +1395,6 @@ function WriterProfile() {
   );
 
 
-  // =======================================================
-  // FOLLOW
-  // =======================================================
-
   const [
     followLoading,
     setFollowLoading,
@@ -1241,10 +1402,6 @@ function WriterProfile() {
     false
   );
 
-
-  // =======================================================
-  // EDIT PROFILE
-  // =======================================================
 
   const [
     editOpen,
@@ -1300,10 +1457,6 @@ function WriterProfile() {
     ""
   );
 
-
-  // =======================================================
-  // AVATAR
-  // =======================================================
 
   const [
     avatarFile,
@@ -1361,9 +1514,77 @@ function WriterProfile() {
   );
 
 
-  // =======================================================
-  // LOAD PROFILE
-  // =======================================================
+  const [
+    coverFile,
+    setCoverFile,
+  ] = useState(
+    null
+  );
+
+
+  const [
+    coverPreviewUrl,
+    setCoverPreviewUrl,
+  ] = useState(
+    ""
+  );
+
+
+  const [
+    coverUploading,
+    setCoverUploading,
+  ] = useState(
+    false
+  );
+
+
+  const [
+    coverRemoving,
+    setCoverRemoving,
+  ] = useState(
+    false
+  );
+
+
+  const [
+    coverPositionSaving,
+    setCoverPositionSaving,
+  ] = useState(
+    false
+  );
+
+
+  const [
+    coverError,
+    setCoverError,
+  ] = useState(
+    ""
+  );
+
+
+  const [
+    coverSuccess,
+    setCoverSuccess,
+  ] = useState(
+    ""
+  );
+
+
+  const [
+    coverDraftPosition,
+    setCoverDraftPosition,
+  ] = useState(
+    50
+  );
+
+
+  const [
+    coverVersion,
+    setCoverVersion,
+  ] = useState(
+    Date.now()
+  );
+
 
   useEffect(
     () => {
@@ -1532,10 +1753,6 @@ function WriterProfile() {
 
           );
 
-
-          // ===============================================
-          // FOLLOW STATUS
-          // ===============================================
 
           if (
             isLoggedIn
@@ -1707,10 +1924,6 @@ function WriterProfile() {
   );
 
 
-  // =======================================================
-  // AVATAR PREVIEW CLEANUP
-  // =======================================================
-
   useEffect(
     () => {
 
@@ -1735,9 +1948,29 @@ function WriterProfile() {
   );
 
 
-  // =======================================================
-  // SHARE STATUS CLEANUP
-  // =======================================================
+  useEffect(
+    () => {
+
+      return () => {
+
+        if (
+          coverPreviewUrl
+        ) {
+
+          URL.revokeObjectURL(
+            coverPreviewUrl
+          );
+
+        }
+
+      };
+
+    },
+    [
+      coverPreviewUrl,
+    ]
+  );
+
 
   useEffect(
     () => {
@@ -1778,10 +2011,6 @@ function WriterProfile() {
     ]
   );
 
-
-  // =======================================================
-  // MEMBER SINCE
-  // =======================================================
 
   const memberSince =
     useMemo(
@@ -1848,10 +2077,6 @@ function WriterProfile() {
     );
 
 
-  // =======================================================
-  // AVATAR URL
-  // =======================================================
-
   const displayedAvatarUrl =
     useMemo(
       () => {
@@ -1899,9 +2124,66 @@ function WriterProfile() {
     );
 
 
-  // =======================================================
-  // OPEN EDIT PROFILE
-  // =======================================================
+  const displayedCoverUrl =
+    useMemo(
+      () => {
+
+        if (
+          !profile?.cover_photo_url
+        ) {
+
+          return "";
+
+        }
+
+
+        try {
+
+          const url =
+            new URL(
+              profile.cover_photo_url
+            );
+
+
+          url.searchParams.set(
+            "shobdo_cover",
+            String(
+              coverVersion
+            )
+          );
+
+
+          return url.toString();
+
+
+        } catch {
+
+          return profile
+            .cover_photo_url;
+
+        }
+
+      },
+      [
+        profile?.cover_photo_url,
+        coverVersion,
+      ]
+    );
+
+
+  const currentCoverPosition =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        safeNumber(
+          profile
+            ?.cover_photo_position_y ??
+          50
+        )
+      )
+    );
+
 
   function openEditProfile() {
 
@@ -1960,6 +2242,31 @@ function WriterProfile() {
     );
 
 
+    setCoverError(
+      ""
+    );
+
+
+    setCoverSuccess(
+      ""
+    );
+
+
+    setCoverDraftPosition(
+      Math.max(
+        0,
+        Math.min(
+          100,
+          safeNumber(
+            profile
+              .cover_photo_position_y ??
+            50
+          )
+        )
+      )
+    );
+
+
     setEditOpen(
       true
     );
@@ -1967,16 +2274,15 @@ function WriterProfile() {
   }
 
 
-  // =======================================================
-  // CLOSE EDIT PROFILE
-  // =======================================================
-
   function closeEditProfile() {
 
     if (
       profileSaving ||
       avatarUploading ||
-      avatarRemoving
+      avatarRemoving ||
+      coverUploading ||
+      coverRemoving ||
+      coverPositionSaving
     ) {
 
       return;
@@ -2015,6 +2321,42 @@ function WriterProfile() {
     );
 
 
+    if (
+      coverPreviewUrl
+    ) {
+
+      URL.revokeObjectURL(
+        coverPreviewUrl
+      );
+
+    }
+
+
+    setCoverFile(
+      null
+    );
+
+
+    setCoverPreviewUrl(
+      ""
+    );
+
+
+    setCoverError(
+      ""
+    );
+
+
+    setCoverSuccess(
+      ""
+    );
+
+
+    setCoverDraftPosition(
+      currentCoverPosition
+    );
+
+
     setProfileError(
       ""
     );
@@ -2042,12 +2384,21 @@ function WriterProfile() {
 
     }
 
+
+    if (
+      coverInputRef
+        .current
+    ) {
+
+      coverInputRef
+        .current
+        .value =
+        "";
+
+    }
+
   }
 
-
-  // =======================================================
-  // EDIT FIELD
-  // =======================================================
 
   function handleEditChange(
     event
@@ -2085,10 +2436,6 @@ function WriterProfile() {
 
   }
 
-
-  // =======================================================
-  // SAVE PROFILE
-  // =======================================================
 
   async function handleSaveProfile(
     event
@@ -2289,10 +2636,6 @@ function WriterProfile() {
   }
 
 
-  // =======================================================
-  // SELECT AVATAR
-  // =======================================================
-
   function handleAvatarSelection(
     event
   ) {
@@ -2411,10 +2754,6 @@ function WriterProfile() {
   }
 
 
-  // =======================================================
-  // CANCEL AVATAR SELECTION
-  // =======================================================
-
   function cancelAvatarSelection() {
 
     if (
@@ -2466,10 +2805,6 @@ function WriterProfile() {
 
   }
 
-
-  // =======================================================
-  // UPLOAD AVATAR
-  // =======================================================
 
   async function handleAvatarUpload() {
 
@@ -2625,10 +2960,6 @@ function WriterProfile() {
   }
 
 
-  // =======================================================
-  // REMOVE AVATAR
-  // =======================================================
-
   async function handleRemoveAvatar() {
 
     if (
@@ -2778,9 +3109,756 @@ function WriterProfile() {
   }
 
 
-  // =======================================================
-  // FOLLOW / UNFOLLOW
-  // =======================================================
+  function handleCoverSelection(
+    event
+  ) {
+
+    const file =
+      event.target
+        .files?.[
+          0
+        ];
+
+
+    if (
+      !file
+    ) {
+
+      return;
+
+    }
+
+
+    setCoverError(
+      ""
+    );
+
+
+    setCoverSuccess(
+      ""
+    );
+
+
+    try {
+
+      validateProfileCover(
+        file
+      );
+
+
+      if (
+        coverPreviewUrl
+      ) {
+
+        URL.revokeObjectURL(
+          coverPreviewUrl
+        );
+
+      }
+
+
+      const previewUrl =
+        URL.createObjectURL(
+          file
+        );
+
+
+      setCoverFile(
+        file
+      );
+
+
+      setCoverPreviewUrl(
+        previewUrl
+      );
+
+
+      setCoverDraftPosition(
+        currentCoverPosition
+      );
+
+
+      if (
+        !editOpen
+      ) {
+
+        openEditProfile();
+
+      }
+
+
+    } catch (
+      validationError
+    ) {
+
+      console.error(
+        "COVER VALIDATION ERROR:",
+        validationError
+      );
+
+
+      setCoverFile(
+        null
+      );
+
+
+      setCoverPreviewUrl(
+        ""
+      );
+
+
+      setCoverError(
+
+        language ===
+          "en"
+
+          ? (
+              validationError
+                ?.message
+              ||
+              copy.invalidCover
+            )
+
+          : copy.invalidCover
+
+      );
+
+
+      if (
+        coverInputRef
+          .current
+      ) {
+
+        coverInputRef
+          .current
+          .value =
+          "";
+
+      }
+
+    }
+
+  }
+
+
+  function cancelCoverSelection() {
+
+    if (
+      coverUploading
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      coverPreviewUrl
+    ) {
+
+      URL.revokeObjectURL(
+        coverPreviewUrl
+      );
+
+    }
+
+
+    setCoverFile(
+      null
+    );
+
+
+    setCoverPreviewUrl(
+      ""
+    );
+
+
+    setCoverError(
+      ""
+    );
+
+
+    setCoverDraftPosition(
+      currentCoverPosition
+    );
+
+
+    if (
+      coverInputRef
+        .current
+    ) {
+
+      coverInputRef
+        .current
+        .value =
+        "";
+
+    }
+
+  }
+
+
+  async function handleCoverUpload() {
+
+    if (
+      !coverFile ||
+      coverUploading
+    ) {
+
+      return;
+
+    }
+
+
+    const requestedPosition =
+      Math.max(
+        0,
+        Math.min(
+          100,
+          Math.round(
+            safeNumber(
+              coverDraftPosition
+            )
+          )
+        )
+      );
+
+
+    setCoverUploading(
+      true
+    );
+
+
+    setCoverError(
+      ""
+    );
+
+
+    setCoverSuccess(
+      ""
+    );
+
+
+    try {
+
+      const result =
+        await uploadMyProfileCover(
+          coverFile
+        );
+
+
+      const nextCoverUrl =
+
+        result
+          ?.cover_photo_url
+
+        ||
+
+        result
+          ?.user
+          ?.cover_photo_url
+
+        ||
+
+        "";
+
+
+      let nextPosition =
+        Math.max(
+          0,
+          Math.min(
+            100,
+            safeNumber(
+              result
+                ?.cover_photo_position_y
+              ??
+              result
+                ?.user
+                ?.cover_photo_position_y
+              ??
+              50
+            )
+          )
+        );
+
+
+      let mergedUser = {
+
+        ...(
+          result?.user ||
+          {}
+        ),
+
+      };
+
+
+      if (
+        nextCoverUrl &&
+        requestedPosition !==
+          nextPosition
+      ) {
+
+        try {
+
+          const positionResult =
+            await updateMyProfileCoverPosition(
+              requestedPosition
+            );
+
+
+          nextPosition =
+            Math.max(
+              0,
+              Math.min(
+                100,
+                safeNumber(
+                  positionResult
+                    ?.cover_photo_position_y
+                  ??
+                  positionResult
+                    ?.user
+                    ?.cover_photo_position_y
+                  ??
+                  requestedPosition
+                )
+              )
+            );
+
+
+          mergedUser = {
+
+            ...mergedUser,
+
+            ...(
+              positionResult
+                ?.user ||
+              {}
+            ),
+
+          };
+
+
+        } catch (
+          positionError
+        ) {
+
+          console.error(
+            "COVER POSITION AFTER UPLOAD ERROR:",
+            positionError
+          );
+
+
+          setCoverError(
+            copy.coverPositionError
+          );
+
+        }
+
+      }
+
+
+      setProfile(
+        (
+          current
+        ) => ({
+
+          ...current,
+
+          ...mergedUser,
+
+          cover_photo_url:
+            nextCoverUrl ||
+            current
+              ?.cover_photo_url ||
+            null,
+
+          cover_photo_position_y:
+            nextPosition,
+
+        })
+      );
+
+
+      setCoverDraftPosition(
+        nextPosition
+      );
+
+
+      setCoverVersion(
+        Date.now()
+      );
+
+
+      if (
+        coverPreviewUrl
+      ) {
+
+        URL.revokeObjectURL(
+          coverPreviewUrl
+        );
+
+      }
+
+
+      setCoverFile(
+        null
+      );
+
+
+      setCoverPreviewUrl(
+        ""
+      );
+
+
+      if (
+        coverInputRef
+          .current
+      ) {
+
+        coverInputRef
+          .current
+          .value =
+          "";
+
+      }
+
+
+      setCoverSuccess(
+        copy.coverUpdated
+      );
+
+
+    } catch (
+      uploadError
+    ) {
+
+      console.error(
+        "PROFILE COVER UPLOAD ERROR:",
+        uploadError
+      );
+
+
+      setCoverError(
+
+        language ===
+          "en"
+
+          ? (
+              uploadError
+                ?.message
+              ||
+              copy.coverUploadError
+            )
+
+          : copy.coverUploadError
+
+      );
+
+
+    } finally {
+
+      setCoverUploading(
+        false
+      );
+
+    }
+
+  }
+
+
+  async function handleRemoveCover() {
+
+    if (
+      coverRemoving ||
+      !profile
+        ?.cover_photo_url
+    ) {
+
+      return;
+
+    }
+
+
+    const confirmed =
+      window.confirm(
+        copy.removeCoverConfirm
+      );
+
+
+    if (
+      !confirmed
+    ) {
+
+      return;
+
+    }
+
+
+    setCoverRemoving(
+      true
+    );
+
+
+    setCoverError(
+      ""
+    );
+
+
+    setCoverSuccess(
+      ""
+    );
+
+
+    try {
+
+      const result =
+        await removeMyProfileCover();
+
+
+      setProfile(
+        (
+          current
+        ) => ({
+
+          ...current,
+
+          ...(
+            result?.user ||
+            {}
+          ),
+
+          cover_photo_url:
+            null,
+
+          cover_photo_position_y:
+            50,
+
+        })
+      );
+
+
+      setCoverVersion(
+        Date.now()
+      );
+
+
+      setCoverDraftPosition(
+        50
+      );
+
+
+      if (
+        coverPreviewUrl
+      ) {
+
+        URL.revokeObjectURL(
+          coverPreviewUrl
+        );
+
+      }
+
+
+      setCoverFile(
+        null
+      );
+
+
+      setCoverPreviewUrl(
+        ""
+      );
+
+
+      if (
+        coverInputRef
+          .current
+      ) {
+
+        coverInputRef
+          .current
+          .value =
+          "";
+
+      }
+
+
+      setCoverSuccess(
+        copy.coverRemoved
+      );
+
+
+    } catch (
+      removeError
+    ) {
+
+      console.error(
+        "PROFILE COVER REMOVE ERROR:",
+        removeError
+      );
+
+
+      setCoverError(
+
+        language ===
+          "en"
+
+          ? (
+              removeError
+                ?.message
+              ||
+              copy.coverRemoveError
+            )
+
+          : copy.coverRemoveError
+
+      );
+
+
+    } finally {
+
+      setCoverRemoving(
+        false
+      );
+
+    }
+
+  }
+
+
+  async function handleSaveCoverPosition() {
+
+    if (
+      coverPositionSaving ||
+      !profile
+        ?.cover_photo_url
+    ) {
+
+      return;
+
+    }
+
+
+    const normalizedPosition =
+      Math.max(
+        0,
+        Math.min(
+          100,
+          Math.round(
+            safeNumber(
+              coverDraftPosition
+            )
+          )
+        )
+      );
+
+
+    setCoverPositionSaving(
+      true
+    );
+
+
+    setCoverError(
+      ""
+    );
+
+
+    setCoverSuccess(
+      ""
+    );
+
+
+    try {
+
+      const result =
+        await updateMyProfileCoverPosition(
+          normalizedPosition
+        );
+
+
+      const nextPosition =
+        Math.max(
+          0,
+          Math.min(
+            100,
+            safeNumber(
+              result
+                ?.cover_photo_position_y
+              ??
+              result
+                ?.user
+                ?.cover_photo_position_y
+              ??
+              normalizedPosition
+            )
+          )
+        );
+
+
+      setProfile(
+        (
+          current
+        ) => ({
+
+          ...current,
+
+          ...(
+            result?.user ||
+            {}
+          ),
+
+          cover_photo_position_y:
+            nextPosition,
+
+        })
+      );
+
+
+      setCoverDraftPosition(
+        nextPosition
+      );
+
+
+      setCoverSuccess(
+        copy.coverPositionSaved
+      );
+
+
+    } catch (
+      positionError
+    ) {
+
+      console.error(
+        "COVER POSITION UPDATE ERROR:",
+        positionError
+      );
+
+
+      setCoverError(
+
+        language ===
+          "en"
+
+          ? (
+              positionError
+                ?.message
+              ||
+              copy.coverPositionError
+            )
+
+          : copy.coverPositionError
+
+      );
+
+
+    } finally {
+
+      setCoverPositionSaving(
+        false
+      );
+
+    }
+
+  }
+
 
   async function handleFollow() {
 
@@ -2981,10 +4059,6 @@ function WriterProfile() {
   }
 
 
-  // =======================================================
-  // SHARE PROFILE
-  // =======================================================
-
   async function handleShareProfile() {
 
     if (
@@ -3091,10 +4165,6 @@ function WriterProfile() {
   }
 
 
-  // =======================================================
-  // WRITING DATE
-  // =======================================================
-
   function getWritingDate(
     writing
   ) {
@@ -3168,10 +4238,6 @@ function WriterProfile() {
   }
 
 
-  // =======================================================
-  // LOADING
-  // =======================================================
-
   if (
     loading
   ) {
@@ -3223,10 +4289,6 @@ function WriterProfile() {
 
   }
 
-
-  // =======================================================
-  // ERROR
-  // =======================================================
 
   if (
     error ||
@@ -3298,10 +4360,6 @@ function WriterProfile() {
   }
 
 
-  // =======================================================
-  // DERIVED COUNTS
-  // =======================================================
-
   const writingsCount =
     safeNumber(
       stats
@@ -3338,10 +4396,6 @@ function WriterProfile() {
         .comments_count
     );
 
-
-  // =======================================================
-  // DYNAMIC PROFILE SEO
-  // =======================================================
 
   const seoProfileName =
     cleanMetaText(
@@ -3414,21 +4468,14 @@ function WriterProfile() {
 
 
   const seoImage =
+    profile.cover_photo_url ||
     profile.avatar_url ||
     undefined;
 
 
-  // =======================================================
-  // UI
-  // =======================================================
-
   return (
 
     <>
-
-      {/* ===================================================
-          DYNAMIC PROFILE SEO
-      ==================================================== */}
 
       <SEO
         title={
@@ -3455,24 +4502,119 @@ function WriterProfile() {
           className="writer-profile-shell"
         >
 
-
-          {/* =================================================
-              PROFESSIONAL SOCIAL PROFILE HEADER
-          ================================================== */}
-
           <section
             className="writer-social-profile-card"
           >
 
             <div
-              className="writer-social-cover"
+              className={
+                (
+                  coverPreviewUrl ||
+                  displayedCoverUrl
+                )
+
+                  ? "writer-social-cover has-cover-photo"
+
+                  : "writer-social-cover"
+              }
+              style={
+                (
+                  coverPreviewUrl ||
+                  displayedCoverUrl
+                )
+
+                  ? {
+                      backgroundImage:
+                        `url("${
+                          coverPreviewUrl ||
+                          displayedCoverUrl
+                        }")`,
+
+                      backgroundPosition:
+                        `center ${
+                          coverPreviewUrl
+                            ? coverDraftPosition
+                            : currentCoverPosition
+                        }%`,
+                    }
+
+                  : undefined
+              }
             >
 
-              <span
-                className="writer-cover-word"
-              >
-                SHOBDO
-              </span>
+              {
+                !(
+                  coverPreviewUrl ||
+                  displayedCoverUrl
+                ) && (
+
+                  <span
+                    className="writer-cover-word"
+                  >
+                    SHOBDO
+                  </span>
+
+                )
+              }
+
+
+              {
+                isSelf && (
+
+                  <>
+
+                    <input
+                      ref={
+                        coverInputRef
+                      }
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      hidden
+                      onChange={
+                        handleCoverSelection
+                      }
+                    />
+
+
+                    <button
+                      type="button"
+                      className="writer-cover-edit-button"
+                      onClick={
+                        () =>
+                          coverInputRef
+                            .current
+                            ?.click()
+                      }
+                      disabled={
+                        coverUploading ||
+                        coverRemoving ||
+                        coverPositionSaving
+                      }
+                    >
+
+                      <Camera
+                        size={17}
+                      />
+
+                      <span>
+
+                        {
+                          profile
+                            .cover_photo_url
+
+                            ? copy.changeCover
+
+                            : copy.chooseCover
+                        }
+
+                      </span>
+
+                    </button>
+
+                  </>
+
+                )
+              }
 
             </div>
 
@@ -3480,10 +4622,6 @@ function WriterProfile() {
             <div
               className="writer-social-profile-content"
             >
-
-              {/* =============================================
-                  AVATAR + ACTIONS
-              ============================================== */}
 
               <div
                 className="writer-social-profile-top"
@@ -3495,6 +4633,7 @@ function WriterProfile() {
 
                   {
                     displayedAvatarUrl
+
                       ? (
 
                           <img
@@ -3553,7 +4692,9 @@ function WriterProfile() {
                         type="button"
                         className={
                           following
+
                             ? "writer-follow-button following"
+
                             : "writer-follow-button"
                         }
                         onClick={
@@ -3566,6 +4707,7 @@ function WriterProfile() {
 
                         {
                           followLoading
+
                             ? (
 
                                 <Loader2
@@ -3576,6 +4718,7 @@ function WriterProfile() {
                               )
 
                             : following
+
                               ? (
 
                                   <UserCheck
@@ -3598,7 +4741,9 @@ function WriterProfile() {
 
                           {
                             following
+
                               ? copy.following
+
                               : copy.follow
                           }
 
@@ -3648,6 +4793,7 @@ function WriterProfile() {
 
                     {
                       shareStatus
+
                         ? (
 
                             <CheckCircle2
@@ -3681,10 +4827,6 @@ function WriterProfile() {
 
               </div>
 
-
-              {/* =============================================
-                  IDENTITY
-              ============================================== */}
 
               <div
                 className="writer-social-identity"
@@ -3727,10 +4869,6 @@ function WriterProfile() {
                   )
                 }
 
-
-                {/* ===========================================
-                    META
-                ============================================ */}
 
                 <div
                   className="writer-profile-meta"
@@ -3813,10 +4951,6 @@ function WriterProfile() {
                 </div>
 
 
-                {/* ===========================================
-                    SOCIAL COUNTS
-                ============================================ */}
-
                 <div
                   className="writer-social-stats"
                 >
@@ -3887,10 +5021,6 @@ function WriterProfile() {
           </section>
 
 
-          {/* =================================================
-              EDIT PROFILE PANEL
-          ================================================== */}
-
           {
             isSelf &&
             editOpen && (
@@ -3927,7 +5057,10 @@ function WriterProfile() {
                     disabled={
                       profileSaving ||
                       avatarUploading ||
-                      avatarRemoving
+                      avatarRemoving ||
+                      coverUploading ||
+                      coverRemoving ||
+                      coverPositionSaving
                     }
                     aria-label={
                       copy.close
@@ -3943,10 +5076,6 @@ function WriterProfile() {
                 </div>
 
 
-                {/* ===========================================
-                    PHOTO EDITOR
-                ============================================ */}
-
                 <div
                   className="writer-profile-photo-editor"
                 >
@@ -3957,6 +5086,7 @@ function WriterProfile() {
 
                     {
                       avatarPreviewUrl
+
                         ? (
 
                             <img
@@ -3971,6 +5101,7 @@ function WriterProfile() {
                           )
 
                         : displayedAvatarUrl
+
                           ? (
 
                               <img
@@ -4059,7 +5190,9 @@ function WriterProfile() {
 
                         {
                           profile.avatar_url
+
                             ? copy.changePhoto
+
                             : copy.choosePhoto
                         }
 
@@ -4083,6 +5216,7 @@ function WriterProfile() {
 
                             {
                               avatarUploading
+
                                 ? (
 
                                     <Loader2
@@ -4101,9 +5235,12 @@ function WriterProfile() {
                                   )
                             }
 
+
                             {
                               avatarUploading
+
                                 ? copy.uploading
+
                                 : copy.uploadPhoto
                             }
 
@@ -4159,6 +5296,7 @@ function WriterProfile() {
 
                             {
                               avatarRemoving
+
                                 ? (
 
                                     <Loader2
@@ -4177,9 +5315,12 @@ function WriterProfile() {
                                   )
                             }
 
+
                             {
                               avatarRemoving
+
                                 ? copy.removing
+
                                 : copy.removePhoto
                             }
 
@@ -4201,7 +5342,6 @@ function WriterProfile() {
                           <strong>
                             {avatarFile.name}
                           </strong>
-
 
                           <span>
 
@@ -4257,9 +5397,450 @@ function WriterProfile() {
                 </div>
 
 
-                {/* ===========================================
-                    PROFILE FORM
-                ============================================ */}
+                <div
+                  className="writer-profile-cover-editor"
+                >
+
+                  <div
+                    className="writer-profile-cover-preview"
+                    style={
+                      (
+                        coverPreviewUrl ||
+                        displayedCoverUrl
+                      )
+
+                        ? {
+                            backgroundImage:
+                              `url("${
+                                coverPreviewUrl ||
+                                displayedCoverUrl
+                              }")`,
+
+                            backgroundPosition:
+                              `center ${coverDraftPosition}%`,
+                          }
+
+                        : undefined
+                    }
+                    aria-label={
+                      coverPreviewUrl
+
+                        ? copy.selectedCover
+
+                        : displayedCoverUrl
+
+                          ? copy.currentCover
+
+                          : copy.defaultCover
+                    }
+                  >
+
+                    {
+                      !(
+                        coverPreviewUrl ||
+                        displayedCoverUrl
+                      ) && (
+
+                        <span>
+                          SHOBDO
+                        </span>
+
+                      )
+                    }
+
+                  </div>
+
+
+                  <div
+                    className="writer-profile-cover-controls"
+                  >
+
+                    <div
+                      className="writer-profile-photo-copy"
+                    >
+
+                      <h3>
+                        {copy.coverPhoto}
+                      </h3>
+
+                      <p>
+                        {copy.coverDescription}
+                      </p>
+
+                    </div>
+
+
+                    <div
+                      className="writer-profile-photo-buttons"
+                    >
+
+                      <button
+                        type="button"
+                        className="writer-profile-photo-select-button"
+                        onClick={
+                          () =>
+                            coverInputRef
+                              .current
+                              ?.click()
+                        }
+                        disabled={
+                          coverUploading ||
+                          coverRemoving ||
+                          coverPositionSaving
+                        }
+                      >
+
+                        <Camera
+                          size={16}
+                        />
+
+                        {
+                          profile
+                            .cover_photo_url
+
+                            ? copy.changeCover
+
+                            : copy.chooseCover
+                        }
+
+                      </button>
+
+
+                      {
+                        coverFile && (
+
+                          <button
+                            type="button"
+                            className="writer-profile-photo-upload-button"
+                            onClick={
+                              handleCoverUpload
+                            }
+                            disabled={
+                              coverUploading ||
+                              coverRemoving ||
+                              coverPositionSaving
+                            }
+                          >
+
+                            {
+                              coverUploading
+
+                                ? (
+
+                                    <Loader2
+                                      size={16}
+                                      className="spin"
+                                    />
+
+                                  )
+
+                                : (
+
+                                    <Upload
+                                      size={16}
+                                    />
+
+                                  )
+                            }
+
+
+                            {
+                              coverUploading
+
+                                ? copy.uploading
+
+                                : copy.uploadCover
+                            }
+
+                          </button>
+
+                        )
+                      }
+
+
+                      {
+                        coverFile && (
+
+                          <button
+                            type="button"
+                            className="writer-profile-photo-cancel-button"
+                            onClick={
+                              cancelCoverSelection
+                            }
+                            disabled={
+                              coverUploading
+                            }
+                          >
+
+                            <X
+                              size={16}
+                            />
+
+                            {
+                              copy.cancelSelection
+                            }
+
+                          </button>
+
+                        )
+                      }
+
+
+                      {
+                        profile
+                          .cover_photo_url &&
+                        !coverFile && (
+
+                          <button
+                            type="button"
+                            className="writer-profile-photo-remove-button"
+                            onClick={
+                              handleRemoveCover
+                            }
+                            disabled={
+                              coverRemoving ||
+                              coverUploading ||
+                              coverPositionSaving
+                            }
+                          >
+
+                            {
+                              coverRemoving
+
+                                ? (
+
+                                    <Loader2
+                                      size={16}
+                                      className="spin"
+                                    />
+
+                                  )
+
+                                : (
+
+                                    <Trash2
+                                      size={16}
+                                    />
+
+                                  )
+                            }
+
+
+                            {
+                              coverRemoving
+
+                                ? copy.removing
+
+                                : copy.removeCover
+                            }
+
+                          </button>
+
+                        )
+                      }
+
+                    </div>
+
+
+                    {
+                      coverFile && (
+
+                        <div
+                          className="writer-profile-selected-file"
+                        >
+
+                          <strong>
+                            {coverFile.name}
+                          </strong>
+
+                          <span>
+
+                            {
+                              (
+                                coverFile.size /
+                                (
+                                  1024 *
+                                  1024
+                                )
+                              ).toFixed(
+                                2
+                              )
+                            }
+
+                            {" MB"}
+
+                          </span>
+
+                        </div>
+
+                      )
+                    }
+
+
+                    {
+                      (
+                        coverPreviewUrl ||
+                        profile
+                          .cover_photo_url
+                      ) && (
+
+                        <div
+                          className="writer-cover-position-editor"
+                        >
+
+                          <div
+                            className="writer-cover-position-heading"
+                          >
+
+                            <div>
+
+                              <strong>
+                                {copy.coverPosition}
+                              </strong>
+
+                              <p>
+                                {copy.coverPositionHelp}
+                              </p>
+
+                            </div>
+
+
+                            <span>
+                              {
+                                Math.round(
+                                  coverDraftPosition
+                                )
+                              }%
+                            </span>
+
+                          </div>
+
+
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            step="1"
+                            value={
+                              coverDraftPosition
+                            }
+                            onChange={
+                              (
+                                event
+                              ) =>
+                                setCoverDraftPosition(
+                                  Number(
+                                    event
+                                      .target
+                                      .value
+                                  )
+                                )
+                            }
+                            disabled={
+                              coverUploading ||
+                              coverRemoving ||
+                              coverPositionSaving
+                            }
+                            aria-label={
+                              copy.coverPosition
+                            }
+                          />
+
+
+                          {
+                            profile
+                              .cover_photo_url &&
+                            !coverFile && (
+
+                              <button
+                                type="button"
+                                className="writer-cover-position-save-button"
+                                onClick={
+                                  handleSaveCoverPosition
+                                }
+                                disabled={
+                                  coverPositionSaving ||
+                                  coverUploading ||
+                                  coverRemoving ||
+                                  Math.round(
+                                    coverDraftPosition
+                                  ) ===
+                                  Math.round(
+                                    currentCoverPosition
+                                  )
+                                }
+                              >
+
+                                {
+                                  coverPositionSaving
+
+                                    ? (
+
+                                        <Loader2
+                                          size={16}
+                                          className="spin"
+                                        />
+
+                                      )
+
+                                    : (
+
+                                        <Save
+                                          size={16}
+                                        />
+
+                                      )
+                                }
+
+
+                                {
+                                  coverPositionSaving
+
+                                    ? copy.savingPosition
+
+                                    : copy.saveCoverPosition
+                                }
+
+                              </button>
+
+                            )
+                          }
+
+                        </div>
+
+                      )
+                    }
+
+
+                    {
+                      coverError && (
+
+                        <p
+                          className="writer-profile-form-error"
+                        >
+                          {coverError}
+                        </p>
+
+                      )
+                    }
+
+
+                    {
+                      coverSuccess && (
+
+                        <p
+                          className="writer-profile-form-success"
+                        >
+                          {coverSuccess}
+                        </p>
+
+                      )
+                    }
+
+                  </div>
+
+                </div>
+
 
                 <form
                   className="writer-profile-edit-form"
@@ -4476,7 +6057,10 @@ function WriterProfile() {
                       disabled={
                         profileSaving ||
                         avatarUploading ||
-                        avatarRemoving
+                        avatarRemoving ||
+                        coverUploading ||
+                        coverRemoving ||
+                        coverPositionSaving
                       }
                     >
 
@@ -4495,6 +6079,7 @@ function WriterProfile() {
 
                       {
                         profileSaving
+
                           ? (
 
                               <Loader2
@@ -4513,9 +6098,12 @@ function WriterProfile() {
                             )
                       }
 
+
                       {
                         profileSaving
+
                           ? copy.saving
+
                           : copy.saveProfile
                       }
 
@@ -4531,10 +6119,6 @@ function WriterProfile() {
           }
 
 
-          {/* =================================================
-              SOCIAL PROFILE TABS
-          ================================================== */}
-
           <nav
             className="writer-profile-tabs"
           >
@@ -4544,7 +6128,9 @@ function WriterProfile() {
               className={
                 activeTab ===
                   "writings"
+
                   ? "active"
+
                   : ""
               }
               onClick={
@@ -4573,7 +6159,9 @@ function WriterProfile() {
               className={
                 activeTab ===
                   "about"
+
                   ? "active"
+
                   : ""
               }
               onClick={
@@ -4594,10 +6182,6 @@ function WriterProfile() {
 
           </nav>
 
-
-          {/* =================================================
-              WRITINGS TAB
-          ================================================== */}
 
           {
             activeTab ===
@@ -4863,7 +6447,9 @@ function WriterProfile() {
                                             {
                                               content.length >
                                                 320
+
                                                 ? "…"
+
                                                 : ""
                                             }
 
@@ -4952,10 +6538,6 @@ function WriterProfile() {
             )
           }
 
-
-          {/* =================================================
-              ABOUT TAB
-          ================================================== */}
 
           {
             activeTab ===

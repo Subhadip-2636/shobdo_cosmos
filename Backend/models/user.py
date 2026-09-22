@@ -235,6 +235,47 @@ class User(db.Model):
     )
 
 
+    # =====================================================
+    # COVER PHOTO
+    # =====================================================
+    #
+    # cover_photo_url:
+    # Public delivery URL for the user's custom cover.
+    #
+    # cover_photo_public_id:
+    # Internal storage-provider identifier used by the
+    # backend when replacing or deleting the cover.
+    # It is intentionally NOT exposed by to_dict().
+    #
+    # cover_photo_position_y:
+    # Vertical focal position from 0 to 100.
+    #
+    # 0   = top
+    # 50  = center
+    # 100 = bottom
+    #
+    # =====================================================
+
+    cover_photo_url = db.Column(
+        db.String(500),
+        nullable=True,
+    )
+
+
+    cover_photo_public_id = db.Column(
+        db.String(255),
+        nullable=True,
+    )
+
+
+    cover_photo_position_y = db.Column(
+        db.Integer,
+        nullable=False,
+        default=50,
+        server_default="50",
+    )
+
+
     location = db.Column(
         db.String(100),
         nullable=True,
@@ -802,6 +843,159 @@ class User(db.Model):
 
 
     # =====================================================
+    # COVER PHOTO HELPERS
+    # =====================================================
+
+    def has_cover_photo(
+        self,
+    ):
+        """
+        Whether the user currently has a custom cover photo.
+        """
+
+        return bool(
+            self.cover_photo_url
+        )
+
+
+    def set_cover_photo(
+        self,
+        cover_photo_url,
+        *,
+        public_id=None,
+        position_y=50,
+    ):
+        """
+        Save cover-photo metadata.
+
+        The actual image file is stored by the configured
+        media provider. SHOBDO stores only the delivery URL,
+        provider identifier, and vertical focal position.
+        """
+
+        normalized_url = str(
+            cover_photo_url or ""
+        ).strip()
+
+
+        if not normalized_url:
+
+            raise ValueError(
+                "Cover photo URL is required."
+            )
+
+
+        normalized_public_id = str(
+            public_id or ""
+        ).strip()
+
+
+        try:
+
+            normalized_position_y = int(
+                position_y
+            )
+
+        except (
+            TypeError,
+            ValueError,
+        ):
+
+            normalized_position_y = 50
+
+
+        normalized_position_y = max(
+            0,
+            min(
+                100,
+                normalized_position_y,
+            ),
+        )
+
+
+        self.cover_photo_url = (
+            normalized_url
+        )
+
+
+        self.cover_photo_public_id = (
+            normalized_public_id
+            or None
+        )
+
+
+        self.cover_photo_position_y = (
+            normalized_position_y
+        )
+
+
+    def set_cover_photo_position(
+        self,
+        position_y,
+    ):
+        """
+        Update only the vertical focal position of the cover.
+        """
+
+        try:
+
+            normalized_position_y = int(
+                position_y
+            )
+
+        except (
+            TypeError,
+            ValueError,
+        ):
+
+            raise ValueError(
+                "Cover photo position must be a number."
+            )
+
+
+        if not (
+            0
+            <= normalized_position_y
+            <= 100
+        ):
+
+            raise ValueError(
+                "Cover photo position must be between 0 and 100."
+            )
+
+
+        self.cover_photo_position_y = (
+            normalized_position_y
+        )
+
+
+    def clear_cover_photo(
+        self,
+    ):
+        """
+        Remove cover-photo metadata from the user profile.
+
+        Deleting the image from the media provider should be
+        handled by the backend route/service before or after
+        this method is called.
+        """
+
+        self.cover_photo_url = (
+            None
+        )
+
+
+        self.cover_photo_public_id = (
+            None
+        )
+
+
+        self.cover_photo_position_y = (
+            50
+        )
+
+
+    # =====================================================
     # PASSWORD RESET
     # =====================================================
 
@@ -910,6 +1104,7 @@ class User(db.Model):
         - instagram_user_id
         - password_reset_token
         - password_reset_expires
+        - cover_photo_public_id
         """
 
         return {
@@ -944,6 +1139,19 @@ class User(db.Model):
 
             "avatar_url":
                 self.avatar_url,
+
+
+            "cover_photo_url":
+                self.cover_photo_url,
+
+
+            "cover_photo_position_y":
+                int(
+                    self.cover_photo_position_y
+                    if self.cover_photo_position_y
+                    is not None
+                    else 50
+                ),
 
 
             "location":
