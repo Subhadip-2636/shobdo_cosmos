@@ -1550,3 +1550,591 @@
     flex-wrap: wrap;
   }
 }
+
+/* =========================================================
+   SHOBDO — PREMIUM WRITING TITLE AUTOCOMPLETE
+   Add this block at the END of Frontend/src/pages/Write.css
+========================================================= */
+
+.write-title-field {
+  position: relative;
+  z-index: 40;
+  overflow: visible;
+}
+
+
+.writing-title-autocomplete {
+  --title-purple: #71419d;
+  --title-purple-deep: #4e246f;
+  --title-purple-soft: rgba(113, 65, 157, 0.1);
+  --title-purple-soft-2: rgba(113, 65, 157, 0.055);
+  --title-gold: #c8a66b;
+  --title-gold-soft: rgba(200, 166, 107, 0.18);
+  --title-ink: #2a242e;
+  --title-muted: #827886;
+  --title-border: rgba(76, 54, 86, 0.13);
+  --title-surface: rgba(255, 253, 251, 0.985);
+
+  position: relative;
+  width: 100%;
+  z-index: 60;
+}
+
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+.writing-title-autocomplete .writing-title-input {
+  width: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+
+.writing-title-autocomplete .writing-title-input:focus {
+  outline: none;
+  border-color: rgba(113, 65, 157, 0.76);
+
+  box-shadow:
+    0 0 0 3px rgba(113, 65, 157, 0.1),
+    0 0 0 6px rgba(200, 166, 107, 0.1);
+}
+
+
+/* =========================================================
+   FLOATING PANEL
+========================================================= */
+
+.writing-title-suggestions {
+  position: absolute;
+  top: calc(100% + 11px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+
+  overflow: visible;
+
+  border: 1px solid var(--title-border);
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 254, 252, 0.995),
+      rgba(252, 249, 252, 0.985)
+    );
+
+  box-shadow:
+    0 26px 70px rgba(38, 25, 45, 0.17),
+    0 8px 26px rgba(38, 25, 45, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  transform-origin: top center;
+
+  animation:
+    shobdoTitleDropdownIn
+    180ms
+    cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+
+.writing-title-suggestions::before {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  left: 22px;
+  right: 22px;
+  height: 1px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(200, 166, 107, 0.82),
+      rgba(113, 65, 157, 0.6),
+      transparent
+    );
+
+  pointer-events: none;
+}
+
+
+.writing-title-suggestions-arrow {
+  position: absolute;
+  top: -7px;
+  left: 28px;
+
+  width: 14px;
+  height: 14px;
+
+  border-top: 1px solid var(--title-border);
+  border-left: 1px solid var(--title-border);
+
+  background: rgba(255, 254, 252, 0.995);
+
+  transform: rotate(45deg);
+
+  z-index: 0;
+}
+
+
+@keyframes shobdoTitleDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-7px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.writing-title-suggestions-header {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  padding: 14px 15px 12px;
+
+  border-radius: 18px 18px 0 0;
+  border-bottom: 1px solid rgba(75, 55, 84, 0.075);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(113, 65, 157, 0.055),
+      rgba(200, 166, 107, 0.05)
+    );
+}
+
+
+.writing-title-suggestions-header-icon {
+  flex: 0 0 38px;
+
+  width: 38px;
+  height: 38px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid rgba(113, 65, 157, 0.14);
+  border-radius: 12px;
+
+  color: var(--title-purple);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.98),
+      rgba(113, 65, 157, 0.065)
+    );
+
+  box-shadow:
+    0 4px 12px rgba(52, 35, 61, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+
+.writing-title-suggestions-header-copy {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+
+.writing-title-suggestions-header-copy strong {
+  color: var(--title-ink);
+
+  font-size: 13.5px;
+  font-weight: 750;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+
+.writing-title-suggestions-header-copy span {
+  color: var(--title-muted);
+
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   LIST
+========================================================= */
+
+.writing-title-suggestions-list {
+  position: relative;
+  z-index: 1;
+
+  max-height: 305px;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  padding: 7px;
+
+  background: rgba(255, 255, 255, 0.38);
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(113, 65, 157, 0.28) transparent;
+}
+
+
+.writing-title-suggestions-list::-webkit-scrollbar {
+  width: 7px;
+}
+
+
+.writing-title-suggestions-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+.writing-title-suggestions-list::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+
+  background: rgba(113, 65, 157, 0.28);
+  background-clip: padding-box;
+}
+
+
+/* =========================================================
+   OPTION
+========================================================= */
+
+.writing-title-suggestion {
+  width: 100%;
+  min-height: 58px;
+
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 10px;
+
+  padding: 8px 10px;
+
+  border: 0;
+  border-radius: 13px;
+
+  color: var(--title-ink);
+  background: transparent;
+
+  text-align: left;
+  font: inherit;
+
+  cursor: pointer;
+
+  transition:
+    transform 140ms ease,
+    color 140ms ease,
+    background-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+
+.writing-title-suggestion +
+.writing-title-suggestion {
+  margin-top: 2px;
+}
+
+
+.writing-title-suggestion:hover,
+.writing-title-suggestion.active {
+  color: var(--title-purple-deep);
+
+  background:
+    linear-gradient(
+      105deg,
+      rgba(113, 65, 157, 0.11),
+      rgba(113, 65, 157, 0.05) 68%,
+      rgba(200, 166, 107, 0.075)
+    );
+
+  box-shadow:
+    inset 0 0 0 1px rgba(113, 65, 157, 0.075);
+}
+
+
+.writing-title-suggestion:focus-visible {
+  outline: 2px solid rgba(113, 65, 157, 0.66);
+  outline-offset: -2px;
+}
+
+
+.writing-title-suggestion:active {
+  transform: scale(0.992);
+}
+
+
+/* =========================================================
+   OPTION ICON
+========================================================= */
+
+.writing-title-suggestion-icon {
+  width: 38px;
+  height: 38px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid rgba(95, 70, 106, 0.1);
+  border-radius: 11px;
+
+  color: #75687c;
+
+  background: rgba(255, 255, 255, 0.76);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88);
+
+  transition:
+    transform 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease,
+    background-color 140ms ease;
+}
+
+
+.writing-title-suggestion:hover
+.writing-title-suggestion-icon,
+.writing-title-suggestion.active
+.writing-title-suggestion-icon {
+  color: var(--title-purple);
+
+  border-color: rgba(113, 65, 157, 0.15);
+
+  background: rgba(255, 255, 255, 0.94);
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   OPTION COPY
+========================================================= */
+
+.writing-title-suggestion-copy {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+
+.writing-title-suggestion-copy strong {
+  overflow: hidden;
+
+  color: inherit;
+
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.45;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.writing-title-suggestion-copy small {
+  width: fit-content;
+
+  padding: 2px 6px;
+
+  border: 1px solid rgba(113, 65, 157, 0.08);
+  border-radius: 999px;
+
+  color: #887b8e;
+  background: rgba(113, 65, 157, 0.045);
+
+  font-size: 9.5px;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+}
+
+
+/* =========================================================
+   ACTIVE CHECK
+========================================================= */
+
+.writing-title-suggestion-status {
+  width: 30px;
+  height: 30px;
+
+  display: grid;
+  place-items: center;
+
+  color: var(--title-purple);
+}
+
+
+.writing-title-suggestion.active
+.writing-title-suggestion-status {
+  border-radius: 999px;
+
+  background: rgba(113, 65, 157, 0.09);
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.writing-title-suggestions-footer {
+  position: relative;
+  z-index: 1;
+
+  min-height: 35px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 8px 14px;
+
+  border-top: 1px solid rgba(75, 55, 84, 0.07);
+  border-radius: 0 0 18px 18px;
+
+  color: #938997;
+
+  background: rgba(249, 247, 250, 0.78);
+}
+
+
+.writing-title-suggestions-footer span {
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   CHARACTER LIMIT
+========================================================= */
+
+.field-character-count {
+  transition: color 160ms ease;
+}
+
+
+.field-character-count.near-limit {
+  color: #9f4963;
+  font-weight: 750;
+}
+
+
+/* =========================================================
+   PREVENT CLIPPING
+========================================================= */
+
+.write-form-card {
+  overflow: visible;
+}
+
+
+.write-section:has(.writing-title-autocomplete) {
+  overflow: visible;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 640px) {
+
+  .writing-title-suggestions {
+    top: calc(100% + 9px);
+    border-radius: 15px;
+
+    box-shadow:
+      0 20px 48px rgba(38, 25, 45, 0.16),
+      0 7px 20px rgba(38, 25, 45, 0.07);
+  }
+
+
+  .writing-title-suggestions-header {
+    padding: 12px 12px 10px;
+    border-radius: 15px 15px 0 0;
+  }
+
+
+  .writing-title-suggestions-header-icon {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+
+
+  .writing-title-suggestions-list {
+    max-height: 265px;
+    padding: 6px;
+  }
+
+
+  .writing-title-suggestion {
+    min-height: 55px;
+
+    grid-template-columns:
+      35px
+      minmax(0, 1fr)
+      25px;
+
+    gap: 8px;
+    padding: 7px 8px;
+  }
+
+
+  .writing-title-suggestion-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+
+  .writing-title-suggestion-copy strong {
+    font-size: 13.5px;
+  }
+
+
+  .writing-title-suggestions-footer {
+    display: none;
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .writing-title-suggestions {
+    animation: none;
+  }
+
+
+  .writing-title-suggestion,
+  .writing-title-suggestion-icon {
+    transition: none;
+  }
+
+}

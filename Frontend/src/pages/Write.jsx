@@ -279,6 +279,80 @@ const CONTENT_PLACEHOLDERS = {
   other: "Start writing here...",
 };
 
+// =========================================================
+// PREMIUM TITLE AUTOCOMPLETE
+// =========================================================
+
+const RECENT_WRITING_TITLES_KEY =
+  "shobdo_recent_writing_titles";
+
+const RECENT_WRITING_TITLES_LIMIT =
+  8;
+
+
+const TITLE_SUGGESTION_COPY = {
+
+  bn: {
+    heading: "শিরোনামের অনুপ্রেরণা",
+    description:
+      "সাম্প্রতিক ও প্রস্তাবিত শিরোনাম থেকে বেছে নিন",
+    recent: "সাম্প্রতিক",
+    suggested: "প্রস্তাবিত",
+    keyboard:
+      "↑ ↓ নির্বাচন · Enter ব্যবহার · Esc বন্ধ",
+  },
+
+  hi: {
+    heading: "शीर्षक प्रेरणा",
+    description:
+      "हाल के और सुझाए गए शीर्षकों में से चुनें",
+    recent: "हाल का",
+    suggested: "सुझाव",
+    keyboard:
+      "↑ ↓ चुनें · Enter उपयोग करें · Esc बंद करें",
+  },
+
+  en: {
+    heading: "Title inspiration",
+    description:
+      "Choose from recent and suggested titles",
+    recent: "Recent",
+    suggested: "Suggested",
+    keyboard:
+      "↑ ↓ Select · Enter use · Esc close",
+  },
+
+};
+
+
+const TITLE_STARTER_SUGGESTIONS = {
+
+  bn: [
+    "চক্রের ছায়ারূপ",
+    "গ্রন্থ",
+    "মানবতার বীণাবাদন",
+    "বর্ষা যখন সঙ্গী",
+    "তেপান্তরের অগ্নিবীণা",
+  ],
+
+  hi: [
+    "शब्दों के पार",
+    "बारिश जब साथी बनी",
+    "मन की वीणा",
+    "क्षितिज के उस पार",
+    "एक अधूरी चिट्ठी",
+  ],
+
+  en: [
+    "Echoes Between Pages",
+    "When Rain Returns",
+    "The Last Letter",
+    "Beyond the Horizon",
+    "A Sky Between Us",
+  ],
+
+};
+
 
 // =========================================================
 // HELPERS
@@ -392,6 +466,130 @@ function getToken() {
   return localStorage.getItem(
     "shobdo_token"
   );
+}
+
+// =========================================================
+// RECENT WRITING TITLES
+// =========================================================
+
+function getRecentWritingTitles() {
+
+  try {
+
+    const raw =
+      localStorage.getItem(
+        RECENT_WRITING_TITLES_KEY
+      );
+
+
+    if (!raw) {
+      return [];
+    }
+
+
+    const parsed =
+      JSON.parse(raw);
+
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+
+    return parsed
+      .filter(
+        (item) =>
+          typeof item === "string" &&
+          item.trim()
+      )
+      .map(
+        (item) =>
+          item.trim()
+      )
+      .slice(
+        0,
+        RECENT_WRITING_TITLES_LIMIT
+      );
+
+
+  } catch (
+    storageError
+  ) {
+
+    console.warn(
+      "Unable to read recent writing titles:",
+      storageError
+    );
+
+    return [];
+  }
+}
+
+
+function saveRecentWritingTitle(
+  title
+) {
+
+  const cleanTitle =
+    String(title || "")
+      .trim();
+
+
+  if (!cleanTitle) {
+    return getRecentWritingTitles();
+  }
+
+
+  try {
+
+    const currentTitles =
+      getRecentWritingTitles();
+
+
+    const normalizedTitle =
+      cleanTitle
+        .toLocaleLowerCase();
+
+
+    const nextTitles = [
+
+      cleanTitle,
+
+      ...currentTitles.filter(
+        (item) =>
+          item
+            .toLocaleLowerCase() !==
+          normalizedTitle
+      ),
+
+    ].slice(
+      0,
+      RECENT_WRITING_TITLES_LIMIT
+    );
+
+
+    localStorage.setItem(
+      RECENT_WRITING_TITLES_KEY,
+      JSON.stringify(
+        nextTitles
+      )
+    );
+
+
+    return nextTitles;
+
+
+  } catch (
+    storageError
+  ) {
+
+    console.warn(
+      "Unable to save recent writing title:",
+      storageError
+    );
+
+    return [];
+  }
 }
 
 
@@ -943,6 +1141,455 @@ function Write({
     publishing,
     setPublishing,
   ] = useState(false);
+
+  // =======================================================
+// PREMIUM TITLE AUTOCOMPLETE STATE
+// =======================================================
+
+const titleAutocompleteRef =
+  useRef(null);
+
+
+const titleInputRef =
+  useRef(null);
+
+
+const [
+  recentWritingTitles,
+  setRecentWritingTitles,
+] = useState(
+  () =>
+    getRecentWritingTitles()
+);
+
+
+const [
+  titleSuggestionsOpen,
+  setTitleSuggestionsOpen,
+] = useState(false);
+
+
+const [
+  activeTitleSuggestionIndex,
+  setActiveTitleSuggestionIndex,
+] = useState(-1);
+
+
+const titleSuggestionCopy =
+  TITLE_SUGGESTION_COPY[
+    uiLanguage
+  ] ||
+  TITLE_SUGGESTION_COPY.en;
+
+
+const filteredTitleSuggestions =
+  useMemo(
+    () => {
+
+      const query =
+        title
+          .trim()
+          .toLocaleLowerCase();
+
+
+      const recentItems =
+        recentWritingTitles
+          .map(
+            (item) => ({
+              title: item,
+              source: "recent",
+            })
+          );
+
+
+      const recentKeys =
+        new Set(
+          recentItems.map(
+            (item) =>
+              item.title
+                .toLocaleLowerCase()
+          )
+        );
+
+
+      const starterItems =
+        (
+          TITLE_STARTER_SUGGESTIONS[
+            writingLanguage
+          ] ||
+          []
+        )
+          .filter(
+            (item) =>
+              !recentKeys.has(
+                item
+                  .toLocaleLowerCase()
+              )
+          )
+          .map(
+            (item) => ({
+              title: item,
+              source: "suggested",
+            })
+          );
+
+
+      return [
+        ...recentItems,
+        ...starterItems,
+      ]
+        .filter(
+          (item) => {
+
+            const normalized =
+              item.title
+                .toLocaleLowerCase();
+
+
+            if (
+              normalized ===
+              query &&
+              query
+            ) {
+
+              return false;
+            }
+
+
+            if (!query) {
+              return true;
+            }
+
+
+            return normalized
+              .includes(
+                query
+              );
+          }
+        )
+        .slice(
+          0,
+          RECENT_WRITING_TITLES_LIMIT
+        );
+
+    },
+    [
+      title,
+      recentWritingTitles,
+      writingLanguage,
+    ]
+  );
+
+
+const showTitleSuggestions =
+  titleSuggestionsOpen &&
+  filteredTitleSuggestions
+    .length > 0 &&
+  !publishing;
+
+
+// =======================================================
+// CLOSE TITLE MENU WHEN CLICKING OUTSIDE
+// =======================================================
+
+useEffect(() => {
+
+  function handleTitleOutsideClick(
+    event
+  ) {
+
+    if (
+      titleAutocompleteRef.current &&
+      !titleAutocompleteRef
+        .current
+        .contains(
+          event.target
+        )
+    ) {
+
+      setTitleSuggestionsOpen(
+        false
+      );
+
+      setActiveTitleSuggestionIndex(
+        -1
+      );
+    }
+  }
+
+
+  document.addEventListener(
+    "mousedown",
+    handleTitleOutsideClick
+  );
+
+
+  return () => {
+
+    document.removeEventListener(
+      "mousedown",
+      handleTitleOutsideClick
+    );
+
+  };
+
+}, []);
+
+
+// =======================================================
+// TITLE CHANGE
+// =======================================================
+
+function handleWritingTitleChange(
+  event
+) {
+
+  const nextValue =
+    event.target.value;
+
+
+  setTitle(
+    nextValue
+  );
+
+
+  setActiveTitleSuggestionIndex(
+    -1
+  );
+
+
+  setTitleSuggestionsOpen(
+    true
+  );
+}
+
+
+// =======================================================
+// CHOOSE TITLE SUGGESTION
+// =======================================================
+
+function chooseTitleSuggestion(
+  suggestion
+) {
+
+  const nextTitle =
+    typeof suggestion === "string"
+      ? suggestion
+      : suggestion?.title ||
+        "";
+
+
+  if (!nextTitle) {
+    return;
+  }
+
+
+  setTitle(
+    nextTitle
+  );
+
+
+  setTitleSuggestionsOpen(
+    false
+  );
+
+
+  setActiveTitleSuggestionIndex(
+    -1
+  );
+
+
+  requestAnimationFrame(
+    () => {
+
+      titleInputRef
+        .current
+        ?.focus();
+
+    }
+  );
+}
+
+
+// =======================================================
+// TITLE KEYBOARD NAVIGATION
+// =======================================================
+
+function handleTitleKeyDown(
+  event
+) {
+
+  if (
+    !showTitleSuggestions
+  ) {
+
+    if (
+      event.key ===
+      "ArrowDown" &&
+      filteredTitleSuggestions
+        .length
+    ) {
+
+      event.preventDefault();
+
+      setTitleSuggestionsOpen(
+        true
+      );
+
+      setActiveTitleSuggestionIndex(
+        0
+      );
+    }
+
+
+    return;
+  }
+
+
+  if (
+    event.key ===
+    "ArrowDown"
+  ) {
+
+    event.preventDefault();
+
+
+    setActiveTitleSuggestionIndex(
+      (
+        current
+      ) => {
+
+        if (
+          current >=
+          filteredTitleSuggestions
+            .length -
+            1
+        ) {
+
+          return 0;
+        }
+
+
+        return current + 1;
+      }
+    );
+
+
+    return;
+  }
+
+
+  if (
+    event.key ===
+    "ArrowUp"
+  ) {
+
+    event.preventDefault();
+
+
+    setActiveTitleSuggestionIndex(
+      (
+        current
+      ) => {
+
+        if (
+          current <= 0
+        ) {
+
+          return (
+            filteredTitleSuggestions
+              .length -
+            1
+          );
+        }
+
+
+        return current - 1;
+      }
+    );
+
+
+    return;
+  }
+
+
+  if (
+    event.key ===
+    "Enter" &&
+    activeTitleSuggestionIndex >=
+      0
+  ) {
+
+    event.preventDefault();
+
+
+    const selected =
+      filteredTitleSuggestions[
+        activeTitleSuggestionIndex
+      ];
+
+
+    if (selected) {
+
+      chooseTitleSuggestion(
+        selected
+      );
+
+    }
+
+
+    return;
+  }
+
+
+  if (
+    event.key ===
+    "Escape"
+  ) {
+
+    event.preventDefault();
+
+
+    setTitleSuggestionsOpen(
+      false
+    );
+
+
+    setActiveTitleSuggestionIndex(
+      -1
+    );
+  }
+}
+
+
+// =======================================================
+// REMEMBER A TITLE
+// =======================================================
+
+function rememberWritingTitle(
+  value
+) {
+
+  const cleanValue =
+    String(value || "")
+      .trim();
+
+
+  if (!cleanValue) {
+    return;
+  }
+
+
+  const updatedTitles =
+    saveRecentWritingTitle(
+      cleanValue
+    );
+
+
+  setRecentWritingTitles(
+    updatedTitles
+  );
+}
 
 
   // =======================================================
@@ -1574,6 +2221,11 @@ function Write({
       );
 
 
+      rememberWritingTitle(
+        title
+      );
+
+
       setSuccess(
         t(
           "write.draftSaved",
@@ -1767,6 +2419,11 @@ function Write({
 
       localStorage.removeItem(
         "shobdo_writing_draft"
+      );
+
+
+      rememberWritingTitle(
+        title
       );
 
 
@@ -3480,6 +4137,7 @@ function Write({
 
           <form
             className="write-form-card"
+            autoComplete="off"
             onSubmit={
               handleWritingSubmit
             }
@@ -3997,7 +4655,7 @@ function Write({
               </div>
 
 
-              <div className="write-field">
+              <div className="write-field write-title-field">
 
                 <label htmlFor="writing-title">
 
@@ -4013,30 +4671,265 @@ function Write({
                 </label>
 
 
-                <input
-                  id="writing-title"
-                  type="text"
-                  value={title}
-                  maxLength={200}
-                  placeholder={
-                    t(
-                      "write.writingTitlePlaceholder",
-                      "Give your writing a title"
-                    )
+                <div
+                  className="writing-title-autocomplete"
+                  ref={
+                    titleAutocompleteRef
                   }
-                  disabled={
-                    publishing
-                  }
-                  onChange={
-                    (
-                      event
-                    ) =>
-                      setTitle(
-                        event.target
-                          .value
+                >
+
+                  <input
+                    ref={
+                      titleInputRef
+                    }
+                    id="writing-title"
+                    name="shobdo-writing-title-v2"
+                    className="writing-title-input"
+                    type="text"
+                    value={title}
+                    maxLength={200}
+                    placeholder={
+                      t(
+                        "write.writingTitlePlaceholder",
+                        "Give your writing a title"
                       )
-                  }
-                />
+                    }
+                    disabled={
+                      publishing
+                    }
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={true}
+                    data-form-type="other"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    aria-autocomplete="list"
+                    aria-expanded={
+                      showTitleSuggestions
+                    }
+                    aria-controls={
+                      showTitleSuggestions
+                        ? "writing-title-suggestions"
+                        : undefined
+                    }
+                    aria-activedescendant={
+                      activeTitleSuggestionIndex >=
+                      0
+                        ? `writing-title-suggestion-${activeTitleSuggestionIndex}`
+                        : undefined
+                    }
+                    onChange={
+                      handleWritingTitleChange
+                    }
+                    onFocus={() => {
+
+                      if (
+                        filteredTitleSuggestions
+                          .length
+                      ) {
+
+                        setTitleSuggestionsOpen(
+                          true
+                        );
+
+                      }
+
+                    }}
+                    onBlur={() => {
+
+                      rememberWritingTitle(
+                        title
+                      );
+
+
+                      window.setTimeout(
+                        () => {
+
+                          setTitleSuggestionsOpen(
+                            false
+                          );
+
+                          setActiveTitleSuggestionIndex(
+                            -1
+                          );
+
+                        },
+                        140
+                      );
+
+                    }}
+                    onKeyDown={
+                      handleTitleKeyDown
+                    }
+                  />
+
+
+                  {showTitleSuggestions && (
+
+                    <div
+                      id="writing-title-suggestions"
+                      className="writing-title-suggestions"
+                      role="listbox"
+                      aria-label={
+                        titleSuggestionCopy
+                          .heading
+                      }
+                    >
+
+                      <div className="writing-title-suggestions-arrow" />
+
+
+                      <div className="writing-title-suggestions-header">
+
+                        <div className="writing-title-suggestions-header-icon">
+
+                          <PenLine
+                            size={17}
+                            strokeWidth={2}
+                          />
+
+                        </div>
+
+
+                        <div className="writing-title-suggestions-header-copy">
+
+                          <strong>
+                            {
+                              titleSuggestionCopy
+                                .heading
+                            }
+                          </strong>
+
+                          <span>
+                            {
+                              titleSuggestionCopy
+                                .description
+                            }
+                          </span>
+
+                        </div>
+
+                      </div>
+
+
+                      <div className="writing-title-suggestions-list">
+
+                        {filteredTitleSuggestions.map(
+                          (
+                            suggestion,
+                            index
+                          ) => {
+
+                            const isActive =
+                              index ===
+                              activeTitleSuggestionIndex;
+
+
+                            return (
+
+                              <button
+                                key={
+                                  `${suggestion.source}-${suggestion.title}`
+                                }
+                                id={
+                                  `writing-title-suggestion-${index}`
+                                }
+                                type="button"
+                                role="option"
+                                aria-selected={
+                                  isActive
+                                }
+                                className={
+                                  isActive
+                                    ? "writing-title-suggestion active"
+                                    : "writing-title-suggestion"
+                                }
+                                onMouseEnter={() =>
+                                  setActiveTitleSuggestionIndex(
+                                    index
+                                  )
+                                }
+                                onMouseDown={(
+                                  event
+                                ) => {
+                                  event.preventDefault();
+                                }}
+                                onClick={() =>
+                                  chooseTitleSuggestion(
+                                    suggestion
+                                  )
+                                }
+                              >
+
+                                <span className="writing-title-suggestion-icon">
+
+                                  <PenLine
+                                    size={17}
+                                    strokeWidth={1.9}
+                                  />
+
+                                </span>
+
+
+                                <span className="writing-title-suggestion-copy">
+
+                                  <strong>
+                                    {suggestion.title}
+                                  </strong>
+
+                                  <small>
+                                    {
+                                      suggestion.source ===
+                                      "recent"
+                                        ? titleSuggestionCopy
+                                            .recent
+                                        : titleSuggestionCopy
+                                            .suggested
+                                    }
+                                  </small>
+
+                                </span>
+
+
+                                <span className="writing-title-suggestion-status">
+
+                                  {isActive && (
+
+                                    <Check
+                                      size={18}
+                                      strokeWidth={2.4}
+                                    />
+
+                                  )}
+
+                                </span>
+
+                              </button>
+
+                            );
+
+                          }
+                        )}
+
+                      </div>
+
+
+                      <div className="writing-title-suggestions-footer">
+
+                        <span>
+                          {
+                            titleSuggestionCopy
+                              .keyboard
+                          }
+                        </span>
+
+                      </div>
+
+                    </div>
+
+                  )}
+
+                </div>
 
 
                 <div className="field-meta">
@@ -4051,7 +4944,14 @@ function Write({
                   </span>
 
 
-                  <span>
+                  <span
+                    className={
+                      title.length >=
+                      180
+                        ? "field-character-count near-limit"
+                        : "field-character-count"
+                    }
+                  >
                     {title.length}/200
                   </span>
 
