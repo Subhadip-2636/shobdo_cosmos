@@ -49,6 +49,7 @@ import PublicHome from "./pages/PublicHome";
 // =========================================================
 
 import Reels from "./pages/Reels";
+import CreateReel from "./pages/CreateReel";
 import Videos from "./pages/Videos";
 
 
