@@ -2223,11 +2223,13 @@ svg:last-child {
 
 
 /* =========================================================
-   MOBILE <= 700
+   COMPACT NAVBAR <= 820
+   Switch tablet widths to the mobile-style action layout
+   so Search / Notifications / Language / Profile stay visible.
 ========================================================= */
 
 @media (
-  max-width: 700px
+  max-width: 820px
 ) {
 
   .shobdo-navbar {
@@ -2237,6 +2239,12 @@ svg:last-child {
 
 
   .shobdo-navbar-inner {
+    width:
+      100%;
+
+    max-width:
+      100%;
+
     min-height:
       61px;
 
@@ -2252,14 +2260,20 @@ svg:last-child {
     padding:
       8px
       10px;
+
+    overflow:
+      visible;
   }
 
 
   /* BRAND */
 
   .shobdo-navbar-brand {
+    min-width:
+      0;
+
     flex:
-      1;
+      1 1 auto;
 
     gap:
       8px;
@@ -2330,6 +2344,9 @@ svg:last-child {
   /* ACTIONS */
 
   .shobdo-navbar-actions {
+    min-width:
+      max-content;
+
     flex:
       0 0
       auto;
