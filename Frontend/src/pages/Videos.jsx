@@ -2,22 +2,32 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
 import {
+  AlertTriangle,
+  Check,
   Clapperboard,
+  Clock3,
+  Copy,
+  Eye,
   Film,
+  Globe2,
+  Link2,
   LoaderCircle,
+  MoreHorizontal,
   Plus,
   RefreshCw,
-  UserRound,
-  UsersRound,
+  Share2,
+  Trash2,
+  Users,
+  X,
 } from "lucide-react";
 
 import {
   Link,
-  useNavigate,
   useSearchParams,
 } from "react-router-dom";
 
@@ -29,45 +39,44 @@ import {
   getReels,
 } from "../api/reels";
 
-import Reels
-  from "./Reels";
-
 import ReelsTab from "./ReelsTab";
 
 import "./Videos.css";
 
 
 // =========================================================
-// API
+// API CONFIG
 // =========================================================
 
 const RAW_API_URL =
   (
     import.meta.env.VITE_API_URL ||
     "http://127.0.0.1:5000"
-  ).replace(
-    /\/+$/,
+  )
+    .trim()
+    .replace(/\/+$/, "");
+
+
+const API_URL =
+  RAW_API_URL.endsWith("/api")
+    ? RAW_API_URL
+    : `${RAW_API_URL}/api`;
+
+
+const API_ORIGIN =
+  API_URL.replace(
+    /\/api$/,
     ""
   );
 
 
-const API_URL =
-  RAW_API_URL.endsWith(
-    "/api"
-  )
-    ? RAW_API_URL
-    : `${RAW_API_URL}/api`;
+const TOKEN_KEY =
+  "shobdo_token";
 
 
 // =========================================================
 // CONSTANTS
 // =========================================================
-
-const VIDEO_LIMIT = 40;
-
-const FOLLOWING_LIMIT = 50;
-
-const REEL_LIMIT = 40;
 
 const VALID_TABS = [
   "videos",
@@ -76,291 +85,8 @@ const VALID_TABS = [
 ];
 
 
-// =========================================================
-// MULTILINGUAL COPY
-// =========================================================
-
-const COPY = {
-
-  // =======================================================
-  // ENGLISH
-  // =======================================================
-
-  en: {
-
-    eyebrow:
-      "SHOBDO MEDIA",
-
-    title:
-      "Video",
-
-    description:
-      "Watch videos, discover Reels and keep up with creators you follow.",
-
-    videos:
-      "Videos",
-
-    reels:
-      "Reels",
-
-    following:
-      "Following",
-
-    createVideo:
-      "Add Video",
-
-    createReel:
-      "Create Reel",
-
-    loading:
-      "Loading videos...",
-
-    loadingFollowing:
-      "Loading media from writers you follow...",
-
-    retry:
-      "Try again",
-
-    refresh:
-      "Refresh",
-
-    unavailable:
-      "Unable to load videos.",
-
-    followingUnavailable:
-      "Unable to load your Following media.",
-
-    emptyVideos:
-      "No videos have been published yet.",
-
-    emptyVideosDescription:
-      "Published SHOBDO videos will appear here.",
-
-    emptyFollowing:
-      "Your Following media feed is quiet.",
-
-    emptyFollowingDescription:
-      "Follow more writers and their videos and Reels will appear here.",
-
-    discoverWriters:
-      "Discover writers",
-
-    loginRequired:
-      "Log in to view your Following media.",
-
-    login:
-      "Log in",
-
-    unknownCreator:
-      "SHOBDO creator",
-
-    untitled:
-      "Untitled video",
-
-    reel:
-      "Reel",
-
-    video:
-      "Video",
-
-    views:
-      "views",
-
-    public:
-      "Public",
-
-    published:
-      "Published",
-
-  },
-
-
-  // =======================================================
-  // BENGALI
-  // =======================================================
-
-  bn: {
-
-    eyebrow:
-      "SHOBDO মিডিয়া",
-
-    title:
-      "ভিডিও",
-
-    description:
-      "ভিডিও দেখুন, রিলস আবিষ্কার করুন এবং আপনার অনুসরণ করা স্রষ্টাদের নতুন মিডিয়া দেখুন।",
-
-    videos:
-      "ভিডিও",
-
-    reels:
-      "রিলস",
-
-    following:
-      "অনুসরণ",
-
-    createVideo:
-      "ভিডিও যোগ করুন",
-
-    createReel:
-      "রিল তৈরি করুন",
-
-    loading:
-      "ভিডিও লোড হচ্ছে...",
-
-    loadingFollowing:
-      "আপনি যাদের অনুসরণ করেন তাদের মিডিয়া লোড হচ্ছে...",
-
-    retry:
-      "আবার চেষ্টা করুন",
-
-    refresh:
-      "রিফ্রেশ",
-
-    unavailable:
-      "ভিডিও লোড করা যায়নি।",
-
-    followingUnavailable:
-      "Following মিডিয়া লোড করা যায়নি।",
-
-    emptyVideos:
-      "এখনও কোনো ভিডিও প্রকাশিত হয়নি।",
-
-    emptyVideosDescription:
-      "প্রকাশিত SHOBDO ভিডিও এখানে দেখা যাবে।",
-
-    emptyFollowing:
-      "আপনার Following মিডিয়া ফিড এখনও খালি।",
-
-    emptyFollowingDescription:
-      "আরও লেখককে অনুসরণ করুন। তাদের ভিডিও ও রিলস এখানে দেখা যাবে।",
-
-    discoverWriters:
-      "লেখক খুঁজুন",
-
-    loginRequired:
-      "Following মিডিয়া দেখতে লগ ইন করুন।",
-
-    login:
-      "লগ ইন",
-
-    unknownCreator:
-      "SHOBDO স্রষ্টা",
-
-    untitled:
-      "শিরোনামহীন ভিডিও",
-
-    reel:
-      "রিল",
-
-    video:
-      "ভিডিও",
-
-    views:
-      "ভিউ",
-
-    public:
-      "পাবলিক",
-
-    published:
-      "প্রকাশিত",
-
-  },
-
-
-  // =======================================================
-  // HINDI
-  // =======================================================
-
-  hi: {
-
-    eyebrow:
-      "SHOBDO मीडिया",
-
-    title:
-      "वीडियो",
-
-    description:
-      "वीडियो देखें, रील्स खोजें और जिन रचनाकारों को आप फ़ॉलो करते हैं उनकी नई मीडिया देखें।",
-
-    videos:
-      "वीडियो",
-
-    reels:
-      "रील्स",
-
-    following:
-      "फ़ॉलोइंग",
-
-    createVideo:
-      "वीडियो जोड़ें",
-
-    createReel:
-      "रील बनाएँ",
-
-    loading:
-      "वीडियो लोड हो रहे हैं...",
-
-    loadingFollowing:
-      "आप जिन लोगों को फ़ॉलो करते हैं उनकी मीडिया लोड हो रही है...",
-
-    retry:
-      "फिर कोशिश करें",
-
-    refresh:
-      "रीफ़्रेश",
-
-    unavailable:
-      "वीडियो लोड नहीं हो सके।",
-
-    followingUnavailable:
-      "Following मीडिया लोड नहीं हो सकी।",
-
-    emptyVideos:
-      "अभी कोई वीडियो प्रकाशित नहीं हुआ है।",
-
-    emptyVideosDescription:
-      "प्रकाशित SHOBDO वीडियो यहाँ दिखाई देंगे।",
-
-    emptyFollowing:
-      "आपकी Following मीडिया फ़ीड अभी खाली है।",
-
-    emptyFollowingDescription:
-      "और लेखकों को फ़ॉलो करें। उनके वीडियो और रील्स यहाँ दिखाई देंगे।",
-
-    discoverWriters:
-      "लेखक खोजें",
-
-    loginRequired:
-      "Following मीडिया देखने के लिए लॉग इन करें।",
-
-    login:
-      "लॉग इन",
-
-    unknownCreator:
-      "SHOBDO creator",
-
-    untitled:
-      "Untitled video",
-
-    reel:
-      "रील",
-
-    video:
-      "वीडियो",
-
-    views:
-      "व्यू",
-
-    public:
-      "पब्लिक",
-
-    published:
-      "प्रकाशित",
-
-  },
-
-};
+const PAGE_SIZE =
+  40;
 
 
 // =========================================================
@@ -369,9 +95,19 @@ const COPY = {
 
 function getToken() {
 
-  return localStorage.getItem(
-    "shobdo_token"
-  );
+  try {
+
+    return (
+      window.localStorage.getItem(
+        TOKEN_KEY
+      ) || ""
+    );
+
+  } catch {
+
+    return "";
+
+  }
 
 }
 
@@ -383,21 +119,30 @@ function getToken() {
 async function apiRequest(
   endpoint,
   {
+    method = "GET",
+    authenticated = false,
     signal,
   } = {}
 ) {
 
-  const token =
-    getToken();
+  const headers = {
+    Accept:
+      "application/json",
+  };
 
 
-  const headers = {};
+  if (authenticated) {
+
+    const token =
+      getToken();
 
 
-  if (token) {
+    if (token) {
 
-    headers.Authorization =
-      `Bearer ${token}`;
+      headers.Authorization =
+        `Bearer ${token}`;
+
+    }
 
   }
 
@@ -406,17 +151,14 @@ async function apiRequest(
     await fetch(
       `${API_URL}${endpoint}`,
       {
-        method:
-          "GET",
-
+        method,
         headers,
-
         signal,
       }
     );
 
 
-  let data = null;
+  let data = {};
 
 
   try {
@@ -426,7 +168,7 @@ async function apiRequest(
 
   } catch {
 
-    data = null;
+    data = {};
 
   }
 
@@ -437,12 +179,16 @@ async function apiRequest(
       new Error(
         data?.message ||
         data?.error ||
+        data?.detail ||
         `Request failed with status ${response.status}.`
       );
 
 
     error.status =
       response.status;
+
+    error.data =
+      data;
 
 
     throw error;
@@ -459,65 +205,398 @@ async function apiRequest(
 // HELPERS
 // =========================================================
 
-function safeNumber(
+function absoluteMediaUrl(
   value
 ) {
 
-  const number =
-    Number(
-      value
+  const url =
+    String(
+      value || ""
+    ).trim();
+
+
+  if (!url) {
+
+    return "";
+
+  }
+
+
+  if (
+    url.startsWith(
+      "http://"
+    ) ||
+    url.startsWith(
+      "https://"
+    ) ||
+    url.startsWith(
+      "blob:"
+    ) ||
+    url.startsWith(
+      "data:"
+    )
+  ) {
+
+    return url;
+
+  }
+
+
+  if (
+    url.startsWith("/")
+  ) {
+
+    return (
+      `${API_ORIGIN}${url}`
     );
 
+  }
 
-  return Number.isFinite(
-    number
-  )
-    ? number
-    : 0;
+
+  return (
+    `${API_ORIGIN}/${url}`
+  );
 
 }
 
 
 // =========================================================
 
-function formatCount(
-  value
+function getCreator(
+  item
 ) {
 
-  const number =
-    safeNumber(
-      value
+  return (
+    item?.creator ||
+    item?.user ||
+    item?.author ||
+    item?.owner ||
+    {}
+  );
+
+}
+
+
+// =========================================================
+
+function getOwnerId(
+  item
+) {
+
+  const creator =
+    getCreator(
+      item
     );
 
 
-  if (
-    number >=
-    1_000_000
-  ) {
+  return (
+    item?.user_id ??
+    item?.creator_id ??
+    item?.owner_id ??
+    item?.author_id ??
+    creator?.id ??
+    creator?.user_id ??
+    null
+  );
 
-    return `${(
-      number /
-      1_000_000
-    ).toFixed(1)}M`;
+}
+
+
+// =========================================================
+
+function isOwnItem(
+  item,
+  user
+) {
+
+  if (!item || !user) {
+
+    return false;
 
   }
 
 
   if (
-    number >=
-    1_000
+    item.is_owner ===
+      true ||
+    item.is_mine ===
+      true ||
+    item.owned_by_current_user ===
+      true
   ) {
 
-    return `${(
-      number /
-      1_000
-    ).toFixed(1)}K`;
+    return true;
+
+  }
+
+
+  const ownerId =
+    Number(
+      getOwnerId(
+        item
+      )
+    );
+
+
+  const currentUserId =
+    Number(
+      user?.id
+    );
+
+
+  return (
+    Number.isFinite(
+      ownerId
+    ) &&
+    Number.isFinite(
+      currentUserId
+    ) &&
+    ownerId ===
+      currentUserId
+  );
+
+}
+
+
+// =========================================================
+
+function getCreatorName(
+  item
+) {
+
+  const creator =
+    getCreator(
+      item
+    );
+
+
+  return (
+    creator?.name ||
+    creator?.full_name ||
+    creator?.display_name ||
+    item?.user_name ||
+    item?.creator_name ||
+    item?.author_name ||
+    "SHOBDO Creator"
+  );
+
+}
+
+
+// =========================================================
+
+function getCreatorAvatar(
+  item
+) {
+
+  const creator =
+    getCreator(
+      item
+    );
+
+
+  const avatar =
+    creator?.avatar_url ||
+    creator?.profile_picture ||
+    creator?.profile_image ||
+    creator?.avatar ||
+    item?.user_avatar ||
+    item?.creator_avatar ||
+    "";
+
+
+  return absoluteMediaUrl(
+    avatar
+  );
+
+}
+
+
+// =========================================================
+
+function getInitials(
+  name
+) {
+
+  const safeName =
+    String(
+      name || ""
+    )
+      .trim();
+
+
+  if (!safeName) {
+
+    return "S";
+
+  }
+
+
+  const parts =
+    safeName
+      .split(/\s+/)
+      .filter(Boolean);
+
+
+  if (
+    parts.length === 1
+  ) {
+
+    return parts[0]
+      .slice(
+        0,
+        2
+      )
+      .toUpperCase();
+
+  }
+
+
+  return (
+    `${parts[0][0]}${parts[1][0]}`
+      .toUpperCase()
+  );
+
+}
+
+
+// =========================================================
+
+function getMediaSource(
+  item
+) {
+
+  return absoluteMediaUrl(
+    item?.video_url ||
+    item?.media_url ||
+    item?.playback_url ||
+    item?.file_url ||
+    item?.video ||
+    item?.url ||
+    ""
+  );
+
+}
+
+
+// =========================================================
+
+function getPoster(
+  item
+) {
+
+  return absoluteMediaUrl(
+    item?.thumbnail_url ||
+    item?.poster_url ||
+    item?.cover_url ||
+    item?.preview_url ||
+    ""
+  );
+
+}
+
+
+// =========================================================
+
+function getTitle(
+  item,
+  type
+) {
+
+  if (
+    item?.title
+  ) {
+
+    return item.title;
+
+  }
+
+
+  if (
+    item?.caption
+  ) {
+
+    const caption =
+      String(
+        item.caption
+      ).trim();
+
+
+    if (
+      caption.length <=
+      90
+    ) {
+
+      return caption;
+
+    }
+
+
+    return (
+      `${caption.slice(
+        0,
+        87
+      )}...`
+    );
+
+  }
+
+
+  return (
+    type === "reel"
+      ? "SHOBDO Reel"
+      : "Untitled video"
+  );
+
+}
+
+
+// =========================================================
+
+function getDescription(
+  item
+) {
+
+  const description =
+    item?.description ||
+    item?.caption ||
+    "";
+
+
+  const title =
+    item?.title ||
+    "";
+
+
+  if (
+    description ===
+    title
+  ) {
+
+    return "";
 
   }
 
 
   return String(
-    number
+    description || ""
+  ).trim();
+
+}
+
+
+// =========================================================
+
+function getCreatedAt(
+  item
+) {
+
+  return (
+    item?.published_at ||
+    item?.created_at ||
+    item?.uploaded_at ||
+    item?.updated_at ||
+    null
   );
 
 }
@@ -526,11 +605,14 @@ function formatCount(
 // =========================================================
 
 function formatDate(
-  value
+  value,
+  language
 ) {
 
   if (!value) {
+
     return "";
+
   }
 
 
@@ -551,10 +633,39 @@ function formatDate(
   }
 
 
+  const localeMap = {
+
+    bn:
+      "bn-IN",
+
+    hi:
+      "hi-IN",
+
+    en:
+      "en-IN",
+
+    as:
+      "as-IN",
+
+    or:
+      "or-IN",
+
+    ta:
+      "ta-IN",
+
+    te:
+      "te-IN",
+
+  };
+
+
   try {
 
     return new Intl.DateTimeFormat(
-      undefined,
+      localeMap[
+        language
+      ] ||
+      "en-IN",
       {
         day:
           "numeric",
@@ -571,412 +682,205 @@ function formatDate(
 
   } catch {
 
+    return date
+      .toLocaleDateString();
+
+  }
+
+}
+
+
+// =========================================================
+
+function formatDuration(
+  value
+) {
+
+  const seconds =
+    Math.max(
+      0,
+      Math.round(
+        Number(
+          value
+        ) || 0
+      )
+    );
+
+
+  if (!seconds) {
+
     return "";
 
   }
 
-}
+
+  const hours =
+    Math.floor(
+      seconds /
+      3600
+    );
 
 
-// =========================================================
-
-function getInitials(
-  name
-) {
-
-  const safeName =
-    String(
-      name ||
-      "Writer"
-    ).trim();
-
-
-  if (!safeName) {
-    return "W";
-  }
-
-
-  return safeName
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(
-      0,
-      2
-    )
-    .map(
+  const minutes =
+    Math.floor(
       (
-        part
-      ) =>
-        part[0]
-    )
-    .join("")
-    .toUpperCase();
-
-}
-
-
-// =========================================================
-// EXTRACT VIDEO ARRAY
-// =========================================================
-
-function extractVideos(
-  payload
-) {
-
-  if (
-    Array.isArray(
-      payload
-    )
-  ) {
-
-    return payload;
-
-  }
-
-
-  const candidates = [
-
-    payload?.videos,
-
-    payload?.items,
-
-    payload?.results,
-
-    payload?.data?.videos,
-
-    payload?.data?.items,
-
-    payload?.data,
-
-  ];
-
-
-  for (
-    const candidate
-    of candidates
-  ) {
-
-    if (
-      Array.isArray(
-        candidate
-      )
-    ) {
-
-      return candidate;
-
-    }
-
-  }
-
-
-  return [];
-
-}
-
-
-// =========================================================
-// EXTRACT REELS
-// =========================================================
-
-function extractReels(
-  payload
-) {
-
-  if (
-    Array.isArray(
-      payload
-    )
-  ) {
-
-    return payload;
-
-  }
-
-
-  const candidates = [
-
-    payload?.reels,
-
-    payload?.items,
-
-    payload?.results,
-
-    payload?.data?.reels,
-
-    payload?.data?.items,
-
-  ];
-
-
-  for (
-    const candidate
-    of candidates
-  ) {
-
-    if (
-      Array.isArray(
-        candidate
-      )
-    ) {
-
-      return candidate;
-
-    }
-
-  }
-
-
-  return [];
-
-}
-
-
-// =========================================================
-// EXTRACT FOLLOWING USERS
-// =========================================================
-
-function extractFollowingUsers(
-  payload
-) {
-
-  if (
-    Array.isArray(
-      payload
-    )
-  ) {
-
-    return payload;
-
-  }
-
-
-  const candidates = [
-
-    payload?.users,
-
-    payload?.following,
-
-    payload?.items,
-
-    payload?.results,
-
-    payload?.data?.users,
-
-    payload?.data?.following,
-
-  ];
-
-
-  for (
-    const candidate
-    of candidates
-  ) {
-
-    if (
-      Array.isArray(
-        candidate
-      )
-    ) {
-
-      return candidate;
-
-    }
-
-  }
-
-
-  return [];
-
-}
-
-
-// =========================================================
-// AUTHOR
-// =========================================================
-
-function getMediaAuthor(
-  media
-) {
-
-  return (
-    media?.author ||
-    media?.creator ||
-    media?.user ||
-    media?.owner ||
-    {}
-  );
-
-}
-
-
-// =========================================================
-// CREATOR ID
-// =========================================================
-
-function getMediaUserId(
-  media
-) {
-
-  const author =
-    getMediaAuthor(
-      media
+        seconds %
+        3600
+      ) /
+      60
     );
 
 
-  const value =
-    media?.user_id ??
-    media?.author_id ??
-    media?.creator_id ??
-    media?.owner_id ??
-    author?.id ??
-    null;
+  const remainingSeconds =
+    seconds %
+    60;
 
 
-  const id =
-    Number(
-      value
+  if (hours > 0) {
+
+    return (
+      `${hours}:${String(
+        minutes
+      ).padStart(
+        2,
+        "0"
+      )}:${String(
+        remainingSeconds
+      ).padStart(
+        2,
+        "0"
+      )}`
     );
 
-
-  return Number.isFinite(
-    id
-  )
-    ? id
-    : null;
-
-}
-
-
-// =========================================================
-// VIDEO URL
-// =========================================================
-
-function getVideoUrl(
-  media
-) {
-
-  return (
-    media?.video_url ||
-    media?.file_url ||
-    media?.url ||
-    media?.media_url ||
-    media?.cloudinary_url ||
-    ""
-  );
-
-}
-
-
-// =========================================================
-// POSTER URL
-// =========================================================
-
-function getPosterUrl(
-  media
-) {
-
-  return (
-    media?.thumbnail_url ||
-    media?.poster_url ||
-    media?.thumbnail ||
-    media?.poster ||
-    ""
-  );
-
-}
-
-
-// =========================================================
-// DATE
-// =========================================================
-
-function getMediaDate(
-  media
-) {
-
-  return (
-    media?.published_at ||
-    media?.created_at ||
-    media?.updated_at ||
-    null
-  );
-
-}
-
-
-// =========================================================
-// PUBLISHED / PUBLIC VIDEO
-// =========================================================
-
-function isVisibleVideo(
-  video
-) {
-
-  const status =
-    String(
-      video?.status ||
-      ""
-    )
-      .trim()
-      .toLowerCase();
-
-
-  const visibility =
-    String(
-      video?.visibility ||
-      ""
-    )
-      .trim()
-      .toLowerCase();
-
-
-  if (
-    status &&
-    status !== "published"
-  ) {
-
-    return false;
-
   }
 
 
-  if (
-    visibility ===
-    "private"
-  ) {
-
-    return false;
-
-  }
-
-
-  return true;
+  return (
+    `${minutes}:${String(
+      remainingSeconds
+    ).padStart(
+      2,
+      "0"
+    )}`
+  );
 
 }
 
 
 // =========================================================
-// NORMALIZE TAB
+
+function getViews(
+  item
+) {
+
+  return Number(
+    item?.views_count ??
+    item?.view_count ??
+    item?.views ??
+    0
+  ) || 0;
+
+}
+
+
 // =========================================================
 
-function normalizeTab(
+function getLanguageLabel(
   value
 ) {
 
-  const tab =
+  const language =
     String(
-      value ||
-      ""
+      value || ""
     )
       .trim()
       .toLowerCase();
 
 
-  return VALID_TABS.includes(
-    tab
-  )
-    ? tab
-    : "videos";
+  const labels = {
+
+    bn:
+      "বাংলা",
+
+    hi:
+      "हिन्दी",
+
+    en:
+      "English",
+
+    as:
+      "অসমীয়া",
+
+    or:
+      "ଓଡ଼ିଆ",
+
+    ta:
+      "தமிழ்",
+
+    te:
+      "తెలుగు",
+
+  };
+
+
+  return (
+    labels[
+      language
+    ] ||
+    ""
+  );
+
+}
+
+
+// =========================================================
+// CREATOR AVATAR
+// =========================================================
+
+function CreatorAvatar({
+  item,
+}) {
+
+  const creatorName =
+    getCreatorName(
+      item
+    );
+
+
+  const avatar =
+    getCreatorAvatar(
+      item
+    );
+
+
+  if (avatar) {
+
+    return (
+
+      <img
+        className="shobdo-video-avatar"
+        src={avatar}
+        alt=""
+        loading="lazy"
+      />
+
+    );
+
+  }
+
+
+  return (
+
+    <div
+      className="shobdo-video-avatar shobdo-video-avatar-fallback"
+      aria-hidden="true"
+    >
+      {getInitials(
+        creatorName
+      )}
+    </div>
+
+  );
 
 }
 
@@ -986,215 +890,345 @@ function normalizeTab(
 // =========================================================
 
 function VideoCard({
-  video,
-  copy,
-  mediaKind = "video",
+  item,
+  type = "video",
+  user,
+  language,
+  menuOpen,
+  deleting,
+  onToggleMenu,
+  onDelete,
+  onShare,
+  onCopy,
+  onPlay,
+  t,
 }) {
 
-  const author =
-    getMediaAuthor(
-      video
+  const source =
+    getMediaSource(
+      item
     );
 
 
-  const authorName =
-    author?.name ||
-    author?.full_name ||
-    author?.username ||
-    video?.user_name ||
-    video?.author_name ||
-    copy.unknownCreator;
-
-
-  const authorId =
-    getMediaUserId(
-      video
+  const poster =
+    getPoster(
+      item
     );
 
 
-  const avatar =
-    author?.profile_picture ||
-    author?.avatar_url ||
-    author?.avatar ||
-    video?.user_avatar ||
-    video?.author_avatar ||
-    "";
-
-
-  const videoUrl =
-    getVideoUrl(
-      video
+  const creatorName =
+    getCreatorName(
+      item
     );
 
 
-  const posterUrl =
-    getPosterUrl(
-      video
+  const createdAt =
+    formatDate(
+      getCreatedAt(
+        item
+      ),
+      language
+    );
+
+
+  const own =
+    type === "video" &&
+    isOwnItem(
+      item,
+      user
     );
 
 
   const title =
-    mediaKind ===
-      "reel"
-      ? (
-          video?.caption ||
-          video?.title ||
-          copy.reel
-        )
-      : (
-          video?.title ||
-          copy.untitled
-        );
-
-
-  const description =
-    mediaKind ===
-      "reel"
-      ? ""
-      : (
-          video?.description ||
-          video?.caption ||
-          ""
-        );
-
-
-  const views =
-    safeNumber(
-      video?.views_count ??
-      video?.view_count ??
-      video?.views
+    getTitle(
+      item,
+      type
     );
 
 
-  const date =
-    formatDate(
-      getMediaDate(
-        video
-      )
+  const description =
+    getDescription(
+      item
+    );
+
+
+  const views =
+    getViews(
+      item
+    );
+
+
+  const duration =
+    formatDuration(
+      item?.duration_seconds ||
+      item?.duration
+    );
+
+
+  const languageLabel =
+    getLanguageLabel(
+      item?.language
     );
 
 
   return (
 
     <article
-      className="shobdo-video-card"
+      className="shobdo-video-post"
     >
 
-      {/* =================================================
-          AUTHOR
-      ================================================== */}
+      {/* ===============================================
+          POST HEADER
+      ================================================ */}
 
-      <div
-        className="shobdo-video-author-row"
+      <header
+        className="shobdo-video-post-header"
       >
 
-        <Link
-          to={
-            authorId
-              ? `/users/${authorId}`
-              : "#"
-          }
+        <div
           className="shobdo-video-author"
         >
 
-          <span
-            className="shobdo-video-avatar"
+          <CreatorAvatar
+            item={item}
+          />
+
+
+          <div
+            className="shobdo-video-author-copy"
           >
 
-            {avatar
-              ? (
+            <div
+              className="shobdo-video-author-name-row"
+            >
 
-                <img
-                  src={
-                    avatar
-                  }
-                  alt=""
-                />
+              <strong>
+                {creatorName}
+              </strong>
 
-              )
-              : (
 
-                <span>
-                  {
-                    getInitials(
-                      authorName
-                    )
-                  }
+              {own && (
+
+                <span
+                  className="shobdo-video-owner-badge"
+                >
+                  {t(
+                    "videos.you",
+                    "You"
+                  )}
                 </span>
 
               )}
 
-          </span>
+            </div>
 
 
-          <span
-            className="shobdo-video-author-copy"
-          >
+            <div
+              className="shobdo-video-post-meta"
+            >
 
-            <strong>
-              {authorName}
-            </strong>
+              {createdAt && (
 
+                <span>
+                  {createdAt}
+                </span>
 
-            <small>
-
-              {
-                mediaKind ===
-                  "reel"
-                  ? copy.reel
-                  : copy.video
-              }
-
-              {date
-                ? ` · ${date}`
-                : ""}
-
-            </small>
-
-          </span>
-
-        </Link>
+              )}
 
 
-        <span
-          className="shobdo-video-card-label"
+              {createdAt && (
+                <span
+                  aria-hidden="true"
+                >
+                  ·
+                </span>
+              )}
+
+
+              <span
+                className="shobdo-video-visibility"
+                title={
+                  item?.visibility ||
+                  "public"
+                }
+              >
+
+                <Globe2
+                  size={13}
+                />
+
+                {type === "reel"
+                  ? t(
+                      "videos.reel",
+                      "Reel"
+                    )
+                  : t(
+                      "videos.video",
+                      "Video"
+                    )}
+
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div
+          className="shobdo-video-menu-shell"
+          onClick={
+            (
+              event
+            ) =>
+              event
+                .stopPropagation()
+          }
         >
 
-          {mediaKind ===
-            "reel"
-            ? (
-
-              <Clapperboard
-                size={15}
-              />
-
-            )
-            : (
-
-              <Film
-                size={15}
-              />
-
+          <button
+            type="button"
+            className={
+              menuOpen
+                ? "shobdo-video-menu-trigger active"
+                : "shobdo-video-menu-trigger"
+            }
+            aria-label={t(
+              "videos.moreOptions",
+              "More options"
             )}
+            aria-expanded={
+              menuOpen
+            }
+            onClick={onToggleMenu}
+          >
 
-          {
-            mediaKind ===
-              "reel"
-              ? copy.reel
-              : copy.video
-          }
+            <MoreHorizontal
+              size={22}
+            />
 
-        </span>
-
-      </div>
+          </button>
 
 
-      {/* =================================================
-          COPY
-      ================================================== */}
+          {menuOpen && (
+
+            <div
+              className="shobdo-video-menu"
+              role="menu"
+            >
+
+              <button
+                type="button"
+                role="menuitem"
+                onClick={onShare}
+              >
+
+                <Share2
+                  size={17}
+                />
+
+                <span>
+                  {t(
+                    "videos.share",
+                    "Share"
+                  )}
+                </span>
+
+              </button>
+
+
+              <button
+                type="button"
+                role="menuitem"
+                onClick={onCopy}
+              >
+
+                <Link2
+                  size={17}
+                />
+
+                <span>
+                  {t(
+                    "videos.copyLink",
+                    "Copy link"
+                  )}
+                </span>
+
+              </button>
+
+
+              {own && (
+
+                <>
+
+                  <div
+                    className="shobdo-video-menu-divider"
+                  />
+
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="danger"
+                    disabled={
+                      deleting
+                    }
+                    onClick={
+                      () =>
+                        onDelete(
+                          item
+                        )
+                    }
+                  >
+
+                    {deleting
+                      ? (
+                        <LoaderCircle
+                          size={17}
+                          className="shobdo-video-spin"
+                        />
+                      )
+                      : (
+                        <Trash2
+                          size={17}
+                        />
+                      )}
+
+
+                    <span>
+                      {deleting
+                        ? t(
+                            "videos.deleting",
+                            "Deleting..."
+                          )
+                        : t(
+                            "videos.deleteVideo",
+                            "Delete video"
+                          )}
+                    </span>
+
+                  </button>
+
+                </>
+
+              )}
+
+            </div>
+
+          )}
+
+        </div>
+
+      </header>
+
+
+      {/* ===============================================
+          TITLE / DESCRIPTION
+      ================================================ */}
 
       <div
-        className="shobdo-video-copy"
+        className="shobdo-video-post-copy"
       >
 
         <h2>
@@ -1213,116 +1247,197 @@ function VideoCard({
       </div>
 
 
-      {/* =================================================
-          PLAYER
-      ================================================== */}
+      {/* ===============================================
+          MEDIA
+      ================================================ */}
+
+      {source ? (
+
+        <div
+          className={
+            type === "reel"
+              ? "shobdo-video-media shobdo-video-media-reel"
+              : "shobdo-video-media"
+          }
+        >
+
+          <video
+            controls
+            playsInline
+            preload="metadata"
+            poster={
+              poster ||
+              undefined
+            }
+            src={source}
+            onPlay={
+              () =>
+                onPlay(
+                  item,
+                  type
+                )
+            }
+          />
+
+        </div>
+
+      ) : (
+
+        <div
+          className="shobdo-video-media-missing"
+        >
+
+          <Film
+            size={30}
+          />
+
+          <span>
+            {t(
+              "videos.mediaUnavailable",
+              "Video unavailable"
+            )}
+          </span>
+
+        </div>
+
+      )}
+
+
+      {/* ===============================================
+          SOCIAL INFORMATION
+      ================================================ */}
 
       <div
-        className={[
-          "shobdo-video-player-shell",
-
-          mediaKind ===
-            "reel"
-            ? "shobdo-video-player-shell-reel"
-            : "",
-
-        ]
-          .filter(Boolean)
-          .join(" ")
-        }
+        className="shobdo-video-stats"
       >
 
-        {videoUrl
-          ? (
+        <div
+          className="shobdo-video-stat-group"
+        >
 
-            <video
-              className="shobdo-video-player"
-              src={
-                videoUrl
-              }
-              poster={
-                posterUrl ||
-                undefined
-              }
-              controls
-              playsInline
-              preload="metadata"
+          <span>
+
+            <Eye
+              size={15}
             />
 
-          )
-          : (
+            {views.toLocaleString()}
 
-            <div
-              className="shobdo-video-missing"
-            >
+            {" "}
 
-              {mediaKind ===
-                "reel"
-                ? (
+            {t(
+              "videos.views",
+              "views"
+            )}
 
-                  <Clapperboard
-                    size={32}
-                  />
+          </span>
 
-                )
-                : (
 
-                  <Film
-                    size={32}
-                  />
+          {duration && (
 
-                )}
+            <span>
 
-              <span>
-                Media unavailable
-              </span>
+              <Clock3
+                size={15}
+              />
 
-            </div>
+              {duration}
+
+            </span>
 
           )}
+
+
+          {languageLabel && (
+
+            <span>
+
+              <Globe2
+                size={15}
+              />
+
+              {languageLabel}
+
+            </span>
+
+          )}
+
+        </div>
 
       </div>
 
 
-      {/* =================================================
-          META
-      ================================================== */}
+      {/* ===============================================
+          ACTION BAR
+      ================================================ */}
 
       <footer
-        className="shobdo-video-meta"
+        className="shobdo-video-actions"
       >
 
-        <span>
+        <button
+          type="button"
+          onClick={onShare}
+        >
 
-          {formatCount(
-            views
-          )}
-
-          {" "}
-
-          {copy.views}
-
-        </span>
-
-
-        {video?.language && (
+          <Share2
+            size={18}
+          />
 
           <span>
-            {
-              String(
-                video.language
-              ).toUpperCase()
+            {t(
+              "videos.share",
+              "Share"
+            )}
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          onClick={onCopy}
+        >
+
+          <Link2
+            size={18}
+          />
+
+          <span>
+            {t(
+              "videos.copyLink",
+              "Copy link"
+            )}
+          </span>
+
+        </button>
+
+
+        {own && (
+
+          <button
+            type="button"
+            className="shobdo-video-action-delete"
+            onClick={
+              () =>
+                onDelete(
+                  item
+                )
             }
-          </span>
+          >
 
-        )}
+            <Trash2
+              size={18}
+            />
 
+            <span>
+              {t(
+                "videos.delete",
+                "Delete"
+              )}
+            </span>
 
-        {video?.category && (
-
-          <span>
-            {video.category}
-          </span>
+          </button>
 
         )}
 
@@ -1336,63 +1451,18 @@ function VideoCard({
 
 
 // =========================================================
-// EMPTY STATE
-// =========================================================
-
-function EmptyState({
-  icon:
-    Icon,
-  title,
-  description,
-  action,
-}) {
-
-  return (
-
-    <div
-      className="shobdo-video-state"
-    >
-
-      <div
-        className="shobdo-video-empty-icon"
-      >
-
-        <Icon
-          size={31}
-        />
-
-      </div>
-
-
-      <h2>
-        {title}
-      </h2>
-
-
-      <p>
-        {description}
-      </p>
-
-
-      {action}
-
-    </div>
-
-  );
-
-}
-
-
-// =========================================================
-// VIDEOS PAGE
+// MAIN PAGE
 // =========================================================
 
 export default function Videos({
   user,
 }) {
 
-  const navigate =
-    useNavigate();
+  const {
+    t,
+    language,
+  } =
+    useLanguage();
 
 
   const [
@@ -1402,33 +1472,27 @@ export default function Videos({
     useSearchParams();
 
 
-  const {
-    language,
-  } =
-    useLanguage();
-
-
-  const copy =
-    COPY[
-      language
-    ] ||
-    COPY.en;
-
-
-  // =======================================================
-  // ACTIVE TAB
-  // =======================================================
-
-  const activeTab =
-    normalizeTab(
+  const requestedTab =
+    String(
       searchParams.get(
         "tab"
-      )
-    );
+      ) ||
+      "videos"
+    )
+      .trim()
+      .toLowerCase();
+
+
+  const activeTab =
+    VALID_TABS.includes(
+      requestedTab
+    )
+      ? requestedTab
+      : "videos";
 
 
   // =======================================================
-  // VIDEO STATE
+  // STATE
   // =======================================================
 
   const [
@@ -1439,24 +1503,6 @@ export default function Videos({
 
 
   const [
-    videosLoading,
-    setVideosLoading,
-  ] =
-    useState(true);
-
-
-  const [
-    videosError,
-    setVideosError,
-  ] =
-    useState("");
-
-
-  // =======================================================
-  // FOLLOWING STATE
-  // =======================================================
-
-  const [
     followingMedia,
     setFollowingMedia,
   ] =
@@ -1464,10 +1510,24 @@ export default function Videos({
 
 
   const [
-    followingLoading,
-    setFollowingLoading,
+    loadingVideos,
+    setLoadingVideos,
+  ] =
+    useState(true);
+
+
+  const [
+    loadingFollowing,
+    setLoadingFollowing,
   ] =
     useState(false);
+
+
+  const [
+    error,
+    setError,
+  ] =
+    useState("");
 
 
   const [
@@ -1478,80 +1538,150 @@ export default function Videos({
 
 
   const [
-    followingLoaded,
-    setFollowingLoaded,
+    openMenuId,
+    setOpenMenuId,
   ] =
-    useState(false);
+    useState(null);
+
+
+  const [
+    deleteTarget,
+    setDeleteTarget,
+  ] =
+    useState(null);
+
+
+  const [
+    deletingId,
+    setDeletingId,
+  ] =
+    useState(null);
+
+
+  const [
+    toast,
+    setToast,
+  ] =
+    useState("");
+
+
+  const viewedVideoIds =
+    useRef(
+      new Set()
+    );
+
+
+  // =======================================================
+  // TITLE
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      const previousTitle =
+        document.title;
+
+
+      document.title =
+        `${t(
+          "videos.title",
+          "Video"
+        )} | SHOBDO`;
+
+
+      return () => {
+
+        document.title =
+          previousTitle;
+
+      };
+
+    },
+    [
+      t,
+    ]
+  );
+
+
+  // =======================================================
+  // TOAST AUTO CLOSE
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      if (!toast) {
+
+        return undefined;
+
+      }
+
+
+      const timer =
+        window.setTimeout(
+          () => {
+
+            setToast("");
+
+          },
+          2600
+        );
+
+
+      return () =>
+        window.clearTimeout(
+          timer
+        );
+
+    },
+    [
+      toast,
+    ]
+  );
 
 
   // =======================================================
   // SET TAB
   // =======================================================
 
-  const setTab =
-    useCallback(
-      (
-        tab
-      ) => {
+  function changeTab(
+    tab
+  ) {
 
-        const normalized =
-          normalizeTab(
-            tab
-          );
+    const next =
+      new URLSearchParams(
+        searchParams
+      );
 
 
-        if (
-          normalized ===
-            "following" &&
-          !user?.id
-        ) {
-
-          navigate(
-            "/login"
-          );
-
-          return;
-
-        }
-
-
-        const nextParams =
-          new URLSearchParams(
-            searchParams
-          );
-
-
-        if (
-          normalized ===
-          "videos"
-        ) {
-
-          nextParams.delete(
-            "tab"
-          );
-
-        } else {
-
-          nextParams.set(
-            "tab",
-            normalized
-          );
-
-        }
-
-
-        setSearchParams(
-          nextParams
-        );
-
-      },
-      [
-        navigate,
-        searchParams,
-        setSearchParams,
-        user?.id,
-      ]
+    next.set(
+      "tab",
+      tab
     );
+
+
+    if (
+      tab !==
+      "reels"
+    ) {
+
+      next.delete(
+        "view"
+      );
+
+    }
+
+
+    setSearchParams(
+      next
+    );
+
+
+    setOpenMenuId(
+      null
+    );
+
+  }
 
 
   // =======================================================
@@ -1566,71 +1696,87 @@ export default function Videos({
 
         if (!silent) {
 
-          setVideosLoading(
+          setLoadingVideos(
             true
           );
 
         }
 
 
-        setVideosError(
-          ""
-        );
+        setError("");
 
 
         try {
 
           const data =
             await apiRequest(
-              `/videos?page=1&limit=${VIDEO_LIMIT}`
+              `/videos?page=1&limit=${PAGE_SIZE}`,
+              {
+                authenticated:
+                  Boolean(
+                    getToken()
+                  ),
+              }
             );
 
 
           const items =
-            extractVideos(
-              data
+            Array.isArray(
+              data?.videos
             )
-              .filter(
-                isVisibleVideo
-              );
+              ? data.videos
+              : Array.isArray(
+                    data?.items
+                  )
+                ? data.items
+                : [];
 
 
           setVideos(
             items
           );
 
+
         } catch (
-          error
+          loadError
         ) {
 
           console.error(
             "LOAD VIDEOS ERROR:",
-            error
+            loadError
           );
 
 
-          setVideosError(
-            error?.message ||
-            copy.unavailable
+          setError(
+            loadError?.message ||
+            t(
+              "videos.loadError",
+              "Unable to load videos."
+            )
           );
+
 
         } finally {
 
-          setVideosLoading(
-            false
-          );
+          if (!silent) {
+
+            setLoadingVideos(
+              false
+            );
+
+          }
 
         }
 
       },
       [
-        copy.unavailable,
+        t,
       ]
     );
 
 
   // =======================================================
-  // INITIAL VIDEOS
+  // INITIAL VIDEO LOAD
   // =======================================================
 
   useEffect(
@@ -1646,14 +1792,12 @@ export default function Videos({
 
 
   // =======================================================
-  // LOAD FOLLOWING MEDIA
+  // FOLLOWING MEDIA
   // =======================================================
 
   const loadFollowingMedia =
     useCallback(
-      async ({
-        silent = false,
-      } = {}) => {
+      async () => {
 
         if (
           !user?.id
@@ -1663,23 +1807,14 @@ export default function Videos({
             []
           );
 
-          setFollowingLoaded(
-            false
-          );
-
           return;
 
         }
 
 
-        if (!silent) {
-
-          setFollowingLoading(
-            true
-          );
-
-        }
-
+        setLoadingFollowing(
+          true
+        );
 
         setFollowingError(
           ""
@@ -1688,23 +1823,51 @@ export default function Videos({
 
         try {
 
-          // -----------------------------------------------
-          // 1. LOAD USERS CURRENT USER FOLLOWS
-          // -----------------------------------------------
+          const [
+            followingResponse,
+            videoResponse,
+            reelsResponse,
+          ] =
+            await Promise.all([
 
-          const followingData =
-            await apiRequest(
-              `/users/${user.id}/following?page=1&limit=${FOLLOWING_LIMIT}`
-            );
+              apiRequest(
+                `/users/${user.id}/following?page=1&limit=50`,
+                {
+                  authenticated:
+                    true,
+                }
+              ),
+
+              apiRequest(
+                `/videos?page=1&limit=${PAGE_SIZE}`,
+                {
+                  authenticated:
+                    true,
+                }
+              ),
+
+              getReels({
+                page:
+                  1,
+
+                perPage:
+                  PAGE_SIZE,
+              }),
+
+            ]);
 
 
           const followingUsers =
-            extractFollowingUsers(
-              followingData
-            );
+            Array.isArray(
+              followingResponse
+                ?.users
+            )
+              ? followingResponse
+                  .users
+              : [];
 
 
-          const followedIds =
+          const followingIds =
             new Set(
               followingUsers
                 .map(
@@ -1712,7 +1875,8 @@ export default function Videos({
                     followedUser
                   ) =>
                     Number(
-                      followedUser?.id
+                      followedUser
+                        ?.id
                     )
                 )
                 .filter(
@@ -1721,200 +1885,115 @@ export default function Videos({
             );
 
 
-          if (
-            followedIds.size ===
-            0
-          ) {
-
-            setFollowingMedia(
-              []
-            );
-
-            setFollowingLoaded(
-              true
-            );
-
-            return;
-
-          }
-
-
-          // -----------------------------------------------
-          // 2. LOAD VIDEO + REEL FEEDS IN PARALLEL
-          // -----------------------------------------------
-
-          const [
-            videosResult,
-            reelsResult,
-          ] =
-            await Promise.allSettled([
-
-              apiRequest(
-                `/videos?page=1&limit=${VIDEO_LIMIT}`
-              ),
-
-              getReels({
-                page:
-                  1,
-
-                perPage:
-                  REEL_LIMIT,
-              }),
-
-            ]);
-
-
-          // -----------------------------------------------
-          // VIDEOS
-          // -----------------------------------------------
-
-          const allVideos =
-            videosResult.status ===
-              "fulfilled"
-              ? extractVideos(
-                  videosResult.value
-                )
-                  .filter(
-                    isVisibleVideo
-                  )
-              : [];
-
-
           const followedVideos =
-            allVideos
+            (
+              Array.isArray(
+                videoResponse
+                  ?.videos
+              )
+                ? videoResponse
+                    .videos
+                : Array.isArray(
+                      videoResponse
+                        ?.items
+                    )
+                  ? videoResponse
+                      .items
+                  : []
+            )
               .filter(
                 (
                   video
-                ) => {
-
-                  const creatorId =
-                    getMediaUserId(
-                      video
-                    );
-
-
-                  return (
-                    creatorId !==
-                      null &&
-                    followedIds.has(
-                      creatorId
+                ) =>
+                  followingIds.has(
+                    Number(
+                      getOwnerId(
+                        video
+                      )
                     )
-                  );
-
-                }
+                  )
               )
               .map(
                 (
                   video
                 ) => ({
-
                   ...video,
 
-                  _mediaKind:
+                  __mediaType:
                     "video",
-
-                  _sortDate:
-                    getMediaDate(
-                      video
-                    ),
-
                 })
               );
-
-
-          // -----------------------------------------------
-          // REELS
-          // -----------------------------------------------
-
-          const allReels =
-            reelsResult.status ===
-              "fulfilled"
-              ? extractReels(
-                  reelsResult.value
-                )
-              : [];
 
 
           const followedReels =
-            allReels
+            (
+              Array.isArray(
+                reelsResponse
+                  ?.reels
+              )
+                ? reelsResponse
+                    .reels
+                : []
+            )
               .filter(
                 (
                   reel
-                ) => {
-
-                  const creatorId =
-                    getMediaUserId(
-                      reel
-                    );
-
-
-                  return (
-                    creatorId !==
-                      null &&
-                    followedIds.has(
-                      creatorId
+                ) =>
+                  followingIds.has(
+                    Number(
+                      getOwnerId(
+                        reel
+                      )
                     )
-                  );
-
-                }
+                  )
               )
               .map(
                 (
                   reel
                 ) => ({
-
                   ...reel,
 
-                  _mediaKind:
+                  __mediaType:
                     "reel",
-
-                  _sortDate:
-                    getMediaDate(
-                      reel
-                    ),
-
                 })
               );
 
 
-          // -----------------------------------------------
-          // 3. MERGE + NEWEST FIRST
-          // -----------------------------------------------
-
-          const merged =
-            [
-              ...followedVideos,
-              ...followedReels,
-            ]
-              .sort(
-                (
-                  a,
-                  b
-                ) => {
-
-                  const aTime =
-                    a?._sortDate
-                      ? new Date(
-                          a._sortDate
-                        ).getTime()
-                      : 0;
+          const merged = [
+            ...followedVideos,
+            ...followedReels,
+          ];
 
 
-                  const bTime =
-                    b?._sortDate
-                      ? new Date(
-                          b._sortDate
-                        ).getTime()
-                      : 0;
+          merged.sort(
+            (
+              first,
+              second
+            ) => {
+
+              const firstDate =
+                new Date(
+                  getCreatedAt(
+                    first
+                  ) || 0
+                ).getTime();
 
 
-                  return (
-                    bTime -
-                    aTime
-                  );
+              const secondDate =
+                new Date(
+                  getCreatedAt(
+                    second
+                  ) || 0
+                ).getTime();
 
-                }
+
+              return (
+                secondDate -
+                firstDate
               );
+
+            }
+          );
 
 
           setFollowingMedia(
@@ -1922,33 +2001,28 @@ export default function Videos({
           );
 
 
-          setFollowingLoaded(
-            true
-          );
-
         } catch (
-          error
+          loadError
         ) {
 
           console.error(
             "LOAD FOLLOWING MEDIA ERROR:",
-            error
+            loadError
           );
 
 
           setFollowingError(
-            error?.message ||
-            copy.followingUnavailable
+            loadError?.message ||
+            t(
+              "videos.followingLoadError",
+              "Unable to load media from people you follow."
+            )
           );
 
-
-          setFollowingLoaded(
-            true
-          );
 
         } finally {
 
-          setFollowingLoading(
+          setLoadingFollowing(
             false
           );
 
@@ -1956,213 +2030,569 @@ export default function Videos({
 
       },
       [
-        copy.followingUnavailable,
         user?.id,
+        t,
       ]
     );
 
 
-  // =======================================================
-  // LOAD FOLLOWING WHEN OPENED
-  // =======================================================
-
   useEffect(
     () => {
-
-      if (
-        activeTab !==
-          "following"
-      ) {
-
-        return;
-
-      }
-
-
-      if (
-        !user?.id
-      ) {
-
-        return;
-
-      }
-
-
-      if (
-        followingLoaded
-      ) {
-
-        return;
-
-      }
-
-
-      loadFollowingMedia();
-
-    },
-    [
-      activeTab,
-      followingLoaded,
-      loadFollowingMedia,
-      user?.id,
-    ]
-  );
-
-
-  // =======================================================
-  // RESET FOLLOWING CACHE WHEN USER CHANGES
-  // =======================================================
-
-  useEffect(
-    () => {
-
-      setFollowingLoaded(
-        false
-      );
-
-      setFollowingMedia(
-        []
-      );
-
-      setFollowingError(
-        ""
-      );
-
-    },
-    [
-      user?.id,
-    ]
-  );
-
-
-  // =======================================================
-  // PAGE TITLE
-  // =======================================================
-
-  useEffect(
-    () => {
-
-      if (
-        activeTab ===
-        "reels"
-      ) {
-
-        document.title =
-          `${copy.reels} | SHOBDO`;
-
-        return;
-
-      }
-
 
       if (
         activeTab ===
         "following"
       ) {
 
-        document.title =
-          `${copy.following} | SHOBDO`;
+        loadFollowingMedia();
+
+      }
+
+    },
+    [
+      activeTab,
+      loadFollowingMedia,
+    ]
+  );
+
+
+  // =======================================================
+  // DELETE
+  // =======================================================
+
+  async function confirmDelete() {
+
+    const videoId =
+      Number(
+        deleteTarget?.id
+      );
+
+
+    if (
+      !Number.isFinite(
+        videoId
+      )
+    ) {
+
+      return;
+
+    }
+
+
+    try {
+
+      setDeletingId(
+        videoId
+      );
+
+
+      await apiRequest(
+        `/videos/${videoId}`,
+        {
+          method:
+            "DELETE",
+
+          authenticated:
+            true,
+        }
+      );
+
+
+      setVideos(
+        (
+          current
+        ) =>
+          current.filter(
+            (
+              video
+            ) =>
+              Number(
+                video?.id
+              ) !==
+              videoId
+          )
+      );
+
+
+      setFollowingMedia(
+        (
+          current
+        ) =>
+          current.filter(
+            (
+              media
+            ) =>
+              !(
+                media
+                  ?.__mediaType ===
+                  "video" &&
+                Number(
+                  media?.id
+                ) ===
+                videoId
+              )
+          )
+      );
+
+
+      setDeleteTarget(
+        null
+      );
+
+
+      setOpenMenuId(
+        null
+      );
+
+
+      setToast(
+        t(
+          "videos.deletedSuccess",
+          "Video deleted successfully."
+        )
+      );
+
+
+    } catch (
+      deleteError
+    ) {
+
+      console.error(
+        "DELETE VIDEO ERROR:",
+        deleteError
+      );
+
+
+      window.alert(
+        deleteError?.message ||
+        t(
+          "videos.deleteError",
+          "Unable to delete this video."
+        )
+      );
+
+
+    } finally {
+
+      setDeletingId(
+        null
+      );
+
+    }
+
+  }
+
+
+  // =======================================================
+  // SHARE
+  // =======================================================
+
+  function getShareUrl(
+    item,
+    type
+  ) {
+
+    if (
+      type === "reel"
+    ) {
+
+      return (
+        `${window.location.origin}/reels/${item.id}`
+      );
+
+    }
+
+
+    return (
+      `${window.location.origin}/videos?video=${item.id}`
+    );
+
+  }
+
+
+  async function shareItem(
+    item,
+    type
+  ) {
+
+    const url =
+      getShareUrl(
+        item,
+        type
+      );
+
+
+    const title =
+      getTitle(
+        item,
+        type
+      );
+
+
+    try {
+
+      if (
+        navigator.share
+      ) {
+
+        await navigator.share({
+          title:
+            title,
+
+          text:
+            type === "reel"
+              ? t(
+                  "videos.shareReelText",
+                  "Watch this Reel on SHOBDO."
+                )
+              : t(
+                  "videos.shareVideoText",
+                  "Watch this video on SHOBDO."
+                ),
+
+          url,
+        });
+
 
         return;
 
       }
 
 
-      document.title =
-        `${copy.title} | SHOBDO`;
+      await navigator.clipboard
+        .writeText(
+          url
+        );
 
-    },
-    [
-      activeTab,
-      copy.following,
-      copy.reels,
-      copy.title,
-    ]
-  );
+
+      setToast(
+        t(
+          "videos.linkCopied",
+          "Link copied."
+        )
+      );
+
+
+    } catch (
+      shareError
+    ) {
+
+      if (
+        shareError?.name ===
+        "AbortError"
+      ) {
+
+        return;
+
+      }
+
+
+      console.error(
+        "SHARE VIDEO ERROR:",
+        shareError
+      );
+
+    }
+
+  }
 
 
   // =======================================================
-  // CURRENT VIDEO LIST
+  // COPY
   // =======================================================
 
-  const visibleVideos =
-    useMemo(
-      () =>
-        videos.filter(
-          isVisibleVideo
+  async function copyItemLink(
+    item,
+    type
+  ) {
+
+    const url =
+      getShareUrl(
+        item,
+        type
+      );
+
+
+    try {
+
+      await navigator.clipboard
+        .writeText(
+          url
+        );
+
+
+      setToast(
+        t(
+          "videos.linkCopied",
+          "Link copied."
+        )
+      );
+
+
+    } catch {
+
+      window.prompt(
+        t(
+          "videos.copyThisLink",
+          "Copy this link:"
         ),
+        url
+      );
+
+    }
+
+  }
+
+
+  // =======================================================
+  // REGISTER VIEW
+  // =======================================================
+
+  async function handlePlay(
+    item,
+    type
+  ) {
+
+    if (
+      type !==
+      "video"
+    ) {
+
+      return;
+
+    }
+
+
+    const id =
+      Number(
+        item?.id
+      );
+
+
+    if (
+      !Number.isFinite(
+        id
+      ) ||
+      viewedVideoIds
+        .current
+        .has(
+          id
+        )
+    ) {
+
+      return;
+
+    }
+
+
+    viewedVideoIds
+      .current
+      .add(
+        id
+      );
+
+
+    try {
+
+      await apiRequest(
+        `/videos/${id}/view`,
+        {
+          method:
+            "POST",
+
+          authenticated:
+            Boolean(
+              getToken()
+            ),
+        }
+      );
+
+
+      setVideos(
+        (
+          current
+        ) =>
+          current.map(
+            (
+              video
+            ) => {
+
+              if (
+                Number(
+                  video?.id
+                ) !==
+                id
+              ) {
+
+                return video;
+
+              }
+
+
+              return {
+                ...video,
+
+                views_count:
+                  getViews(
+                    video
+                  ) +
+                  1,
+              };
+
+            }
+          )
+      );
+
+
+    } catch {
+
+      // View registration should never block playback.
+
+    }
+
+  }
+
+
+  // =======================================================
+  // DISPLAY ITEMS
+  // =======================================================
+
+  const currentItems =
+    useMemo(
+      () => {
+
+        if (
+          activeTab ===
+          "following"
+        ) {
+
+          return (
+            followingMedia
+          );
+
+        }
+
+
+        return videos.map(
+          (
+            video
+          ) => ({
+            ...video,
+
+            __mediaType:
+              "video",
+          })
+        );
+
+      },
       [
+        activeTab,
         videos,
+        followingMedia,
       ]
     );
 
 
   // =======================================================
-  // REELS MODE CLASS
+  // REFRESH
   // =======================================================
 
-  const reelsActive =
+  async function refreshCurrent() {
+
+    if (
+      activeTab ===
+      "following"
+    ) {
+
+      await loadFollowingMedia();
+
+      return;
+
+    }
+
+
+    await loadVideos();
+
+  }
+
+
+  const currentLoading =
     activeTab ===
-    "reels";
+    "following"
+      ? loadingFollowing
+      : loadingVideos;
+
+
+  const currentError =
+    activeTab ===
+    "following"
+      ? followingError
+      : error;
 
 
   // =======================================================
-  // UI
+  // RENDER
   // =======================================================
 
   return (
 
     <main
-      className={[
-        "shobdo-video-hub",
-
-        reelsActive
-          ? "shobdo-video-hub-reels-active"
-          : "",
-
-      ]
-        .filter(Boolean)
-        .join(" ")
+      className="shobdo-video-page"
+      onClick={
+        () =>
+          setOpenMenuId(
+            null
+          )
       }
     >
 
       {/* =================================================
-          HEADER
+          HERO
       ================================================== */}
 
-      <header
-        className="shobdo-video-hub-header"
+      <section
+        className="shobdo-video-hero"
       >
 
         <div
-          className="shobdo-video-hub-heading"
+          className="shobdo-video-hero-main"
         >
 
-          <span
-            className="shobdo-video-hub-icon"
+          <div
+            className="shobdo-video-hero-icon"
           >
+
             <Film
-              size={22}
+              size={28}
             />
-          </span>
+
+          </div>
 
 
-          <div>
+          <div
+            className="shobdo-video-hero-copy"
+          >
 
             <span
-              className="shobdo-video-hub-eyebrow"
+              className="shobdo-video-eyebrow"
             >
-              {copy.eyebrow}
+              SHOBDO MEDIA
             </span>
 
 
             <h1>
-              {copy.title}
+              {t(
+                "videos.title",
+                "Video"
+              )}
             </h1>
 
 
             <p>
-              {copy.description}
+              {t(
+                "videos.description",
+                "Watch videos, discover Reels and keep up with creators you follow."
+              )}
             </p>
 
           </div>
@@ -2170,371 +2600,224 @@ export default function Videos({
         </div>
 
 
-        {/* ===============================================
-            CREATE ACTIONS
-        ================================================ */}
+        <div
+          className="shobdo-video-create-actions"
+        >
 
-        {user && (
-
-          <div
-            className="shobdo-video-create-actions"
+          <Link
+            to="/write?mode=video"
+            className="shobdo-video-create-button"
           >
 
-            <Link
-              to="/write?mode=video"
-              className="shobdo-video-create-button"
-            >
+            <Plus
+              size={18}
+            />
 
-              <Plus
-                size={17}
-              />
+            <span>
+              {t(
+                "videos.addVideo",
+                "Add Video"
+              )}
+            </span>
 
-              <span>
-                {copy.createVideo}
-              </span>
-
-            </Link>
+          </Link>
 
 
-            <Link
-              to="/reels/create"
-              className="shobdo-video-create-button shobdo-video-create-button-secondary"
-            >
+          <button
+            type="button"
+            className="shobdo-video-create-button shobdo-video-create-button-secondary"
+            onClick={
+              (
+                event
+              ) => {
 
-              <Clapperboard
-                size={17}
-              />
+                event.stopPropagation();
 
-              <span>
-                {copy.createReel}
-              </span>
 
-            </Link>
+                const next =
+                  new URLSearchParams(
+                    searchParams
+                  );
 
-          </div>
 
-        )}
+                next.set(
+                  "tab",
+                  "reels"
+                );
 
-      </header>
+                next.set(
+                  "view",
+                  "create"
+                );
+
+
+                setSearchParams(
+                  next
+                );
+
+              }
+            }
+          >
+
+            <Clapperboard
+              size={18}
+            />
+
+            <span>
+              {t(
+                "videos.createReel",
+                "Create Reel"
+              )}
+            </span>
+
+          </button>
+
+        </div>
+
+      </section>
 
 
       {/* =================================================
           TABS
       ================================================== */}
 
-      <nav
-        className="shobdo-video-tabs"
-        aria-label="Video feed"
+      <section
+        className="shobdo-video-tabs-shell"
       >
-
-        {/* VIDEOS */}
 
         <button
           type="button"
           className={
             activeTab ===
-              "videos"
+            "videos"
               ? "shobdo-video-tab active"
               : "shobdo-video-tab"
           }
           onClick={
-            () =>
-              setTab(
+            (
+              event
+            ) => {
+
+              event.stopPropagation();
+
+              changeTab(
                 "videos"
-              )
-          }
-          aria-current={
-            activeTab ===
-              "videos"
-              ? "page"
-              : undefined
+              );
+
+            }
           }
         >
 
           <Film
-            size={17}
+            size={18}
           />
 
           <span>
-            {copy.videos}
+            {t(
+              "videos.videos",
+              "Videos"
+            )}
           </span>
 
         </button>
 
 
-        {/* REELS */}
-
         <button
           type="button"
           className={
             activeTab ===
-              "reels"
+            "reels"
               ? "shobdo-video-tab active"
               : "shobdo-video-tab"
           }
           onClick={
-            () =>
-              setTab(
+            (
+              event
+            ) => {
+
+              event.stopPropagation();
+
+              changeTab(
                 "reels"
-              )
-          }
-          aria-current={
-            activeTab ===
-              "reels"
-              ? "page"
-              : undefined
+              );
+
+            }
           }
         >
 
           <Clapperboard
-            size={17}
+            size={18}
           />
 
           <span>
-            {copy.reels}
+            {t(
+              "videos.reels",
+              "Reels"
+            )}
           </span>
 
         </button>
 
-
-        {/* FOLLOWING */}
 
         <button
           type="button"
           className={
             activeTab ===
-              "following"
+            "following"
               ? "shobdo-video-tab active"
               : "shobdo-video-tab"
           }
           onClick={
-            () =>
-              setTab(
+            (
+              event
+            ) => {
+
+              event.stopPropagation();
+
+              changeTab(
                 "following"
-              )
-          }
-          aria-current={
-            activeTab ===
-              "following"
-              ? "page"
-              : undefined
+              );
+
+            }
           }
         >
 
-          <UsersRound
-            size={17}
+          <Users
+            size={18}
           />
 
           <span>
-            {copy.following}
+            {t(
+              "videos.following",
+              "Following"
+            )}
           </span>
 
         </button>
 
-      </nav>
+      </section>
 
 
       {/* =================================================
-          VIDEOS TAB
-      ================================================== */}
-
-      {activeTab ===
-        "videos" && (
-
-        <section
-          className="shobdo-videos-section"
-        >
-
-          {/* REFRESH */}
-
-          {!videosLoading &&
-            !videosError && (
-
-            <div
-              className="shobdo-video-section-actions"
-            >
-
-              <button
-                type="button"
-                className="shobdo-video-refresh-button"
-                onClick={
-                  () =>
-                    loadVideos()
-                }
-                title={
-                  copy.refresh
-                }
-                aria-label={
-                  copy.refresh
-                }
-              >
-
-                <RefreshCw
-                  size={16}
-                />
-
-              </button>
-
-            </div>
-
-          )}
-
-
-          {/* LOADING */}
-
-          {videosLoading && (
-
-            <div
-              className="shobdo-video-state"
-            >
-
-              <LoaderCircle
-                className="spin"
-                size={32}
-              />
-
-              <p>
-                {copy.loading}
-              </p>
-
-            </div>
-
-          )}
-
-
-          {/* ERROR */}
-
-          {!videosLoading &&
-            videosError && (
-
-            <div
-              className="shobdo-video-state"
-            >
-
-              <Film
-                size={31}
-              />
-
-              <h2>
-                {copy.unavailable}
-              </h2>
-
-              <p>
-                {videosError}
-              </p>
-
-              <button
-                type="button"
-                className="shobdo-video-empty-create"
-                onClick={
-                  () =>
-                    loadVideos()
-                }
-              >
-                {copy.retry}
-              </button>
-
-            </div>
-
-          )}
-
-
-          {/* EMPTY */}
-
-          {!videosLoading &&
-            !videosError &&
-            visibleVideos.length ===
-              0 && (
-
-            <EmptyState
-              icon={
-                Film
-              }
-              title={
-                copy.emptyVideos
-              }
-              description={
-                copy.emptyVideosDescription
-              }
-              action={
-                user
-                  ? (
-
-                    <Link
-                      to="/write?mode=video"
-                      className="shobdo-video-empty-create"
-                    >
-                      <Plus
-                        size={16}
-                      />
-
-                      {copy.createVideo}
-                    </Link>
-
-                  )
-                  : null
-              }
-            />
-
-          )}
-
-
-          {/* VIDEO FEED */}
-
-          {!videosLoading &&
-            !videosError &&
-            visibleVideos.length >
-              0 && (
-
-            <div
-              className="shobdo-video-feed"
-            >
-
-              {visibleVideos.map(
-                (
-                  video
-                ) => (
-
-                  <VideoCard
-                    key={
-                      `video-${video.id}`
-                    }
-                    video={
-                      video
-                    }
-                    copy={
-                      copy
-                    }
-                    mediaKind="video"
-                  />
-
-                )
-              )}
-
-            </div>
-
-          )}
-
-        </section>
-
-      )}
-
-
-      {/* =================================================
-          REELS TAB
+          REELS
       ================================================== */}
 
       {activeTab ===
         "reels" && (
 
         <section
-          className="shobdo-video-reels-section"
+          className="shobdo-video-reels-container"
+          onClick={
+            (
+              event
+            ) =>
+              event
+                .stopPropagation()
+          }
         >
 
           <ReelsTab
-            user={
-              user
-            }
+            user={user}
           />
 
         </section>
@@ -2543,239 +2826,638 @@ export default function Videos({
 
 
       {/* =================================================
-          FOLLOWING TAB
+          VIDEOS / FOLLOWING FEED
       ================================================== */}
 
-      {activeTab ===
-        "following" && (
+      {activeTab !==
+        "reels" && (
 
         <section
-          className="shobdo-videos-section"
+          className="shobdo-video-feed"
         >
 
-          {/* NOT LOGGED IN */}
+          <div
+            className="shobdo-video-feed-toolbar"
+          >
 
-          {!user?.id && (
+            <div>
 
-            <EmptyState
-              icon={
-                UserRound
-              }
-              title={
-                copy.loginRequired
-              }
-              description={
-                copy.loginRequired
-              }
-              action={
+              <span
+                className="shobdo-video-feed-kicker"
+              >
+                {activeTab ===
+                "following"
+                  ? t(
+                      "videos.yourNetwork",
+                      "YOUR NETWORK"
+                    )
+                  : t(
+                      "videos.communityFeed",
+                      "COMMUNITY FEED"
+                    )}
+              </span>
 
-                <Link
-                  to="/login"
-                  className="shobdo-video-empty-create"
-                >
-                  {copy.login}
-                </Link>
 
+              <h2>
+                {activeTab ===
+                "following"
+                  ? t(
+                      "videos.fromPeopleYouFollow",
+                      "From people you follow"
+                    )
+                  : t(
+                      "videos.latestVideos",
+                      "Latest videos"
+                    )}
+              </h2>
+
+            </div>
+
+
+            <button
+              type="button"
+              className="shobdo-video-refresh-button"
+              disabled={
+                currentLoading
               }
-            />
+              onClick={
+                (
+                  event
+                ) => {
+
+                  event.stopPropagation();
+
+                  refreshCurrent();
+
+                }
+              }
+              aria-label={t(
+                "videos.refresh",
+                "Refresh videos"
+              )}
+              title={t(
+                "videos.refresh",
+                "Refresh videos"
+              )}
+            >
+
+              <RefreshCw
+                size={18}
+                className={
+                  currentLoading
+                    ? "shobdo-video-spin"
+                    : ""
+                }
+              />
+
+              <span>
+                {t(
+                  "videos.refresh",
+                  "Refresh"
+                )}
+              </span>
+
+            </button>
+
+          </div>
+
+
+          {/* =============================================
+              LOADING
+          ============================================== */}
+
+          {currentLoading && (
+
+            <div
+              className="shobdo-video-state"
+            >
+
+              <LoaderCircle
+                size={30}
+                className="shobdo-video-spin"
+              />
+
+
+              <strong>
+                {t(
+                  "videos.loading",
+                  "Loading videos..."
+                )}
+              </strong>
+
+            </div>
 
           )}
 
 
-          {/* LOGGED IN */}
+          {/* =============================================
+              ERROR
+          ============================================== */}
 
-          {user?.id && (
-            <>
+          {!currentLoading &&
+            currentError && (
 
-              {/* REFRESH */}
+            <div
+              className="shobdo-video-state shobdo-video-state-error"
+            >
 
-              {!followingLoading && (
-
-                <div
-                  className="shobdo-video-section-actions"
-                >
-
-                  <button
-                    type="button"
-                    className="shobdo-video-refresh-button"
-                    onClick={
-                      () =>
-                        loadFollowingMedia({
-                          silent:
-                            false,
-                        })
-                    }
-                    title={
-                      copy.refresh
-                    }
-                    aria-label={
-                      copy.refresh
-                    }
-                  >
-
-                    <RefreshCw
-                      size={16}
-                    />
-
-                  </button>
-
-                </div>
-
-              )}
+              <AlertTriangle
+                size={30}
+              />
 
 
-              {/* LOADING */}
-
-              {followingLoading && (
-
-                <div
-                  className="shobdo-video-state"
-                >
-
-                  <LoaderCircle
-                    className="spin"
-                    size={32}
-                  />
-
-                  <p>
-                    {
-                      copy.loadingFollowing
-                    }
-                  </p>
-
-                </div>
-
-              )}
+              <strong>
+                {t(
+                  "videos.unavailable",
+                  "Unable to load videos"
+                )}
+              </strong>
 
 
-              {/* ERROR */}
-
-              {!followingLoading &&
-                followingError && (
-
-                <div
-                  className="shobdo-video-state"
-                >
-
-                  <UsersRound
-                    size={31}
-                  />
-
-                  <h2>
-                    {
-                      copy.followingUnavailable
-                    }
-                  </h2>
-
-                  <p>
-                    {
-                      followingError
-                    }
-                  </p>
-
-                  <button
-                    type="button"
-                    className="shobdo-video-empty-create"
-                    onClick={
-                      () =>
-                        loadFollowingMedia()
-                    }
-                  >
-                    {copy.retry}
-                  </button>
-
-                </div>
-
-              )}
+              <p>
+                {currentError}
+              </p>
 
 
-              {/* EMPTY */}
+              <button
+                type="button"
+                onClick={
+                  refreshCurrent
+                }
+              >
 
-              {!followingLoading &&
-                !followingError &&
-                followingLoaded &&
-                followingMedia.length ===
-                  0 && (
-
-                <EmptyState
-                  icon={
-                    UsersRound
-                  }
-                  title={
-                    copy.emptyFollowing
-                  }
-                  description={
-                    copy.emptyFollowingDescription
-                  }
-                  action={
-
-                    <Link
-                      to="/explore"
-                      className="shobdo-video-empty-create"
-                    >
-                      <UserRound
-                        size={16}
-                      />
-
-                      {
-                        copy.discoverWriters
-                      }
-                    </Link>
-
-                  }
+                <RefreshCw
+                  size={17}
                 />
 
-              )}
+                {t(
+                  "videos.tryAgain",
+                  "Try again"
+                )}
+
+              </button>
+
+            </div>
+
+          )}
 
 
-              {/* FOLLOWING FEED */}
+          {/* =============================================
+              EMPTY
+          ============================================== */}
 
-              {!followingLoading &&
-                !followingError &&
-                followingMedia.length >
-                  0 && (
+          {!currentLoading &&
+            !currentError &&
+            currentItems
+              .length ===
+              0 && (
 
-                <div
-                  className="shobdo-video-feed"
+            <div
+              className="shobdo-video-state shobdo-video-state-empty"
+            >
+
+              {activeTab ===
+              "following"
+                ? (
+                  <Users
+                    size={34}
+                  />
+                )
+                : (
+                  <Film
+                    size={34}
+                  />
+                )}
+
+
+              <strong>
+                {activeTab ===
+                "following"
+                  ? t(
+                      "videos.noFollowingMedia",
+                      "No videos or Reels here yet"
+                    )
+                  : t(
+                      "videos.noVideos",
+                      "No videos yet"
+                    )}
+              </strong>
+
+
+              <p>
+                {activeTab ===
+                "following"
+                  ? t(
+                      "videos.noFollowingMediaDescription",
+                      "Follow creators to see their latest videos and Reels here."
+                    )
+                  : t(
+                      "videos.noVideosDescription",
+                      "Be the first to share a video with the SHOBDO community."
+                    )}
+              </p>
+
+
+              {activeTab ===
+                "videos" && (
+
+                <Link
+                  to="/write?mode=video"
                 >
 
-                  {followingMedia.map(
-                    (
-                      media,
-                      index
-                    ) => (
+                  <Plus
+                    size={17}
+                  />
 
-                      <VideoCard
-                        key={
-                          `${
-                            media._mediaKind
-                          }-${
-                            media.id
-                          }-${index}`
-                        }
-                        video={
-                          media
-                        }
-                        copy={
-                          copy
-                        }
-                        mediaKind={
-                          media._mediaKind ||
-                          "video"
-                        }
-                      />
-
-                    )
+                  {t(
+                    "videos.addVideo",
+                    "Add Video"
                   )}
 
-                </div>
+                </Link>
 
               )}
 
-            </>
+            </div>
+
+          )}
+
+
+          {/* =============================================
+              POSTS
+          ============================================== */}
+
+          {!currentLoading &&
+            !currentError &&
+            currentItems
+              .length >
+              0 && (
+
+            <div
+              className="shobdo-video-post-list"
+            >
+
+              {currentItems.map(
+                (
+                  item
+                ) => {
+
+                  const mediaType =
+                    item
+                      ?.__mediaType ||
+                    "video";
+
+
+                  const menuKey =
+                    `${mediaType}-${item.id}`;
+
+
+                  return (
+
+                    <VideoCard
+                      key={menuKey}
+                      item={item}
+                      type={mediaType}
+                      user={user}
+                      language={
+                        language
+                      }
+                      t={t}
+                      menuOpen={
+                        openMenuId ===
+                        menuKey
+                      }
+                      deleting={
+                        mediaType ===
+                          "video" &&
+                        Number(
+                          deletingId
+                        ) ===
+                          Number(
+                            item.id
+                          )
+                      }
+                      onToggleMenu={
+                        (
+                          event
+                        ) => {
+
+                          event
+                            .stopPropagation();
+
+
+                          setOpenMenuId(
+                            (
+                              current
+                            ) =>
+                              current ===
+                              menuKey
+                                ? null
+                                : menuKey
+                          );
+
+                        }
+                      }
+                      onDelete={
+                        (
+                          video
+                        ) => {
+
+                          setOpenMenuId(
+                            null
+                          );
+
+
+                          setDeleteTarget(
+                            video
+                          );
+
+                        }
+                      }
+                      onShare={
+                        async (
+                          event
+                        ) => {
+
+                          event
+                            ?.stopPropagation?.();
+
+
+                          setOpenMenuId(
+                            null
+                          );
+
+
+                          await shareItem(
+                            item,
+                            mediaType
+                          );
+
+                        }
+                      }
+                      onCopy={
+                        async (
+                          event
+                        ) => {
+
+                          event
+                            ?.stopPropagation?.();
+
+
+                          setOpenMenuId(
+                            null
+                          );
+
+
+                          await copyItemLink(
+                            item,
+                            mediaType
+                          );
+
+                        }
+                      }
+                      onPlay={
+                        handlePlay
+                      }
+                    />
+
+                  );
+
+                }
+              )}
+
+            </div>
+
           )}
 
         </section>
+
+      )}
+
+
+      {/* =================================================
+          DELETE CONFIRMATION
+      ================================================== */}
+
+      {deleteTarget && (
+
+        <div
+          className="shobdo-video-modal-backdrop"
+          role="presentation"
+          onClick={
+            () => {
+
+              if (
+                deletingId
+              ) {
+
+                return;
+
+              }
+
+
+              setDeleteTarget(
+                null
+              );
+
+            }
+          }
+        >
+
+          <div
+            className="shobdo-video-delete-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-video-title"
+            onClick={
+              (
+                event
+              ) =>
+                event
+                  .stopPropagation()
+            }
+          >
+
+            <button
+              type="button"
+              className="shobdo-video-modal-close"
+              disabled={
+                Boolean(
+                  deletingId
+                )
+              }
+              onClick={
+                () =>
+                  setDeleteTarget(
+                    null
+                  )
+              }
+              aria-label={t(
+                "videos.close",
+                "Close"
+              )}
+            >
+
+              <X
+                size={20}
+              />
+
+            </button>
+
+
+            <div
+              className="shobdo-video-delete-icon"
+            >
+
+              <Trash2
+                size={25}
+              />
+
+            </div>
+
+
+            <span
+              className="shobdo-video-modal-eyebrow"
+            >
+              {t(
+                "videos.removeVideo",
+                "REMOVE VIDEO"
+              )}
+            </span>
+
+
+            <h2
+              id="delete-video-title"
+            >
+              {t(
+                "videos.deleteConfirmTitle",
+                "Delete this video?"
+              )}
+            </h2>
+
+
+            <p>
+              {t(
+                "videos.deleteConfirmDescription",
+                "This video will be permanently removed from SHOBDO. This action cannot be undone."
+              )}
+            </p>
+
+
+            <div
+              className="shobdo-video-delete-preview"
+            >
+
+              <Film
+                size={17}
+              />
+
+              <span>
+                {getTitle(
+                  deleteTarget,
+                  "video"
+                )}
+              </span>
+
+            </div>
+
+
+            <div
+              className="shobdo-video-modal-actions"
+            >
+
+              <button
+                type="button"
+                className="shobdo-video-modal-cancel"
+                disabled={
+                  Boolean(
+                    deletingId
+                  )
+                }
+                onClick={
+                  () =>
+                    setDeleteTarget(
+                      null
+                    )
+                }
+              >
+                {t(
+                  "videos.cancel",
+                  "Cancel"
+                )}
+              </button>
+
+
+              <button
+                type="button"
+                className="shobdo-video-modal-delete"
+                disabled={
+                  Boolean(
+                    deletingId
+                  )
+                }
+                onClick={
+                  confirmDelete
+                }
+              >
+
+                {deletingId
+                  ? (
+                    <LoaderCircle
+                      size={18}
+                      className="shobdo-video-spin"
+                    />
+                  )
+                  : (
+                    <Trash2
+                      size={18}
+                    />
+                  )}
+
+
+                <span>
+                  {deletingId
+                    ? t(
+                        "videos.deleting",
+                        "Deleting..."
+                      )
+                    : t(
+                        "videos.deleteVideo",
+                        "Delete video"
+                      )}
+                </span>
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+
+      {/* =================================================
+          TOAST
+      ================================================== */}
+
+      {toast && (
+
+        <div
+          className="shobdo-video-toast"
+          role="status"
+        >
+
+          <Check
+            size={17}
+          />
+
+          <span>
+            {toast}
+          </span>
+
+        </div>
 
       )}
 
