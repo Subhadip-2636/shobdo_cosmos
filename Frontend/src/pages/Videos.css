@@ -3325,19 +3325,19 @@ shobdo-video-spin {
 }
 
 /* =========================================================
-   VIDEO HUB — ANIMATED SHOBDO BACKGROUND
-   Reuses /public/backgrounds/shobdo-reels-bg.mp4
+   VIDEO HUB — CLEAR ANIMATED SHOBDO BACKGROUND
+   Designed to keep the artwork visible while preserving
+   readable glass surfaces.
 ========================================================= */
 
 .shobdo-video-page {
-  isolation:
-    isolate;
+  position: relative;
 
-  min-height:
-    100dvh;
+  isolation: isolate;
 
-  background:
-    transparent;
+  min-height: 100dvh;
+
+  background: transparent;
 }
 
 
@@ -3345,11 +3345,9 @@ shobdo-video-spin {
 :not(
   .shobdo-video-animated-background
 ) {
-  position:
-    relative;
+  position: relative;
 
-  z-index:
-    1;
+  z-index: 2;
 }
 
 
@@ -3358,112 +3356,138 @@ shobdo-video-spin {
 ========================================================= */
 
 .shobdo-video-animated-background {
-  position:
-    fixed;
+  position: fixed;
 
-  inset:
-    0;
+  inset: 0;
 
-  z-index:
-    -2;
+  z-index: -1;
 
-  overflow:
-    hidden;
+  overflow: hidden;
 
-  pointer-events:
-    none;
+  pointer-events: none;
 
   background:
     linear-gradient(
       145deg,
-      #f8f2e9 0%,
-      #f5edf2 48%,
-      #f7f1e9 100%
+      #f1e8e1 0%,
+      #eee2e7 48%,
+      #f4ece5 100%
     );
 }
 
 
 .shobdo-video-background-video {
-  position:
-    absolute;
+  position: absolute;
 
-  inset:
-    0;
+  inset: 0;
 
-  width:
-    100%;
+  width: 100%;
+  height: 100%;
 
-  height:
-    100%;
+  display: block;
 
-  display:
-    block;
+  object-fit: cover;
 
-  object-fit:
-    cover;
+  object-position: center center;
 
-  object-position:
-    center center;
-
-  opacity:
-    0.34;
+  opacity: 0.74;
 
   filter:
-    saturate(0.82)
-    contrast(0.94)
-    brightness(1.12);
+    saturate(0.96)
+    contrast(1.03)
+    brightness(0.99);
 
   transform:
-    scale(1.025);
+    scale(1.015);
+
+  will-change: transform;
 }
 
 
-.shobdo-video-background-overlay {
-  position:
-    absolute;
+/* =========================================================
+   LIGHT READABILITY OVERLAY
+   Keep this subtle so the background stays visible.
+========================================================= */
 
-  inset:
-    0;
+.shobdo-video-background-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  pointer-events: none;
 
   background:
     radial-gradient(
-      circle at 50% 12%,
-      rgba(
-        255,
-        253,
-        248,
-        0.48
-      ) 0%,
-      rgba(
-        255,
-        253,
-        248,
-        0.16
-      ) 35%,
-      transparent
-        62%
+      circle at 50% 18%,
+      rgba(255, 252, 248, 0.08) 0%,
+      rgba(255, 252, 248, 0.025) 42%,
+      transparent 68%
     ),
     linear-gradient(
       180deg,
-      rgba(
-        250,
-        246,
-        239,
-        0.48
-      ) 0%,
-      rgba(
-        248,
-        242,
-        237,
-        0.3
-      ) 45%,
-      rgba(
-        248,
-        243,
-        238,
-        0.5
-      ) 100%
+      rgba(248, 241, 237, 0.05) 0%,
+      rgba(248, 241, 237, 0.09) 48%,
+      rgba(248, 241, 237, 0.14) 100%
     );
+}
+
+
+/* =========================================================
+   VIDEO PAGE NAVBAR
+   Works with or without the optional shobdo-video-route
+   body class.
+========================================================= */
+
+body.shobdo-video-route
+.shobdo-navbar,
+body:has(.shobdo-video-page)
+.shobdo-navbar {
+  display: block !important;
+
+  position: sticky !important;
+
+  top: 0 !important;
+
+  z-index: 20000 !important;
+
+  visibility: visible !important;
+
+  opacity: 1 !important;
+
+  border-bottom:
+    1px solid
+    rgba(91, 63, 79, 0.15) !important;
+
+  background:
+    rgba(255, 253, 249, 0.96) !important;
+
+  box-shadow:
+    0 7px 28px
+    rgba(52, 35, 45, 0.11) !important;
+
+  backdrop-filter:
+    blur(20px)
+    saturate(1.12) !important;
+
+  -webkit-backdrop-filter:
+    blur(20px)
+    saturate(1.12) !important;
+}
+
+
+body.shobdo-video-route
+.shobdo-navbar-scrolled,
+body:has(.shobdo-video-page)
+.shobdo-navbar-scrolled {
+  background:
+    rgba(255, 253, 249, 0.985) !important;
+
+  border-bottom-color:
+    rgba(91, 63, 79, 0.19) !important;
+
+  box-shadow:
+    0 8px 30px
+    rgba(52, 35, 45, 0.13) !important;
 }
 
 
@@ -3476,39 +3500,22 @@ shobdo-video-spin {
 .shobdo-video-post,
 .shobdo-video-state {
   border-color:
-    rgba(
-      117,
-      82,
-      103,
-      0.16
-    );
+    rgba(117, 82, 103, 0.15);
 
   background:
-    rgba(
-      255,
-      253,
-      250,
-      0.84
-    );
+    rgba(255, 253, 250, 0.78);
 
   backdrop-filter:
-    blur(18px)
-    saturate(1.08);
+    blur(16px)
+    saturate(1.06);
 
   -webkit-backdrop-filter:
-    blur(18px)
-    saturate(1.08);
+    blur(16px)
+    saturate(1.06);
 
   box-shadow:
-    0
-    16px
-    44px
-    rgba(
-      66,
-      44,
-      57,
-      0.08
-    );
+    0 15px 42px
+    rgba(66, 44, 57, 0.075);
 }
 
 
@@ -3516,48 +3523,28 @@ shobdo-video-spin {
   background:
     linear-gradient(
       135deg,
-      rgba(
-        255,
-        255,
-        255,
-        0.88
-      ),
-      rgba(
-        249,
-        240,
-        247,
-        0.78
-      )
+      rgba(255, 255, 255, 0.84),
+      rgba(249, 240, 247, 0.72)
     );
 }
 
 
 .shobdo-video-tabs-shell {
   background:
-    rgba(
-      255,
-      253,
-      250,
-      0.82
-    );
+    rgba(255, 253, 250, 0.78);
 }
 
 
 .shobdo-video-refresh-button,
 .shobdo-video-create-button-secondary {
   background:
-    rgba(
-      255,
-      253,
-      250,
-      0.84
-    );
+    rgba(255, 253, 250, 0.82);
 
   backdrop-filter:
-    blur(14px);
+    blur(12px);
 
   -webkit-backdrop-filter:
-    blur(14px);
+    blur(12px);
 }
 
 
@@ -3571,46 +3558,30 @@ shobdo-video-spin {
     16px;
 
   background:
-    rgba(
-      255,
-      253,
-      250,
-      0.38
-    );
+    rgba(255, 253, 250, 0.30);
 
   backdrop-filter:
-    blur(9px);
+    blur(7px);
 
   -webkit-backdrop-filter:
-    blur(9px);
+    blur(7px);
 }
 
 
 /* =========================================================
    REELS INSIDE VIDEO HUB
-   The page background remains behind the unified media shell.
 ========================================================= */
 
 .shobdo-video-reels-container {
-  position:
-    relative;
+  position: relative;
 
-  z-index:
-    1;
+  z-index: 2;
 
-  border-radius:
-    24px;
+  border-radius: 24px;
 
   box-shadow:
-    0
-    18px
-    46px
-    rgba(
-      47,
-      30,
-      43,
-      0.12
-    );
+    0 18px 46px
+    rgba(47, 30, 43, 0.12);
 }
 
 
@@ -3628,10 +3599,15 @@ shobdo-video-spin {
       center center;
 
     opacity:
-      0.29;
+      0.66;
+
+    filter:
+      saturate(0.95)
+      contrast(1.02)
+      brightness(1);
 
     transform:
-      scale(1.04);
+      scale(1.035);
   }
 
 
@@ -3639,24 +3615,9 @@ shobdo-video-spin {
     background:
       linear-gradient(
         180deg,
-        rgba(
-          250,
-          246,
-          239,
-          0.56
-        ) 0%,
-        rgba(
-          248,
-          242,
-          237,
-          0.36
-        ) 45%,
-        rgba(
-          248,
-          243,
-          238,
-          0.56
-        ) 100%
+        rgba(248, 241, 237, 0.07) 0%,
+        rgba(248, 241, 237, 0.11) 48%,
+        rgba(248, 241, 237, 0.17) 100%
       );
   }
 
@@ -3666,12 +3627,7 @@ shobdo-video-spin {
   .shobdo-video-post,
   .shobdo-video-state {
     background:
-      rgba(
-        255,
-        253,
-        250,
-        0.88
-      );
+      rgba(255, 253, 250, 0.84);
   }
 
 }
@@ -3687,8 +3643,7 @@ shobdo-video-spin {
 ) {
 
   .shobdo-video-background-video {
-    display:
-      none;
+    display: none;
   }
 
 
@@ -3696,11 +3651,10 @@ shobdo-video-spin {
     background:
       linear-gradient(
         145deg,
-        #f8f2e9 0%,
-        #f5edf2 48%,
-        #f7f1e9 100%
+        #f1e8e1 0%,
+        #eee2e7 48%,
+        #f4ece5 100%
       );
   }
 
 }
-
