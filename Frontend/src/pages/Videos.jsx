@@ -11,7 +11,6 @@ import {
   Check,
   Clapperboard,
   Clock3,
-  Copy,
   Eye,
   Film,
   Globe2,
@@ -20,6 +19,7 @@ import {
   MoreHorizontal,
   Plus,
   RefreshCw,
+  RotateCcw,
   Share2,
   Trash2,
   Users,
@@ -212,7 +212,8 @@ function absoluteMediaUrl(
   const url =
     String(
       value || ""
-    ).trim();
+    )
+      .trim();
 
 
   if (!url) {
@@ -309,7 +310,10 @@ function isOwnItem(
   user
 ) {
 
-  if (!item || !user) {
+  if (
+    !item ||
+    !user
+  ) {
 
     return false;
 
@@ -317,10 +321,8 @@ function isOwnItem(
 
 
   if (
-    item.is_owner ===
-      true ||
-    item.is_mine ===
-      true ||
+    item.is_owner === true ||
+    item.is_mine === true ||
     item.owned_by_current_user ===
       true
   ) {
@@ -519,7 +521,8 @@ function getTitle(
     const caption =
       String(
         item.caption
-      ).trim();
+      )
+        .trim();
 
 
     if (
@@ -580,7 +583,8 @@ function getDescription(
 
   return String(
     description || ""
-  ).trim();
+  )
+    .trim();
 
 }
 
@@ -736,7 +740,9 @@ function formatDuration(
     60;
 
 
-  if (hours > 0) {
+  if (
+    hours > 0
+  ) {
 
     return (
       `${hours}:${String(
@@ -875,9 +881,11 @@ function CreatorAvatar({
       className="shobdo-video-avatar shobdo-video-avatar-fallback"
       aria-hidden="true"
     >
+
       {getInitials(
         creatorName
       )}
+
     </div>
 
   );
@@ -896,8 +904,13 @@ function VideoCard({
   language,
   menuOpen,
   deleting,
+  restoring,
+  permanentlyDeleting,
+  trashMode = false,
   onToggleMenu,
   onDelete,
+  onRestore,
+  onPermanentDelete,
   onShare,
   onCopy,
   onPlay,
@@ -924,18 +937,28 @@ function VideoCard({
 
   const createdAt =
     formatDate(
-      getCreatedAt(
-        item
-      ),
+      trashMode
+        ? (
+            item?.deleted_at ||
+            getCreatedAt(
+              item
+            )
+          )
+        : getCreatedAt(
+            item
+          ),
       language
     );
 
 
   const own =
-    type === "video" &&
-    isOwnItem(
-      item,
-      user
+    trashMode ||
+    (
+      type === "video" &&
+      isOwnItem(
+        item,
+        user
+      )
     );
 
 
@@ -968,6 +991,14 @@ function VideoCard({
   const languageLabel =
     getLanguageLabel(
       item?.language
+    );
+
+
+  const busy =
+    Boolean(
+      deleting ||
+      restoring ||
+      permanentlyDeleting
     );
 
 
@@ -1012,10 +1043,15 @@ function VideoCard({
                 <span
                   className="shobdo-video-owner-badge"
                 >
-                  {t(
-                    "videos.you",
-                    "You"
-                  )}
+                  {trashMode
+                    ? t(
+                        "videos.inTrash",
+                        "In Trash"
+                      )
+                    : t(
+                        "videos.you",
+                        "You"
+                      )}
                 </span>
 
               )}
@@ -1037,35 +1073,47 @@ function VideoCard({
 
 
               {createdAt && (
+
                 <span
                   aria-hidden="true"
                 >
                   ·
                 </span>
+
               )}
 
 
               <span
                 className="shobdo-video-visibility"
-                title={
-                  item?.visibility ||
-                  "public"
-                }
               >
 
-                <Globe2
-                  size={13}
-                />
-
-                {type === "reel"
-                  ? t(
-                      "videos.reel",
-                      "Reel"
+                {trashMode
+                  ? (
+                      <Trash2
+                        size={13}
+                      />
                     )
-                  : t(
-                      "videos.video",
-                      "Video"
+                  : (
+                      <Globe2
+                        size={13}
+                      />
                     )}
+
+
+                {trashMode
+                  ? t(
+                      "videos.trashed",
+                      "Trashed"
+                    )
+                  : type === "reel"
+                    ? t(
+                        "videos.reel",
+                        "Reel"
+                      )
+                    : t(
+                        "videos.video",
+                        "Video"
+                      )}
 
               </span>
 
@@ -1101,7 +1149,9 @@ function VideoCard({
             aria-expanded={
               menuOpen
             }
-            onClick={onToggleMenu}
+            onClick={
+              onToggleMenu
+            }
           >
 
             <MoreHorizontal
@@ -1118,101 +1168,193 @@ function VideoCard({
               role="menu"
             >
 
-              <button
-                type="button"
-                role="menuitem"
-                onClick={onShare}
-              >
+              {trashMode
+                ? (
+                    <>
 
-                <Share2
-                  size={17}
-                />
+                      <button
+                        type="button"
+                        role="menuitem"
+                        disabled={
+                          busy
+                        }
+                        onClick={
+                          () =>
+                            onRestore(
+                              item
+                            )
+                        }
+                      >
 
-                <span>
-                  {t(
-                    "videos.share",
-                    "Share"
-                  )}
-                </span>
-
-              </button>
-
-
-              <button
-                type="button"
-                role="menuitem"
-                onClick={onCopy}
-              >
-
-                <Link2
-                  size={17}
-                />
-
-                <span>
-                  {t(
-                    "videos.copyLink",
-                    "Copy link"
-                  )}
-                </span>
-
-              </button>
+                        {restoring
+                          ? (
+                              <LoaderCircle
+                                size={17}
+                                className="shobdo-video-spin"
+                              />
+                            )
+                          : (
+                              <RotateCcw
+                                size={17}
+                              />
+                            )}
 
 
-              {own && (
+                        <span>
+                          {restoring
+                            ? t(
+                                "videos.restoring",
+                                "Restoring..."
+                              )
+                            : t(
+                                "videos.restore",
+                                "Restore video"
+                              )}
+                        </span>
 
-                <>
-
-                  <div
-                    className="shobdo-video-menu-divider"
-                  />
+                      </button>
 
 
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="danger"
-                    disabled={
-                      deleting
-                    }
-                    onClick={
-                      () =>
-                        onDelete(
-                          item
-                        )
-                    }
-                  >
+                      <div
+                        className="shobdo-video-menu-divider"
+                      />
 
-                    {deleting
-                      ? (
-                        <LoaderCircle
-                          size={17}
-                          className="shobdo-video-spin"
-                        />
-                      )
-                      : (
+
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="danger"
+                        disabled={
+                          busy
+                        }
+                        onClick={
+                          () =>
+                            onPermanentDelete(
+                              item
+                            )
+                        }
+                      >
+
                         <Trash2
                           size={17}
                         />
+
+                        <span>
+                          {t(
+                            "videos.deletePermanently",
+                            "Delete permanently"
+                          )}
+                        </span>
+
+                      </button>
+
+                    </>
+                  )
+                : (
+                    <>
+
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={
+                          onShare
+                        }
+                      >
+
+                        <Share2
+                          size={17}
+                        />
+
+                        <span>
+                          {t(
+                            "videos.share",
+                            "Share"
+                          )}
+                        </span>
+
+                      </button>
+
+
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={
+                          onCopy
+                        }
+                      >
+
+                        <Link2
+                          size={17}
+                        />
+
+                        <span>
+                          {t(
+                            "videos.copyLink",
+                            "Copy link"
+                          )}
+                        </span>
+
+                      </button>
+
+
+                      {own && (
+
+                        <>
+
+                          <div
+                            className="shobdo-video-menu-divider"
+                          />
+
+
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="danger"
+                            disabled={
+                              deleting
+                            }
+                            onClick={
+                              () =>
+                                onDelete(
+                                  item
+                                )
+                            }
+                          >
+
+                            {deleting
+                              ? (
+                                  <LoaderCircle
+                                    size={17}
+                                    className="shobdo-video-spin"
+                                  />
+                                )
+                              : (
+                                  <Trash2
+                                    size={17}
+                                  />
+                                )}
+
+
+                            <span>
+                              {deleting
+                                ? t(
+                                    "videos.movingToTrash",
+                                    "Moving..."
+                                  )
+                                : t(
+                                    "videos.moveToTrash",
+                                    "Move to Trash"
+                                  )}
+                            </span>
+
+                          </button>
+
+                        </>
+
                       )}
 
-
-                    <span>
-                      {deleting
-                        ? t(
-                            "videos.deleting",
-                            "Deleting..."
-                          )
-                        : t(
-                            "videos.deleteVideo",
-                            "Delete video"
-                          )}
-                    </span>
-
-                  </button>
-
-                </>
-
-              )}
+                    </>
+                  )}
 
             </div>
 
@@ -1251,56 +1393,67 @@ function VideoCard({
           MEDIA
       ================================================ */}
 
-      {source ? (
+      {source
+        ? (
 
-        <div
-          className={
-            type === "reel"
-              ? "shobdo-video-media shobdo-video-media-reel"
-              : "shobdo-video-media"
-          }
-        >
+            <div
+              className={
+                type === "reel"
+                  ? "shobdo-video-media shobdo-video-media-reel"
+                  : "shobdo-video-media"
+              }
+            >
 
-          <video
-            controls
-            playsInline
-            preload="metadata"
-            poster={
-              poster ||
-              undefined
-            }
-            src={source}
-            onPlay={
-              () =>
-                onPlay(
-                  item,
-                  type
-                )
-            }
-          />
+              <video
+                controls
+                playsInline
+                preload="metadata"
+                poster={
+                  poster ||
+                  undefined
+                }
+                src={source}
+                onPlay={
+                  () => {
 
-        </div>
+                    if (
+                      !trashMode
+                    ) {
 
-      ) : (
+                      onPlay(
+                        item,
+                        type
+                      );
 
-        <div
-          className="shobdo-video-media-missing"
-        >
+                    }
 
-          <Film
-            size={30}
-          />
+                  }
+                }
+              />
 
-          <span>
-            {t(
-              "videos.mediaUnavailable",
-              "Video unavailable"
-            )}
-          </span>
+            </div>
 
-        </div>
+          )
+        : (
 
-      )}
+            <div
+              className="shobdo-video-media-missing"
+            >
+
+              <Film
+                size={30}
+              />
+
+              <span>
+                {t(
+                  "videos.mediaUnavailable",
+                  "Video unavailable"
+                )}
+              </span>
+
+            </div>
+
+          )}
 
 
       {/* ===============================================
@@ -1371,77 +1524,186 @@ function VideoCard({
           ACTION BAR
       ================================================ */}
 
-      <footer
-        className="shobdo-video-actions"
-      >
+      {trashMode
+        ? (
 
-        <button
-          type="button"
-          onClick={onShare}
-        >
+            <footer
+              className="shobdo-video-actions"
+              style={{
+                gridTemplateColumns:
+                  "repeat(2, minmax(0, 1fr))",
+              }}
+            >
 
-          <Share2
-            size={18}
-          />
+              <button
+                type="button"
+                disabled={
+                  busy
+                }
+                onClick={
+                  () =>
+                    onRestore(
+                      item
+                    )
+                }
+              >
 
-          <span>
-            {t(
-              "videos.share",
-              "Share"
-            )}
-          </span>
-
-        </button>
-
-
-        <button
-          type="button"
-          onClick={onCopy}
-        >
-
-          <Link2
-            size={18}
-          />
-
-          <span>
-            {t(
-              "videos.copyLink",
-              "Copy link"
-            )}
-          </span>
-
-        </button>
+                {restoring
+                  ? (
+                      <LoaderCircle
+                        size={18}
+                        className="shobdo-video-spin"
+                      />
+                    )
+                  : (
+                      <RotateCcw
+                        size={18}
+                      />
+                    )}
 
 
-        {own && (
+                <span>
+                  {restoring
+                    ? t(
+                        "videos.restoring",
+                        "Restoring..."
+                      )
+                    : t(
+                        "videos.restore",
+                        "Restore"
+                      )}
+                </span>
 
-          <button
-            type="button"
-            className="shobdo-video-action-delete"
-            onClick={
-              () =>
-                onDelete(
-                  item
-                )
-            }
-          >
+              </button>
 
-            <Trash2
-              size={18}
-            />
 
-            <span>
-              {t(
-                "videos.delete",
-                "Delete"
+              <button
+                type="button"
+                className="shobdo-video-action-delete"
+                disabled={
+                  busy
+                }
+                onClick={
+                  () =>
+                    onPermanentDelete(
+                      item
+                    )
+                }
+              >
+
+                <Trash2
+                  size={18}
+                />
+
+                <span>
+                  {t(
+                    "videos.deletePermanently",
+                    "Delete permanently"
+                  )}
+                </span>
+
+              </button>
+
+            </footer>
+
+          )
+        : (
+
+            <footer
+              className="shobdo-video-actions"
+            >
+
+              <button
+                type="button"
+                onClick={
+                  onShare
+                }
+              >
+
+                <Share2
+                  size={18}
+                />
+
+                <span>
+                  {t(
+                    "videos.share",
+                    "Share"
+                  )}
+                </span>
+
+              </button>
+
+
+              <button
+                type="button"
+                onClick={
+                  onCopy
+                }
+              >
+
+                <Link2
+                  size={18}
+                />
+
+                <span>
+                  {t(
+                    "videos.copyLink",
+                    "Copy link"
+                  )}
+                </span>
+
+              </button>
+
+
+              {own && (
+
+                <button
+                  type="button"
+                  className="shobdo-video-action-delete"
+                  disabled={
+                    deleting
+                  }
+                  onClick={
+                    () =>
+                      onDelete(
+                        item
+                      )
+                  }
+                >
+
+                  {deleting
+                    ? (
+                        <LoaderCircle
+                          size={18}
+                          className="shobdo-video-spin"
+                        />
+                      )
+                    : (
+                        <Trash2
+                          size={18}
+                        />
+                      )}
+
+
+                  <span>
+                    {deleting
+                      ? t(
+                          "videos.movingToTrash",
+                          "Moving..."
+                        )
+                      : t(
+                          "videos.moveToTrash",
+                          "Move to Trash"
+                        )}
+                  </span>
+
+                </button>
+
               )}
-            </span>
 
-          </button>
+            </footer>
 
-        )}
-
-      </footer>
+          )}
 
     </article>
 
@@ -1491,6 +1753,26 @@ export default function Videos({
       : "videos";
 
 
+  const requestedView =
+    String(
+      searchParams.get(
+        "view"
+      ) ||
+      ""
+    )
+      .trim()
+      .toLowerCase();
+
+
+  const isTrashView =
+    (
+      activeTab ===
+        "videos" &&
+      requestedView ===
+        "trash"
+    );
+
+
   // =======================================================
   // STATE
   // =======================================================
@@ -1510,6 +1792,20 @@ export default function Videos({
 
 
   const [
+    trashVideos,
+    setTrashVideos,
+  ] =
+    useState([]);
+
+
+  const [
+    trashTotal,
+    setTrashTotal,
+  ] =
+    useState(0);
+
+
+  const [
     loadingVideos,
     setLoadingVideos,
   ] =
@@ -1519,6 +1815,13 @@ export default function Videos({
   const [
     loadingFollowing,
     setLoadingFollowing,
+  ] =
+    useState(false);
+
+
+  const [
+    loadingTrash,
+    setLoadingTrash,
   ] =
     useState(false);
 
@@ -1538,6 +1841,13 @@ export default function Videos({
 
 
   const [
+    trashError,
+    setTrashError,
+  ] =
+    useState("");
+
+
+  const [
     openMenuId,
     setOpenMenuId,
   ] =
@@ -1552,8 +1862,29 @@ export default function Videos({
 
 
   const [
+    permanentDeleteTarget,
+    setPermanentDeleteTarget,
+  ] =
+    useState(null);
+
+
+  const [
     deletingId,
     setDeletingId,
+  ] =
+    useState(null);
+
+
+  const [
+    restoringId,
+    setRestoringId,
+  ] =
+    useState(null);
+
+
+  const [
+    permanentlyDeletingId,
+    setPermanentlyDeletingId,
   ] =
     useState(null);
 
@@ -1572,7 +1903,7 @@ export default function Videos({
 
 
   // =======================================================
-  // TITLE
+  // PAGE TITLE
   // =======================================================
 
   useEffect(
@@ -1624,7 +1955,7 @@ export default function Videos({
             setToast("");
 
           },
-          2600
+          2800
         );
 
 
@@ -1641,7 +1972,7 @@ export default function Videos({
 
 
   // =======================================================
-  // SET TAB
+  // MAIN TAB
   // =======================================================
 
   function changeTab(
@@ -1672,10 +2003,93 @@ export default function Videos({
     }
 
 
+    if (
+      tab !==
+      "videos"
+    ) {
+
+      next.delete(
+        "video"
+      );
+
+    }
+
+
     setSearchParams(
       next
     );
 
+
+    setOpenMenuId(
+      null
+    );
+
+  }
+
+
+  // =======================================================
+  // OPEN TRASH
+  // =======================================================
+
+  function openTrashView() {
+
+    const next =
+      new URLSearchParams(
+        searchParams
+      );
+
+
+    next.set(
+      "tab",
+      "videos"
+    );
+
+    next.set(
+      "view",
+      "trash"
+    );
+
+    next.delete(
+      "video"
+    );
+
+
+    setSearchParams(
+      next
+    );
+
+    setOpenMenuId(
+      null
+    );
+
+  }
+
+
+  // =======================================================
+  // CLOSE TRASH
+  // =======================================================
+
+  function closeTrashView() {
+
+    const next =
+      new URLSearchParams(
+        searchParams
+      );
+
+
+    next.set(
+      "tab",
+      "videos"
+    );
+
+    next.delete(
+      "view"
+    );
+
+
+    setSearchParams(
+      next
+    );
 
     setOpenMenuId(
       null
@@ -1792,6 +2206,165 @@ export default function Videos({
 
 
   // =======================================================
+  // LOAD TRASH
+  // =======================================================
+
+  const loadTrash =
+    useCallback(
+      async ({
+        silent = false,
+      } = {}) => {
+
+        const token =
+          getToken();
+
+
+        if (
+          !token ||
+          !user?.id
+        ) {
+
+          setTrashVideos(
+            []
+          );
+
+          setTrashTotal(
+            0
+          );
+
+          setTrashError(
+            ""
+          );
+
+          return;
+
+        }
+
+
+        if (!silent) {
+
+          setLoadingTrash(
+            true
+          );
+
+        }
+
+
+        setTrashError(
+          ""
+        );
+
+
+        try {
+
+          const data =
+            await apiRequest(
+              `/videos/trash?page=1&limit=${PAGE_SIZE}`,
+              {
+                authenticated:
+                  true,
+              }
+            );
+
+
+          const items =
+            Array.isArray(
+              data?.videos
+            )
+              ? data.videos
+              : Array.isArray(
+                    data?.items
+                  )
+                ? data.items
+                : [];
+
+
+          setTrashVideos(
+            items
+          );
+
+
+          setTrashTotal(
+            Number(
+              data?.total ??
+              data?.pagination
+                ?.total ??
+              items.length
+            ) || 0
+          );
+
+
+        } catch (
+          loadError
+        ) {
+
+          console.error(
+            "LOAD VIDEO TRASH ERROR:",
+            loadError
+          );
+
+
+          setTrashError(
+            loadError?.message ||
+            t(
+              "videos.trashLoadError",
+              "Unable to load Video Trash."
+            )
+          );
+
+
+        } finally {
+
+          if (!silent) {
+
+            setLoadingTrash(
+              false
+            );
+
+          }
+
+        }
+
+      },
+      [
+        t,
+        user?.id,
+      ]
+    );
+
+
+  // =======================================================
+  // LOAD TRASH COUNT / VIEW
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      if (
+        !user?.id ||
+        !getToken()
+      ) {
+
+        return;
+
+      }
+
+
+      loadTrash({
+        silent:
+          !isTrashView,
+      });
+
+    },
+    [
+      user?.id,
+      isTrashView,
+      loadTrash,
+    ]
+  );
+
+
+  // =======================================================
   // FOLLOWING MEDIA
   // =======================================================
 
@@ -1815,6 +2388,7 @@ export default function Videos({
         setLoadingFollowing(
           true
         );
+
 
         setFollowingError(
           ""
@@ -1976,7 +2550,8 @@ export default function Videos({
                   getCreatedAt(
                     first
                   ) || 0
-                ).getTime();
+                )
+                  .getTime();
 
 
               const secondDate =
@@ -1984,7 +2559,8 @@ export default function Videos({
                   getCreatedAt(
                     second
                   ) || 0
-                ).getTime();
+                )
+                  .getTime();
 
 
               return (
@@ -2057,10 +2633,10 @@ export default function Videos({
 
 
   // =======================================================
-  // DELETE
+  // MOVE TO TRASH
   // =======================================================
 
-  async function confirmDelete() {
+  async function confirmMoveToTrash() {
 
     const videoId =
       Number(
@@ -2086,16 +2662,17 @@ export default function Videos({
       );
 
 
-      await apiRequest(
-        `/videos/${videoId}`,
-        {
-          method:
-            "DELETE",
+      const data =
+        await apiRequest(
+          `/videos/${videoId}`,
+          {
+            method:
+              "DELETE",
 
-          authenticated:
-            true,
-        }
-      );
+            authenticated:
+              true,
+          }
+        );
 
 
       setVideos(
@@ -2129,9 +2706,56 @@ export default function Videos({
                 Number(
                   media?.id
                 ) ===
-                videoId
+                  videoId
               )
           )
+      );
+
+
+      if (
+        data?.video
+      ) {
+
+        setTrashVideos(
+          (
+            current
+          ) => {
+
+            const exists =
+              current.some(
+                (
+                  video
+                ) =>
+                  Number(
+                    video?.id
+                  ) ===
+                  videoId
+              );
+
+
+            if (exists) {
+
+              return current;
+
+            }
+
+
+            return [
+              data.video,
+              ...current,
+            ];
+
+          }
+        );
+
+      }
+
+
+      setTrashTotal(
+        (
+          current
+        ) =>
+          current + 1
       );
 
 
@@ -2147,8 +2771,8 @@ export default function Videos({
 
       setToast(
         t(
-          "videos.deletedSuccess",
-          "Video deleted successfully."
+          "videos.movedToTrash",
+          "Video moved to Trash."
         )
       );
 
@@ -2158,7 +2782,7 @@ export default function Videos({
     ) {
 
       console.error(
-        "DELETE VIDEO ERROR:",
+        "MOVE VIDEO TO TRASH ERROR:",
         deleteError
       );
 
@@ -2166,8 +2790,8 @@ export default function Videos({
       window.alert(
         deleteError?.message ||
         t(
-          "videos.deleteError",
-          "Unable to delete this video."
+          "videos.moveToTrashError",
+          "Unable to move this video to Trash."
         )
       );
 
@@ -2184,7 +2808,244 @@ export default function Videos({
 
 
   // =======================================================
-  // SHARE
+  // RESTORE VIDEO
+  // =======================================================
+
+  async function restoreVideo(
+    video
+  ) {
+
+    const videoId =
+      Number(
+        video?.id
+      );
+
+
+    if (
+      !Number.isFinite(
+        videoId
+      )
+    ) {
+
+      return;
+
+    }
+
+
+    try {
+
+      setRestoringId(
+        videoId
+      );
+
+
+      await apiRequest(
+        `/videos/${videoId}/restore`,
+        {
+          method:
+            "POST",
+
+          authenticated:
+            true,
+        }
+      );
+
+
+      setTrashVideos(
+        (
+          current
+        ) =>
+          current.filter(
+            (
+              item
+            ) =>
+              Number(
+                item?.id
+              ) !==
+              videoId
+          )
+      );
+
+
+      setTrashTotal(
+        (
+          current
+        ) =>
+          Math.max(
+            0,
+            current - 1
+          )
+      );
+
+
+      setOpenMenuId(
+        null
+      );
+
+
+      await loadVideos({
+        silent:
+          true,
+      });
+
+
+      setToast(
+        t(
+          "videos.restored",
+          "Video restored successfully."
+        )
+      );
+
+
+    } catch (
+      restoreError
+    ) {
+
+      console.error(
+        "RESTORE VIDEO ERROR:",
+        restoreError
+      );
+
+
+      window.alert(
+        restoreError?.message ||
+        t(
+          "videos.restoreError",
+          "Unable to restore this video."
+        )
+      );
+
+
+    } finally {
+
+      setRestoringId(
+        null
+      );
+
+    }
+
+  }
+
+
+  // =======================================================
+  // PERMANENT DELETE
+  // =======================================================
+
+  async function confirmPermanentDelete() {
+
+    const videoId =
+      Number(
+        permanentDeleteTarget?.id
+      );
+
+
+    if (
+      !Number.isFinite(
+        videoId
+      )
+    ) {
+
+      return;
+
+    }
+
+
+    try {
+
+      setPermanentlyDeletingId(
+        videoId
+      );
+
+
+      await apiRequest(
+        `/videos/${videoId}/permanent`,
+        {
+          method:
+            "DELETE",
+
+          authenticated:
+            true,
+        }
+      );
+
+
+      setTrashVideos(
+        (
+          current
+        ) =>
+          current.filter(
+            (
+              video
+            ) =>
+              Number(
+                video?.id
+              ) !==
+              videoId
+          )
+      );
+
+
+      setTrashTotal(
+        (
+          current
+        ) =>
+          Math.max(
+            0,
+            current - 1
+          )
+      );
+
+
+      setPermanentDeleteTarget(
+        null
+      );
+
+
+      setOpenMenuId(
+        null
+      );
+
+
+      setToast(
+        t(
+          "videos.permanentlyDeleted",
+          "Video permanently deleted."
+        )
+      );
+
+
+    } catch (
+      deleteError
+    ) {
+
+      console.error(
+        "PERMANENT DELETE VIDEO ERROR:",
+        deleteError
+      );
+
+
+      window.alert(
+        deleteError?.message ||
+        t(
+          "videos.permanentDeleteError",
+          "Unable to permanently delete this video."
+        )
+      );
+
+
+    } finally {
+
+      setPermanentlyDeletingId(
+        null
+      );
+
+    }
+
+  }
+
+
+  // =======================================================
+  // SHARE URL
   // =======================================================
 
   function getShareUrl(
@@ -2193,7 +3054,8 @@ export default function Videos({
   ) {
 
     if (
-      type === "reel"
+      type ===
+      "reel"
     ) {
 
       return (
@@ -2209,6 +3071,10 @@ export default function Videos({
 
   }
 
+
+  // =======================================================
+  // SHARE
+  // =======================================================
 
   async function shareItem(
     item,
@@ -2236,8 +3102,8 @@ export default function Videos({
       ) {
 
         await navigator.share({
-          title:
-            title,
+
+          title,
 
           text:
             type === "reel"
@@ -2251,6 +3117,7 @@ export default function Videos({
                 ),
 
           url,
+
         });
 
 
@@ -2473,6 +3340,24 @@ export default function Videos({
         }
 
 
+        if (
+          isTrashView
+        ) {
+
+          return trashVideos.map(
+            (
+              video
+            ) => ({
+              ...video,
+
+              __mediaType:
+                "video",
+            })
+          );
+
+        }
+
+
         return videos.map(
           (
             video
@@ -2487,7 +3372,9 @@ export default function Videos({
       },
       [
         activeTab,
+        isTrashView,
         videos,
+        trashVideos,
         followingMedia,
       ]
     );
@@ -2498,6 +3385,17 @@ export default function Videos({
   // =======================================================
 
   async function refreshCurrent() {
+
+    if (
+      isTrashView
+    ) {
+
+      await loadTrash();
+
+      return;
+
+    }
+
 
     if (
       activeTab ===
@@ -2516,18 +3414,26 @@ export default function Videos({
   }
 
 
+  // =======================================================
+  // CURRENT STATE
+  // =======================================================
+
   const currentLoading =
-    activeTab ===
-    "following"
-      ? loadingFollowing
-      : loadingVideos;
+    isTrashView
+      ? loadingTrash
+      : activeTab ===
+          "following"
+        ? loadingFollowing
+        : loadingVideos;
 
 
   const currentError =
-    activeTab ===
-    "following"
-      ? followingError
-      : error;
+    isTrashView
+      ? trashError
+      : activeTab ===
+          "following"
+        ? followingError
+        : error;
 
 
   // =======================================================
@@ -2678,7 +3584,7 @@ export default function Videos({
 
 
       {/* =================================================
-          TABS
+          PRIMARY TABS
       ================================================== */}
 
       <section
@@ -2826,7 +3732,7 @@ export default function Videos({
 
 
       {/* =================================================
-          VIDEOS / FOLLOWING FEED
+          VIDEOS / FOLLOWING / TRASH
       ================================================== */}
 
       {activeTab !==
@@ -2845,79 +3751,177 @@ export default function Videos({
               <span
                 className="shobdo-video-feed-kicker"
               >
-                {activeTab ===
-                "following"
+
+                {isTrashView
                   ? t(
-                      "videos.yourNetwork",
-                      "YOUR NETWORK"
+                      "videos.yourLibrary",
+                      "YOUR LIBRARY"
                     )
-                  : t(
-                      "videos.communityFeed",
-                      "COMMUNITY FEED"
-                    )}
+                  : activeTab ===
+                      "following"
+                    ? t(
+                        "videos.yourNetwork",
+                        "YOUR NETWORK"
+                      )
+                    : t(
+                        "videos.communityFeed",
+                        "COMMUNITY FEED"
+                      )}
+
               </span>
 
 
               <h2>
-                {activeTab ===
-                "following"
+
+                {isTrashView
                   ? t(
-                      "videos.fromPeopleYouFollow",
-                      "From people you follow"
+                      "videos.videoTrash",
+                      "Video Trash"
                     )
-                  : t(
-                      "videos.latestVideos",
-                      "Latest videos"
-                    )}
+                  : activeTab ===
+                      "following"
+                    ? t(
+                        "videos.fromPeopleYouFollow",
+                        "From people you follow"
+                      )
+                    : t(
+                        "videos.latestVideos",
+                        "Latest videos"
+                      )}
+
               </h2>
 
             </div>
 
 
-            <button
-              type="button"
-              className="shobdo-video-refresh-button"
-              disabled={
-                currentLoading
-              }
-              onClick={
-                (
-                  event
-                ) => {
+            <div
+              style={{
+                display:
+                  "flex",
 
-                  event.stopPropagation();
+                alignItems:
+                  "center",
 
-                  refreshCurrent();
-
-                }
-              }
-              aria-label={t(
-                "videos.refresh",
-                "Refresh videos"
-              )}
-              title={t(
-                "videos.refresh",
-                "Refresh videos"
-              )}
+                gap:
+                  "8px",
+              }}
             >
 
-              <RefreshCw
-                size={18}
-                className={
+              {activeTab ===
+                "videos" &&
+                user?.id && (
+
+                <button
+                  type="button"
+                  className="shobdo-video-refresh-button"
+                  onClick={
+                    (
+                      event
+                    ) => {
+
+                      event.stopPropagation();
+
+
+                      if (
+                        isTrashView
+                      ) {
+
+                        closeTrashView();
+
+                      } else {
+
+                        openTrashView();
+
+                      }
+
+                    }
+                  }
+                >
+
+                  {isTrashView
+                    ? (
+                        <Film
+                          size={17}
+                        />
+                      )
+                    : (
+                        <Trash2
+                          size={17}
+                        />
+                      )}
+
+
+                  <span>
+                    {isTrashView
+                      ? t(
+                          "videos.backToVideos",
+                          "Back to Videos"
+                        )
+                      : (
+                          <>
+                            {t(
+                              "videos.trash",
+                              "Trash"
+                            )}
+
+                            {trashTotal > 0
+                              ? ` (${trashTotal})`
+                              : ""}
+                          </>
+                        )}
+                  </span>
+
+                </button>
+
+              )}
+
+
+              <button
+                type="button"
+                className="shobdo-video-refresh-button"
+                disabled={
                   currentLoading
-                    ? "shobdo-video-spin"
-                    : ""
                 }
-              />
+                onClick={
+                  (
+                    event
+                  ) => {
 
-              <span>
-                {t(
+                    event.stopPropagation();
+
+                    refreshCurrent();
+
+                  }
+                }
+                aria-label={t(
                   "videos.refresh",
-                  "Refresh"
+                  "Refresh videos"
                 )}
-              </span>
+                title={t(
+                  "videos.refresh",
+                  "Refresh videos"
+                )}
+              >
 
-            </button>
+                <RefreshCw
+                  size={18}
+                  className={
+                    currentLoading
+                      ? "shobdo-video-spin"
+                      : ""
+                  }
+                />
+
+                <span>
+                  {t(
+                    "videos.refresh",
+                    "Refresh"
+                  )}
+                </span>
+
+              </button>
+
+            </div>
 
           </div>
 
@@ -2939,10 +3943,17 @@ export default function Videos({
 
 
               <strong>
-                {t(
-                  "videos.loading",
-                  "Loading videos..."
-                )}
+
+                {isTrashView
+                  ? t(
+                      "videos.loadingTrash",
+                      "Loading Video Trash..."
+                    )
+                  : t(
+                      "videos.loading",
+                      "Loading videos..."
+                    )}
+
               </strong>
 
             </div>
@@ -2967,10 +3978,17 @@ export default function Videos({
 
 
               <strong>
-                {t(
-                  "videos.unavailable",
-                  "Unable to load videos"
-                )}
+
+                {isTrashView
+                  ? t(
+                      "videos.trashUnavailable",
+                      "Unable to load Video Trash"
+                    )
+                  : t(
+                      "videos.unavailable",
+                      "Unable to load videos"
+                    )}
+
               </strong>
 
 
@@ -3008,58 +4026,78 @@ export default function Videos({
 
           {!currentLoading &&
             !currentError &&
-            currentItems
-              .length ===
+            currentItems.length ===
               0 && (
 
             <div
               className="shobdo-video-state shobdo-video-state-empty"
             >
 
-              {activeTab ===
-              "following"
+              {isTrashView
                 ? (
-                  <Users
-                    size={34}
-                  />
-                )
-                : (
-                  <Film
-                    size={34}
-                  />
-                )}
+                    <Trash2
+                      size={34}
+                    />
+                  )
+                : activeTab ===
+                    "following"
+                  ? (
+                      <Users
+                        size={34}
+                      />
+                    )
+                  : (
+                      <Film
+                        size={34}
+                      />
+                    )}
 
 
               <strong>
-                {activeTab ===
-                "following"
+
+                {isTrashView
                   ? t(
-                      "videos.noFollowingMedia",
-                      "No videos or Reels here yet"
+                      "videos.trashEmpty",
+                      "Video Trash is empty"
                     )
-                  : t(
-                      "videos.noVideos",
-                      "No videos yet"
-                    )}
+                  : activeTab ===
+                      "following"
+                    ? t(
+                        "videos.noFollowingMedia",
+                        "No videos or Reels here yet"
+                      )
+                    : t(
+                        "videos.noVideos",
+                        "No videos yet"
+                      )}
+
               </strong>
 
 
               <p>
-                {activeTab ===
-                "following"
+
+                {isTrashView
                   ? t(
-                      "videos.noFollowingMediaDescription",
-                      "Follow creators to see their latest videos and Reels here."
+                      "videos.trashEmptyDescription",
+                      "Videos you move to Trash will appear here until you restore or permanently delete them."
                     )
-                  : t(
-                      "videos.noVideosDescription",
-                      "Be the first to share a video with the SHOBDO community."
-                    )}
+                  : activeTab ===
+                      "following"
+                    ? t(
+                        "videos.noFollowingMediaDescription",
+                        "Follow creators to see their latest videos and Reels here."
+                      )
+                    : t(
+                        "videos.noVideosDescription",
+                        "Be the first to share a video with the SHOBDO community."
+                      )}
+
               </p>
 
 
-              {activeTab ===
-                "videos" && (
+              {!isTrashView &&
+                activeTab ===
+                  "videos" && (
 
                 <Link
                   to="/write?mode=video"
@@ -3089,8 +4127,7 @@ export default function Videos({
 
           {!currentLoading &&
             !currentError &&
-            currentItems
-              .length >
+            currentItems.length >
               0 && (
 
             <div
@@ -3109,33 +4146,67 @@ export default function Videos({
 
 
                   const menuKey =
-                    `${mediaType}-${item.id}`;
+                    `${isTrashView
+                      ? "trash"
+                      : mediaType}-${item.id}`;
 
 
                   return (
 
                     <VideoCard
-                      key={menuKey}
-                      item={item}
-                      type={mediaType}
-                      user={user}
+                      key={
+                        menuKey
+                      }
+                      item={
+                        item
+                      }
+                      type={
+                        mediaType
+                      }
+                      user={
+                        user
+                      }
                       language={
                         language
                       }
-                      t={t}
+                      t={
+                        t
+                      }
+                      trashMode={
+                        isTrashView
+                      }
                       menuOpen={
                         openMenuId ===
                         menuKey
                       }
                       deleting={
+                        !isTrashView &&
                         mediaType ===
                           "video" &&
                         Number(
                           deletingId
                         ) ===
-                          Number(
-                            item.id
-                          )
+                        Number(
+                          item.id
+                        )
+                      }
+                      restoring={
+                        isTrashView &&
+                        Number(
+                          restoringId
+                        ) ===
+                        Number(
+                          item.id
+                        )
+                      }
+                      permanentlyDeleting={
+                        isTrashView &&
+                        Number(
+                          permanentlyDeletingId
+                        ) ===
+                        Number(
+                          item.id
+                        )
                       }
                       onToggleMenu={
                         (
@@ -3169,6 +4240,38 @@ export default function Videos({
 
 
                           setDeleteTarget(
+                            video
+                          );
+
+                        }
+                      }
+                      onRestore={
+                        async (
+                          video
+                        ) => {
+
+                          setOpenMenuId(
+                            null
+                          );
+
+
+                          await restoreVideo(
+                            video
+                          );
+
+                        }
+                      }
+                      onPermanentDelete={
+                        (
+                          video
+                        ) => {
+
+                          setOpenMenuId(
+                            null
+                          );
+
+
+                          setPermanentDeleteTarget(
                             video
                           );
 
@@ -3236,7 +4339,7 @@ export default function Videos({
 
 
       {/* =================================================
-          DELETE CONFIRMATION
+          MOVE TO TRASH CONFIRMATION
       ================================================== */}
 
       {deleteTarget && (
@@ -3268,7 +4371,7 @@ export default function Videos({
             className="shobdo-video-delete-modal"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="delete-video-title"
+            aria-labelledby="trash-video-title"
             onClick={
               (
                 event
@@ -3320,26 +4423,26 @@ export default function Videos({
               className="shobdo-video-modal-eyebrow"
             >
               {t(
-                "videos.removeVideo",
-                "REMOVE VIDEO"
+                "videos.videoTrash",
+                "VIDEO TRASH"
               )}
             </span>
 
 
             <h2
-              id="delete-video-title"
+              id="trash-video-title"
             >
               {t(
-                "videos.deleteConfirmTitle",
-                "Delete this video?"
+                "videos.moveToTrashTitle",
+                "Move video to Trash?"
               )}
             </h2>
 
 
             <p>
               {t(
-                "videos.deleteConfirmDescription",
-                "This video will be permanently removed from SHOBDO. This action cannot be undone."
+                "videos.moveToTrashDescription",
+                "This video will disappear from SHOBDO, but you can restore it later from Video Trash."
               )}
             </p>
 
@@ -3397,33 +4500,236 @@ export default function Videos({
                   )
                 }
                 onClick={
-                  confirmDelete
+                  confirmMoveToTrash
                 }
               >
 
                 {deletingId
                   ? (
-                    <LoaderCircle
-                      size={18}
-                      className="shobdo-video-spin"
-                    />
-                  )
+                      <LoaderCircle
+                        size={18}
+                        className="shobdo-video-spin"
+                      />
+                    )
                   : (
-                    <Trash2
-                      size={18}
-                    />
-                  )}
+                      <Trash2
+                        size={18}
+                      />
+                    )}
 
 
                 <span>
                   {deletingId
                     ? t(
-                        "videos.deleting",
+                        "videos.movingToTrash",
+                        "Moving..."
+                      )
+                    : t(
+                        "videos.moveToTrash",
+                        "Move to Trash"
+                      )}
+                </span>
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+
+      {/* =================================================
+          PERMANENT DELETE CONFIRMATION
+      ================================================== */}
+
+      {permanentDeleteTarget && (
+
+        <div
+          className="shobdo-video-modal-backdrop"
+          role="presentation"
+          onClick={
+            () => {
+
+              if (
+                permanentlyDeletingId
+              ) {
+
+                return;
+
+              }
+
+
+              setPermanentDeleteTarget(
+                null
+              );
+
+            }
+          }
+        >
+
+          <div
+            className="shobdo-video-delete-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="permanent-delete-video-title"
+            onClick={
+              (
+                event
+              ) =>
+                event
+                  .stopPropagation()
+            }
+          >
+
+            <button
+              type="button"
+              className="shobdo-video-modal-close"
+              disabled={
+                Boolean(
+                  permanentlyDeletingId
+                )
+              }
+              onClick={
+                () =>
+                  setPermanentDeleteTarget(
+                    null
+                  )
+              }
+              aria-label={t(
+                "videos.close",
+                "Close"
+              )}
+            >
+
+              <X
+                size={20}
+              />
+
+            </button>
+
+
+            <div
+              className="shobdo-video-delete-icon"
+            >
+
+              <AlertTriangle
+                size={25}
+              />
+
+            </div>
+
+
+            <span
+              className="shobdo-video-modal-eyebrow"
+            >
+              {t(
+                "videos.permanentDeletion",
+                "PERMANENT DELETION"
+              )}
+            </span>
+
+
+            <h2
+              id="permanent-delete-video-title"
+            >
+              {t(
+                "videos.permanentDeleteTitle",
+                "Delete video permanently?"
+              )}
+            </h2>
+
+
+            <p>
+              {t(
+                "videos.permanentDeleteDescription",
+                "This permanently removes the video from SHOBDO and deletes its stored media. This action cannot be undone."
+              )}
+            </p>
+
+
+            <div
+              className="shobdo-video-delete-preview"
+            >
+
+              <Film
+                size={17}
+              />
+
+              <span>
+                {getTitle(
+                  permanentDeleteTarget,
+                  "video"
+                )}
+              </span>
+
+            </div>
+
+
+            <div
+              className="shobdo-video-modal-actions"
+            >
+
+              <button
+                type="button"
+                className="shobdo-video-modal-cancel"
+                disabled={
+                  Boolean(
+                    permanentlyDeletingId
+                  )
+                }
+                onClick={
+                  () =>
+                    setPermanentDeleteTarget(
+                      null
+                    )
+                }
+              >
+                {t(
+                  "videos.cancel",
+                  "Cancel"
+                )}
+              </button>
+
+
+              <button
+                type="button"
+                className="shobdo-video-modal-delete"
+                disabled={
+                  Boolean(
+                    permanentlyDeletingId
+                  )
+                }
+                onClick={
+                  confirmPermanentDelete
+                }
+              >
+
+                {permanentlyDeletingId
+                  ? (
+                      <LoaderCircle
+                        size={18}
+                        className="shobdo-video-spin"
+                      />
+                    )
+                  : (
+                      <Trash2
+                        size={18}
+                      />
+                    )}
+
+
+                <span>
+                  {permanentlyDeletingId
+                    ? t(
+                        "videos.deletingPermanently",
                         "Deleting..."
                       )
                     : t(
-                        "videos.deleteVideo",
-                        "Delete video"
+                        "videos.deletePermanently",
+                        "Delete permanently"
                       )}
                 </span>
 

@@ -1141,7 +1141,10 @@ def get_my_videos():
 
         .filter(
             Video.user_id ==
-                user_id
+                user_id,
+
+            Video.status !=
+                "deleted",
         )
 
         .order_by(
@@ -1292,10 +1295,168 @@ def get_video(
 
 
 # =========================================================
-# DELETE VIDEO
+# VIDEO TRASH
+# =========================================================
+#
+# GET /api/videos/trash
+#
+# Returns only soft-deleted videos belonging
+# to the currently logged-in user.
+#
+# =========================================================
+
+@video_bp.route(
+    "/trash",
+    methods=[
+        "GET",
+    ],
+)
+@jwt_required()
+def get_video_trash():
+
+    user_id = (
+        get_current_user_id()
+    )
+
+
+    if not user_id:
+
+        return video_error(
+            "Invalid login session.",
+            401,
+            "invalid_identity",
+        )
+
+
+    page = parse_page_number(
+        request.args.get(
+            "page"
+        ),
+        1,
+    )
+
+
+    limit = parse_page_number(
+        request.args.get(
+            "limit"
+        ),
+        DEFAULT_PAGE_SIZE,
+    )
+
+
+    limit = min(
+        limit,
+        MAX_PAGE_SIZE,
+    )
+
+
+    query = (
+
+        Video.query
+
+        .filter(
+            Video.user_id ==
+                user_id,
+
+            Video.status ==
+                "deleted",
+        )
+
+        .order_by(
+            Video.deleted_at.desc(),
+            Video.created_at.desc(),
+        )
+
+    )
+
+
+    pagination = (
+        query.paginate(
+            page=
+                page,
+
+            per_page=
+                limit,
+
+            error_out=
+                False,
+        )
+    )
+
+
+    videos = [
+
+        serialize_video(
+            video,
+            include_owner=True,
+        )
+
+        for video
+        in pagination.items
+
+    ]
+
+
+    return jsonify({
+
+        "success":
+            True,
+
+        "videos":
+            videos,
+
+        "items":
+            videos,
+
+        "page":
+            pagination.page,
+
+        "per_page":
+            pagination.per_page,
+
+        "total":
+            pagination.total,
+
+        "total_pages":
+            pagination.pages,
+
+        "has_more":
+            pagination.has_next,
+
+        "pagination": {
+
+            "page":
+                pagination.page,
+
+            "per_page":
+                pagination.per_page,
+
+            "total":
+                pagination.total,
+
+            "pages":
+                pagination.pages,
+
+            "has_next":
+                pagination.has_next,
+
+            "has_prev":
+                pagination.has_prev,
+        },
+
+    }), 200
+
+
+# =========================================================
+# MOVE VIDEO TO TRASH
 # =========================================================
 #
 # DELETE /api/videos/<video_id>
+#
+# This is a SOFT DELETE.
+#
+# The database record and stored video remain available
+# so the owner can restore the video later.
 #
 # =========================================================
 
@@ -1356,13 +1517,323 @@ def remove_video(
         )
 
 
+    if (
+        video.status ==
+        "deleted"
+    ):
+
+        return video_error(
+            "Video is already in Trash.",
+            400,
+            "video_already_deleted",
+        )
+
+
+    # =====================================================
+    # SOFT DELETE
+    # =====================================================
+
+    try:
+
+        moved = (
+            video.move_to_trash()
+        )
+
+
+        if not moved:
+
+            return video_error(
+                "Video is already in Trash.",
+                400,
+                "video_already_deleted",
+            )
+
+
+        db.session.commit()
+
+
+    except Exception as error:
+
+        db.session.rollback()
+
+
+        print(
+            "VIDEO SOFT DELETE ERROR:",
+            repr(
+                error
+            ),
+        )
+
+
+        return video_error(
+            (
+                "Unable to move "
+                "video to Trash."
+            ),
+            500,
+            "video_soft_delete_failed",
+        )
+
+
+    return jsonify({
+
+        "success":
+            True,
+
+        "message":
+            (
+                "Video moved to Trash "
+                "successfully."
+            ),
+
+        "video":
+            serialize_video(
+                video,
+                include_owner=True,
+            ),
+
+    }), 200
+
+
+# =========================================================
+# RESTORE VIDEO FROM TRASH
+# =========================================================
+#
+# POST /api/videos/<video_id>/restore
+#
+# =========================================================
+
+@video_bp.route(
+    "/<int:video_id>/restore",
+    methods=[
+        "POST",
+    ],
+)
+@jwt_required()
+def restore_video(
+    video_id,
+):
+
+    user_id = (
+        get_current_user_id()
+    )
+
+
+    if not user_id:
+
+        return video_error(
+            "Invalid login session.",
+            401,
+            "invalid_identity",
+        )
+
+
+    video = (
+        db.session.get(
+            Video,
+            video_id,
+        )
+    )
+
+
+    if not video:
+
+        return video_error(
+            "Video not found.",
+            404,
+            "video_not_found",
+        )
+
+
+    if (
+        video.user_id !=
+        user_id
+    ):
+
+        return video_error(
+            (
+                "You cannot restore "
+                "this video."
+            ),
+            403,
+            "video_restore_forbidden",
+        )
+
+
+    if (
+        video.status !=
+        "deleted"
+    ):
+
+        return video_error(
+            (
+                "This video is not "
+                "in Trash."
+            ),
+            400,
+            "video_not_deleted",
+        )
+
+
+    try:
+
+        restored = (
+            video.restore_from_trash()
+        )
+
+
+        if not restored:
+
+            return video_error(
+                (
+                    "This video is not "
+                    "in Trash."
+                ),
+                400,
+                "video_not_deleted",
+            )
+
+
+        db.session.commit()
+
+
+    except Exception as error:
+
+        db.session.rollback()
+
+
+        print(
+            "VIDEO RESTORE ERROR:",
+            repr(
+                error
+            ),
+        )
+
+
+        return video_error(
+            (
+                "Unable to restore "
+                "video."
+            ),
+            500,
+            "video_restore_failed",
+        )
+
+
+    return jsonify({
+
+        "success":
+            True,
+
+        "message":
+            (
+                "Video restored "
+                "successfully."
+            ),
+
+        "video":
+            serialize_video(
+                video,
+                include_owner=True,
+            ),
+
+    }), 200
+
+
+# =========================================================
+# PERMANENTLY DELETE VIDEO
+# =========================================================
+#
+# DELETE /api/videos/<video_id>/permanent
+#
+# Only videos already in Trash may be permanently deleted.
+#
+# This removes:
+#
+# 1. The database record
+# 2. The stored video asset
+#
+# =========================================================
+
+@video_bp.route(
+    "/<int:video_id>/permanent",
+    methods=[
+        "DELETE",
+    ],
+)
+@jwt_required()
+def permanently_delete_video(
+    video_id,
+):
+
+    user_id = (
+        get_current_user_id()
+    )
+
+
+    if not user_id:
+
+        return video_error(
+            "Invalid login session.",
+            401,
+            "invalid_identity",
+        )
+
+
+    video = (
+        db.session.get(
+            Video,
+            video_id,
+        )
+    )
+
+
+    if not video:
+
+        return video_error(
+            "Video not found.",
+            404,
+            "video_not_found",
+        )
+
+
+    if (
+        video.user_id !=
+        user_id
+    ):
+
+        return video_error(
+            (
+                "You cannot permanently "
+                "delete this video."
+            ),
+            403,
+            "video_permanent_delete_forbidden",
+        )
+
+
+    if (
+        video.status !=
+        "deleted"
+    ):
+
+        return video_error(
+            (
+                "Move the video to Trash "
+                "before deleting it permanently."
+            ),
+            400,
+            "video_not_in_trash",
+        )
+
+
     public_id = (
         video.public_id
     )
 
 
     # =====================================================
-    # DELETE DATABASE RECORD FIRST
+    # DELETE DATABASE RECORD
     # =====================================================
 
     try:
@@ -1373,21 +1844,30 @@ def remove_video(
 
         db.session.commit()
 
+
     except Exception as error:
 
         db.session.rollback()
 
+
         print(
-            "VIDEO DELETE DATABASE ERROR:",
+            (
+                "VIDEO PERMANENT DELETE "
+                "DATABASE ERROR:"
+            ),
             repr(
                 error
             ),
         )
 
+
         return video_error(
-            "Unable to delete video.",
+            (
+                "Unable to permanently "
+                "delete video."
+            ),
             500,
-            "video_delete_failed",
+            "video_permanent_delete_failed",
         )
 
 
@@ -1395,7 +1875,9 @@ def remove_video(
     # STORAGE CLEANUP
     # =====================================================
 
-    storage_cleanup_succeeded = True
+    storage_cleanup_succeeded = (
+        True
+    )
 
 
     if public_id:
@@ -1406,14 +1888,19 @@ def remove_video(
                 public_id
             )
 
+
         except Exception as error:
 
             storage_cleanup_succeeded = (
                 False
             )
 
+
             print(
-                "VIDEO STORAGE DELETE ERROR:",
+                (
+                    "VIDEO STORAGE "
+                    "DELETE ERROR:"
+                ),
                 repr(
                     error
                 ),
@@ -1427,12 +1914,17 @@ def remove_video(
 
         "message":
             (
-                "Video deleted successfully."
+                (
+                    "Video permanently "
+                    "deleted successfully."
+                )
+
                 if storage_cleanup_succeeded
+
                 else
                 (
-                    "Video was removed from "
-                    "SHOBDO, but storage cleanup "
+                    "Video was permanently removed "
+                    "from SHOBDO, but storage cleanup "
                     "did not complete successfully."
                 )
             ),

@@ -1,4 +1,7 @@
-from datetime import datetime, timezone
+from datetime import (
+    datetime,
+    timezone,
+)
 
 from database import db
 
@@ -198,6 +201,23 @@ class Video(db.Model):
     )
 
     # =====================================================
+    # TRASH / SOFT DELETE
+    # =====================================================
+
+    deleted_at = db.Column(
+        db.DateTime(
+            timezone=True
+        ),
+        nullable=True,
+        index=True,
+    )
+
+    previous_status = db.Column(
+        db.String(20),
+        nullable=True,
+    )
+
+    # =====================================================
     # STATUS HELPERS
     # =====================================================
 
@@ -216,6 +236,81 @@ class Video(db.Model):
             self.visibility ==
             "public"
         )
+
+    @property
+    def is_deleted(self):
+
+        return (
+            self.status ==
+            "deleted"
+        )
+
+    # =====================================================
+    # SOFT DELETE
+    # =====================================================
+
+    def move_to_trash(
+        self
+    ):
+
+        if self.is_deleted:
+
+            return False
+
+        self.previous_status = (
+            self.status
+            if self.status
+            else "published"
+        )
+
+        self.status = (
+            "deleted"
+        )
+
+        self.deleted_at = (
+            datetime.now(
+                timezone.utc
+            )
+        )
+
+        return True
+
+    # =====================================================
+    # RESTORE
+    # =====================================================
+
+    def restore_from_trash(
+        self
+    ):
+
+        if not self.is_deleted:
+
+            return False
+
+        restore_status = (
+            self.previous_status
+            if self.previous_status
+            in {
+                "draft",
+                "published",
+                "unpublished",
+            }
+            else "published"
+        )
+
+        self.status = (
+            restore_status
+        )
+
+        self.deleted_at = (
+            None
+        )
+
+        self.previous_status = (
+            None
+        )
+
+        return True
 
     # =====================================================
     # SERIALIZATION
@@ -279,6 +374,18 @@ class Video(db.Model):
             "visibility":
                 self.visibility,
 
+            "is_published":
+                self.is_published,
+
+            "is_public":
+                self.is_public,
+
+            "is_deleted":
+                self.is_deleted,
+
+            "previous_status":
+                self.previous_status,
+
             "views_count":
                 self.views_count or 0,
 
@@ -315,6 +422,14 @@ class Video(db.Model):
                     self.published_at
                     .isoformat()
                     if self.published_at
+                    else None
+                ),
+
+            "deleted_at":
+                (
+                    self.deleted_at
+                    .isoformat()
+                    if self.deleted_at
                     else None
                 ),
         }
@@ -358,11 +473,15 @@ class Video(db.Model):
 
                 else:
 
-                    data["user"] = None
+                    data["user"] = (
+                        None
+                    )
 
             except Exception:
 
-                data["user"] = None
+                data["user"] = (
+                    None
+                )
 
         return data
 
@@ -378,5 +497,6 @@ class Video(db.Model):
             f"<Video "
             f"id={self.id} "
             f"user_id={self.user_id} "
+            f"status={self.status!r} "
             f"title={self.title!r}>"
         )
