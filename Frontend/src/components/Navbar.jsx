@@ -43,33 +43,55 @@ import {
 import "./Navbar.css";
 
 
-const MOBILE_BREAKPOINT = 700;
+// =========================================================
+// CONFIG
+// =========================================================
 
-const NOTIFICATION_REFRESH_MS = 60000;
+const MOBILE_BREAKPOINT =
+  820;
+
+const NOTIFICATION_REFRESH_MS =
+  60000;
 
 
 // =========================================================
 // HELPERS
 // =========================================================
 
-function getInitials(name) {
-  const safeName = String(
-    name || ""
-  ).trim();
+function getInitials(
+  name
+) {
+
+  const safeName =
+    String(
+      name || ""
+    ).trim();
+
 
   if (!safeName) {
+
     return "U";
   }
 
-  const parts = safeName
-    .split(/\s+/)
-    .filter(Boolean);
 
-  if (parts.length === 1) {
+  const parts =
+    safeName
+      .split(/\s+/)
+      .filter(Boolean);
+
+
+  if (
+    parts.length === 1
+  ) {
+
     return parts[0]
-      .slice(0, 2)
+      .slice(
+        0,
+        2
+      )
       .toUpperCase();
   }
+
 
   return (
     `${parts[0][0]}${parts[1][0]}`
@@ -77,25 +99,62 @@ function getInitials(name) {
 }
 
 
+// =========================================================
+// GET SEARCH QUERY FROM URL
+// =========================================================
+
 function getSearchQueryFromLocation(
   pathname,
   search
 ) {
-  if (pathname !== "/search") {
+
+  if (
+    pathname !== "/search"
+  ) {
+
     return "";
   }
+
 
   try {
+
     const params =
-      new URLSearchParams(search);
+      new URLSearchParams(
+        search
+      );
+
 
     return (
-      params.get("q") ||
+      params.get(
+        "q"
+      ) ||
       ""
     );
+
   } catch {
+
     return "";
   }
+}
+
+
+// =========================================================
+// PATH ACTIVE HELPER
+// =========================================================
+
+function isPathActive(
+  pathname,
+  target
+) {
+
+  return (
+    pathname ===
+      target
+    ||
+    pathname.startsWith(
+      `${target}/`
+    )
+  );
 }
 
 
@@ -107,11 +166,14 @@ function Navbar({
   user,
   setUser,
 }) {
+
   const navigate =
     useNavigate();
 
+
   const location =
     useLocation();
+
 
   const {
     t,
@@ -137,30 +199,45 @@ function Navbar({
       )
   );
 
+
   const [
     languageOpen,
     setLanguageOpen,
-  ] = useState(false);
+  ] = useState(
+    false
+  );
+
 
   const [
     profileOpen,
     setProfileOpen,
-  ] = useState(false);
+  ] = useState(
+    false
+  );
+
 
   const [
     mobileSearchOpen,
     setMobileSearchOpen,
-  ] = useState(false);
+  ] = useState(
+    false
+  );
+
 
   const [
     unreadNotificationCount,
     setUnreadNotificationCount,
-  ] = useState(0);
+  ] = useState(
+    0
+  );
+
 
   const [
     scrolled,
     setScrolled,
-  ] = useState(false);
+  ] = useState(
+    false
+  );
 
 
   // =======================================================
@@ -168,13 +245,21 @@ function Navbar({
   // =======================================================
 
   const languageMenuRef =
-    useRef(null);
+    useRef(
+      null
+    );
+
 
   const profileMenuRef =
-    useRef(null);
+    useRef(
+      null
+    );
+
 
   const mobileSearchInputRef =
-    useRef(null);
+    useRef(
+      null
+    );
 
 
   // =======================================================
@@ -187,29 +272,50 @@ function Navbar({
     fallbackEn,
     fallbackHi = null
   ) {
+
     try {
-      const translated = t(key);
+
+      const translated =
+        t(
+          key
+        );
+
 
       if (
         translated &&
-        translated !== key
+        translated !==
+          key
       ) {
+
         return translated;
       }
+
     } catch {
+
       // Use local fallback.
     }
 
-    if (language === "bn") {
+
+    if (
+      language ===
+      "bn"
+    ) {
+
       return fallbackBn;
     }
 
-    if (language === "hi") {
+
+    if (
+      language ===
+      "hi"
+    ) {
+
       return (
         fallbackHi ||
         fallbackEn
       );
     }
+
 
     return fallbackEn;
   }
@@ -220,12 +326,16 @@ function Navbar({
   // =======================================================
 
   const labels = {
+
     tagline:
-      language === "bn"
+      language ===
+        "bn"
         ? "লিখুন · পড়ুন · যুক্ত হোন"
-        : language === "hi"
+        : language ===
+            "hi"
           ? "लिखें · पढ़ें · जुड़ें"
           : "WRITE · READ · BELONG",
+
 
     search:
       translate(
@@ -235,6 +345,7 @@ function Navbar({
         "रचनाएँ, लेखक और विषय खोजें"
       ),
 
+
     searchButton:
       translate(
         "navbar.searchButton",
@@ -243,13 +354,6 @@ function Navbar({
         "खोजें"
       ),
 
-    video:
-      translate(
-        "navbar.video",
-        "ভিডিও",
-        "Video",
-        "वीडियो"
-      ),
 
     searchHint:
       translate(
@@ -259,6 +363,7 @@ function Navbar({
         "रचनाएँ, लेखक, विषय या हैशटैग खोजें"
       ),
 
+
     clearSearch:
       translate(
         "navbar.clearSearch",
@@ -266,6 +371,7 @@ function Navbar({
         "Clear search",
         "खोज साफ़ करें"
       ),
+
 
     closeSearch:
       translate(
@@ -275,6 +381,16 @@ function Navbar({
         "खोज बंद करें"
       ),
 
+
+    video:
+      translate(
+        "navbar.video",
+        "ভিডিও",
+        "Video",
+        "वीडियो"
+      ),
+
+
     notifications:
       translate(
         "navbar.notifications",
@@ -282,6 +398,7 @@ function Navbar({
         "Notifications",
         "सूचनाएँ"
       ),
+
 
     language:
       translate(
@@ -291,6 +408,7 @@ function Navbar({
         "वेबसाइट भाषा"
       ),
 
+
     profile:
       translate(
         "navbar.profile",
@@ -298,6 +416,7 @@ function Navbar({
         "Profile",
         "प्रोफ़ाइल"
       ),
+
 
     openProfile:
       translate(
@@ -307,6 +426,7 @@ function Navbar({
         "प्रोफ़ाइल मेनू खोलें"
       ),
 
+
     myWritings:
       translate(
         "navbar.myWritings",
@@ -314,6 +434,7 @@ function Navbar({
         "My writings",
         "मेरी रचनाएँ"
       ),
+
 
     saved:
       translate(
@@ -323,6 +444,7 @@ function Navbar({
         "सहेजे गए"
       ),
 
+
     editProfile:
       translate(
         "navbar.editProfile",
@@ -330,6 +452,7 @@ function Navbar({
         "Edit profile",
         "प्रोफ़ाइल संपादित करें"
       ),
+
 
     logout:
       translate(
@@ -339,6 +462,7 @@ function Navbar({
         "लॉग आउट"
       ),
 
+
     login:
       translate(
         "navbar.login",
@@ -346,6 +470,7 @@ function Navbar({
         "Log in",
         "लॉग इन"
       ),
+
 
     register:
       translate(
@@ -355,6 +480,7 @@ function Navbar({
         "जुड़ें"
       ),
 
+
     writer:
       translate(
         "common.writer",
@@ -362,6 +488,7 @@ function Navbar({
         "Writer",
         "लेखक"
       ),
+
   };
 
 
@@ -375,10 +502,12 @@ function Navbar({
       user?.username
     );
 
+
   const userAvatar =
     user?.avatar_url ||
     user?.avatar ||
     "";
+
 
   const profilePath =
     user?.id
@@ -387,30 +516,37 @@ function Navbar({
 
 
   // =======================================================
-  // VIDEO ACTIVE STATE
-  // =======================================================
-  //
-  // Reels now live inside the unified /videos experience.
-  // /videos?tab=reels remains active because pathname is
-  // still /videos.
-  //
+  // ACTIVE NAVBAR ROUTES
   // =======================================================
 
   const videoActive =
-    (
-      location.pathname ===
-        "/videos"
-      ||
-      location.pathname.startsWith(
-        "/videos/"
-      )
+    isPathActive(
+      location.pathname,
+      "/videos"
     );
 
 
+  const notificationsActive =
+    isPathActive(
+      location.pathname,
+      "/notifications"
+    );
+
+
+  // =======================================================
+  // NOTIFICATION BADGE
+  // =======================================================
+
   const notificationBadge =
-    unreadNotificationCount > 99
+    unreadNotificationCount >
+    99
       ? "99+"
       : unreadNotificationCount;
+
+
+  // =======================================================
+  // LANGUAGE
+  // =======================================================
 
   const currentLanguageName =
     currentLanguage?.nativeName ||
@@ -419,19 +555,29 @@ function Navbar({
     ).toUpperCase() ||
     "Language";
 
+
   const languageItems =
-    Array.isArray(languages)
+    Array.isArray(
+      languages
+    )
       ? languages
       : [];
 
 
   // =======================================================
-  // CLOSE DROPDOWNS
+  // CLOSE MENUS
   // =======================================================
 
   function closeMenus() {
-    setLanguageOpen(false);
-    setProfileOpen(false);
+
+    setLanguageOpen(
+      false
+    );
+
+
+    setProfileOpen(
+      false
+    );
   }
 
 
@@ -439,20 +585,35 @@ function Navbar({
   // SEARCH
   // =======================================================
 
-  function handleSearchSubmit(event) {
+  function handleSearchSubmit(
+    event
+  ) {
+
     event.preventDefault();
 
+
     const query =
-      searchQuery.trim();
+      searchQuery
+        .trim();
+
 
     closeMenus();
 
-    setMobileSearchOpen(false);
+
+    setMobileSearchOpen(
+      false
+    );
+
 
     if (!query) {
-      navigate("/search");
+
+      navigate(
+        "/search"
+      );
+
       return;
     }
+
 
     navigate(
       `/search?q=${encodeURIComponent(
@@ -463,28 +624,49 @@ function Navbar({
 
 
   function handleSearchClear() {
-    setSearchQuery("");
 
-    if (mobileSearchOpen) {
+    setSearchQuery(
+      ""
+    );
+
+
+    if (
+      mobileSearchOpen
+    ) {
+
       requestAnimationFrame(
         () => {
+
           mobileSearchInputRef
             .current
             ?.focus();
+
         }
       );
     }
   }
 
 
+  // =======================================================
+  // MOBILE SEARCH
+  // =======================================================
+
   function openMobileSearch() {
+
     closeMenus();
-    setMobileSearchOpen(true);
+
+
+    setMobileSearchOpen(
+      true
+    );
   }
 
 
   function closeMobileSearch() {
-    setMobileSearchOpen(false);
+
+    setMobileSearchOpen(
+      false
+    );
   }
 
 
@@ -492,19 +674,34 @@ function Navbar({
   // LANGUAGE
   // =======================================================
 
-  function handleLanguageChange(code) {
-    setLanguage(code);
-    setLanguageOpen(false);
+  function handleLanguageChange(
+    code
+  ) {
+
+    setLanguage(
+      code
+    );
+
+
+    setLanguageOpen(
+      false
+    );
   }
 
 
   function toggleLanguageMenu() {
+
     setLanguageOpen(
-      (current) =>
+      (
+        current
+      ) =>
         !current
     );
 
-    setProfileOpen(false);
+
+    setProfileOpen(
+      false
+    );
   }
 
 
@@ -513,12 +710,18 @@ function Navbar({
   // =======================================================
 
   function toggleProfileMenu() {
+
     setProfileOpen(
-      (current) =>
+      (
+        current
+      ) =>
         !current
     );
 
-    setLanguageOpen(false);
+
+    setLanguageOpen(
+      false
+    );
   }
 
 
@@ -527,29 +730,51 @@ function Navbar({
   // =======================================================
 
   async function handleLogout() {
+
     try {
+
       await logoutUser();
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "LOGOUT ERROR:",
         error
       );
+
     } finally {
+
       if (
         typeof setUser ===
         "function"
       ) {
-        setUser(null);
+
+        setUser(
+          null
+        );
       }
 
-      setUnreadNotificationCount(0);
+
+      setUnreadNotificationCount(
+        0
+      );
+
 
       closeMenus();
+
+
+      setMobileSearchOpen(
+        false
+      );
+
 
       navigate(
         "/",
         {
-          replace: true,
+          replace:
+            true,
         }
       );
     }
@@ -562,39 +787,56 @@ function Navbar({
 
   useEffect(
     () => {
+
       function handleOutsidePointer(
         event
       ) {
+
         if (
           languageMenuRef.current &&
-          !languageMenuRef.current.contains(
-            event.target
-          )
+          !languageMenuRef
+            .current
+            .contains(
+              event.target
+            )
         ) {
-          setLanguageOpen(false);
+
+          setLanguageOpen(
+            false
+          );
         }
+
 
         if (
           profileMenuRef.current &&
-          !profileMenuRef.current.contains(
-            event.target
-          )
+          !profileMenuRef
+            .current
+            .contains(
+              event.target
+            )
         ) {
-          setProfileOpen(false);
+
+          setProfileOpen(
+            false
+          );
         }
       }
+
 
       document.addEventListener(
         "pointerdown",
         handleOutsidePointer
       );
 
+
       return () => {
+
         document.removeEventListener(
           "pointerdown",
           handleOutsidePointer
         );
       };
+
     },
     []
   );
@@ -606,30 +848,50 @@ function Navbar({
 
   useEffect(
     () => {
-      function handleKeyDown(event) {
+
+      function handleKeyDown(
+        event
+      ) {
+
         if (
           event.key !==
           "Escape"
         ) {
+
           return;
         }
 
-        setLanguageOpen(false);
-        setProfileOpen(false);
-        setMobileSearchOpen(false);
+
+        setLanguageOpen(
+          false
+        );
+
+
+        setProfileOpen(
+          false
+        );
+
+
+        setMobileSearchOpen(
+          false
+        );
       }
+
 
       document.addEventListener(
         "keydown",
         handleKeyDown
       );
 
+
       return () => {
+
         document.removeEventListener(
           "keydown",
           handleKeyDown
         );
       };
+
     },
     []
   );
@@ -641,9 +903,21 @@ function Navbar({
 
   useEffect(
     () => {
-      setLanguageOpen(false);
-      setProfileOpen(false);
-      setMobileSearchOpen(false);
+
+      setLanguageOpen(
+        false
+      );
+
+
+      setProfileOpen(
+        false
+      );
+
+
+      setMobileSearchOpen(
+        false
+      );
+
     },
     [
       location.pathname,
@@ -658,12 +932,15 @@ function Navbar({
 
   useEffect(
     () => {
+
       if (
         location.pathname !==
         "/search"
       ) {
+
         return;
       }
+
 
       setSearchQuery(
         getSearchQueryFromLocation(
@@ -671,6 +948,7 @@ function Navbar({
           location.search
         )
       );
+
     },
     [
       location.pathname,
@@ -685,23 +963,35 @@ function Navbar({
 
   useEffect(
     () => {
-      if (!mobileSearchOpen) {
+
+      if (
+        !mobileSearchOpen
+      ) {
+
         return undefined;
       }
+
 
       const timer =
         window.setTimeout(
           () => {
+
             mobileSearchInputRef
               .current
               ?.focus();
+
           },
           50
         );
 
+
       return () => {
-        window.clearTimeout(timer);
+
+        window.clearTimeout(
+          timer
+        );
       };
+
     },
     [
       mobileSearchOpen,
@@ -715,20 +1005,32 @@ function Navbar({
 
   useEffect(
     () => {
-      if (!mobileSearchOpen) {
+
+      if (
+        !mobileSearchOpen
+      ) {
+
         return undefined;
       }
 
+
       const previousOverflow =
-        document.body.style.overflow;
+        document
+          .body
+          .style
+          .overflow;
+
 
       document.body.style.overflow =
         "hidden";
 
+
       return () => {
+
         document.body.style.overflow =
           previousOverflow;
       };
+
     },
     [
       mobileSearchOpen,
@@ -742,26 +1044,38 @@ function Navbar({
 
   useEffect(
     () => {
+
       function handleResize() {
+
         if (
           window.innerWidth >
           MOBILE_BREAKPOINT
         ) {
-          setMobileSearchOpen(false);
+
+          setMobileSearchOpen(
+            false
+          );
         }
       }
+
+
+      handleResize();
+
 
       window.addEventListener(
         "resize",
         handleResize
       );
 
+
       return () => {
+
         window.removeEventListener(
           "resize",
           handleResize
         );
       };
+
     },
     []
   );
@@ -773,28 +1087,37 @@ function Navbar({
 
   useEffect(
     () => {
+
       function handleScroll() {
+
         setScrolled(
-          window.scrollY > 6
+          window.scrollY >
+          6
         );
       }
 
+
       handleScroll();
+
 
       window.addEventListener(
         "scroll",
         handleScroll,
         {
-          passive: true,
+          passive:
+            true,
         }
       );
 
+
       return () => {
+
         window.removeEventListener(
           "scroll",
           handleScroll
         );
       };
+
     },
     []
   );
@@ -806,55 +1129,90 @@ function Navbar({
 
   useEffect(
     () => {
-      let cancelled = false;
+
+      let cancelled =
+        false;
+
 
       if (!user) {
-        setUnreadNotificationCount(0);
+
+        setUnreadNotificationCount(
+          0
+        );
+
         return undefined;
       }
 
 
       async function loadUnreadCount() {
+
         if (
           document.visibilityState ===
           "hidden"
         ) {
+
           return;
         }
 
+
         try {
+
           const data =
             await getUnreadNotificationCount();
 
-          if (cancelled) {
+
+          if (
+            cancelled
+          ) {
+
             return;
           }
+
 
           const count =
             Number(
               data?.unread_count
             );
 
+
           setUnreadNotificationCount(
-            Number.isFinite(count)
+            Number.isFinite(
+              count
+            )
               ? Math.max(
                   count,
                   0
                 )
               : 0
           );
-        } catch (error) {
-          if (cancelled) {
+
+        } catch (
+          error
+        ) {
+
+          if (
+            cancelled
+          ) {
+
             return;
           }
 
+
           if (
-            error?.status === 401 ||
-            error?.status === 422
+            error?.status ===
+              401
+            ||
+            error?.status ===
+              422
           ) {
-            setUnreadNotificationCount(0);
+
+            setUnreadNotificationCount(
+              0
+            );
+
             return;
           }
+
 
           console.error(
             "NOTIFICATION COUNT ERROR:",
@@ -865,20 +1223,24 @@ function Navbar({
 
 
       function handleNotificationChange() {
+
         loadUnreadCount();
       }
 
 
       function handleFocus() {
+
         loadUnreadCount();
       }
 
 
       function handleVisibilityChange() {
+
         if (
           document.visibilityState ===
           "visible"
         ) {
+
           loadUnreadCount();
         }
       }
@@ -892,10 +1254,12 @@ function Navbar({
         handleNotificationChange
       );
 
+
       window.addEventListener(
         "focus",
         handleFocus
       );
+
 
       document.addEventListener(
         "visibilitychange",
@@ -911,27 +1275,34 @@ function Navbar({
 
 
       return () => {
-        cancelled = true;
+
+        cancelled =
+          true;
+
 
         window.removeEventListener(
           "shobdo:notifications-changed",
           handleNotificationChange
         );
 
+
         window.removeEventListener(
           "focus",
           handleFocus
         );
+
 
         document.removeEventListener(
           "visibilitychange",
           handleVisibilityChange
         );
 
+
         window.clearInterval(
           intervalId
         );
       };
+
     },
     [
       user?.id,
@@ -944,6 +1315,7 @@ function Navbar({
   // =======================================================
 
   return (
+
     <header
       className={[
         "shobdo-navbar",
@@ -955,6 +1327,7 @@ function Navbar({
         mobileSearchOpen
           ? "shobdo-navbar-search-open"
           : "",
+
       ]
         .filter(Boolean)
         .join(" ")
@@ -979,27 +1352,32 @@ function Navbar({
             className="shobdo-navbar-logo"
             aria-hidden="true"
           >
+
             <Feather
               size={20}
               strokeWidth={1.9}
             />
+
           </span>
 
 
           <span
             className="shobdo-navbar-brand-copy"
           >
+
             <strong
               className="shobdo-navbar-brand-name"
             >
               SHOBDO
             </strong>
 
+
             <small
               className="shobdo-navbar-tagline"
             >
               {labels.tagline}
             </small>
+
           </span>
 
         </Link>
@@ -1021,6 +1399,7 @@ function Navbar({
             className="shobdo-navbar-search-icon"
             size={18}
             strokeWidth={1.8}
+            aria-hidden="true"
           />
 
 
@@ -1030,7 +1409,10 @@ function Navbar({
               searchQuery
             }
             onChange={
-              (event) => {
+              (
+                event
+              ) => {
+
                 setSearchQuery(
                   event.target.value
                 );
@@ -1044,11 +1426,12 @@ function Navbar({
             }
             autoComplete="off"
             enterKeyHint="search"
-            spellCheck="false"
+            spellCheck={false}
           />
 
 
           {searchQuery && (
+
             <button
               type="button"
               className="shobdo-search-clear"
@@ -1062,10 +1445,13 @@ function Navbar({
                 handleSearchClear
               }
             >
+
               <X
                 size={15}
               />
+
             </button>
+
           )}
 
 
@@ -1089,18 +1475,42 @@ function Navbar({
 
           {/* ===============================================
               VIDEO HUB
-              Authenticated users only.
-              Videos + Reels + Following live under /videos.
+
+              /videos
+              /videos?tab=videos
+              /videos?tab=reels
+              /videos?tab=following
+              /videos?view=trash
           ================================================ */}
 
           {user && (
 
             <Link
               to="/videos"
-              className={
+              className={[
+                "shobdo-navbar-icon-button",
+
+                /*
+                 * New logical class.
+                 */
+                "shobdo-video-button",
+
+                /*
+                 * Existing CSS already provides the
+                 * polished media-button appearance under
+                 * .shobdo-reels-button.
+                 *
+                 * Keep this class for compatibility.
+                 */
+                "shobdo-reels-button",
+
                 videoActive
-                  ? "shobdo-navbar-icon-button active"
-                  : "shobdo-navbar-icon-button"
+                  ? "active"
+                  : "",
+
+              ]
+                .filter(Boolean)
+                .join(" ")
               }
               aria-label={
                 labels.video
@@ -1120,6 +1530,7 @@ function Navbar({
                 strokeWidth={1.9}
               />
 
+
               <span
                 className="shobdo-sr-only"
               >
@@ -1129,6 +1540,7 @@ function Navbar({
             </Link>
 
           )}
+
 
           {/* ===============================================
               MOBILE SEARCH
@@ -1147,9 +1559,12 @@ function Navbar({
               labels.search
             }
           >
+
             <Search
               size={19}
+              strokeWidth={1.9}
             />
+
           </button>
 
 
@@ -1158,22 +1573,22 @@ function Navbar({
           ================================================ */}
 
           {user && (
+
             <Link
               to="/notifications"
               className={
-                location.pathname ===
-                "/notifications"
+                notificationsActive
                   ? "shobdo-navbar-icon-button shobdo-notification-button active"
                   : "shobdo-navbar-icon-button shobdo-notification-button"
               }
               aria-label={
-                unreadNotificationCount > 0
+                unreadNotificationCount >
+                0
                   ? `${labels.notifications}: ${unreadNotificationCount}`
                   : labels.notifications
               }
               aria-current={
-                location.pathname ===
-                "/notifications"
+                notificationsActive
                   ? "page"
                   : undefined
               }
@@ -1188,16 +1603,22 @@ function Navbar({
               />
 
 
-              {unreadNotificationCount > 0 && (
+              {unreadNotificationCount >
+                0 && (
+
                 <span
                   className="shobdo-navbar-notification-badge"
                   aria-hidden="true"
                 >
-                  {notificationBadge}
+                  {
+                    notificationBadge
+                  }
                 </span>
+
               )}
 
             </Link>
+
           )}
 
 
@@ -1235,11 +1656,15 @@ function Navbar({
                 size={17}
               />
 
+
               <span
                 className="shobdo-language-name"
               >
-                {currentLanguageName}
+                {
+                  currentLanguageName
+                }
               </span>
+
 
               <ChevronDown
                 size={13}
@@ -1254,6 +1679,7 @@ function Navbar({
 
 
             {languageOpen && (
+
               <div
                 className="shobdo-language-dropdown shobdo-dropdown-animate"
                 role="menu"
@@ -1262,13 +1688,16 @@ function Navbar({
                 <div
                   className="shobdo-dropdown-heading"
                 >
+
                   <Globe2
                     size={16}
                   />
 
+
                   <span>
                     {labels.language}
                   </span>
+
                 </div>
 
 
@@ -1277,12 +1706,17 @@ function Navbar({
                 >
 
                   {languageItems.map(
-                    (item) => {
+                    (
+                      item
+                    ) => {
+
                       const selected =
                         language ===
                         item.code;
 
+
                       return (
+
                         <button
                           key={
                             item.code
@@ -1308,28 +1742,41 @@ function Navbar({
                           <span
                             className="shobdo-language-check"
                           >
+
                             {selected && (
+
                               <Check
                                 size={14}
                               />
+
                             )}
+
                           </span>
 
 
                           <span
                             className="shobdo-language-option-text"
                           >
+
                             <strong>
-                              {item.nativeName}
+                              {
+                                item.nativeName
+                              }
                             </strong>
+
 
                             {item.name &&
                               item.name !==
                                 item.nativeName && (
-                                <small>
-                                  {item.name}
-                                </small>
-                              )}
+
+                              <small>
+                                {
+                                  item.name
+                                }
+                              </small>
+
+                            )}
+
                           </span>
 
                         </button>
@@ -1340,17 +1787,19 @@ function Navbar({
                 </div>
 
               </div>
+
             )}
 
           </div>
 
 
           {/* ===============================================
-              PROFILE / AUTH
+              AUTHENTICATED PROFILE
           ================================================ */}
 
           {user
             ? (
+
               <div
                 className="shobdo-navbar-dropdown shobdo-profile-wrapper"
                 ref={
@@ -1383,26 +1832,35 @@ function Navbar({
                   <span
                     className="shobdo-profile-avatar"
                   >
+
                     {userAvatar
                       ? (
+
                         <img
                           src={
                             userAvatar
                           }
                           alt=""
                         />
+
                       )
                       : (
+
                         <span>
-                          {userInitials}
+                          {
+                            userInitials
+                          }
                         </span>
+
                       )}
+
                   </span>
 
 
                   <span
                     className="shobdo-profile-trigger-text"
                   >
+
                     <strong>
                       {
                         user?.name ||
@@ -1410,11 +1868,15 @@ function Navbar({
                       }
                     </strong>
 
+
                     {user?.username && (
+
                       <small>
                         @{user.username}
                       </small>
+
                     )}
+
                   </span>
 
 
@@ -1431,6 +1893,7 @@ function Navbar({
 
 
                 {profileOpen && (
+
                   <div
                     className="shobdo-profile-dropdown shobdo-dropdown-animate"
                     role="menu"
@@ -1451,32 +1914,42 @@ function Navbar({
                       <span
                         className="shobdo-profile-dropdown-avatar"
                       >
+
                         {userAvatar
                           ? (
+
                             <img
                               src={
                                 userAvatar
                               }
                               alt=""
                             />
+
                           )
                           : (
+
                             <span>
-                              {userInitials}
+                              {
+                                userInitials
+                              }
                             </span>
+
                           )}
+
                       </span>
 
 
                       <span
                         className="shobdo-profile-dropdown-user-text"
                       >
+
                         <strong>
                           {
                             user?.name ||
                             labels.writer
                           }
                         </strong>
+
 
                         <small>
                           {
@@ -1485,6 +1958,7 @@ function Navbar({
                               : labels.profile
                           }
                         </small>
+
                       </span>
 
                     </Link>
@@ -1506,13 +1980,18 @@ function Navbar({
                       className="shobdo-profile-menu-item"
                       role="menuitem"
                     >
+
                       <UserRound
                         size={17}
                       />
 
+
                       <span>
-                        {labels.profile}
+                        {
+                          labels.profile
+                        }
                       </span>
+
                     </Link>
 
 
@@ -1525,13 +2004,18 @@ function Navbar({
                       className="shobdo-profile-menu-item"
                       role="menuitem"
                     >
+
                       <FileText
                         size={17}
                       />
 
+
                       <span>
-                        {labels.myWritings}
+                        {
+                          labels.myWritings
+                        }
                       </span>
+
                     </Link>
 
 
@@ -1544,13 +2028,18 @@ function Navbar({
                       className="shobdo-profile-menu-item"
                       role="menuitem"
                     >
+
                       <Bookmark
                         size={17}
                       />
 
+
                       <span>
-                        {labels.saved}
+                        {
+                          labels.saved
+                        }
                       </span>
+
                     </Link>
 
 
@@ -1563,13 +2052,18 @@ function Navbar({
                       className="shobdo-profile-menu-item"
                       role="menuitem"
                     >
+
                       <Settings
                         size={17}
                       />
 
+
                       <span>
-                        {labels.editProfile}
+                        {
+                          labels.editProfile
+                        }
                       </span>
+
                     </Link>
 
 
@@ -1590,21 +2084,33 @@ function Navbar({
                         handleLogout
                       }
                     >
+
                       <LogOut
                         size={17}
                       />
 
+
                       <span>
-                        {labels.logout}
+                        {
+                          labels.logout
+                        }
                       </span>
+
                     </button>
 
                   </div>
+
                 )}
 
               </div>
+
             )
             : (
+
+              /* ===========================================
+                 GUEST ACTIONS
+              =========================================== */
+
               <div
                 className="shobdo-guest-actions"
               >
@@ -1613,13 +2119,18 @@ function Navbar({
                   to="/login"
                   className="shobdo-login-button"
                 >
+
                   <LogIn
                     size={16}
                   />
 
+
                   <span>
-                    {labels.login}
+                    {
+                      labels.login
+                    }
                   </span>
+
                 </Link>
 
 
@@ -1627,16 +2138,22 @@ function Navbar({
                   to="/register"
                   className="shobdo-register-button"
                 >
+
                   <UserPlus
                     size={16}
                   />
 
+
                   <span>
-                    {labels.register}
+                    {
+                      labels.register
+                    }
                   </span>
+
                 </Link>
 
               </div>
+
             )}
 
         </div>
@@ -1649,6 +2166,7 @@ function Navbar({
       ================================================== */}
 
       {mobileSearchOpen && (
+
         <div
           className="shobdo-mobile-search-panel"
           role="dialog"
@@ -1657,11 +2175,15 @@ function Navbar({
             labels.search
           }
           onPointerDown={
-            (event) => {
+            (
+              event
+            ) => {
+
               if (
                 event.target ===
                 event.currentTarget
               ) {
+
                 closeMobileSearch();
               }
             }
@@ -1682,6 +2204,8 @@ function Navbar({
 
               <Search
                 size={18}
+                strokeWidth={1.9}
+                aria-hidden="true"
               />
 
 
@@ -1694,7 +2218,10 @@ function Navbar({
                   searchQuery
                 }
                 onChange={
-                  (event) => {
+                  (
+                    event
+                  ) => {
+
                     setSearchQuery(
                       event.target.value
                     );
@@ -1708,11 +2235,12 @@ function Navbar({
                 }
                 autoComplete="off"
                 enterKeyHint="search"
-                spellCheck="false"
+                spellCheck={false}
               />
 
 
               {searchQuery && (
+
                 <button
                   type="button"
                   className="shobdo-mobile-search-clear"
@@ -1722,11 +2250,17 @@ function Navbar({
                   aria-label={
                     labels.clearSearch
                   }
+                  title={
+                    labels.clearSearch
+                  }
                 >
+
                   <X
                     size={16}
                   />
+
                 </button>
+
               )}
 
 
@@ -1739,10 +2273,15 @@ function Navbar({
                 aria-label={
                   labels.closeSearch
                 }
+                title={
+                  labels.closeSearch
+                }
               >
+
                 <X
                   size={19}
                 />
+
               </button>
 
             </form>
@@ -1751,12 +2290,15 @@ function Navbar({
             <p
               className="shobdo-mobile-search-hint"
             >
-              {labels.searchHint}
+              {
+                labels.searchHint
+              }
             </p>
 
           </div>
 
         </div>
+
       )}
 
     </header>
