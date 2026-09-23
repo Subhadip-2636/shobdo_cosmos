@@ -1,0 +1,570 @@
+/* =========================================================
+   SHOBDO REELS TAB
+   Real in-app Reels page inside /videos
+========================================================= */
+
+.shobdo-reels-tab {
+  width:
+    100%;
+
+  min-width:
+    0;
+}
+
+
+.shobdo-reels-tab *,
+.shobdo-reels-tab *::before,
+.shobdo-reels-tab *::after {
+  box-sizing:
+    border-box;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.shobdo-reels-tab-header {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    space-between;
+
+  gap:
+    18px;
+
+  margin-bottom:
+    16px;
+
+  padding:
+    18px
+    20px;
+
+  border:
+    1px solid
+    rgba(
+      110,
+      79,
+      101,
+      0.14
+    );
+
+  border-radius:
+    20px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(
+        255,
+        253,
+        249,
+        0.98
+      ),
+      rgba(
+        249,
+        241,
+        247,
+        0.95
+      )
+    );
+
+  box-shadow:
+    0
+    10px
+    30px
+    rgba(
+      67,
+      45,
+      61,
+      0.055
+    );
+}
+
+
+.shobdo-reels-tab-heading {
+  min-width:
+    0;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    14px;
+}
+
+
+.shobdo-reels-tab-icon {
+  width:
+    48px;
+
+  height:
+    48px;
+
+  flex:
+    0 0
+    48px;
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  border-radius:
+    15px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #74496f,
+      #533150
+    );
+
+  color:
+    #ffffff;
+
+  box-shadow:
+    0
+    12px
+    28px
+    rgba(
+      78,
+      43,
+      73,
+      0.17
+    );
+}
+
+
+.shobdo-reels-tab-heading
+> div:last-child {
+  min-width:
+    0;
+}
+
+
+.shobdo-reels-tab-eyebrow {
+  display:
+    block;
+
+  margin-bottom:
+    3px;
+
+  color:
+    #9a744c;
+
+  font-size:
+    9px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    0.15em;
+
+  text-transform:
+    uppercase;
+}
+
+
+.shobdo-reels-tab-heading h2 {
+  margin:
+    0;
+
+  color:
+    #2f2630;
+
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+
+  font-size:
+    clamp(
+      25px,
+      3vw,
+      34px
+    );
+
+  line-height:
+    1.05;
+}
+
+
+.shobdo-reels-tab-heading p {
+  max-width:
+    650px;
+
+  margin:
+    6px
+    0
+    0;
+
+  color:
+    #7a7078;
+
+  font-size:
+    12px;
+
+  line-height:
+    1.55;
+}
+
+
+/* =========================================================
+   ACTION BUTTON
+========================================================= */
+
+.shobdo-reels-tab-action {
+  min-height:
+    42px;
+
+  flex:
+    0 0
+    auto;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    7px;
+
+  padding:
+    0
+    16px;
+
+  border:
+    1px solid
+    #684060;
+
+  border-radius:
+    12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #754b70,
+      #583451
+    );
+
+  color:
+    #ffffff;
+
+  font:
+    inherit;
+
+  font-size:
+    11px;
+
+  font-weight:
+    850;
+
+  cursor:
+    pointer;
+
+  box-shadow:
+    0
+    9px
+    22px
+    rgba(
+      78,
+      44,
+      73,
+      0.16
+    );
+
+  transition:
+    transform
+    160ms
+    ease,
+    box-shadow
+    160ms
+    ease,
+    opacity
+    160ms
+    ease;
+}
+
+
+.shobdo-reels-tab-action:hover {
+  transform:
+    translateY(
+      -1px
+    );
+
+  box-shadow:
+    0
+    12px
+    26px
+    rgba(
+      78,
+      44,
+      73,
+      0.20
+    );
+}
+
+
+.shobdo-reels-tab-action:active {
+  transform:
+    translateY(
+      0
+    );
+}
+
+
+.shobdo-reels-tab-action-secondary {
+  border-color:
+    rgba(
+      106,
+      75,
+      98,
+      0.20
+    );
+
+  background:
+    rgba(
+      255,
+      253,
+      250,
+      0.88
+    );
+
+  color:
+    #684c62;
+
+  box-shadow:
+    none;
+}
+
+
+.shobdo-reels-tab-action-secondary:hover {
+  background:
+    #fffafc;
+
+  box-shadow:
+    0
+    8px
+    20px
+    rgba(
+      74,
+      53,
+      68,
+      0.08
+    );
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.shobdo-reels-tab-content {
+  width:
+    100%;
+
+  min-width:
+    0;
+}
+
+
+/* =========================================================
+   CREATOR MODE
+========================================================= */
+
+.shobdo-reels-tab-creator
+.shobdo-reels-tab-content {
+  overflow:
+    visible;
+}
+
+
+/* =========================================================
+   FOCUS
+========================================================= */
+
+.shobdo-reels-tab-action:focus-visible {
+  outline:
+    3px solid
+    rgba(
+      116,
+      75,
+      110,
+      0.22
+    );
+
+  outline-offset:
+    3px;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (
+  max-width: 900px
+) {
+
+  .shobdo-reels-tab-header {
+    gap:
+      14px;
+  }
+
+
+  .shobdo-reels-tab-heading p {
+    max-width:
+      520px;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+  max-width: 700px
+) {
+
+  .shobdo-reels-tab-header {
+    align-items:
+      flex-start;
+
+    flex-direction:
+      column;
+
+    padding:
+      15px;
+
+    border-radius:
+      16px;
+  }
+
+
+  .shobdo-reels-tab-heading {
+    align-items:
+      flex-start;
+  }
+
+
+  .shobdo-reels-tab-icon {
+    width:
+      44px;
+
+    height:
+      44px;
+
+    flex-basis:
+      44px;
+
+    border-radius:
+      13px;
+  }
+
+
+  .shobdo-reels-tab-heading h2 {
+    font-size:
+      27px;
+  }
+
+
+  .shobdo-reels-tab-heading p {
+    font-size:
+      11px;
+  }
+
+
+  .shobdo-reels-tab-action {
+    width:
+      100%;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (
+  max-width: 420px
+) {
+
+  .shobdo-reels-tab-header {
+    padding:
+      13px;
+  }
+
+
+  .shobdo-reels-tab-heading {
+    gap:
+      11px;
+  }
+
+
+  .shobdo-reels-tab-icon {
+    width:
+      41px;
+
+    height:
+      41px;
+
+    flex-basis:
+      41px;
+  }
+
+
+  .shobdo-reels-tab-heading h2 {
+    font-size:
+      24px;
+  }
+
+
+  .shobdo-reels-tab-heading p {
+    font-size:
+      10.5px;
+  }
+
+
+  .shobdo-reels-tab-action {
+    min-height:
+      40px;
+
+    border-radius:
+      11px;
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+
+  .shobdo-reels-tab-action {
+    transition:
+      none;
+  }
+
+}

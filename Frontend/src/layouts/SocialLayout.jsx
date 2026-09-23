@@ -11,6 +11,7 @@ import {
   Clapperboard,
   Compass,
   Feather,
+  Film,
   Home,
   Loader2,
   PenLine,
@@ -389,12 +390,12 @@ export default function SocialLayout({
         "एक्सप्लोर"
       ),
 
-    reels:
+    video:
       translate(
-        "navbar.reels",
-        "রিলস",
-        "Reels",
-        "रील्स"
+        "navbar.video",
+        "ভিডিও",
+        "Video",
+        "वीडियो"
       ),
 
     search:
@@ -1364,15 +1365,13 @@ export default function SocialLayout({
                 }
               />
 
-
               <SidebarLink
-                to="/reels"
-                icon={Clapperboard}
+                to="/videos"
+                icon={Film}
                 label={
-                  labels.reels
+                  labels.video
                 }
               />
-
 
               <SidebarLink
                 to="/search"
@@ -2429,15 +2428,13 @@ export default function SocialLayout({
           }
         />
 
-
         <MobileNavLink
-          to="/reels"
-          icon={Clapperboard}
+          to="/videos"
+          icon={Film}
           label={
-            labels.reels
+            labels.video
           }
         />
-
 
         <NavLink
           to={

@@ -2886,3 +2886,770 @@ button:disabled {
   }
 
 }
+
+/* =========================================================
+   EMBEDDED REELS MODE
+   ---------------------------------------------------------
+   Used only when <Reels embedded /> is rendered inside:
+       /videos?tab=reels
+
+   Standalone /reels keeps the immersive full-screen design.
+========================================================= */
+
+
+/* =========================================================
+   EMBEDDED SHELL
+========================================================= */
+
+.shobdo-reels-shell-embedded {
+  position:
+    relative;
+
+  isolation:
+    isolate;
+
+  width:
+    100%;
+
+  max-width:
+    100%;
+
+  min-width:
+    0;
+
+  min-height:
+    0;
+
+  margin:
+    0;
+
+  padding:
+    0;
+
+  overflow:
+    hidden;
+
+  border:
+    1px solid
+    rgba(
+      101,
+      72,
+      94,
+      0.15
+    );
+
+  border-radius:
+    22px;
+
+  background:
+    #09080a;
+
+  box-shadow:
+    0
+    18px
+    46px
+    rgba(
+      48,
+      31,
+      44,
+      0.12
+    );
+}
+
+
+/* =========================================================
+   NEVER USE THE IMMERSIVE BACKGROUND INSIDE VIDEO HUB
+========================================================= */
+
+.shobdo-reels-shell-embedded
+.shobdo-reels-animated-background {
+  display:
+    none !important;
+}
+
+
+/* =========================================================
+   EMBEDDED CONTENT LAYER
+========================================================= */
+
+.shobdo-reels-content-layer-embedded {
+  position:
+    relative;
+
+  z-index:
+    1;
+
+  width:
+    100%;
+
+  min-width:
+    0;
+
+  min-height:
+    0;
+
+  overflow:
+    hidden;
+
+  background:
+    #09080a;
+}
+
+
+/* =========================================================
+   EMBEDDED REELS FEED
+
+   Reels scroll vertically INSIDE the Video tab.
+   The surrounding SHOBDO Video header and tabs stay visible.
+========================================================= */
+
+.shobdo-reels-shell-embedded
+.shobdo-reels-page {
+  position:
+    relative;
+
+  z-index:
+    2;
+
+  width:
+    100%;
+
+  max-width:
+    100%;
+
+  height:
+    clamp(
+      560px,
+      72dvh,
+      760px
+    );
+
+  min-height:
+    560px;
+
+  max-height:
+    760px;
+
+  margin:
+    0;
+
+  padding:
+    0;
+
+  overflow-x:
+    hidden;
+
+  overflow-y:
+    auto;
+
+  border:
+    0;
+
+  border-radius:
+    22px;
+
+  background:
+    #070708;
+
+  box-shadow:
+    none;
+
+  scroll-snap-type:
+    y mandatory;
+
+  scroll-behavior:
+    smooth;
+
+  overscroll-behavior-y:
+    contain;
+
+  scrollbar-width:
+    none;
+}
+
+
+.shobdo-reels-shell-embedded
+.shobdo-reels-page::-webkit-scrollbar {
+  display:
+    none;
+}
+
+
+/* =========================================================
+   EMBEDDED INDIVIDUAL REEL
+========================================================= */
+
+.shobdo-reels-shell-embedded
+.shobdo-reel {
+  width:
+    100%;
+
+  height:
+    100%;
+
+  min-height:
+    100%;
+
+  max-height:
+    none;
+
+  margin:
+    0;
+
+  border:
+    0;
+
+  border-radius:
+    0;
+
+  scroll-snap-align:
+    start;
+
+  scroll-snap-stop:
+    always;
+}
+
+
+/* =========================================================
+   EMBEDDED VIDEO
+========================================================= */
+
+.shobdo-reels-shell-embedded
+.shobdo-reel-video-button,
+.shobdo-reels-shell-embedded
+.shobdo-reel-video {
+  width:
+    100%;
+
+  height:
+    100%;
+}
+
+
+.shobdo-reels-shell-embedded
+.shobdo-reel-video {
+  object-fit:
+    contain;
+
+  object-position:
+    center;
+
+  background:
+    #000000;
+}
+
+
+/* =========================================================
+   EMBEDDED LOADING / ERROR / EMPTY STATES
+========================================================= */
+
+.shobdo-reels-shell-embedded
+.shobdo-reels-state {
+  position:
+    relative;
+
+  z-index:
+    2;
+
+  width:
+    100%;
+
+  min-width:
+    0;
+
+  min-height:
+    520px;
+
+  margin:
+    0;
+
+  padding:
+    48px
+    28px;
+
+  border:
+    0;
+
+  border-radius:
+    22px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #171216,
+      #09080a
+    );
+
+  box-shadow:
+    none;
+}
+
+
+.shobdo-reels-shell-embedded
+.shobdo-reels-state h1 {
+  max-width:
+    650px;
+
+  color:
+    #fffafc;
+
+  font-size:
+    clamp(
+      30px,
+      4vw,
+      48px
+    );
+
+  text-shadow:
+    none;
+}
+
+
+.shobdo-reels-shell-embedded
+.shobdo-reels-state > p {
+  max-width:
+    600px;
+
+  color:
+    rgba(
+      255,
+      255,
+      255,
+      0.72
+    );
+
+  text-shadow:
+    none;
+}
+
+
+/* =========================================================
+   EMBEDDED EMPTY EYEBROW
+========================================================= */
+
+.shobdo-reels-shell-embedded
+.shobdo-reels-empty-eyebrow {
+  color:
+    #d8afca;
+}
+
+
+/* =========================================================
+   EMBEDDED FLOATING CREATE BUTTON
+
+   Important:
+   Standalone Reels uses fixed positioning.
+   Embedded Reels must stay inside the Video card.
+========================================================= */
+
+.shobdo-reels-shell-embedded
+.shobdo-reels-floating-create {
+  position:
+    absolute;
+
+  right:
+    18px;
+
+  bottom:
+    18px;
+
+  z-index:
+    50;
+}
+
+
+/* =========================================================
+   EMBEDDED ACTION / NAVIGATION LAYERS
+========================================================= */
+
+.shobdo-reels-shell-embedded
+.shobdo-reel-topbar,
+.shobdo-reels-shell-embedded
+.shobdo-reel-sound,
+.shobdo-reels-shell-embedded
+.shobdo-reel-actions,
+.shobdo-reels-shell-embedded
+.shobdo-reel-info,
+.shobdo-reels-shell-embedded
+.shobdo-reel-navigation,
+.shobdo-reels-shell-embedded
+.shobdo-reel-progress {
+  position:
+    absolute;
+}
+
+
+/* =========================================================
+   EMBEDDED DESKTOP POLISH
+========================================================= */
+
+@media (
+  min-width: 901px
+) {
+
+  .shobdo-reels-shell-embedded {
+    border-radius:
+      22px;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reels-page {
+    border-radius:
+      22px;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reel {
+    min-height:
+      100%;
+  }
+
+}
+
+
+/* =========================================================
+   EMBEDDED TABLET
+========================================================= */
+
+@media (
+  max-width: 900px
+) {
+
+  .shobdo-reels-shell-embedded {
+    border-radius:
+      19px;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reels-page {
+    height:
+      clamp(
+        540px,
+        70dvh,
+        700px
+      );
+
+    min-height:
+      540px;
+
+    max-height:
+      700px;
+
+    border-radius:
+      19px;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reel {
+    height:
+      100%;
+
+    min-height:
+      100%;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reels-state {
+    min-height:
+      500px;
+
+    border-radius:
+      19px;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reel-navigation {
+    display:
+      none;
+  }
+
+}
+
+
+/* =========================================================
+   EMBEDDED MOBILE
+========================================================= */
+
+@media (
+  max-width: 700px
+) {
+
+  .shobdo-reels-shell-embedded {
+    width:
+      100%;
+
+    min-height:
+      0;
+
+    margin:
+      0;
+
+    border-radius:
+      16px;
+
+    overflow:
+      hidden;
+  }
+
+
+  .shobdo-reels-content-layer-embedded {
+    min-height:
+      0;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reels-page {
+    width:
+      100%;
+
+    height:
+      calc(
+        100dvh -
+        230px
+      );
+
+    min-height:
+      500px;
+
+    max-height:
+      680px;
+
+    border:
+      0;
+
+    border-radius:
+      16px;
+
+    box-shadow:
+      none;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reel {
+    width:
+      100%;
+
+    height:
+      100%;
+
+    min-height:
+      100%;
+
+    border-radius:
+      0;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reels-state {
+    width:
+      100%;
+
+    min-height:
+      480px;
+
+    padding:
+      36px
+      18px
+      42px;
+
+    border-radius:
+      16px;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reels-state h1 {
+    font-size:
+      clamp(
+        28px,
+        8.5vw,
+        38px
+      );
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reels-state > p {
+    font-size:
+      12px;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reel-topbar {
+    padding:
+      14px;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reel-sound {
+    top:
+      65px;
+
+    right:
+      13px;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reel-actions {
+    right:
+      12px;
+
+    bottom:
+      94px;
+
+    gap:
+      9px;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reel-info {
+    left:
+      15px;
+
+    right:
+      68px;
+
+    bottom:
+      21px;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reels-floating-create {
+    position:
+      absolute;
+
+    right:
+      14px;
+
+    bottom:
+      14px;
+
+    width:
+      48px;
+
+    height:
+      48px;
+  }
+
+}
+
+
+/* =========================================================
+   EMBEDDED SMALL MOBILE
+========================================================= */
+
+@media (
+  max-width: 420px
+) {
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reels-page {
+    height:
+      calc(
+        100dvh -
+        218px
+      );
+
+    min-height:
+      470px;
+
+    max-height:
+      640px;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reels-state {
+    min-height:
+      450px;
+
+    padding-left:
+      14px;
+
+    padding-right:
+      14px;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reel-info {
+    right:
+      62px;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reel-caption {
+    font-size:
+      12px;
+  }
+
+}
+
+
+/* =========================================================
+   EMBEDDED SHORT HEIGHT DEVICES
+========================================================= */
+
+@media (
+  max-height: 680px
+) and (
+  min-width: 701px
+) {
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reels-page {
+    height:
+      540px;
+
+    min-height:
+      540px;
+
+    max-height:
+      540px;
+  }
+
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reel {
+    height:
+      100%;
+
+    min-height:
+      100%;
+  }
+
+}
+
+
+/* =========================================================
+   EMBEDDED REDUCED MOTION
+========================================================= */
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+
+  .shobdo-reels-shell-embedded
+  .shobdo-reels-page {
+    scroll-behavior:
+      auto;
+  }
+
+}
+

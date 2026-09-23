@@ -45,11 +45,11 @@ import PublicHome from "./pages/PublicHome";
 
 
 // =========================================================
-// PUBLIC / SOCIAL REELS
+// PUBLIC / SOCIAL REELS + VIDEO HUB
 // =========================================================
 
 import Reels from "./pages/Reels";
-import CreateReel from "./pages/CreateReel";
+import Videos from "./pages/Videos";
 
 
 // =========================================================
@@ -1274,6 +1274,31 @@ function App() {
               }
             >
 
+
+              {/* =============================================
+                VIDEO HUB
+                Videos + Reels
+              ============================================== */}
+
+              <Route
+                path="/videos"
+                element={
+                  <PrivateRoute
+                    user={
+                      user
+                    }
+                    authLoading={
+                      authLoading
+                    }
+                  >
+                    <Videos
+                      user={
+                        user
+                      }
+                    />
+                  </PrivateRoute>
+                }
+              />
 
               {/* ===========================================
                   EXPLORE

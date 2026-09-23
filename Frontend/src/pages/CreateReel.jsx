@@ -1380,7 +1380,9 @@ function localizeError(
 // CREATE REEL PAGE
 // =========================================================
 
-export default function CreateReel() {
+export default function CreateReel({
+  embedded = false,
+}) {
 
   const navigate =
     useNavigate();
@@ -1513,6 +1515,15 @@ export default function CreateReel() {
   useEffect(
     () => {
 
+      if (
+        embedded
+      ) {
+
+        return undefined;
+
+      }
+
+
       const previousTitle =
         document.title;
 
@@ -1531,6 +1542,7 @@ export default function CreateReel() {
     },
     [
       copy.pageTitle,
+      embedded,
     ]
   );
 
@@ -2042,6 +2054,24 @@ export default function CreateReel() {
         () => {
 
           if (
+            embedded
+          ) {
+
+            navigate(
+              "/videos?tab=reels",
+              {
+                replace:
+                  true,
+              }
+            );
+
+
+            return;
+
+          }
+
+
+          if (
             reel?.id
           ) {
 
@@ -2118,71 +2148,79 @@ export default function CreateReel() {
   return (
 
     <main
-      className="create-reel-page"
+      className={
+        embedded
+          ? "create-reel-page create-reel-page-embedded"
+          : "create-reel-page"
+      }
     >
 
       {/* =================================================
           HEADER
       ================================================== */}
 
-      <section
-        className="create-reel-header"
-      >
+      {!embedded && (
 
-        <Link
-          to="/reels"
-          className="create-reel-back"
+        <section
+          className="create-reel-header"
         >
 
-          <ArrowLeft
-            size={18}
-          />
-
-          <span>
-            {copy.back}
-          </span>
-
-        </Link>
-
-
-        <div
-          className="create-reel-heading"
-        >
-
-          <div
-            className="create-reel-heading-icon"
+          <Link
+            to="/reels"
+            className="create-reel-back"
           >
 
-            <Clapperboard
-              size={24}
+            <ArrowLeft
+              size={18}
             />
 
-          </div>
-
-
-          <div>
-
-            <span
-              className="create-reel-eyebrow"
-            >
-              {copy.eyebrow}
+            <span>
+              {copy.back}
             </span>
 
-
-            <h1>
-              {copy.title}
-            </h1>
+          </Link>
 
 
-            <p>
-              {copy.description}
-            </p>
+          <div
+            className="create-reel-heading"
+          >
+
+            <div
+              className="create-reel-heading-icon"
+            >
+
+              <Clapperboard
+                size={24}
+              />
+
+            </div>
+
+
+            <div>
+
+              <span
+                className="create-reel-eyebrow"
+              >
+                {copy.eyebrow}
+              </span>
+
+
+              <h1>
+                {copy.title}
+              </h1>
+
+
+              <p>
+                {copy.description}
+              </p>
+
+            </div>
 
           </div>
 
-        </div>
+        </section>
 
-      </section>
+      )}
 
 
       {/* =================================================

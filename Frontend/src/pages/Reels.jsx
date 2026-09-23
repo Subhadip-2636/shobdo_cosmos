@@ -603,19 +603,30 @@ function ReelsBackground() {
 
 function ReelsScene({
   children,
+  embedded = false,
 }) {
 
   return (
 
     <div
-      className="shobdo-reels-shell"
+      className={
+        embedded
+          ? "shobdo-reels-shell shobdo-reels-shell-embedded"
+          : "shobdo-reels-shell"
+      }
     >
 
-      <ReelsBackground />
+      {!embedded && (
+        <ReelsBackground />
+      )}
 
 
       <div
-        className="shobdo-reels-content-layer"
+        className={
+          embedded
+            ? "shobdo-reels-content-layer shobdo-reels-content-layer-embedded"
+            : "shobdo-reels-content-layer"
+        }
       >
 
         {children}
@@ -642,6 +653,8 @@ function ReelItem({
   user,
 
   copy,
+
+  createPath,
 
   onVisible,
 
@@ -1162,7 +1175,9 @@ function ReelItem({
           ? (
 
             <Link
-              to="/reels/create"
+              to={
+                createPath
+              }
               className="shobdo-reel-create-top"
             >
 
@@ -1718,6 +1733,8 @@ function ReelItem({
 
 export default function Reels({
   user,
+  embedded = false,
+  createPath = "/reels/create",
 }) {
 
   const {
@@ -1784,6 +1801,15 @@ export default function Reels({
   useEffect(
     () => {
 
+      if (
+        embedded
+      ) {
+
+        return undefined;
+
+      }
+
+
       const body =
         document.body;
 
@@ -1816,7 +1842,9 @@ export default function Reels({
       };
 
     },
-    []
+    [
+      embedded,
+    ]
   );
 
 
@@ -1826,6 +1854,15 @@ export default function Reels({
 
   useEffect(
     () => {
+
+      if (
+        embedded
+      ) {
+
+        return undefined;
+
+      }
+
 
       const previousTitle =
         document.title;
@@ -1845,6 +1882,7 @@ export default function Reels({
     },
     [
       copy.reels,
+      embedded,
     ]
   );
 
@@ -2131,7 +2169,11 @@ export default function Reels({
 
     return (
 
-      <ReelsScene>
+      <ReelsScene
+        embedded={
+          embedded
+        }
+      >
 
         <main
           className="shobdo-reels-state shobdo-reels-loading-state"
@@ -2175,7 +2217,11 @@ export default function Reels({
 
     return (
 
-      <ReelsScene>
+      <ReelsScene
+        embedded={
+          embedded
+        }
+      >
 
         <main
           className="shobdo-reels-state shobdo-reels-error-state"
@@ -2240,7 +2286,11 @@ export default function Reels({
 
     return (
 
-      <ReelsScene>
+      <ReelsScene
+        embedded={
+          embedded
+        }
+      >
 
         <main
           className="shobdo-reels-state shobdo-reels-empty-state"
@@ -2288,7 +2338,9 @@ export default function Reels({
 
 
                 <Link
-                  to="/reels/create"
+                  to={
+                    createPath
+                  }
                   className="shobdo-reels-create-button"
                 >
 
@@ -2386,7 +2438,11 @@ export default function Reels({
 
   return (
 
-    <ReelsScene>
+    <ReelsScene
+        embedded={
+          embedded
+        }
+      >
 
       <main
         ref={
@@ -2413,6 +2469,9 @@ export default function Reels({
               }
               copy={
                 copy
+              }
+              createPath={
+                createPath
               }
               active={
                 reel.id ===
@@ -2453,7 +2512,9 @@ export default function Reels({
         {user && (
 
           <Link
-            to="/reels/create"
+            to={
+              createPath
+            }
             className="shobdo-reels-floating-create"
             aria-label={
               copy.create

@@ -2,10 +2,10 @@ import {
   Bell,
   Bookmark,
   Check,
-  Clapperboard,
   ChevronDown,
   Feather,
   FileText,
+  Film,
   Globe2,
   LogIn,
   LogOut,
@@ -45,47 +45,31 @@ import "./Navbar.css";
 
 const MOBILE_BREAKPOINT = 700;
 
-const NOTIFICATION_REFRESH_MS =
-  60000;
+const NOTIFICATION_REFRESH_MS = 60000;
 
 
 // =========================================================
 // HELPERS
 // =========================================================
 
-function getInitials(
-  name
-) {
-
-  const safeName =
-    String(
-      name || ""
-    ).trim();
-
+function getInitials(name) {
+  const safeName = String(
+    name || ""
+  ).trim();
 
   if (!safeName) {
     return "U";
   }
 
+  const parts = safeName
+    .split(/\s+/)
+    .filter(Boolean);
 
-  const parts =
-    safeName
-      .split(/\s+/)
-      .filter(Boolean);
-
-
-  if (
-    parts.length === 1
-  ) {
-
+  if (parts.length === 1) {
     return parts[0]
-      .slice(
-        0,
-        2
-      )
+      .slice(0, 2)
       .toUpperCase();
   }
-
 
   return (
     `${parts[0][0]}${parts[1][0]}`
@@ -97,30 +81,19 @@ function getSearchQueryFromLocation(
   pathname,
   search
 ) {
-
-  if (
-    pathname !== "/search"
-  ) {
-
+  if (pathname !== "/search") {
     return "";
   }
 
-
   try {
-
     const params =
-      new URLSearchParams(
-        search
-      );
-
+      new URLSearchParams(search);
 
     return (
       params.get("q") ||
       ""
     );
-
   } catch {
-
     return "";
   }
 }
@@ -134,14 +107,11 @@ function Navbar({
   user,
   setUser,
 }) {
-
   const navigate =
     useNavigate();
 
-
   const location =
     useLocation();
-
 
   const {
     t,
@@ -167,45 +137,30 @@ function Navbar({
       )
   );
 
-
   const [
     languageOpen,
     setLanguageOpen,
-  ] = useState(
-    false
-  );
-
+  ] = useState(false);
 
   const [
     profileOpen,
     setProfileOpen,
-  ] = useState(
-    false
-  );
-
+  ] = useState(false);
 
   const [
     mobileSearchOpen,
     setMobileSearchOpen,
-  ] = useState(
-    false
-  );
-
+  ] = useState(false);
 
   const [
     unreadNotificationCount,
     setUnreadNotificationCount,
-  ] = useState(
-    0
-  );
-
+  ] = useState(0);
 
   const [
     scrolled,
     setScrolled,
-  ] = useState(
-    false
-  );
+  ] = useState(false);
 
 
   // =======================================================
@@ -213,74 +168,48 @@ function Navbar({
   // =======================================================
 
   const languageMenuRef =
-    useRef(
-      null
-    );
-
+    useRef(null);
 
   const profileMenuRef =
-    useRef(
-      null
-    );
-
+    useRef(null);
 
   const mobileSearchInputRef =
-    useRef(
-      null
-    );
+    useRef(null);
 
 
   // =======================================================
-  // TRANSLATION
+  // TRANSLATION HELPER
   // =======================================================
 
   function translate(
     key,
     fallbackBn,
     fallbackEn,
-    fallbackHi = null,
+    fallbackHi = null
   ) {
-
     try {
-
-      const translated =
-        t(
-          key
-        );
-
+      const translated = t(key);
 
       if (
         translated &&
         translated !== key
       ) {
-
         return translated;
       }
-
     } catch {
-
-      // Local fallback.
+      // Use local fallback.
     }
 
-
-    if (
-      language === "bn"
-    ) {
-
+    if (language === "bn") {
       return fallbackBn;
     }
 
-
-    if (
-      language === "hi"
-    ) {
-
+    if (language === "hi") {
       return (
         fallbackHi ||
         fallbackEn
       );
     }
-
 
     return fallbackEn;
   }
@@ -291,7 +220,6 @@ function Navbar({
   // =======================================================
 
   const labels = {
-
     tagline:
       language === "bn"
         ? "লিখুন · পড়ুন · যুক্ত হোন"
@@ -313,6 +241,14 @@ function Navbar({
         "খুঁজুন",
         "Search",
         "खोजें"
+      ),
+
+    video:
+      translate(
+        "navbar.video",
+        "ভিডিও",
+        "Video",
+        "वीडियो"
       ),
 
     searchHint:
@@ -337,14 +273,6 @@ function Navbar({
         "সার্চ বন্ধ করুন",
         "Close search",
         "खोज बंद करें"
-      ),
-
-    reels:
-      translate(
-        "navbar.reels",
-        "রিলস",
-        "Reels",
-        "रील्स"
       ),
 
     notifications:
@@ -434,7 +362,6 @@ function Navbar({
         "Writer",
         "लेखक"
       ),
-
   };
 
 
@@ -448,12 +375,10 @@ function Navbar({
       user?.username
     );
 
-
   const userAvatar =
     user?.avatar_url ||
     user?.avatar ||
     "";
-
 
   const profilePath =
     user?.id
@@ -461,13 +386,23 @@ function Navbar({
       : "/login";
 
 
-  const reelsActive =
+  // =======================================================
+  // VIDEO ACTIVE STATE
+  // =======================================================
+  //
+  // Reels now live inside the unified /videos experience.
+  // /videos?tab=reels remains active because pathname is
+  // still /videos.
+  //
+  // =======================================================
+
+  const videoActive =
     (
       location.pathname ===
-        "/reels"
+        "/videos"
       ||
       location.pathname.startsWith(
-        "/reels/"
+        "/videos/"
       )
     );
 
@@ -477,7 +412,6 @@ function Navbar({
       ? "99+"
       : unreadNotificationCount;
 
-
   const currentLanguageName =
     currentLanguage?.nativeName ||
     String(
@@ -485,29 +419,19 @@ function Navbar({
     ).toUpperCase() ||
     "Language";
 
-
   const languageItems =
-    Array.isArray(
-      languages
-    )
+    Array.isArray(languages)
       ? languages
       : [];
 
 
   // =======================================================
-  // CLOSE MENUS
+  // CLOSE DROPDOWNS
   // =======================================================
 
   function closeMenus() {
-
-    setLanguageOpen(
-      false
-    );
-
-
-    setProfileOpen(
-      false
-    );
+    setLanguageOpen(false);
+    setProfileOpen(false);
   }
 
 
@@ -515,34 +439,20 @@ function Navbar({
   // SEARCH
   // =======================================================
 
-  function handleSearchSubmit(
-    event
-  ) {
-
+  function handleSearchSubmit(event) {
     event.preventDefault();
-
 
     const query =
       searchQuery.trim();
 
-
     closeMenus();
 
-
-    setMobileSearchOpen(
-      false
-    );
-
+    setMobileSearchOpen(false);
 
     if (!query) {
-
-      navigate(
-        "/search"
-      );
-
+      navigate("/search");
       return;
     }
-
 
     navigate(
       `/search?q=${encodeURIComponent(
@@ -553,23 +463,14 @@ function Navbar({
 
 
   function handleSearchClear() {
+    setSearchQuery("");
 
-    setSearchQuery(
-      ""
-    );
-
-
-    if (
-      mobileSearchOpen
-    ) {
-
+    if (mobileSearchOpen) {
       requestAnimationFrame(
         () => {
-
           mobileSearchInputRef
             .current
             ?.focus();
-
         }
       );
     }
@@ -577,21 +478,13 @@ function Navbar({
 
 
   function openMobileSearch() {
-
     closeMenus();
-
-
-    setMobileSearchOpen(
-      true
-    );
+    setMobileSearchOpen(true);
   }
 
 
   function closeMobileSearch() {
-
-    setMobileSearchOpen(
-      false
-    );
+    setMobileSearchOpen(false);
   }
 
 
@@ -599,34 +492,19 @@ function Navbar({
   // LANGUAGE
   // =======================================================
 
-  function handleLanguageChange(
-    code
-  ) {
-
-    setLanguage(
-      code
-    );
-
-
-    setLanguageOpen(
-      false
-    );
+  function handleLanguageChange(code) {
+    setLanguage(code);
+    setLanguageOpen(false);
   }
 
 
   function toggleLanguageMenu() {
-
     setLanguageOpen(
-      (
-        current
-      ) =>
+      (current) =>
         !current
     );
 
-
-    setProfileOpen(
-      false
-    );
+    setProfileOpen(false);
   }
 
 
@@ -635,18 +513,12 @@ function Navbar({
   // =======================================================
 
   function toggleProfileMenu() {
-
     setProfileOpen(
-      (
-        current
-      ) =>
+      (current) =>
         !current
     );
 
-
-    setLanguageOpen(
-      false
-    );
+    setLanguageOpen(false);
   }
 
 
@@ -655,46 +527,29 @@ function Navbar({
   // =======================================================
 
   async function handleLogout() {
-
     try {
-
       await logoutUser();
-
-    } catch (
-      error
-    ) {
-
+    } catch (error) {
       console.error(
         "LOGOUT ERROR:",
         error
       );
-
     } finally {
-
       if (
         typeof setUser ===
         "function"
       ) {
-
-        setUser(
-          null
-        );
+        setUser(null);
       }
 
-
-      setUnreadNotificationCount(
-        0
-      );
-
+      setUnreadNotificationCount(0);
 
       closeMenus();
-
 
       navigate(
         "/",
         {
-          replace:
-            true,
+          replace: true,
         }
       );
     }
@@ -702,28 +557,22 @@ function Navbar({
 
 
   // =======================================================
-  // CLICK OUTSIDE
+  // CLICK OUTSIDE DROPDOWNS
   // =======================================================
 
   useEffect(
     () => {
-
       function handleOutsidePointer(
         event
       ) {
-
         if (
           languageMenuRef.current &&
           !languageMenuRef.current.contains(
             event.target
           )
         ) {
-
-          setLanguageOpen(
-            false
-          );
+          setLanguageOpen(false);
         }
-
 
         if (
           profileMenuRef.current &&
@@ -731,76 +580,56 @@ function Navbar({
             event.target
           )
         ) {
-
-          setProfileOpen(
-            false
-          );
+          setProfileOpen(false);
         }
       }
-
 
       document.addEventListener(
         "pointerdown",
         handleOutsidePointer
       );
 
-
       return () => {
-
         document.removeEventListener(
           "pointerdown",
           handleOutsidePointer
         );
       };
-
     },
     []
   );
 
 
   // =======================================================
-  // ESCAPE
+  // ESCAPE KEY
   // =======================================================
 
   useEffect(
     () => {
-
-      function handleKeyDown(
-        event
-      ) {
-
+      function handleKeyDown(event) {
         if (
           event.key !==
           "Escape"
         ) {
-
           return;
         }
 
-
-        closeMenus();
-
-
-        setMobileSearchOpen(
-          false
-        );
+        setLanguageOpen(false);
+        setProfileOpen(false);
+        setMobileSearchOpen(false);
       }
-
 
       document.addEventListener(
         "keydown",
         handleKeyDown
       );
 
-
       return () => {
-
         document.removeEventListener(
           "keydown",
           handleKeyDown
         );
       };
-
     },
     []
   );
@@ -812,14 +641,9 @@ function Navbar({
 
   useEffect(
     () => {
-
-      closeMenus();
-
-
-      setMobileSearchOpen(
-        false
-      );
-
+      setLanguageOpen(false);
+      setProfileOpen(false);
+      setMobileSearchOpen(false);
     },
     [
       location.pathname,
@@ -829,20 +653,17 @@ function Navbar({
 
 
   // =======================================================
-  // SEARCH URL SYNC
+  // SYNC SEARCH URL
   // =======================================================
 
   useEffect(
     () => {
-
       if (
         location.pathname !==
         "/search"
       ) {
-
         return;
       }
-
 
       setSearchQuery(
         getSearchQueryFromLocation(
@@ -850,7 +671,6 @@ function Navbar({
           location.search
         )
       );
-
     },
     [
       location.pathname,
@@ -860,40 +680,28 @@ function Navbar({
 
 
   // =======================================================
-  // MOBILE SEARCH FOCUS
+  // MOBILE SEARCH AUTOFOCUS
   // =======================================================
 
   useEffect(
     () => {
-
-      if (
-        !mobileSearchOpen
-      ) {
-
+      if (!mobileSearchOpen) {
         return undefined;
       }
-
 
       const timer =
         window.setTimeout(
           () => {
-
             mobileSearchInputRef
               .current
               ?.focus();
-
           },
           50
         );
 
-
       return () => {
-
-        window.clearTimeout(
-          timer
-        );
+        window.clearTimeout(timer);
       };
-
     },
     [
       mobileSearchOpen,
@@ -907,29 +715,20 @@ function Navbar({
 
   useEffect(
     () => {
-
-      if (
-        !mobileSearchOpen
-      ) {
-
+      if (!mobileSearchOpen) {
         return undefined;
       }
-
 
       const previousOverflow =
         document.body.style.overflow;
 
-
       document.body.style.overflow =
         "hidden";
 
-
       return () => {
-
         document.body.style.overflow =
           previousOverflow;
       };
-
     },
     [
       mobileSearchOpen,
@@ -938,40 +737,31 @@ function Navbar({
 
 
   // =======================================================
-  // CLOSE MOBILE SEARCH AFTER RESIZE
+  // CLOSE MOBILE SEARCH ON DESKTOP
   // =======================================================
 
   useEffect(
     () => {
-
       function handleResize() {
-
         if (
           window.innerWidth >
           MOBILE_BREAKPOINT
         ) {
-
-          setMobileSearchOpen(
-            false
-          );
+          setMobileSearchOpen(false);
         }
       }
-
 
       window.addEventListener(
         "resize",
         handleResize
       );
 
-
       return () => {
-
         window.removeEventListener(
           "resize",
           handleResize
         );
       };
-
     },
     []
   );
@@ -983,36 +773,28 @@ function Navbar({
 
   useEffect(
     () => {
-
       function handleScroll() {
-
         setScrolled(
           window.scrollY > 6
         );
       }
 
-
       handleScroll();
-
 
       window.addEventListener(
         "scroll",
         handleScroll,
         {
-          passive:
-            true,
+          passive: true,
         }
       );
 
-
       return () => {
-
         window.removeEventListener(
           "scroll",
           handleScroll
         );
       };
-
     },
     []
   );
@@ -1024,89 +806,55 @@ function Navbar({
 
   useEffect(
     () => {
+      let cancelled = false;
 
-      let cancelled =
-        false;
-
-
-      if (
-        !user
-      ) {
-
-        setUnreadNotificationCount(
-          0
-        );
-
+      if (!user) {
+        setUnreadNotificationCount(0);
         return undefined;
       }
 
 
       async function loadUnreadCount() {
-
         if (
           document.visibilityState ===
           "hidden"
         ) {
-
           return;
         }
 
-
         try {
-
           const data =
             await getUnreadNotificationCount();
 
-
-          if (
-            cancelled
-          ) {
-
+          if (cancelled) {
             return;
           }
-
 
           const count =
             Number(
               data?.unread_count
             );
 
-
           setUnreadNotificationCount(
-            Number.isFinite(
-              count
-            )
+            Number.isFinite(count)
               ? Math.max(
                   count,
                   0
                 )
               : 0
           );
-
-        } catch (
-          error
-        ) {
-
-          if (
-            cancelled
-          ) {
-
+        } catch (error) {
+          if (cancelled) {
             return;
           }
-
 
           if (
             error?.status === 401 ||
             error?.status === 422
           ) {
-
-            setUnreadNotificationCount(
-              0
-            );
-
+            setUnreadNotificationCount(0);
             return;
           }
-
 
           console.error(
             "NOTIFICATION COUNT ERROR:",
@@ -1117,24 +865,20 @@ function Navbar({
 
 
       function handleNotificationChange() {
-
         loadUnreadCount();
       }
 
 
       function handleFocus() {
-
         loadUnreadCount();
       }
 
 
       function handleVisibilityChange() {
-
         if (
           document.visibilityState ===
           "visible"
         ) {
-
           loadUnreadCount();
         }
       }
@@ -1148,12 +892,10 @@ function Navbar({
         handleNotificationChange
       );
 
-
       window.addEventListener(
         "focus",
         handleFocus
       );
-
 
       document.addEventListener(
         "visibilitychange",
@@ -1169,34 +911,27 @@ function Navbar({
 
 
       return () => {
-
-        cancelled =
-          true;
-
+        cancelled = true;
 
         window.removeEventListener(
           "shobdo:notifications-changed",
           handleNotificationChange
         );
 
-
         window.removeEventListener(
           "focus",
           handleFocus
         );
-
 
         document.removeEventListener(
           "visibilitychange",
           handleVisibilityChange
         );
 
-
         window.clearInterval(
           intervalId
         );
       };
-
     },
     [
       user?.id,
@@ -1209,7 +944,6 @@ function Navbar({
   // =======================================================
 
   return (
-
     <header
       className={[
         "shobdo-navbar",
@@ -1221,7 +955,6 @@ function Navbar({
         mobileSearchOpen
           ? "shobdo-navbar-search-open"
           : "",
-
       ]
         .filter(Boolean)
         .join(" ")
@@ -1246,32 +979,27 @@ function Navbar({
             className="shobdo-navbar-logo"
             aria-hidden="true"
           >
-
             <Feather
               size={20}
               strokeWidth={1.9}
             />
-
           </span>
 
 
           <span
             className="shobdo-navbar-brand-copy"
           >
-
             <strong
               className="shobdo-navbar-brand-name"
             >
               SHOBDO
             </strong>
 
-
             <small
               className="shobdo-navbar-tagline"
             >
               {labels.tagline}
             </small>
-
           </span>
 
         </Link>
@@ -1302,10 +1030,7 @@ function Navbar({
               searchQuery
             }
             onChange={
-              (
-                event
-              ) => {
-
+              (event) => {
                 setSearchQuery(
                   event.target.value
                 );
@@ -1324,7 +1049,6 @@ function Navbar({
 
 
           {searchQuery && (
-
             <button
               type="button"
               className="shobdo-search-clear"
@@ -1338,13 +1062,10 @@ function Navbar({
                 handleSearchClear
               }
             >
-
               <X
                 size={15}
               />
-
             </button>
-
           )}
 
 
@@ -1366,47 +1087,52 @@ function Navbar({
           className="shobdo-navbar-actions"
         >
 
-          {/* =================================================
-              REELS
-          ================================================== */}
+          {/* ===============================================
+              VIDEO HUB
+              Authenticated users only.
+              Videos + Reels + Following live under /videos.
+          ================================================ */}
 
-          <Link
-            to="/reels"
-            className={
-              reelsActive
-                ? "shobdo-navbar-icon-button shobdo-reels-button active"
-                : "shobdo-navbar-icon-button shobdo-reels-button"
-            }
-            aria-label={
-              labels.reels
-            }
-            aria-current={
-              reelsActive
-                ? "page"
-                : undefined
-            }
-            title={
-              labels.reels
-            }
-          >
+          {user && (
 
-            <Clapperboard
-              size={19}
-              strokeWidth={1.9}
-            />
-
-            <span
-              className="shobdo-sr-only"
+            <Link
+              to="/videos"
+              className={
+                videoActive
+                  ? "shobdo-navbar-icon-button active"
+                  : "shobdo-navbar-icon-button"
+              }
+              aria-label={
+                labels.video
+              }
+              aria-current={
+                videoActive
+                  ? "page"
+                  : undefined
+              }
+              title={
+                labels.video
+              }
             >
-              {labels.reels}
-            </span>
 
-          </Link>
+              <Film
+                size={19}
+                strokeWidth={1.9}
+              />
 
+              <span
+                className="shobdo-sr-only"
+              >
+                {labels.video}
+              </span>
 
-          {/* =================================================
+            </Link>
+
+          )}
+
+          {/* ===============================================
               MOBILE SEARCH
-          ================================================== */}
+          ================================================ */}
 
           <button
             type="button"
@@ -1421,20 +1147,17 @@ function Navbar({
               labels.search
             }
           >
-
             <Search
               size={19}
             />
-
           </button>
 
 
-          {/* =================================================
+          {/* ===============================================
               NOTIFICATIONS
-          ================================================== */}
+          ================================================ */}
 
           {user && (
-
             <Link
               to="/notifications"
               className={
@@ -1466,24 +1189,21 @@ function Navbar({
 
 
               {unreadNotificationCount > 0 && (
-
                 <span
                   className="shobdo-navbar-notification-badge"
                   aria-hidden="true"
                 >
                   {notificationBadge}
                 </span>
-
               )}
 
             </Link>
-
           )}
 
 
-          {/* =================================================
+          {/* ===============================================
               LANGUAGE
-          ================================================== */}
+          ================================================ */}
 
           <div
             className="shobdo-navbar-dropdown"
@@ -1515,13 +1235,11 @@ function Navbar({
                 size={17}
               />
 
-
               <span
                 className="shobdo-language-name"
               >
                 {currentLanguageName}
               </span>
-
 
               <ChevronDown
                 size={13}
@@ -1536,7 +1254,6 @@ function Navbar({
 
 
             {languageOpen && (
-
               <div
                 className="shobdo-language-dropdown shobdo-dropdown-animate"
                 role="menu"
@@ -1545,7 +1262,6 @@ function Navbar({
                 <div
                   className="shobdo-dropdown-heading"
                 >
-
                   <Globe2
                     size={16}
                   />
@@ -1553,7 +1269,6 @@ function Navbar({
                   <span>
                     {labels.language}
                   </span>
-
                 </div>
 
 
@@ -1562,17 +1277,12 @@ function Navbar({
                 >
 
                   {languageItems.map(
-                    (
-                      item
-                    ) => {
-
+                    (item) => {
                       const selected =
                         language ===
                         item.code;
 
-
                       return (
-
                         <button
                           key={
                             item.code
@@ -1598,37 +1308,28 @@ function Navbar({
                           <span
                             className="shobdo-language-check"
                           >
-
                             {selected && (
-
                               <Check
                                 size={14}
                               />
-
                             )}
-
                           </span>
 
 
                           <span
                             className="shobdo-language-option-text"
                           >
-
                             <strong>
                               {item.nativeName}
                             </strong>
 
-
                             {item.name &&
                               item.name !==
-                              item.nativeName && (
-
-                              <small>
-                                {item.name}
-                              </small>
-
-                            )}
-
+                                item.nativeName && (
+                                <small>
+                                  {item.name}
+                                </small>
+                              )}
                           </span>
 
                         </button>
@@ -1639,19 +1340,17 @@ function Navbar({
                 </div>
 
               </div>
-
             )}
 
           </div>
 
 
-          {/* =================================================
-              AUTHENTICATED PROFILE
-          ================================================== */}
+          {/* ===============================================
+              PROFILE / AUTH
+          ================================================ */}
 
           {user
             ? (
-
               <div
                 className="shobdo-navbar-dropdown shobdo-profile-wrapper"
                 ref={
@@ -1684,33 +1383,26 @@ function Navbar({
                   <span
                     className="shobdo-profile-avatar"
                   >
-
                     {userAvatar
                       ? (
-
                         <img
                           src={
                             userAvatar
                           }
                           alt=""
                         />
-
                       )
                       : (
-
                         <span>
                           {userInitials}
                         </span>
-
                       )}
-
                   </span>
 
 
                   <span
                     className="shobdo-profile-trigger-text"
                   >
-
                     <strong>
                       {
                         user?.name ||
@@ -1718,15 +1410,11 @@ function Navbar({
                       }
                     </strong>
 
-
                     {user?.username && (
-
                       <small>
                         @{user.username}
                       </small>
-
                     )}
-
                   </span>
 
 
@@ -1743,11 +1431,14 @@ function Navbar({
 
 
                 {profileOpen && (
-
                   <div
                     className="shobdo-profile-dropdown shobdo-dropdown-animate"
                     role="menu"
                   >
+
+                    {/* =====================================
+                        PROFILE HEADER
+                    ====================================== */}
 
                     <Link
                       to={
@@ -1760,40 +1451,32 @@ function Navbar({
                       <span
                         className="shobdo-profile-dropdown-avatar"
                       >
-
                         {userAvatar
                           ? (
-
                             <img
                               src={
                                 userAvatar
                               }
                               alt=""
                             />
-
                           )
                           : (
-
                             <span>
                               {userInitials}
                             </span>
-
                           )}
-
                       </span>
 
 
                       <span
                         className="shobdo-profile-dropdown-user-text"
                       >
-
                         <strong>
                           {
                             user?.name ||
                             labels.writer
                           }
                         </strong>
-
 
                         <small>
                           {
@@ -1802,7 +1485,6 @@ function Navbar({
                               : labels.profile
                           }
                         </small>
-
                       </span>
 
                     </Link>
@@ -1812,6 +1494,10 @@ function Navbar({
                       className="shobdo-dropdown-divider"
                     />
 
+
+                    {/* =====================================
+                        PROFILE
+                    ====================================== */}
 
                     <Link
                       to={
@@ -1820,7 +1506,6 @@ function Navbar({
                       className="shobdo-profile-menu-item"
                       role="menuitem"
                     >
-
                       <UserRound
                         size={17}
                       />
@@ -1828,16 +1513,18 @@ function Navbar({
                       <span>
                         {labels.profile}
                       </span>
-
                     </Link>
 
+
+                    {/* =====================================
+                        MY WRITINGS
+                    ====================================== */}
 
                     <Link
                       to="/my-writings"
                       className="shobdo-profile-menu-item"
                       role="menuitem"
                     >
-
                       <FileText
                         size={17}
                       />
@@ -1845,16 +1532,18 @@ function Navbar({
                       <span>
                         {labels.myWritings}
                       </span>
-
                     </Link>
 
+
+                    {/* =====================================
+                        SAVED
+                    ====================================== */}
 
                     <Link
                       to="/saved"
                       className="shobdo-profile-menu-item"
                       role="menuitem"
                     >
-
                       <Bookmark
                         size={17}
                       />
@@ -1862,16 +1551,18 @@ function Navbar({
                       <span>
                         {labels.saved}
                       </span>
-
                     </Link>
 
+
+                    {/* =====================================
+                        EDIT PROFILE
+                    ====================================== */}
 
                     <Link
                       to="/profile/edit"
                       className="shobdo-profile-menu-item"
                       role="menuitem"
                     >
-
                       <Settings
                         size={17}
                       />
@@ -1879,7 +1570,6 @@ function Navbar({
                       <span>
                         {labels.editProfile}
                       </span>
-
                     </Link>
 
 
@@ -1887,6 +1577,10 @@ function Navbar({
                       className="shobdo-dropdown-divider"
                     />
 
+
+                    {/* =====================================
+                        LOGOUT
+                    ====================================== */}
 
                     <button
                       type="button"
@@ -1896,7 +1590,6 @@ function Navbar({
                         handleLogout
                       }
                     >
-
                       <LogOut
                         size={17}
                       />
@@ -1904,18 +1597,14 @@ function Navbar({
                       <span>
                         {labels.logout}
                       </span>
-
                     </button>
 
                   </div>
-
                 )}
 
               </div>
-
             )
             : (
-
               <div
                 className="shobdo-guest-actions"
               >
@@ -1924,7 +1613,6 @@ function Navbar({
                   to="/login"
                   className="shobdo-login-button"
                 >
-
                   <LogIn
                     size={16}
                   />
@@ -1932,7 +1620,6 @@ function Navbar({
                   <span>
                     {labels.login}
                   </span>
-
                 </Link>
 
 
@@ -1940,7 +1627,6 @@ function Navbar({
                   to="/register"
                   className="shobdo-register-button"
                 >
-
                   <UserPlus
                     size={16}
                   />
@@ -1948,11 +1634,9 @@ function Navbar({
                   <span>
                     {labels.register}
                   </span>
-
                 </Link>
 
               </div>
-
             )}
 
         </div>
@@ -1961,11 +1645,10 @@ function Navbar({
 
 
       {/* =================================================
-          MOBILE SEARCH
+          MOBILE SEARCH MODAL
       ================================================== */}
 
       {mobileSearchOpen && (
-
         <div
           className="shobdo-mobile-search-panel"
           role="dialog"
@@ -1974,15 +1657,11 @@ function Navbar({
             labels.search
           }
           onPointerDown={
-            (
-              event
-            ) => {
-
+            (event) => {
               if (
                 event.target ===
                 event.currentTarget
               ) {
-
                 closeMobileSearch();
               }
             }
@@ -2015,10 +1694,7 @@ function Navbar({
                   searchQuery
                 }
                 onChange={
-                  (
-                    event
-                  ) => {
-
+                  (event) => {
                     setSearchQuery(
                       event.target.value
                     );
@@ -2037,7 +1713,6 @@ function Navbar({
 
 
               {searchQuery && (
-
                 <button
                   type="button"
                   className="shobdo-mobile-search-clear"
@@ -2048,13 +1723,10 @@ function Navbar({
                     labels.clearSearch
                   }
                 >
-
                   <X
                     size={16}
                   />
-
                 </button>
-
               )}
 
 
@@ -2068,11 +1740,9 @@ function Navbar({
                   labels.closeSearch
                 }
               >
-
                 <X
                   size={19}
                 />
-
               </button>
 
             </form>
@@ -2087,7 +1757,6 @@ function Navbar({
           </div>
 
         </div>
-
       )}
 
     </header>
