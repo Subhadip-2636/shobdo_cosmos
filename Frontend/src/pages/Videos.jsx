@@ -89,6 +89,490 @@ const PAGE_SIZE =
   40;
 
 
+const VIDEO_BACKGROUND_VIDEO =
+  "/backgrounds/shobdo-reels-bg.mp4";
+
+
+const VIDEO_COPY = {
+  "en": {
+    "eyebrow": "SHOBDO MEDIA",
+    "title": "Video",
+    "description": "Watch videos, discover Reels and keep up with creators you follow.",
+    "addVideo": "Add Video",
+    "createReel": "Create Reel",
+    "videos": "Videos",
+    "reels": "Reels",
+    "following": "Following",
+    "communityFeed": "COMMUNITY FEED",
+    "latestVideos": "Latest videos",
+    "yourNetwork": "YOUR NETWORK",
+    "fromPeopleYouFollow": "From people you follow",
+    "yourLibrary": "YOUR LIBRARY",
+    "videoTrash": "Video Trash",
+    "trash": "Trash",
+    "backToVideos": "Back to Videos",
+    "refresh": "Refresh",
+    "loading": "Loading videos...",
+    "loadingTrash": "Loading Video Trash...",
+    "unavailable": "Unable to load videos",
+    "trashUnavailable": "Unable to load Video Trash",
+    "tryAgain": "Try again",
+    "noVideos": "No videos yet",
+    "noVideosDescription": "Be the first to share a video with the SHOBDO community.",
+    "noFollowingMedia": "No videos or Reels here yet",
+    "noFollowingMediaDescription": "Follow creators to see their latest videos and Reels here.",
+    "trashEmpty": "Video Trash is empty",
+    "trashEmptyDescription": "Videos you move to Trash will appear here until you restore or permanently delete them.",
+    "inTrash": "In Trash",
+    "you": "You",
+    "trashed": "Trashed",
+    "reel": "Reel",
+    "video": "Video",
+    "moreOptions": "More options",
+    "restore": "Restore",
+    "restoring": "Restoring...",
+    "deletePermanently": "Delete permanently",
+    "deletingPermanently": "Deleting...",
+    "share": "Share",
+    "copyLink": "Copy link",
+    "moveToTrash": "Move to Trash",
+    "movingToTrash": "Moving...",
+    "mediaUnavailable": "Video unavailable",
+    "views": "views",
+    "loadError": "Unable to load videos.",
+    "followingLoadError": "Unable to load media from people you follow.",
+    "trashLoadError": "Unable to load Video Trash.",
+    "shareReelText": "Watch this Reel on SHOBDO.",
+    "shareVideoText": "Watch this video on SHOBDO.",
+    "linkCopied": "Link copied.",
+    "copyThisLink": "Copy this link:",
+    "moveToTrashTitle": "Move video to Trash?",
+    "moveToTrashDescription": "This video will disappear from SHOBDO, but you can restore it later from Video Trash.",
+    "moveToTrashError": "Unable to move this video to Trash.",
+    "movedToTrash": "Video moved to Trash.",
+    "restoreError": "Unable to restore this video.",
+    "restored": "Video restored successfully.",
+    "permanentDeletion": "PERMANENT DELETION",
+    "permanentDeleteTitle": "Delete video permanently?",
+    "permanentDeleteDescription": "This permanently removes the video from SHOBDO and deletes its stored media. This action cannot be undone.",
+    "permanentDeleteError": "Unable to permanently delete this video.",
+    "permanentlyDeleted": "Video permanently deleted.",
+    "cancel": "Cancel",
+    "close": "Close",
+    "defaultReelTitle": "SHOBDO Reel",
+    "untitledVideo": "Untitled video"
+  },
+  "bn": {
+    "eyebrow": "SHOBDO মিডিয়া",
+    "title": "ভিডিও",
+    "description": "ভিডিও দেখুন, রিলস আবিষ্কার করুন এবং যাদের অনুসরণ করেন তাদের নতুন কনটেন্টের সঙ্গে থাকুন।",
+    "addVideo": "ভিডিও যোগ করুন",
+    "createReel": "রিল তৈরি করুন",
+    "videos": "ভিডিও",
+    "reels": "রিলস",
+    "following": "অনুসরণ",
+    "communityFeed": "কমিউনিটি ফিড",
+    "latestVideos": "সর্বশেষ ভিডিও",
+    "yourNetwork": "আপনার নেটওয়ার্ক",
+    "fromPeopleYouFollow": "আপনি যাদের অনুসরণ করেন",
+    "yourLibrary": "আপনার লাইব্রেরি",
+    "videoTrash": "ভিডিও ট্র্যাশ",
+    "trash": "ট্র্যাশ",
+    "backToVideos": "ভিডিওতে ফিরুন",
+    "refresh": "রিফ্রেশ",
+    "loading": "ভিডিও লোড হচ্ছে...",
+    "loadingTrash": "ভিডিও ট্র্যাশ লোড হচ্ছে...",
+    "unavailable": "ভিডিও লোড করা যাচ্ছে না",
+    "trashUnavailable": "ভিডিও ট্র্যাশ লোড করা যাচ্ছে না",
+    "tryAgain": "আবার চেষ্টা করুন",
+    "noVideos": "এখনও কোনো ভিডিও নেই",
+    "noVideosDescription": "SHOBDO কমিউনিটিতে প্রথম ভিডিওটি শেয়ার করুন।",
+    "noFollowingMedia": "এখানে এখনও কোনো ভিডিও বা রিলস নেই",
+    "noFollowingMediaDescription": "স্রষ্টাদের অনুসরণ করুন, তাদের নতুন ভিডিও ও রিলস এখানে দেখুন।",
+    "trashEmpty": "ভিডিও ট্র্যাশ খালি",
+    "trashEmptyDescription": "আপনি ট্র্যাশে পাঠানো ভিডিওগুলি পুনরুদ্ধার বা স্থায়ীভাবে মুছে না ফেলা পর্যন্ত এখানে থাকবে।",
+    "inTrash": "ট্র্যাশে",
+    "you": "আপনি",
+    "trashed": "ট্র্যাশে",
+    "reel": "রিল",
+    "video": "ভিডিও",
+    "moreOptions": "আরও বিকল্প",
+    "restore": "পুনরুদ্ধার",
+    "restoring": "পুনরুদ্ধার হচ্ছে...",
+    "deletePermanently": "স্থায়ীভাবে মুছুন",
+    "deletingPermanently": "মুছে ফেলা হচ্ছে...",
+    "share": "শেয়ার",
+    "copyLink": "লিংক কপি",
+    "moveToTrash": "ট্র্যাশে পাঠান",
+    "movingToTrash": "পাঠানো হচ্ছে...",
+    "mediaUnavailable": "ভিডিও উপলভ্য নয়",
+    "views": "ভিউ",
+    "loadError": "ভিডিও লোড করা যায়নি।",
+    "followingLoadError": "আপনি যাদের অনুসরণ করেন তাদের মিডিয়া লোড করা যায়নি।",
+    "trashLoadError": "ভিডিও ট্র্যাশ লোড করা যায়নি।",
+    "shareReelText": "SHOBDO-তে এই রিলটি দেখুন।",
+    "shareVideoText": "SHOBDO-তে এই ভিডিওটি দেখুন।",
+    "linkCopied": "লিংক কপি হয়েছে।",
+    "copyThisLink": "এই লিংকটি কপি করুন:",
+    "moveToTrashTitle": "ভিডিওটি ট্র্যাশে পাঠাবেন?",
+    "moveToTrashDescription": "ভিডিওটি SHOBDO থেকে সরিয়ে দেওয়া হবে, তবে পরে ভিডিও ট্র্যাশ থেকে পুনরুদ্ধার করতে পারবেন।",
+    "moveToTrashError": "ভিডিওটি ট্র্যাশে পাঠানো যায়নি।",
+    "movedToTrash": "ভিডিওটি ট্র্যাশে পাঠানো হয়েছে।",
+    "restoreError": "ভিডিওটি পুনরুদ্ধার করা যায়নি।",
+    "restored": "ভিডিওটি সফলভাবে পুনরুদ্ধার করা হয়েছে।",
+    "permanentDeletion": "স্থায়ীভাবে মুছে ফেলা",
+    "permanentDeleteTitle": "ভিডিওটি স্থায়ীভাবে মুছবেন?",
+    "permanentDeleteDescription": "এতে ভিডিওটি SHOBDO থেকে স্থায়ীভাবে মুছে যাবে এবং সংরক্ষিত মিডিয়াও মুছে যাবে। এই কাজটি আর ফিরিয়ে আনা যাবে না।",
+    "permanentDeleteError": "ভিডিওটি স্থায়ীভাবে মুছে ফেলা যায়নি।",
+    "permanentlyDeleted": "ভিডিওটি স্থায়ীভাবে মুছে ফেলা হয়েছে।",
+    "cancel": "বাতিল",
+    "close": "বন্ধ করুন",
+    "defaultReelTitle": "SHOBDO রিল",
+    "untitledVideo": "শিরোনামহীন ভিডিও"
+  },
+  "hi": {
+    "eyebrow": "SHOBDO मीडिया",
+    "title": "वीडियो",
+    "description": "वीडियो देखें, रील्स खोजें और जिन क्रिएटर्स को आप फ़ॉलो करते हैं उनके नए कंटेंट से जुड़े रहें।",
+    "addVideo": "वीडियो जोड़ें",
+    "createReel": "रील बनाएँ",
+    "videos": "वीडियो",
+    "reels": "रील्स",
+    "following": "फ़ॉलोइंग",
+    "communityFeed": "कम्युनिटी फ़ीड",
+    "latestVideos": "नवीनतम वीडियो",
+    "yourNetwork": "आपका नेटवर्क",
+    "fromPeopleYouFollow": "जिन्हें आप फ़ॉलो करते हैं",
+    "yourLibrary": "आपकी लाइब्रेरी",
+    "videoTrash": "वीडियो ट्रैश",
+    "trash": "ट्रैश",
+    "backToVideos": "वीडियो पर वापस जाएँ",
+    "refresh": "रीफ़्रेश",
+    "loading": "वीडियो लोड हो रहे हैं...",
+    "loadingTrash": "वीडियो ट्रैश लोड हो रहा है...",
+    "unavailable": "वीडियो लोड नहीं हो सके",
+    "trashUnavailable": "वीडियो ट्रैश लोड नहीं हो सका",
+    "tryAgain": "फिर कोशिश करें",
+    "noVideos": "अभी कोई वीडियो नहीं है",
+    "noVideosDescription": "SHOBDO कम्युनिटी में पहला वीडियो शेयर करें।",
+    "noFollowingMedia": "यहाँ अभी कोई वीडियो या रील नहीं है",
+    "noFollowingMediaDescription": "क्रिएटर्स को फ़ॉलो करें और उनके नए वीडियो व रील्स यहाँ देखें।",
+    "trashEmpty": "वीडियो ट्रैश खाली है",
+    "trashEmptyDescription": "ट्रैश में भेजे गए वीडियो तब तक यहाँ रहेंगे जब तक आप उन्हें पुनर्स्थापित या स्थायी रूप से हटा नहीं देते।",
+    "inTrash": "ट्रैश में",
+    "you": "आप",
+    "trashed": "ट्रैश में",
+    "reel": "रील",
+    "video": "वीडियो",
+    "moreOptions": "और विकल्प",
+    "restore": "पुनर्स्थापित करें",
+    "restoring": "पुनर्स्थापित हो रहा है...",
+    "deletePermanently": "स्थायी रूप से हटाएँ",
+    "deletingPermanently": "हटाया जा रहा है...",
+    "share": "शेयर",
+    "copyLink": "लिंक कॉपी करें",
+    "moveToTrash": "ट्रैश में भेजें",
+    "movingToTrash": "भेजा जा रहा है...",
+    "mediaUnavailable": "वीडियो उपलब्ध नहीं है",
+    "views": "व्यू",
+    "loadError": "वीडियो लोड नहीं किए जा सके।",
+    "followingLoadError": "आप जिन लोगों को फ़ॉलो करते हैं उनका मीडिया लोड नहीं किया जा सका।",
+    "trashLoadError": "वीडियो ट्रैश लोड नहीं किया जा सका।",
+    "shareReelText": "SHOBDO पर यह रील देखें।",
+    "shareVideoText": "SHOBDO पर यह वीडियो देखें।",
+    "linkCopied": "लिंक कॉपी हो गया।",
+    "copyThisLink": "यह लिंक कॉपी करें:",
+    "moveToTrashTitle": "वीडियो को ट्रैश में भेजें?",
+    "moveToTrashDescription": "वीडियो SHOBDO से हट जाएगा, लेकिन आप इसे बाद में वीडियो ट्रैश से पुनर्स्थापित कर सकते हैं।",
+    "moveToTrashError": "वीडियो को ट्रैश में नहीं भेजा जा सका।",
+    "movedToTrash": "वीडियो ट्रैश में भेज दिया गया।",
+    "restoreError": "वीडियो पुनर्स्थापित नहीं किया जा सका।",
+    "restored": "वीडियो सफलतापूर्वक पुनर्स्थापित हुआ।",
+    "permanentDeletion": "स्थायी हटाना",
+    "permanentDeleteTitle": "वीडियो को स्थायी रूप से हटाएँ?",
+    "permanentDeleteDescription": "यह वीडियो को SHOBDO से स्थायी रूप से हटाएगा और संग्रहित मीडिया भी मिटा देगा। यह कार्रवाई वापस नहीं की जा सकती।",
+    "permanentDeleteError": "वीडियो स्थायी रूप से नहीं हटाया जा सका।",
+    "permanentlyDeleted": "वीडियो स्थायी रूप से हटा दिया गया।",
+    "cancel": "रद्द करें",
+    "close": "बंद करें",
+    "defaultReelTitle": "SHOBDO रील",
+    "untitledVideo": "बिना शीर्षक का वीडियो"
+  },
+  "as": {
+    "eyebrow": "SHOBDO মিডিয়া",
+    "title": "ভিডিঅ'",
+    "description": "ভিডিঅ' চাওক, ৰিলছ আৱিষ্কাৰ কৰক আৰু আপুনি অনুসৰণ কৰা স্ৰষ্টাসকলৰ নতুন কনটেন্টৰ সৈতে সংযুক্ত থাকক।",
+    "addVideo": "ভিডিঅ' যোগ কৰক",
+    "createReel": "ৰিল তৈয়াৰ কৰক",
+    "videos": "ভিডিঅ'",
+    "reels": "ৰিলছ",
+    "following": "অনুসৰণ",
+    "communityFeed": "কমিউনিটি ফিড",
+    "latestVideos": "শেহতীয়া ভিডিঅ'",
+    "yourNetwork": "আপোনাৰ নেটৱৰ্ক",
+    "fromPeopleYouFollow": "আপুনি অনুসৰণ কৰা লোকসকলৰ পৰা",
+    "yourLibrary": "আপোনাৰ লাইব্ৰেৰী",
+    "videoTrash": "ভিডিঅ' ট্রেশ",
+    "trash": "ট্রেশ",
+    "backToVideos": "ভিডিঅ'লৈ উভতি যাওক",
+    "refresh": "ৰিফ্ৰেছ",
+    "loading": "ভিডিঅ' লোড হৈ আছে...",
+    "loadingTrash": "ভিডিঅ' ট্রেশ লোড হৈ আছে...",
+    "unavailable": "ভিডিঅ' লোড কৰিব পৰা নগ'ল",
+    "trashUnavailable": "ভিডিঅ' ট্রেশ লোড কৰিব পৰা নগ'ল",
+    "tryAgain": "পুনৰ চেষ্টা কৰক",
+    "noVideos": "এতিয়াও কোনো ভিডিঅ' নাই",
+    "noVideosDescription": "SHOBDO কমিউনিটিত প্ৰথম ভিডিঅ'টো শ্বেয়াৰ কৰক।",
+    "noFollowingMedia": "ইয়াত এতিয়াও কোনো ভিডিঅ' বা ৰিল নাই",
+    "noFollowingMediaDescription": "স্ৰষ্টাসকলক অনুসৰণ কৰক আৰু তেওঁলোকৰ নতুন ভিডিঅ' আৰু ৰিল ইয়াত চাওক।",
+    "trashEmpty": "ভিডিঅ' ট্রেশ খালী",
+    "trashEmptyDescription": "ট্রেশলৈ পঠোৱা ভিডিঅ'সমূহ পুনৰুদ্ধাৰ বা স্থায়ীভাৱে মচি নোপোৱালৈকে ইয়াত থাকিব।",
+    "inTrash": "ট্রেশত",
+    "you": "আপুনি",
+    "trashed": "ট্রেশত",
+    "reel": "ৰিল",
+    "video": "ভিডিঅ'",
+    "moreOptions": "অধিক বিকল্প",
+    "restore": "পুনৰুদ্ধাৰ",
+    "restoring": "পুনৰুদ্ধাৰ হৈ আছে...",
+    "deletePermanently": "স্থায়ীভাৱে মচক",
+    "deletingPermanently": "মচি থকা হৈছে...",
+    "share": "শ্বেয়াৰ",
+    "copyLink": "লিংক কপি কৰক",
+    "moveToTrash": "ট্রেশলৈ পঠাওক",
+    "movingToTrash": "পঠোৱা হৈছে...",
+    "mediaUnavailable": "ভিডিঅ' উপলভ্য নহয়",
+    "views": "ভিউ",
+    "loadError": "ভিডিঅ' লোড কৰিব পৰা নগ'ল।",
+    "followingLoadError": "আপুনি অনুসৰণ কৰা লোকসকলৰ মিডিয়া লোড কৰিব পৰা নগ'ল।",
+    "trashLoadError": "ভিডিঅ' ট্রেশ লোড কৰিব পৰা নগ'ল।",
+    "shareReelText": "SHOBDO-ত এই ৰিলটো চাওক।",
+    "shareVideoText": "SHOBDO-ত এই ভিডিঅ'টো চাওক।",
+    "linkCopied": "লিংক কপি হৈছে।",
+    "copyThisLink": "এই লিংকটো কপি কৰক:",
+    "moveToTrashTitle": "ভিডিঅ'টো ট্রেশলৈ পঠাবনে?",
+    "moveToTrashDescription": "ভিডিঅ'টো SHOBDO-ৰ পৰা আঁতৰি যাব, কিন্তু পাছত ভিডিঅ' ট্রেশৰ পৰা পুনৰুদ্ধাৰ কৰিব পাৰিব।",
+    "moveToTrashError": "ভিডিঅ'টো ট্রেশলৈ পঠাব পৰা নগ'ল।",
+    "movedToTrash": "ভিডিঅ'টো ট্রেশলৈ পঠোৱা হৈছে।",
+    "restoreError": "ভিডিঅ'টো পুনৰুদ্ধাৰ কৰিব পৰা নগ'ল।",
+    "restored": "ভিডিঅ'টো সফলভাৱে পুনৰুদ্ধাৰ কৰা হৈছে।",
+    "permanentDeletion": "স্থায়ীভাৱে মচা",
+    "permanentDeleteTitle": "ভিডিঅ'টো স্থায়ীভাৱে মচিবনে?",
+    "permanentDeleteDescription": "ইয়াৰ ফলত ভিডিঅ'টো SHOBDO-ৰ পৰা স্থায়ীভাৱে মচি যাব আৰু সংৰক্ষিত মিডিয়াও মচি যাব। এই কাম পুনৰ ঘূৰাই আনিব নোৱাৰি।",
+    "permanentDeleteError": "ভিডিঅ'টো স্থায়ীভাৱে মচিব পৰা নগ'ল।",
+    "permanentlyDeleted": "ভিডিঅ'টো স্থায়ীভাৱে মচি দিয়া হৈছে।",
+    "cancel": "বাতিল",
+    "close": "বন্ধ কৰক",
+    "defaultReelTitle": "SHOBDO ৰিল",
+    "untitledVideo": "শিৰোনামহীন ভিডিঅ'"
+  },
+  "or": {
+    "eyebrow": "SHOBDO ମିଡିଆ",
+    "title": "ଭିଡିଓ",
+    "description": "ଭିଡିଓ ଦେଖନ୍ତୁ, ରିଲ୍ସ ଖୋଜନ୍ତୁ ଏବଂ ଆପଣ ଅନୁସରଣ କରୁଥିବା ସୃଷ୍ଟାମାନଙ୍କର ନୂଆ କଣ୍ଟେଣ୍ଟ ସହିତ ଯୋଡ଼ିତ ରୁହନ୍ତୁ।",
+    "addVideo": "ଭିଡିଓ ଯୋଡ଼ନ୍ତୁ",
+    "createReel": "ରିଲ୍ ତିଆରି କରନ୍ତୁ",
+    "videos": "ଭିଡିଓ",
+    "reels": "ରିଲ୍ସ",
+    "following": "ଅନୁସରଣ",
+    "communityFeed": "କମ୍ୟୁନିଟି ଫିଡ୍",
+    "latestVideos": "ସବୁଠାରୁ ନୂଆ ଭିଡିଓ",
+    "yourNetwork": "ଆପଣଙ୍କ ନେଟୱର୍କ",
+    "fromPeopleYouFollow": "ଆପଣ ଅନୁସରଣ କରୁଥିବା ଲୋକମାନଙ୍କଠାରୁ",
+    "yourLibrary": "ଆପଣଙ୍କ ଲାଇବ୍ରେରୀ",
+    "videoTrash": "ଭିଡିଓ ଟ୍ରାଶ୍",
+    "trash": "ଟ୍ରାଶ୍",
+    "backToVideos": "ଭିଡିଓକୁ ଫେରନ୍ତୁ",
+    "refresh": "ରିଫ୍ରେଶ୍",
+    "loading": "ଭିଡିଓ ଲୋଡ୍ ହେଉଛି...",
+    "loadingTrash": "ଭିଡିଓ ଟ୍ରାଶ୍ ଲୋଡ୍ ହେଉଛି...",
+    "unavailable": "ଭିଡିଓ ଲୋଡ୍ ହୋଇପାରିଲା ନାହିଁ",
+    "trashUnavailable": "ଭିଡିଓ ଟ୍ରାଶ୍ ଲୋଡ୍ ହୋଇପାରିଲା ନାହିଁ",
+    "tryAgain": "ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ",
+    "noVideos": "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଭିଡିଓ ନାହିଁ",
+    "noVideosDescription": "SHOBDO କମ୍ୟୁନିଟିରେ ପ୍ରଥମ ଭିଡିଓଟି ଶେୟାର୍ କରନ୍ତୁ।",
+    "noFollowingMedia": "ଏଠାରେ ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଭିଡିଓ କିମ୍ବା ରିଲ୍ ନାହିଁ",
+    "noFollowingMediaDescription": "ସୃଷ୍ଟାମାନଙ୍କୁ ଅନୁସରଣ କରନ୍ତୁ ଏବଂ ସେମାନଙ୍କର ନୂଆ ଭିଡିଓ ଓ ରିଲ୍ସ ଏଠାରେ ଦେଖନ୍ତୁ।",
+    "trashEmpty": "ଭିଡିଓ ଟ୍ରାଶ୍ ଖାଲି",
+    "trashEmptyDescription": "ଟ୍ରାଶ୍‌କୁ ପଠାଇଥିବା ଭିଡିଓଗୁଡ଼ିକ ପୁନରୁଦ୍ଧାର କିମ୍ବା ସ୍ଥାୟୀଭାବେ ଡିଲିଟ୍ କରିବା ପର୍ଯ୍ୟନ୍ତ ଏଠାରେ ରହିବ।",
+    "inTrash": "ଟ୍ରାଶ୍‌ରେ",
+    "you": "ଆପଣ",
+    "trashed": "ଟ୍ରାଶ୍‌ରେ",
+    "reel": "ରିଲ୍",
+    "video": "ଭିଡିଓ",
+    "moreOptions": "ଅଧିକ ବିକଳ୍ପ",
+    "restore": "ପୁନରୁଦ୍ଧାର",
+    "restoring": "ପୁନରୁଦ୍ଧାର ହେଉଛି...",
+    "deletePermanently": "ସ୍ଥାୟୀଭାବେ ଡିଲିଟ୍ କରନ୍ତୁ",
+    "deletingPermanently": "ଡିଲିଟ୍ ହେଉଛି...",
+    "share": "ଶେୟାର୍",
+    "copyLink": "ଲିଙ୍କ କପି କରନ୍ତୁ",
+    "moveToTrash": "ଟ୍ରାଶ୍‌କୁ ପଠାନ୍ତୁ",
+    "movingToTrash": "ପଠାଯାଉଛି...",
+    "mediaUnavailable": "ଭିଡିଓ ଉପଲବ୍ଧ ନାହିଁ",
+    "views": "ଭ୍ୟୁ",
+    "loadError": "ଭିଡିଓ ଲୋଡ୍ ହୋଇପାରିଲା ନାହିଁ।",
+    "followingLoadError": "ଆପଣ ଅନୁସରଣ କରୁଥିବା ଲୋକମାନଙ୍କର ମିଡିଆ ଲୋଡ୍ ହୋଇପାରିଲା ନାହିଁ।",
+    "trashLoadError": "ଭିଡିଓ ଟ୍ରାଶ୍ ଲୋଡ୍ ହୋଇପାରିଲା ନାହିଁ।",
+    "shareReelText": "SHOBDO-ରେ ଏହି ରିଲ୍ ଦେଖନ୍ତୁ।",
+    "shareVideoText": "SHOBDO-ରେ ଏହି ଭିଡିଓ ଦେଖନ୍ତୁ।",
+    "linkCopied": "ଲିଙ୍କ କପି ହୋଇଛି।",
+    "copyThisLink": "ଏହି ଲିଙ୍କ କପି କରନ୍ତୁ:",
+    "moveToTrashTitle": "ଭିଡିଓଟି ଟ୍ରାଶ୍‌କୁ ପଠାଇବେ?",
+    "moveToTrashDescription": "ଭିଡିଓଟି SHOBDOରୁ ହଟିଯିବ, କିନ୍ତୁ ପରେ ଭିଡିଓ ଟ୍ରାଶ୍‌ରୁ ପୁନରୁଦ୍ଧାର କରିପାରିବେ।",
+    "moveToTrashError": "ଭିଡିଓଟି ଟ୍ରାଶ୍‌କୁ ପଠାଇପାରିଲା ନାହିଁ।",
+    "movedToTrash": "ଭିଡିଓଟି ଟ୍ରାଶ୍‌କୁ ପଠାଯାଇଛି।",
+    "restoreError": "ଭିଡିଓଟି ପୁନରୁଦ୍ଧାର ହୋଇପାରିଲା ନାହିଁ।",
+    "restored": "ଭିଡିଓଟି ସଫଳତାର ସହ ପୁନରୁଦ୍ଧାର ହୋଇଛି।",
+    "permanentDeletion": "ସ୍ଥାୟୀ ଡିଲିଟ୍",
+    "permanentDeleteTitle": "ଭିଡିଓଟି ସ୍ଥାୟୀଭାବେ ଡିଲିଟ୍ କରିବେ?",
+    "permanentDeleteDescription": "ଏହା ଭିଡିଓଟିକୁ SHOBDOରୁ ସ୍ଥାୟୀଭାବେ ହଟାଇବ ଏବଂ ସଞ୍ଚିତ ମିଡିଆକୁ ମଧ୍ୟ ଡିଲିଟ୍ କରିଦେବ। ଏହି କାର୍ଯ୍ୟ ପଛକୁ ଫେରାଇହେବ ନାହିଁ।",
+    "permanentDeleteError": "ଭିଡିଓଟି ସ୍ଥାୟୀଭାବେ ଡିଲିଟ୍ ହୋଇପାରିଲା ନାହିଁ।",
+    "permanentlyDeleted": "ଭିଡିଓଟି ସ୍ଥାୟୀଭାବେ ଡିଲିଟ୍ ହୋଇଛି।",
+    "cancel": "ବାତିଲ୍",
+    "close": "ବନ୍ଦ କରନ୍ତୁ",
+    "defaultReelTitle": "SHOBDO ରିଲ୍",
+    "untitledVideo": "ଶିରୋନାମହୀନ ଭିଡିଓ"
+  },
+  "ta": {
+    "eyebrow": "SHOBDO மீடியா",
+    "title": "வீடியோ",
+    "description": "வீடியோக்களைப் பாருங்கள், ரீல்ஸை கண்டறியுங்கள், நீங்கள் பின்தொடரும் படைப்பாளர்களின் புதிய உள்ளடக்கத்துடன் இணைந்திருங்கள்.",
+    "addVideo": "வீடியோ சேர்க்கவும்",
+    "createReel": "ரீல் உருவாக்கவும்",
+    "videos": "வீடியோக்கள்",
+    "reels": "ரீல்ஸ்",
+    "following": "பின்தொடர்பவை",
+    "communityFeed": "சமூக ஃபீடு",
+    "latestVideos": "சமீபத்திய வீடியோக்கள்",
+    "yourNetwork": "உங்கள் நெட்வொர்க்",
+    "fromPeopleYouFollow": "நீங்கள் பின்தொடர்பவர்களிடமிருந்து",
+    "yourLibrary": "உங்கள் நூலகம்",
+    "videoTrash": "வீடியோ குப்பை",
+    "trash": "குப்பை",
+    "backToVideos": "வீடியோக்களுக்கு திரும்பவும்",
+    "refresh": "புதுப்பிக்கவும்",
+    "loading": "வீடியோக்கள் ஏற்றப்படுகின்றன...",
+    "loadingTrash": "வீடியோ குப்பை ஏற்றப்படுகிறது...",
+    "unavailable": "வீடியோக்களை ஏற்ற முடியவில்லை",
+    "trashUnavailable": "வீடியோ குப்பையை ஏற்ற முடியவில்லை",
+    "tryAgain": "மீண்டும் முயற்சிக்கவும்",
+    "noVideos": "இன்னும் வீடியோக்கள் இல்லை",
+    "noVideosDescription": "SHOBDO சமூகத்தில் முதல் வீடியோவைப் பகிருங்கள்.",
+    "noFollowingMedia": "இங்கே இன்னும் வீடியோக்கள் அல்லது ரீல்ஸ் இல்லை",
+    "noFollowingMediaDescription": "படைப்பாளர்களைப் பின்தொடர்ந்து அவர்களின் புதிய வீடியோக்கள் மற்றும் ரீல்ஸை இங்கே பாருங்கள்.",
+    "trashEmpty": "வீடியோ குப்பை காலியாக உள்ளது",
+    "trashEmptyDescription": "குப்பைக்கு அனுப்பிய வீடியோக்கள் மீட்டெடுக்கப்படும் அல்லது நிரந்தரமாக நீக்கப்படும் வரை இங்கே இருக்கும்.",
+    "inTrash": "குப்பையில்",
+    "you": "நீங்கள்",
+    "trashed": "குப்பையில்",
+    "reel": "ரீல்",
+    "video": "வீடியோ",
+    "moreOptions": "மேலும் விருப்பங்கள்",
+    "restore": "மீட்டெடுக்கவும்",
+    "restoring": "மீட்டெடுக்கப்படுகிறது...",
+    "deletePermanently": "நிரந்தரமாக நீக்கவும்",
+    "deletingPermanently": "நீக்கப்படுகிறது...",
+    "share": "பகிர்",
+    "copyLink": "இணைப்பை நகலெடுக்கவும்",
+    "moveToTrash": "குப்பைக்கு அனுப்பவும்",
+    "movingToTrash": "அனுப்பப்படுகிறது...",
+    "mediaUnavailable": "வீடியோ கிடைக்கவில்லை",
+    "views": "பார்வைகள்",
+    "loadError": "வீடியோக்களை ஏற்ற முடியவில்லை.",
+    "followingLoadError": "நீங்கள் பின்தொடர்பவர்களின் மீடியாவை ஏற்ற முடியவில்லை.",
+    "trashLoadError": "வீடியோ குப்பையை ஏற்ற முடியவில்லை.",
+    "shareReelText": "SHOBDO-வில் இந்த ரீலைப் பாருங்கள்.",
+    "shareVideoText": "SHOBDO-வில் இந்த வீடியோவைப் பாருங்கள்.",
+    "linkCopied": "இணைப்பு நகலெடுக்கப்பட்டது.",
+    "copyThisLink": "இந்த இணைப்பை நகலெடுக்கவும்:",
+    "moveToTrashTitle": "வீடியோவை குப்பைக்கு அனுப்பவா?",
+    "moveToTrashDescription": "வீடியோ SHOBDO-வில் இருந்து மறையும்; ஆனால் பின்னர் வீடியோ குப்பையிலிருந்து மீட்டெடுக்கலாம்.",
+    "moveToTrashError": "வீடியோவை குப்பைக்கு அனுப்ப முடியவில்லை.",
+    "movedToTrash": "வீடியோ குப்பைக்கு அனுப்பப்பட்டது.",
+    "restoreError": "வீடியோவை மீட்டெடுக்க முடியவில்லை.",
+    "restored": "வீடியோ வெற்றிகரமாக மீட்டெடுக்கப்பட்டது.",
+    "permanentDeletion": "நிரந்தர நீக்கம்",
+    "permanentDeleteTitle": "வீடியோவை நிரந்தரமாக நீக்கவா?",
+    "permanentDeleteDescription": "இது வீடியோவை SHOBDO-வில் இருந்து நிரந்தரமாக நீக்கி, சேமிக்கப்பட்ட மீடியாவையும் அழிக்கும். இந்த செயலை மீட்டெடுக்க முடியாது.",
+    "permanentDeleteError": "வீடியோவை நிரந்தரமாக நீக்க முடியவில்லை.",
+    "permanentlyDeleted": "வீடியோ நிரந்தரமாக நீக்கப்பட்டது.",
+    "cancel": "ரத்து",
+    "close": "மூடு",
+    "defaultReelTitle": "SHOBDO ரீல்",
+    "untitledVideo": "தலைப்பில்லா வீடியோ"
+  },
+  "te": {
+    "eyebrow": "SHOBDO మీడియా",
+    "title": "వీడియో",
+    "description": "వీడియోలు చూడండి, రీల్స్‌ను కనుగొనండి, మీరు ఫాలో అయ్యే సృష్టికర్తల కొత్త కంటెంట్‌తో కనెక్ట్‌గా ఉండండి.",
+    "addVideo": "వీడియో జోడించండి",
+    "createReel": "రీల్ సృష్టించండి",
+    "videos": "వీడియోలు",
+    "reels": "రీల్స్",
+    "following": "ఫాలోయింగ్",
+    "communityFeed": "కమ్యూనిటీ ఫీడ్",
+    "latestVideos": "తాజా వీడియోలు",
+    "yourNetwork": "మీ నెట్‌వర్క్",
+    "fromPeopleYouFollow": "మీరు ఫాలో అయ్యే వారి నుండి",
+    "yourLibrary": "మీ లైబ్రరీ",
+    "videoTrash": "వీడియో ట్రాష్",
+    "trash": "ట్రాష్",
+    "backToVideos": "వీడియోలకు తిరిగి వెళ్లండి",
+    "refresh": "రిఫ్రెష్",
+    "loading": "వీడియోలు లోడ్ అవుతున్నాయి...",
+    "loadingTrash": "వీడియో ట్రాష్ లోడ్ అవుతోంది...",
+    "unavailable": "వీడియోలను లోడ్ చేయలేకపోయాం",
+    "trashUnavailable": "వీడియో ట్రాష్‌ను లోడ్ చేయలేకపోయాం",
+    "tryAgain": "మళ్లీ ప్రయత్నించండి",
+    "noVideos": "ఇంకా వీడియోలు లేవు",
+    "noVideosDescription": "SHOBDO కమ్యూనిటీలో మొదటి వీడియోను షేర్ చేయండి.",
+    "noFollowingMedia": "ఇక్కడ ఇంకా వీడియోలు లేదా రీల్స్ లేవు",
+    "noFollowingMediaDescription": "సృష్టికర్తలను ఫాలో అవ్వండి మరియు వారి తాజా వీడియోలు, రీల్స్‌ను ఇక్కడ చూడండి.",
+    "trashEmpty": "వీడియో ట్రాష్ ఖాళీగా ఉంది",
+    "trashEmptyDescription": "ట్రాష్‌కు పంపిన వీడియోలు మీరు వాటిని పునరుద్ధరించే వరకు లేదా శాశ్వతంగా తొలగించే వరకు ఇక్కడ కనిపిస్తాయి.",
+    "inTrash": "ట్రాష్‌లో",
+    "you": "మీరు",
+    "trashed": "ట్రాష్‌లో",
+    "reel": "రీల్",
+    "video": "వీడియో",
+    "moreOptions": "మరిన్ని ఎంపికలు",
+    "restore": "పునరుద్ధరించండి",
+    "restoring": "పునరుద్ధరిస్తోంది...",
+    "deletePermanently": "శాశ్వతంగా తొలగించండి",
+    "deletingPermanently": "తొలగిస్తోంది...",
+    "share": "షేర్",
+    "copyLink": "లింక్ కాపీ చేయండి",
+    "moveToTrash": "ట్రాష్‌కు పంపండి",
+    "movingToTrash": "పంపుతోంది...",
+    "mediaUnavailable": "వీడియో అందుబాటులో లేదు",
+    "views": "వ్యూస్",
+    "loadError": "వీడియోలను లోడ్ చేయలేకపోయాం.",
+    "followingLoadError": "మీరు ఫాలో అయ్యే వారి మీడియాను లోడ్ చేయలేకపోయాం.",
+    "trashLoadError": "వీడియో ట్రాష్‌ను లోడ్ చేయలేకపోయాం.",
+    "shareReelText": "SHOBDOలో ఈ రీల్ చూడండి.",
+    "shareVideoText": "SHOBDOలో ఈ వీడియో చూడండి.",
+    "linkCopied": "లింక్ కాపీ అయింది.",
+    "copyThisLink": "ఈ లింక్‌ను కాపీ చేయండి:",
+    "moveToTrashTitle": "వీడియోను ట్రాష్‌కు పంపాలా?",
+    "moveToTrashDescription": "వీడియో SHOBDO నుంచి కనిపించదు, కానీ తర్వాత వీడియో ట్రాష్ నుంచి పునరుద్ధరించవచ్చు.",
+    "moveToTrashError": "వీడియోను ట్రాష్‌కు పంపలేకపోయాం.",
+    "movedToTrash": "వీడియో ట్రాష్‌కు పంపబడింది.",
+    "restoreError": "వీడియోను పునరుద్ధరించలేకపోయాం.",
+    "restored": "వీడియో విజయవంతంగా పునరుద్ధరించబడింది.",
+    "permanentDeletion": "శాశ్వత తొలగింపు",
+    "permanentDeleteTitle": "వీడియోను శాశ్వతంగా తొలగించాలా?",
+    "permanentDeleteDescription": "ఇది వీడియోను SHOBDO నుంచి శాశ్వతంగా తొలగించి, నిల్వ చేసిన మీడియాను కూడా తొలగిస్తుంది. ఈ చర్యను తిరిగి మార్చలేరు.",
+    "permanentDeleteError": "వీడియోను శాశ్వతంగా తొలగించలేకపోయాం.",
+    "permanentlyDeleted": "వీడియో శాశ్వతంగా తొలగించబడింది.",
+    "cancel": "రద్దు",
+    "close": "మూసివేయండి",
+    "defaultReelTitle": "SHOBDO రీల్",
+    "untitledVideo": "శీర్షిక లేని వీడియో"
+  }
+};
+
+
 // =========================================================
 // TOKEN
 // =========================================================
@@ -502,7 +986,8 @@ function getPoster(
 
 function getTitle(
   item,
-  type
+  type,
+  t
 ) {
 
   if (
@@ -547,8 +1032,14 @@ function getTitle(
 
   return (
     type === "reel"
-      ? "SHOBDO Reel"
-      : "Untitled video"
+      ? t(
+          "videos.defaultReelTitle",
+          "SHOBDO Reel"
+        )
+      : t(
+          "videos.untitledVideo",
+          "Untitled video"
+        )
   );
 
 }
@@ -965,7 +1456,8 @@ function VideoCard({
   const title =
     getTitle(
       item,
-      type
+      type,
+      t
     );
 
 
@@ -1721,10 +2213,74 @@ export default function Videos({
 }) {
 
   const {
-    t,
+    t:
+      globalT,
     language,
   } =
     useLanguage();
+
+
+  const t =
+    useCallback(
+      (
+        key,
+        fallback = ""
+      ) => {
+
+        if (
+          String(
+            key || ""
+          ).startsWith(
+            "videos."
+          )
+        ) {
+
+          const copy =
+            VIDEO_COPY[
+              language
+            ] ||
+            VIDEO_COPY.en;
+
+
+          const englishCopy =
+            VIDEO_COPY.en;
+
+
+          const localKey =
+            String(
+              key
+            ).slice(
+              "videos.".length
+            );
+
+
+          return (
+            copy?.[
+              localKey
+            ] ??
+            englishCopy?.[
+              localKey
+            ] ??
+            fallback
+          );
+
+        }
+
+
+        return (
+          globalT?.(
+            key,
+            fallback
+          ) ??
+          fallback
+        );
+
+      },
+      [
+        globalT,
+        language,
+      ]
+    );
 
 
   const [
@@ -1732,6 +2288,80 @@ export default function Videos({
     setSearchParams,
   ] =
     useSearchParams();
+
+
+  const [
+    reduceMotion,
+    setReduceMotion,
+  ] =
+    useState(false);
+
+
+  useEffect(
+    () => {
+
+      if (
+        typeof window ===
+          "undefined" ||
+        !window.matchMedia
+      ) {
+
+        return undefined;
+
+      }
+
+
+      const mediaQuery =
+        window.matchMedia(
+          "(prefers-reduced-motion: reduce)"
+        );
+
+
+      const syncPreference =
+        () => {
+
+          setReduceMotion(
+            mediaQuery.matches
+          );
+
+        };
+
+
+      syncPreference();
+
+
+      if (
+        mediaQuery.addEventListener
+      ) {
+
+        mediaQuery.addEventListener(
+          "change",
+          syncPreference
+        );
+
+
+        return () =>
+          mediaQuery.removeEventListener(
+            "change",
+            syncPreference
+          );
+
+      }
+
+
+      mediaQuery.addListener?.(
+        syncPreference
+      );
+
+
+      return () =>
+        mediaQuery.removeListener?.(
+          syncPreference
+        );
+
+    },
+    []
+  );
 
 
   const requestedTab =
@@ -3453,6 +4083,45 @@ export default function Videos({
     >
 
       {/* =================================================
+          ANIMATED PAGE BACKGROUND
+      ================================================== */}
+
+      <div
+        className="shobdo-video-animated-background"
+        aria-hidden="true"
+      >
+
+        {!reduceMotion && (
+
+          <video
+            className="shobdo-video-background-video"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          >
+
+            <source
+              src={
+                VIDEO_BACKGROUND_VIDEO
+              }
+              type="video/mp4"
+            />
+
+          </video>
+
+        )}
+
+
+        <div
+          className="shobdo-video-background-overlay"
+        />
+
+      </div>
+
+
+      {/* =================================================
           HERO
       ================================================== */}
 
@@ -3482,7 +4151,10 @@ export default function Videos({
             <span
               className="shobdo-video-eyebrow"
             >
-              SHOBDO MEDIA
+              {t(
+                "videos.eyebrow",
+                "SHOBDO MEDIA"
+              )}
             </span>
 
 
