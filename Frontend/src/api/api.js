@@ -2636,6 +2636,27 @@ export async function toggleRepost(
   );
 }
 
+// =========================================================
+// VIDEO TRASH
+// =========================================================
+
+export async function getVideoTrash({
+  page = 1,
+  limit = 50,
+} = {}) {
+
+  const queryString =
+    createQueryString({
+      page,
+      limit,
+    });
+
+
+  return apiRequest(
+    `/api/videos/trash${queryString}`
+  );
+
+}
 
 // =========================================================
 // DEFAULT EXPORT

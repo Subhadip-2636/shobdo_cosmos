@@ -12,6 +12,7 @@ import {
   Eye,
   FileText,
   Files,
+  Film,
   Globe2,
   Image as ImageIcon,
   Loader2,
@@ -32,6 +33,7 @@ import {
 import {
   deleteWriting,
   getMyWritings,
+  getVideoTrash,
   permanentlyDeleteWriting,
   publishWriting,
   restoreWriting,
@@ -297,6 +299,9 @@ function MyWritings() {
             trashArtwork:
               "শিল্পকর্ম",
 
+            trashVideos:
+              "ভিডিও",
+
             searchDocuments:
               "PDF ডকুমেন্ট খুঁজুন…",
 
@@ -494,6 +499,9 @@ function MyWritings() {
             trashArtwork:
               "Artwork",
 
+            trashVideos:
+              "Videos",
+
             searchDocuments:
               "Search PDF documents…",
 
@@ -690,6 +698,9 @@ function MyWritings() {
 
             trashArtwork:
               "कलाकृति",
+
+            trashVideos:
+              "वीडियो",
 
             searchDocuments:
               "PDF दस्तावेज़ खोजें…",
@@ -900,6 +911,7 @@ function MyWritings() {
   // writings
   // documents
   // artworks
+  // videos
   //
   // =======================================================
 
@@ -978,11 +990,17 @@ function MyWritings() {
     setDeletedArtworkCount,
   ] = useState(0);
 
+  const [
+    deletedVideoCount,
+    setDeletedVideoCount,
+  ] = useState(0);
+
 
   const trashCount =
     deletedWritingCount +
     deletedDocumentCount +
-    deletedArtworkCount;
+    deletedArtworkCount +
+    deletedVideoCount;
 
 
   // =======================================================
@@ -1303,6 +1321,13 @@ function MyWritings() {
               limit:
                 100,
             }),
+
+            getVideoTrash({
+              page:
+                1,
+              limit:
+                100,
+            }),
           ]);
 
 
@@ -1314,6 +1339,7 @@ function MyWritings() {
           deletedDocumentsResult,
           activeArtworksResult,
           deletedArtworksResult,
+          deletedVideosResult,
         ] = results;
 
 
@@ -1337,6 +1363,13 @@ function MyWritings() {
               draftsResult.value,
               items
             )
+          );
+
+        } else {
+
+          console.error(
+            "DRAFT COUNT ERROR:",
+            draftsResult.reason
           );
         }
 
@@ -1362,6 +1395,13 @@ function MyWritings() {
               items
             )
           );
+
+        } else {
+
+          console.error(
+            "PUBLISHED COUNT ERROR:",
+            publishedResult.reason
+          );
         }
 
 
@@ -1385,6 +1425,13 @@ function MyWritings() {
               deletedWritingsResult.value,
               items
             )
+          );
+
+        } else {
+
+          console.error(
+            "DELETED WRITING COUNT ERROR:",
+            deletedWritingsResult.reason
           );
         }
 
@@ -1512,9 +1559,51 @@ function MyWritings() {
           );
         }
 
+
+        // =================================================
+        // DELETED VIDEOS
+        // =================================================
+
+        if (
+          deletedVideosResult.status ===
+          "fulfilled"
+        ) {
+
+          const data =
+            deletedVideosResult.value;
+
+
+          const items =
+            Array.isArray(
+              data?.videos
+            )
+              ? data.videos
+              : Array.isArray(
+                    data?.items
+                  )
+                ? data.items
+                : [];
+
+
+          setDeletedVideoCount(
+            extractTotal(
+              data,
+              items
+            )
+          );
+
+        } else {
+
+          console.error(
+            "DELETED VIDEO COUNT ERROR:",
+            deletedVideosResult.reason
+          );
+        }
+
       },
       []
     );
+
 
 
   // =======================================================
@@ -4575,6 +4664,36 @@ function MyWritings() {
 
               <strong>
                 {deletedArtworkCount}
+              </strong>
+
+            </button>
+
+            {/* VIDEOS */}
+
+            <button
+              type="button"
+              style={
+                subTabButtonStyle(
+                  false
+                )
+              }
+              onClick={() =>
+                navigate(
+                  "/videos?tab=videos&view=trash"
+                )
+              }
+            >
+
+              <Film
+                size={18}
+              />
+
+              <span>
+                {localText.trashVideos}
+              </span>
+
+              <strong>
+                {deletedVideoCount}
               </strong>
 
             </button>
