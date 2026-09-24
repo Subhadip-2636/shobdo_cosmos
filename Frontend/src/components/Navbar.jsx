@@ -3,7 +3,6 @@ import {
   Bookmark,
   Check,
   ChevronDown,
-  Feather,
   FileText,
   Film,
   Globe2,
@@ -330,11 +329,11 @@ function Navbar({
     tagline:
       language ===
         "bn"
-        ? "লিখুন · পড়ুন · যুক্ত হোন"
+        ? "শব্দে যুক্ত হোন"
         : language ===
             "hi"
-          ? "लिखें · पढ़ें · जुड़ें"
-          : "WRITE · READ · BELONG",
+          ? "शब्दों से जुड़ें"
+          : "Connect through words",
 
 
     search:
@@ -1353,9 +1352,12 @@ function Navbar({
             aria-hidden="true"
           >
 
-            <Feather
-              size={20}
-              strokeWidth={1.9}
+            <img
+              src="/shobdo-icon.png"
+              alt=""
+              className="shobdo-navbar-logo-image"
+              draggable="false"
+              decoding="async"
             />
 
           </span>
