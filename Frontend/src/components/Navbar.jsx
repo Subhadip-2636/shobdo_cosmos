@@ -340,9 +340,9 @@ function Navbar({
     search:
       translate(
         "navbar.search",
-        "লেখা, লেখক ও বিষয় খুঁজুন",
-        "Search writings, writers and topics",
-        "रचनाएँ, लेखक और विषय खोजें"
+        "SHOBDO-তে লেখা, লেখক ও বিষয় খুঁজুন",
+        "Search SHOBDO — writings, writers and topics",
+        "SHOBDO पर रचनाएँ, लेखक और विषय खोजें"
       ),
 
 

@@ -2886,3 +2886,237 @@ svg:last-child {
   }
 
 }
+
+/* =========================================================
+   SHOBDO — PROFESSIONAL SOCIAL TOP BAR V2
+   Desktop visual refinement only. Existing behaviour,
+   menus, search routing and mobile layout are preserved.
+========================================================= */
+
+@media (min-width: 821px) {
+
+  .shobdo-navbar {
+    min-height: 66px;
+    border-bottom: 1px solid rgba(55, 45, 35, 0.07);
+    background: rgba(255, 254, 251, 0.96);
+    box-shadow: 0 1px 0 rgba(35, 28, 22, 0.018);
+    backdrop-filter: blur(20px) saturate(1.12);
+    -webkit-backdrop-filter: blur(20px) saturate(1.12);
+  }
+
+  .shobdo-navbar-scrolled {
+    border-bottom-color: rgba(55, 45, 35, 0.09);
+    background: rgba(255, 254, 251, 0.985);
+    box-shadow: 0 8px 28px rgba(45, 34, 23, 0.055);
+  }
+
+  .shobdo-navbar-inner {
+    width: min(100%, 1500px);
+    min-height: 66px;
+    grid-template-columns: 208px minmax(320px, 680px) minmax(max-content, 1fr);
+    gap: 22px;
+    padding: 8px 24px;
+  }
+
+  /* Brand: compact, recognizable and less like a landing-page masthead. */
+  .shobdo-navbar-brand {
+    gap: 11px;
+    width: max-content;
+    max-width: 100%;
+  }
+
+  .shobdo-navbar-logo {
+    width: 43px;
+    height: 43px;
+    flex: 0 0 43px;
+    border: 1px solid rgba(186, 129, 37, 0.72);
+    border-radius: 50%;
+    background: linear-gradient(145deg, #302a25 0%, #171411 70%, #0f0d0b 100%);
+    color: #c78b21;
+    box-shadow:
+      0 5px 14px rgba(36, 28, 19, 0.13),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.025);
+  }
+
+  .shobdo-navbar-logo svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .shobdo-navbar-brand:hover .shobdo-navbar-logo {
+    transform: translateY(-1px);
+    box-shadow:
+      0 7px 18px rgba(36, 28, 19, 0.16),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  }
+
+  .shobdo-navbar-brand-copy {
+    gap: 2px;
+    justify-content: center;
+  }
+
+  .shobdo-navbar-brand-name {
+    color: #26211d;
+    font-size: 20px;
+    font-weight: 760;
+    line-height: 1;
+    letter-spacing: 0.085em;
+  }
+
+  .shobdo-navbar-tagline {
+    margin-top: 2px;
+    color: #9a7545;
+    font-size: 7.4px;
+    font-weight: 760;
+    line-height: 1.1;
+    letter-spacing: 0.09em;
+    opacity: 0.92;
+  }
+
+  /* Search: social-platform surface, not a form-field rectangle. */
+  .shobdo-navbar-inner > form.shobdo-navbar-search {
+    position: relative;
+    width: 100% !important;
+    max-width: 680px !important;
+    min-width: 0 !important;
+    height: 46px;
+    justify-self: stretch !important;
+    align-self: center;
+    overflow: hidden;
+    border: 1px solid transparent;
+    border-radius: 17px;
+    background: #f4f2ee;
+    box-shadow:
+      inset 0 0 0 1px rgba(65, 52, 39, 0.035),
+      0 1px 2px rgba(45, 34, 24, 0.025);
+    transition:
+      border-color 0.16s ease,
+      background-color 0.16s ease,
+      box-shadow 0.16s ease,
+      transform 0.16s ease;
+  }
+
+  .shobdo-navbar-inner > form.shobdo-navbar-search:hover {
+    border-color: rgba(128, 99, 63, 0.12);
+    background: #f7f5f1;
+  }
+
+  .shobdo-navbar-inner > form.shobdo-navbar-search:focus-within {
+    border-color: rgba(177, 126, 51, 0.45);
+    background: #fffefa;
+    box-shadow:
+      0 0 0 3px rgba(177, 126, 51, 0.09),
+      0 7px 22px rgba(48, 36, 24, 0.055);
+  }
+
+  .shobdo-navbar-inner
+  > form.shobdo-navbar-search
+  > .shobdo-navbar-search-icon {
+    left: 16px;
+    width: 19px;
+    height: 19px;
+    color: #807971;
+    stroke-width: 1.85;
+  }
+
+  .shobdo-navbar-inner
+  > form.shobdo-navbar-search:focus-within
+  > .shobdo-navbar-search-icon {
+    color: #8d6428;
+  }
+
+  .shobdo-navbar-inner
+  > form.shobdo-navbar-search
+  > input[type="search"] {
+    padding: 0 44px 0 47px !important;
+    color: #332e29;
+    font-size: 13px;
+    font-weight: 520;
+    letter-spacing: 0.005em;
+  }
+
+  .shobdo-navbar-inner
+  > form.shobdo-navbar-search
+  > input[type="search"]::placeholder {
+    color: #918b84;
+    font-weight: 500;
+  }
+
+  .shobdo-navbar-inner
+  > form.shobdo-navbar-search
+  > .shobdo-search-clear {
+    right: 8px;
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 10px;
+    color: #817a73;
+  }
+
+  .shobdo-navbar-inner
+  > form.shobdo-navbar-search
+  > .shobdo-search-clear:hover {
+    background: rgba(130, 101, 66, 0.10);
+    color: #76511d;
+  }
+
+  /* Action cluster gets visual separation from the search area. */
+  .shobdo-navbar-actions {
+    gap: 5px;
+  }
+
+  .shobdo-navbar-icon-button {
+    width: 39px;
+    height: 39px;
+    flex-basis: 39px;
+    border-radius: 12px;
+  }
+
+  .shobdo-language-button {
+    min-height: 39px;
+    border-radius: 12px;
+  }
+
+  .shobdo-profile-trigger {
+    min-height: 41px;
+    border-radius: 14px;
+  }
+}
+
+/* Keep the desktop composition balanced as space narrows. */
+@media (min-width: 1051px) and (max-width: 1320px) {
+  .shobdo-navbar-inner {
+    grid-template-columns: 196px minmax(280px, 590px) minmax(max-content, 1fr);
+    gap: 18px;
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .shobdo-navbar-inner > form.shobdo-navbar-search {
+    max-width: 590px !important;
+  }
+}
+
+@media (min-width: 821px) and (max-width: 1050px) {
+  .shobdo-navbar-inner {
+    grid-template-columns: 166px minmax(220px, 1fr) auto;
+    gap: 13px;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .shobdo-navbar-logo {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+
+  .shobdo-navbar-brand-name {
+    font-size: 18px;
+  }
+
+  .shobdo-navbar-inner > form.shobdo-navbar-search {
+    height: 44px;
+    max-width: none !important;
+  }
+}
+
