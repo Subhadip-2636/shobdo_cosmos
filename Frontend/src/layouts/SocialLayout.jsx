@@ -1895,13 +1895,15 @@ export default function SocialLayout({
                                     suggestedUser
                                       ?.username
                                       ? `@${suggestedUser.username}`
-                                      : `writer${suggestedUserId}`
+                                      : `@writer${suggestedUserId}`
                                   }
 
                                 </span>
 
 
-                                <small>
+                                <small
+                                  className="social-suggestion-stats"
+                                >
 
                                   {followersCount}
 
@@ -1909,7 +1911,10 @@ export default function SocialLayout({
 
                                   {labels.followers}
 
-                                  <span>
+                                  <span
+                                    className="social-suggestion-separator"
+                                    aria-hidden="true"
+                                  >
                                     ·
                                   </span>
 
@@ -1932,6 +1937,12 @@ export default function SocialLayout({
                               disabled={
                                 followLoading
                               }
+                              aria-label={`${labels.follow} ${
+                                suggestedUser?.name ||
+                                suggestedUser?.username ||
+                                "SHOBDO Writer"
+                              }`}
+                              title={labels.follow}
                               onClick={
                                 () =>
                                   handleFollowSuggestedUser(
