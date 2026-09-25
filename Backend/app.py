@@ -903,7 +903,20 @@ def create_app():
         repost_bp,
     )
 
+    from routes.seo_routes import (
+        seo_bp,
+    )
+
     from routes.audio_summary_routes import audio_summary_bp
+
+
+    # =====================================================
+    # REGISTER SEO
+    # =====================================================
+
+    app.register_blueprint(
+        seo_bp
+    )
 
 
     # =====================================================
