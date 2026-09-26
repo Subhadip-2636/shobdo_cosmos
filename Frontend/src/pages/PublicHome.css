@@ -2425,7 +2425,7 @@
       rgba(255, 253, 247, 0.96),
       rgba(248, 240, 232, 0.94)
     ),
-    url("/backgrounds/shobdo-literary.jpg");
+    url("/backgrounds/shobdo-literary-960.webp");
 
   background-size: cover;
   background-position: center;
@@ -2550,7 +2550,7 @@
       rgba(255, 253, 247, 0.88),
       rgba(248, 240, 232, 0.86)
     ),
-    url("/backgrounds/shobdo-literary.jpg");
+    url("/backgrounds/shobdo-literary-960.webp");
 
   background-size: cover;
   background-position: center;
@@ -2718,7 +2718,7 @@
         rgba(255, 253, 247, 0.90),
         rgba(247, 237, 230, 0.88)
       ),
-      url("/backgrounds/shobdo-literary.jpg");
+      url("/backgrounds/shobdo-literary-960.webp");
 
     background-size:
       cover;

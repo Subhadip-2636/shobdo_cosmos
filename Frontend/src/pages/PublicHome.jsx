@@ -990,7 +990,7 @@ function PublicHome() {
               loop
               playsInline
               preload="metadata"
-              poster="/backgrounds/shobdo-literary.jpg"
+              poster="/backgrounds/shobdo-literary-960.webp"
               tabIndex={-1}
               onError={() => {
                 setBackgroundVideoFailed(true);
