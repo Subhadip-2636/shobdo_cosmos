@@ -3985,17 +3985,137 @@ function WritingDetails() {
       writing.content,
       seoTitle
     );
-
-
+  
   const seoPublishedTime =
-    toIsoDate(
-      publishedValue
+  toIsoDate(
+    publishedValue
+  );
+
+
+const seoModifiedTime =
+  toIsoDate(
+    writing.updated_at ||
+    publishedValue
+  );
+
+
+const canonicalPath =
+  `/writings/${writing.id}`;
+
+
+// =====================================================
+// ARTICLE STRUCTURED DATA
+// =====================================================
+
+const siteUrl =
+  String(
+    import.meta.env.VITE_PUBLIC_SITE_URL ||
+    "https://shobdoverse.com"
+  )
+    .trim()
+    .replace(
+      /\/+$/,
+      ""
     );
 
 
-  const canonicalPath =
-    `/writings/${writing.id}`;
+const canonicalUrl =
+  `${siteUrl}${canonicalPath}`;
 
+
+const authorProfileUrl =
+  author?.id
+    ? `${siteUrl}/users/${author.id}`
+    : undefined;
+
+
+const articleStructuredData = {
+
+  "@context":
+    "https://schema.org",
+
+  "@type":
+    "Article",
+
+  "@id":
+    `${canonicalUrl}#article`,
+
+  url:
+    canonicalUrl,
+
+  mainEntityOfPage: {
+
+    "@type":
+      "WebPage",
+
+    "@id":
+      canonicalUrl,
+
+  },
+
+  headline:
+    seoTitle,
+
+  description:
+    seoDescription,
+
+  inLanguage:
+    languageCode,
+
+  articleSection:
+    category,
+
+  wordCount:
+    wordCount,
+
+  isAccessibleForFree:
+    true,
+
+  author: {
+
+    "@type":
+      "Person",
+
+    name:
+      authorName,
+
+    ...(authorProfileUrl
+      ? {
+          url:
+            authorProfileUrl,
+        }
+      : {}),
+
+  },
+
+  publisher: {
+
+    "@type":
+      "Organization",
+
+    name:
+      "SHOBDO",
+
+    url:
+      `${siteUrl}/`,
+
+  },
+
+  ...(seoPublishedTime
+    ? {
+        datePublished:
+          seoPublishedTime,
+      }
+    : {}),
+
+  ...(seoModifiedTime
+    ? {
+        dateModified:
+          seoModifiedTime,
+      }
+    : {}),
+
+};
 
   // =====================================================
   // UI
@@ -4010,23 +4130,36 @@ function WritingDetails() {
       ==================================================== */}
 
       <SEO
-        title={
-          seoTitle
-        }
-        description={
-          seoDescription
-        }
-        path={
-          canonicalPath
-        }
-        type="article"
-        author={
-          authorName
-        }
-        publishedTime={
-          seoPublishedTime
-        }
-      />
+  title={
+    seoTitle
+  }
+
+  description={
+    seoDescription
+  }
+
+  path={
+    canonicalPath
+  }
+
+  type="article"
+
+  author={
+    authorName
+  }
+
+  publishedTime={
+    seoPublishedTime
+  }
+
+  modifiedTime={
+    seoModifiedTime
+  }
+
+  structuredData={
+    articleStructuredData
+  }
+/>
 
 
       <main

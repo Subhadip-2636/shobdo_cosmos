@@ -4473,6 +4473,156 @@ function WriterProfile() {
     undefined;
 
 
+  // =====================================================
+  // GOOGLE STRUCTURED DATA
+  // PROFILE PAGE + PERSON
+  // =====================================================
+
+  const siteUrl =
+    String(
+      import.meta.env.VITE_PUBLIC_SITE_URL ||
+      "https://shobdoverse.com"
+    )
+      .trim()
+      .replace(
+        /\/+$/,
+        ""
+      );
+
+
+  const profileUrl =
+    `${siteUrl}${seoPath}`;
+
+
+  const personId =
+    `${profileUrl}#person`;
+
+
+  const profilePageStructuredData = {
+
+    "@type":
+      "ProfilePage",
+
+    "@id":
+      `${profileUrl}#profilepage`,
+
+    url:
+      profileUrl,
+
+    name:
+      seoTitle,
+
+    description:
+      seoDescription,
+
+    inLanguage:
+      language ||
+      "en",
+
+    mainEntity: {
+
+      "@id":
+        personId,
+
+    },
+
+  };
+
+
+  const personStructuredData = {
+
+    "@type":
+      "Person",
+
+    "@id":
+      personId,
+
+    name:
+      seoProfileName,
+
+    url:
+      profileUrl,
+
+    ...(seoUsername
+      ? {
+
+          alternateName:
+            `@${seoUsername}`,
+
+          identifier:
+            seoUsername,
+
+        }
+      : {
+
+          identifier:
+            String(
+              profile.id ||
+              userId
+            ),
+
+        }),
+
+    ...(profile.bio
+      ? {
+
+          description:
+            cleanMetaText(
+              profile.bio
+            ),
+
+        }
+      : {}),
+
+    ...(profile.avatar_url
+      ? {
+
+          image:
+            profile.avatar_url,
+
+        }
+      : {}),
+
+    ...(profile.website
+      ? {
+
+          sameAs: [
+            profile.website,
+          ],
+
+        }
+      : {}),
+
+    ...(profile.location
+      ? {
+
+          homeLocation: {
+
+            "@type":
+              "Place",
+
+            name:
+              cleanMetaText(
+                profile.location
+              ),
+
+          },
+
+        }
+      : {}),
+
+  };
+
+
+  const profileStructuredData = [
+
+    profilePageStructuredData,
+
+    personStructuredData,
+
+  ];
+
+
   return (
 
     <>
@@ -4490,6 +4640,9 @@ function WriterProfile() {
         type="profile"
         image={
           seoImage
+        }
+        structuredData={
+          profileStructuredData
         }
       />
 

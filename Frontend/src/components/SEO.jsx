@@ -145,6 +145,125 @@ function makeAbsoluteUrl(
 
 
 // =========================================================
+// CLEAN STRUCTURED DATA
+// =========================================================
+
+function cleanStructuredData(
+  value
+) {
+
+  if (
+    value === null ||
+    value === undefined
+  ) {
+
+    return undefined;
+
+  }
+
+
+  if (
+    Array.isArray(
+      value
+    )
+  ) {
+
+    const cleanedArray =
+      value
+        .map(
+          cleanStructuredData
+        )
+        .filter(
+          (
+            item
+          ) =>
+            item !== undefined
+        );
+
+
+    return cleanedArray.length
+      ? cleanedArray
+      : undefined;
+
+  }
+
+
+  if (
+    typeof value ===
+    "object"
+  ) {
+
+    const cleanedObject =
+      {};
+
+
+    Object
+      .entries(
+        value
+      )
+      .forEach(
+        ([
+          key,
+          itemValue,
+        ]) => {
+
+          const cleanedValue =
+            cleanStructuredData(
+              itemValue
+            );
+
+
+          if (
+            cleanedValue !==
+            undefined
+          ) {
+
+            cleanedObject[
+              key
+            ] =
+              cleanedValue;
+
+          }
+
+        }
+      );
+
+
+    return Object
+      .keys(
+        cleanedObject
+      )
+      .length
+
+      ? cleanedObject
+
+      : undefined;
+
+  }
+
+
+  if (
+    typeof value ===
+    "string"
+  ) {
+
+    const cleaned =
+      value.trim();
+
+
+    return cleaned
+      ? cleaned
+      : undefined;
+
+  }
+
+
+  return value;
+
+}
+
+
+// =========================================================
 // META MANAGER
 // =========================================================
 
@@ -160,9 +279,11 @@ function setMetaTag({
 
 
   let element =
-    document.head.querySelector(
-      `meta[${attribute}="${key}"]`
-    );
+    document
+      .head
+      .querySelector(
+        `meta[${attribute}="${key}"]`
+      );
 
 
   const existed =
@@ -191,9 +312,11 @@ function setMetaTag({
     );
 
 
-    document.head.appendChild(
-      element
-    );
+    document
+      .head
+      .appendChild(
+        element
+      );
 
   }
 
@@ -227,7 +350,8 @@ function setMetaTag({
 
 
     if (
-      previousContent === null
+      previousContent ===
+      null
     ) {
 
       element.removeAttribute(
@@ -263,9 +387,11 @@ function setCanonical(
 
 
   let element =
-    document.head.querySelector(
-      'link[rel="canonical"]'
-    );
+    document
+      .head
+      .querySelector(
+        'link[rel="canonical"]'
+      );
 
 
   const existed =
@@ -294,9 +420,11 @@ function setCanonical(
     );
 
 
-    document.head.appendChild(
-      element
-    );
+    document
+      .head
+      .appendChild(
+        element
+      );
 
   }
 
@@ -330,7 +458,8 @@ function setCanonical(
 
 
     if (
-      previousHref === null
+      previousHref ===
+      null
     ) {
 
       element.removeAttribute(
@@ -346,6 +475,121 @@ function setCanonical(
       "href",
       previousHref
     );
+
+  };
+
+}
+
+
+// =========================================================
+// JSON-LD MANAGER
+// =========================================================
+
+function setStructuredData(
+  structuredData
+) {
+
+  const cleanedData =
+    cleanStructuredData(
+      structuredData
+    );
+
+
+  if (!cleanedData) {
+    return null;
+  }
+
+
+  let element =
+    document
+      .head
+      .querySelector(
+        'script[data-shobdo-jsonld="true"]'
+      );
+
+
+  const existed =
+    Boolean(
+      element
+    );
+
+
+  if (!element) {
+
+    element =
+      document.createElement(
+        "script"
+      );
+
+
+    element.type =
+      "application/ld+json";
+
+
+    element.setAttribute(
+      "data-shobdo-jsonld",
+      "true"
+    );
+
+
+    document
+      .head
+      .appendChild(
+        element
+      );
+
+  }
+
+
+  const previousContent =
+    element.textContent;
+
+
+  try {
+
+    element.textContent =
+      JSON.stringify(
+        cleanedData
+      );
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      "SHOBDO JSON-LD ERROR:",
+      error
+    );
+
+
+    if (!existed) {
+      element.remove();
+    }
+
+
+    return null;
+
+  }
+
+
+  return () => {
+
+    if (!element) {
+      return;
+    }
+
+
+    if (!existed) {
+
+      element.remove();
+
+      return;
+
+    }
+
+
+    element.textContent =
+      previousContent || "";
 
   };
 
@@ -370,6 +614,8 @@ function SEO({
 
   image = "",
 
+  imageAlt = "",
+
   noIndex =
     false,
 
@@ -378,6 +624,9 @@ function SEO({
   publishedTime = "",
 
   modifiedTime = "",
+
+  structuredData =
+    null,
 
 }) {
 
@@ -410,7 +659,8 @@ function SEO({
 
   const siteUrl =
     useMemo(
-      () => getSiteUrl(),
+      () =>
+        getSiteUrl(),
       []
     );
 
@@ -438,7 +688,8 @@ function SEO({
           safeTitle
             .toLowerCase()
             .includes(
-              SITE_NAME.toLowerCase()
+              SITE_NAME
+                .toLowerCase()
             )
         ) {
 
@@ -470,20 +721,20 @@ function SEO({
 
 
   // =======================================================
-  // CANONICAL
+  // CANONICAL URL
   // =======================================================
 
   const canonicalUrl =
     useMemo(
       () => {
 
-        if (
-          !siteUrl ||
-          !path
-        ) {
-
+        if (!siteUrl) {
           return "";
+        }
 
+
+        if (!path) {
+          return `${siteUrl}/`;
         }
 
 
@@ -506,12 +757,13 @@ function SEO({
 
 
   // =======================================================
-  // OG IMAGE
+  // SOCIAL IMAGE
   // =======================================================
 
   const defaultOgImage =
     cleanString(
-      import.meta.env.VITE_DEFAULT_OG_IMAGE
+      import.meta.env
+        .VITE_DEFAULT_OG_IMAGE
     );
 
 
@@ -520,6 +772,106 @@ function SEO({
       image ||
       defaultOgImage,
       siteUrl
+    );
+
+
+  const socialImageAlt =
+    cleanString(
+      imageAlt
+    ) ||
+    (
+      title
+        ? `${cleanString(title)} on ${SITE_NAME}`
+        : `${SITE_NAME} social preview`
+    );
+
+
+  // =======================================================
+  // STRUCTURED DATA
+  // =======================================================
+
+  const finalStructuredData =
+    useMemo(
+      () => {
+
+        if (
+          !structuredData ||
+          noIndex
+        ) {
+
+          return null;
+
+        }
+
+
+        const data =
+          typeof structuredData ===
+          "function"
+
+            ? structuredData({
+                siteUrl,
+                canonicalUrl,
+                pageTitle,
+                pageDescription,
+                socialImage,
+                language:
+                  currentLanguage,
+              })
+
+            : structuredData;
+
+
+        if (!data) {
+          return null;
+        }
+
+
+        if (
+          Array.isArray(
+            data
+          )
+        ) {
+
+          return {
+            "@context":
+              "https://schema.org",
+
+            "@graph":
+              data,
+          };
+
+        }
+
+
+        if (
+          typeof data ===
+          "object" &&
+          !data["@context"]
+        ) {
+
+          return {
+            "@context":
+              "https://schema.org",
+
+            ...data,
+          };
+
+        }
+
+
+        return data;
+
+      },
+      [
+        structuredData,
+        noIndex,
+        siteUrl,
+        canonicalUrl,
+        pageTitle,
+        pageDescription,
+        socialImage,
+        currentLanguage,
+      ]
     );
 
 
@@ -561,7 +913,8 @@ function SEO({
       // ===================================================
 
       const html =
-        document.documentElement;
+        document
+          .documentElement;
 
 
       const previousLanguage =
@@ -624,8 +977,10 @@ function SEO({
 
       const robotsValue =
         noIndex
+
           ? "noindex, nofollow"
-          : "index, follow";
+
+          : "index, follow, max-image-preview:large";
 
 
       cleanupFunctions.push(
@@ -777,7 +1132,7 @@ function SEO({
               "og:image:alt",
 
             content:
-              `${SITE_NAME} social preview`,
+              socialImageAlt,
           })
         );
 
@@ -798,7 +1153,9 @@ function SEO({
 
           content:
             socialImage
+
               ? "summary_large_image"
+
               : "summary",
         })
       );
@@ -846,6 +1203,20 @@ function SEO({
 
             content:
               socialImage,
+          })
+        );
+
+
+        cleanupFunctions.push(
+          setMetaTag({
+            attribute:
+              "name",
+
+            key:
+              "twitter:image:alt",
+
+            content:
+              socialImageAlt,
           })
         );
 
@@ -971,6 +1342,23 @@ function SEO({
 
 
       // ===================================================
+      // JSON-LD STRUCTURED DATA
+      // ===================================================
+
+      if (
+        finalStructuredData
+      ) {
+
+        cleanupFunctions.push(
+          setStructuredData(
+            finalStructuredData
+          )
+        );
+
+      }
+
+
+      // ===================================================
       // CLEANUP
       // ===================================================
 
@@ -986,7 +1374,20 @@ function SEO({
               cleanup
             ) => {
 
-              cleanup();
+              try {
+
+                cleanup();
+
+              } catch (
+                error
+              ) {
+
+                console.error(
+                  "SHOBDO SEO CLEANUP ERROR:",
+                  error
+                );
+
+              }
 
             }
           );
@@ -999,12 +1400,14 @@ function SEO({
       canonicalUrl,
       currentLanguage,
       currentLocale,
+      finalStructuredData,
       modifiedTime,
       noIndex,
       pageDescription,
       pageTitle,
       publishedTime,
       socialImage,
+      socialImageAlt,
       type,
     ]
   );

@@ -862,7 +862,89 @@ function PublicHome() {
   // UI
   // =======================================================
 
+
+  // =======================================================
+  // GOOGLE STRUCTURED DATA
+  // WEBSITE + ORGANIZATION
+  // =======================================================
+
+  const siteUrl =
+    String(
+      import.meta.env.VITE_PUBLIC_SITE_URL ||
+      "https://shobdoverse.com"
+    )
+      .trim()
+      .replace(
+        /\/+$/,
+        ""
+      );
+
+
+  const websiteStructuredData = {
+
+    "@type":
+      "WebSite",
+
+    "@id":
+      `${siteUrl}/#website`,
+
+    url:
+      `${siteUrl}/`,
+
+    name:
+      "SHOBDO",
+
+    alternateName:
+      "SHOBDO Literary Community",
+
+    description:
+      "Discover stories, poetry, essays and original voices on SHOBDO, a multilingual community for writers and readers.",
+
+    inLanguage:
+      language ||
+      "en",
+
+    publisher: {
+
+      "@id":
+        `${siteUrl}/#organization`,
+
+    },
+
+  };
+
+
+  const organizationStructuredData = {
+
+    "@type":
+      "Organization",
+
+    "@id":
+      `${siteUrl}/#organization`,
+
+    name:
+      "SHOBDO",
+
+    url:
+      `${siteUrl}/`,
+
+    description:
+      "SHOBDO is a multilingual writing and reading community for stories, poetry, essays, reflections and meaningful connections.",
+
+  };
+
+
+  const homeStructuredData = [
+
+    websiteStructuredData,
+
+    organizationStructuredData,
+
+  ];
+
+
   return (
+
     <>
 
       <SEO
@@ -870,6 +952,9 @@ function PublicHome() {
         description="Discover stories, poetry, essays and original voices on SHOBDO, a multilingual community for writers and readers."
         path="/"
         type="website"
+        structuredData={
+          homeStructuredData
+        }
       />
 
 
