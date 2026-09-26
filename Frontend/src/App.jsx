@@ -825,16 +825,41 @@ function App() {
   // INITIAL APPLICATION LOAD
   // =======================================================
 
-  useEffect(
+    useEffect(
     () => {
 
       loadCurrentUser();
+
+    },
+    [
+      loadCurrentUser,
+    ]
+  );
+
+
+  // =======================================================
+  // LOAD SOCIAL FEED ONLY FOR AUTHENTICATED USERS
+  // =======================================================
+
+  useEffect(
+    () => {
+
+      if (
+        authLoading ||
+        !user
+      ) {
+
+        return;
+
+      }
+
 
       loadWritings();
 
     },
     [
-      loadCurrentUser,
+      authLoading,
+      user,
       loadWritings,
     ]
   );
