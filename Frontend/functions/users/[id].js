@@ -29,16 +29,23 @@ function truncate(value = "", maxLength = 160) {
   const clean =
     stripHtml(value);
 
-  if (clean.length <= maxLength) {
+  const characters =
+    Array.from(clean);
+
+  if (
+    characters.length <=
+    maxLength
+  ) {
     return clean;
   }
 
   return (
-    clean
+    characters
       .slice(
         0,
         maxLength - 1
       )
+      .join("")
       .trimEnd()
     +
     "?"
