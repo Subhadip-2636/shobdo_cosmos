@@ -8,6 +8,8 @@ import {
 
 
 import {
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useState,
@@ -22,7 +24,7 @@ import {
 // LAYOUTS
 // =========================================================
 
-import SocialLayout from "./layouts/SocialLayout";
+
 
 
 // =========================================================
@@ -41,73 +43,225 @@ import BackgroundPicker from "./components/BackgroundPicker";
 // PUBLIC HOME
 // =========================================================
 
-import PublicHome from "./pages/PublicHome";
-
-
 // =========================================================
 // PUBLIC / SOCIAL REELS + VIDEO HUB
 // =========================================================
-
-import Reels from "./pages/Reels";
-import CreateReel from "./pages/CreateReel";
-import Videos from "./pages/Videos";
-
 
 // =========================================================
 // MAIN PAGES
 // =========================================================
 
-import Home from "./pages/Home";
-import Explore from "./pages/Explore";
-import Write from "./pages/Write";
-import WritingDetails from "./pages/WritingDetails";
-import MyWritings from "./pages/MyWritings";
-import ConnectionsPage from "./pages/ConnectionsPage";
-import SearchPage from "./pages/SearchPage";
-import TagPage from "./pages/TagPage";
-import NotFound from "./pages/NotFound";
-
-
 // =========================================================
 // SAVED WRITINGS
 // =========================================================
-
-import Saved from "./pages/Saved";
-
 
 // =========================================================
 // NOTIFICATIONS
 // =========================================================
 
-import Notifications from "./pages/Notifications";
-
-
 // =========================================================
 // AUTH PAGES
 // =========================================================
-
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-
 
 // =========================================================
 // INFORMATION / LEGAL
 // =========================================================
 
-import About from "./pages/About";
-import Privacy from "./pages/Privacy";
-import Terms from "./pages/Terms";
-import DataDeletion from "./pages/DataDeletion";
-
-
 // =========================================================
 // USER PAGES
 // =========================================================
 
-import WriterProfile from "./pages/WriterProfile";
-import EditProfile from "./pages/EditProfile";
+// =========================================================
+// ROUTE-LEVEL CODE SPLITTING
+// =========================================================
+
+const SocialLayout =
+  lazy(
+    () =>
+      import("./layouts/SocialLayout")
+  );
+
+
+
+//
+// Page components are loaded only when their route is opened.
+// Global application shell components remain eagerly loaded.
+//
+// =========================================================
+
+const PublicHome =
+  lazy(
+    () =>
+      import("./pages/PublicHome")
+  );
+
+
+const Reels =
+  lazy(
+    () =>
+      import("./pages/Reels")
+  );
+
+
+const CreateReel =
+  lazy(
+    () =>
+      import("./pages/CreateReel")
+  );
+
+
+const Videos =
+  lazy(
+    () =>
+      import("./pages/Videos")
+  );
+
+
+const Home =
+  lazy(
+    () =>
+      import("./pages/Home")
+  );
+
+
+const Explore =
+  lazy(
+    () =>
+      import("./pages/Explore")
+  );
+
+
+const Write =
+  lazy(
+    () =>
+      import("./pages/Write")
+  );
+
+
+const WritingDetails =
+  lazy(
+    () =>
+      import("./pages/WritingDetails")
+  );
+
+
+const MyWritings =
+  lazy(
+    () =>
+      import("./pages/MyWritings")
+  );
+
+
+const ConnectionsPage =
+  lazy(
+    () =>
+      import("./pages/ConnectionsPage")
+  );
+
+
+const SearchPage =
+  lazy(
+    () =>
+      import("./pages/SearchPage")
+  );
+
+
+const TagPage =
+  lazy(
+    () =>
+      import("./pages/TagPage")
+  );
+
+
+const NotFound =
+  lazy(
+    () =>
+      import("./pages/NotFound")
+  );
+
+
+const Saved =
+  lazy(
+    () =>
+      import("./pages/Saved")
+  );
+
+
+const Notifications =
+  lazy(
+    () =>
+      import("./pages/Notifications")
+  );
+
+
+const Login =
+  lazy(
+    () =>
+      import("./pages/Login")
+  );
+
+
+const Register =
+  lazy(
+    () =>
+      import("./pages/Register")
+  );
+
+
+const ForgotPassword =
+  lazy(
+    () =>
+      import("./pages/ForgotPassword")
+  );
+
+
+const ResetPassword =
+  lazy(
+    () =>
+      import("./pages/ResetPassword")
+  );
+
+
+const About =
+  lazy(
+    () =>
+      import("./pages/About")
+  );
+
+
+const Privacy =
+  lazy(
+    () =>
+      import("./pages/Privacy")
+  );
+
+
+const Terms =
+  lazy(
+    () =>
+      import("./pages/Terms")
+  );
+
+
+const DataDeletion =
+  lazy(
+    () =>
+      import("./pages/DataDeletion")
+  );
+
+
+const WriterProfile =
+  lazy(
+    () =>
+      import("./pages/WriterProfile")
+  );
+
+
+const EditProfile =
+  lazy(
+    () =>
+      import("./pages/EditProfile")
+  );
 
 
 // =========================================================
@@ -1112,7 +1266,13 @@ function App() {
               ROUTER
           ================================================ */}
 
-          <Routes>
+          <Suspense
+            fallback={
+              <RouteLoading />
+            }
+          >
+
+            <Routes>
 
 
             {/* =============================================
@@ -1742,7 +1902,9 @@ function App() {
             />
 
 
-          </Routes>
+            </Routes>
+
+          </Suspense>
 
         </div>
 
