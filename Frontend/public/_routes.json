@@ -1,7 +1,9 @@
 {
   "version": 1,
   "include": [
-    "/sitemap.xml"
+    "/sitemap.xml",
+    "/users/*",
+    "/writings/*"
   ],
   "exclude": []
 }
