@@ -259,6 +259,19 @@
 }
 
 
+.public-hero h1,
+.public-hero h1 span,
+.public-hero h1 strong {
+  font-family:
+    "Nirmala UI",
+    "Vrinda",
+    "Noto Serif Bengali",
+    Georgia,
+    "Times New Roman",
+    serif;
+}
+
+
 .public-hero h1 span,
 .public-hero h1 strong {
   display:
