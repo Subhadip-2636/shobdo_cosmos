@@ -565,7 +565,7 @@ function ReelsBackground() {
         muted
         loop
         playsInline
-        preload="auto"
+        preload="metadata"
         tabIndex={-1}
         onLoadedData={
           ensurePlayback
