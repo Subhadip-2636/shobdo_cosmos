@@ -383,6 +383,7 @@ function DocumentCard({
                 )
               }
               loading="lazy"
+                  decoding="async"
             />
 
           )

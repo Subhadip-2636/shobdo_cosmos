@@ -3758,6 +3758,7 @@ function WritingCard({
                   }
                   alt=""
                   loading="lazy"
+                  decoding="async"
                 />
 
               )

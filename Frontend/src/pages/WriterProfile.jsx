@@ -4796,6 +4796,7 @@ function WriterProfile() {
                             alt={
                               `${profile.name || "Writer"} profile`
                             }
+                            decoding="async"
                             onLoad={
                               (
                                 event
@@ -5249,6 +5250,7 @@ function WriterProfile() {
                               alt={
                                 copy.selectedPhoto
                               }
+                              decoding="async"
                             />
 
                           )
@@ -5264,6 +5266,7 @@ function WriterProfile() {
                                 alt={
                                   copy.currentPhoto
                                 }
+                                decoding="async"
                               />
 
                             )
@@ -6480,6 +6483,8 @@ function WriterProfile() {
                                                     displayedAvatarUrl
                                                   }
                                                   alt=""
+                                                  loading="lazy"
+                                                  decoding="async"
                                                 />
 
                                               )

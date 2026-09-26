@@ -538,6 +538,7 @@ function ArtworkCard({
                 )
               }
               loading="lazy"
+                  decoding="async"
             />
 
           )
