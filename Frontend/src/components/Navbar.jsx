@@ -1,4 +1,4 @@
-import {
+﻿import {
   Bell,
   Bookmark,
   Check,
@@ -329,163 +329,163 @@ function Navbar({
     tagline:
       language ===
         "bn"
-        ? "শব্দে যুক্ত হোন"
+        ? "à¦¶à¦¬à§à¦¦à§‡ à¦¯à§à¦•à§à¦¤ à¦¹à§‹à¦¨"
         : language ===
             "hi"
-          ? "शब्दों से जुड़ें"
+          ? "à¤¶à¤¬à¥à¤¦à¥‹à¤‚ à¤¸à¥‡ à¤œà¥à¤¡à¤¼à¥‡à¤‚"
           : "Connect through words",
 
 
     search:
       translate(
         "navbar.search",
-        "SHOBDO-তে লেখা, লেখক ও বিষয় খুঁজুন",
-        "Search SHOBDO — writings, writers and topics",
-        "SHOBDO पर रचनाएँ, लेखक और विषय खोजें"
+        "SHOBDO-à¦¤à§‡ à¦²à§‡à¦–à¦¾, à¦²à§‡à¦–à¦• à¦“ à¦¬à¦¿à¦·à¦¯à¦¼ à¦–à§à¦à¦œà§à¦¨",
+        "Search SHOBDO â€” writings, writers and topics",
+        "SHOBDO à¤ªà¤° à¤°à¤šà¤¨à¤¾à¤à¤, à¤²à¥‡à¤–à¤• à¤”à¤° à¤µà¤¿à¤·à¤¯ à¤–à¥‹à¤œà¥‡à¤‚"
       ),
 
 
     searchButton:
       translate(
         "navbar.searchButton",
-        "খুঁজুন",
+        "à¦–à§à¦à¦œà§à¦¨",
         "Search",
-        "खोजें"
+        "à¤–à¥‹à¤œà¥‡à¤‚"
       ),
 
 
     searchHint:
       translate(
         "navbar.searchHint",
-        "লেখা, লেখক, বিষয় বা হ্যাশট্যাগ খুঁজুন",
+        "à¦²à§‡à¦–à¦¾, à¦²à§‡à¦–à¦•, à¦¬à¦¿à¦·à¦¯à¦¼ à¦¬à¦¾ à¦¹à§à¦¯à¦¾à¦¶à¦Ÿà§à¦¯à¦¾à¦— à¦–à§à¦à¦œà§à¦¨",
         "Search writings, writers, topics or hashtags",
-        "रचनाएँ, लेखक, विषय या हैशटैग खोजें"
+        "à¤°à¤šà¤¨à¤¾à¤à¤, à¤²à¥‡à¤–à¤•, à¤µà¤¿à¤·à¤¯ à¤¯à¤¾ à¤¹à¥ˆà¤¶à¤Ÿà¥ˆà¤— à¤–à¥‹à¤œà¥‡à¤‚"
       ),
 
 
     clearSearch:
       translate(
         "navbar.clearSearch",
-        "সার্চ মুছুন",
+        "à¦¸à¦¾à¦°à§à¦š à¦®à§à¦›à§à¦¨",
         "Clear search",
-        "खोज साफ़ करें"
+        "à¤–à¥‹à¤œ à¤¸à¤¾à¤«à¤¼ à¤•à¤°à¥‡à¤‚"
       ),
 
 
     closeSearch:
       translate(
         "navbar.closeSearch",
-        "সার্চ বন্ধ করুন",
+        "à¦¸à¦¾à¦°à§à¦š à¦¬à¦¨à§à¦§ à¦•à¦°à§à¦¨",
         "Close search",
-        "खोज बंद करें"
+        "à¤–à¥‹à¤œ à¤¬à¤‚à¤¦ à¤•à¤°à¥‡à¤‚"
       ),
 
 
     video:
       translate(
         "navbar.video",
-        "ভিডিও",
+        "à¦­à¦¿à¦¡à¦¿à¦“",
         "Video",
-        "वीडियो"
+        "à¤µà¥€à¤¡à¤¿à¤¯à¥‹"
       ),
 
 
     notifications:
       translate(
         "navbar.notifications",
-        "বিজ্ঞপ্তি",
+        "à¦¬à¦¿à¦œà§à¦žà¦ªà§à¦¤à¦¿",
         "Notifications",
-        "सूचनाएँ"
+        "à¤¸à¥‚à¤šà¤¨à¤¾à¤à¤"
       ),
 
 
     language:
       translate(
         "navbar.websiteLanguage",
-        "ওয়েবসাইটের ভাষা",
+        "à¦“à¦¯à¦¼à§‡à¦¬à¦¸à¦¾à¦‡à¦Ÿà§‡à¦° à¦­à¦¾à¦·à¦¾",
         "Website language",
-        "वेबसाइट भाषा"
+        "à¤µà¥‡à¤¬à¤¸à¤¾à¤‡à¤Ÿ à¤­à¤¾à¤·à¤¾"
       ),
 
 
     profile:
       translate(
         "navbar.profile",
-        "প্রোফাইল",
+        "à¦ªà§à¦°à§‹à¦«à¦¾à¦‡à¦²",
         "Profile",
-        "प्रोफ़ाइल"
+        "à¤ªà¥à¤°à¥‹à¤«à¤¼à¤¾à¤‡à¤²"
       ),
 
 
     openProfile:
       translate(
         "navbar.openProfile",
-        "প্রোফাইল মেনু খুলুন",
+        "à¦ªà§à¦°à§‹à¦«à¦¾à¦‡à¦² à¦®à§‡à¦¨à§ à¦–à§à¦²à§à¦¨",
         "Open profile menu",
-        "प्रोफ़ाइल मेनू खोलें"
+        "à¤ªà¥à¤°à¥‹à¤«à¤¼à¤¾à¤‡à¤² à¤®à¥‡à¤¨à¥‚ à¤–à¥‹à¤²à¥‡à¤‚"
       ),
 
 
     myWritings:
       translate(
         "navbar.myWritings",
-        "আমার লেখা",
+        "à¦†à¦®à¦¾à¦° à¦²à§‡à¦–à¦¾",
         "My writings",
-        "मेरी रचनाएँ"
+        "à¤®à¥‡à¤°à¥€ à¤°à¤šà¤¨à¤¾à¤à¤"
       ),
 
 
     saved:
       translate(
         "navbar.saved",
-        "সংরক্ষিত",
+        "à¦¸à¦‚à¦°à¦•à§à¦·à¦¿à¦¤",
         "Saved",
-        "सहेजे गए"
+        "à¤¸à¤¹à¥‡à¤œà¥‡ à¤—à¤"
       ),
 
 
     editProfile:
       translate(
         "navbar.editProfile",
-        "প্রোফাইল সম্পাদনা",
+        "à¦ªà§à¦°à§‹à¦«à¦¾à¦‡à¦² à¦¸à¦®à§à¦ªà¦¾à¦¦à¦¨à¦¾",
         "Edit profile",
-        "प्रोफ़ाइल संपादित करें"
+        "à¤ªà¥à¤°à¥‹à¤«à¤¼à¤¾à¤‡à¤² à¤¸à¤‚à¤ªà¤¾à¤¦à¤¿à¤¤ à¤•à¤°à¥‡à¤‚"
       ),
 
 
     logout:
       translate(
         "navbar.logout",
-        "লগ আউট",
+        "à¦²à¦— à¦†à¦‰à¦Ÿ",
         "Log out",
-        "लॉग आउट"
+        "à¤²à¥‰à¤— à¤†à¤‰à¤Ÿ"
       ),
 
 
     login:
       translate(
         "navbar.login",
-        "লগ ইন",
+        "à¦²à¦— à¦‡à¦¨",
         "Log in",
-        "लॉग इन"
+        "à¤²à¥‰à¤— à¤‡à¤¨"
       ),
 
 
     register:
       translate(
         "navbar.register",
-        "যোগ দিন",
+        "à¦¯à§‹à¦— à¦¦à¦¿à¦¨",
         "Join",
-        "जुड़ें"
+        "à¤œà¥à¤¡à¤¼à¥‡à¤‚"
       ),
 
 
     writer:
       translate(
         "common.writer",
-        "লেখক",
+        "à¦²à§‡à¦–à¦•",
         "Writer",
-        "लेखक"
+        "à¤²à¥‡à¤–à¤•"
       ),
 
   };
@@ -1353,7 +1353,7 @@ function Navbar({
           >
 
             <img
-              src="/shobdo-icon.png"
+              src="/shobdo-navbar-icon.webp"
               alt=""
               className="shobdo-navbar-logo-image"
               draggable="false"
