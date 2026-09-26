@@ -89,11 +89,7 @@ const SocialLayout =
 //
 // =========================================================
 
-const PublicHome =
-  lazy(
-    () =>
-      import("./pages/PublicHome")
-  );
+import PublicHome from "./pages/PublicHome";
 
 
 const Reels =
