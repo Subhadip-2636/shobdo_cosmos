@@ -34,9 +34,7 @@ import {
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
-import NotificationToast from "./components/NotificationToast";
 import PageBackground from "./components/PageBackground";
-import BackgroundPicker from "./components/BackgroundPicker";
 
 
 // =========================================================
@@ -79,6 +77,20 @@ const SocialLayout =
   lazy(
     () =>
       import("./layouts/SocialLayout")
+  );
+
+
+const BackgroundPicker =
+  lazy(
+    () =>
+      import("./components/BackgroundPicker")
+  );
+
+
+const NotificationToast =
+  lazy(
+    () =>
+      import("./components/NotificationToast")
   );
 
 
@@ -1230,7 +1242,16 @@ function App() {
 
         <PageBackground />
 
-        <BackgroundPicker />
+
+        {
+          user && (
+            <Suspense
+              fallback={null}
+            >
+              <BackgroundPicker />
+            </Suspense>
+          )
+        }
 
 
         {/* =================================================
@@ -1244,20 +1265,29 @@ function App() {
             REAL-TIME NOTIFICATION TOAST
         ================================================== */}
 
-        <NotificationToast
-          notification={
-            realtimeNotification
-          }
-          onClose={
-            () => {
+        {
+          user &&
+          realtimeNotification && (
+            <Suspense
+              fallback={null}
+            >
+              <NotificationToast
+                notification={
+                  realtimeNotification
+                }
+                onClose={
+                  () => {
 
-              setRealtimeNotification(
-                null
-              );
+                    setRealtimeNotification(
+                      null
+                    );
 
-            }
-          }
-        />
+                  }
+                }
+              />
+            </Suspense>
+          )
+        }
 
 
         {/* =================================================
