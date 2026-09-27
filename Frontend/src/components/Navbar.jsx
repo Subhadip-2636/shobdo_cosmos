@@ -2139,6 +2139,9 @@ function Navbar({
                 <Link
                   to="/register"
                   className="shobdo-register-button"
+                  aria-label={
+                    labels.register
+                  }
                 >
 
                   <UserPlus
