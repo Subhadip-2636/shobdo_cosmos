@@ -1129,6 +1129,9 @@ function PublicHome() {
 
                 <button
                   type="submit"
+                  aria-label={
+                    copy.search
+                  }
                 >
 
                   <span>
