@@ -17,7 +17,7 @@ from models.writing import Writing
 
 from services.notification_service import (
     delete_notification,
-    emit_notification,
+    deliver_notification,
     notify_comment,
     notify_comment_reply,
 )
@@ -551,7 +551,7 @@ def create_comment(
 
         try:
 
-            emit_notification(
+            deliver_notification(
                 notification
             )
 
@@ -976,3 +976,5 @@ def delete_comment(
             was_reply,
 
     }), 200
+
+

@@ -1033,6 +1033,19 @@ function App() {
         window.dispatchEvent(
 
           new CustomEvent(
+            "shobdo:notification-received",
+            {
+              detail:
+                notification,
+            }
+          )
+
+        );
+
+
+        window.dispatchEvent(
+
+          new CustomEvent(
             "shobdo:notifications-changed",
             {
               detail:

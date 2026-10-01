@@ -17,7 +17,7 @@ from models.writing import Writing
 from services.notification_service import (
     create_notification,
     delete_notification,
-    emit_notification,
+    deliver_notification,
 )
 
 
@@ -570,7 +570,7 @@ def like_writing(
 
         try:
 
-            emit_notification(
+            deliver_notification(
                 notification
             )
 

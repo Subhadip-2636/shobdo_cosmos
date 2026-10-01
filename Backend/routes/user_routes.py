@@ -23,7 +23,7 @@ from models.repost import Repost
 from services.notification_service import (
     create_notification,
     delete_notification,
-    emit_notification,
+    deliver_notification,
 )
 
 from services.profile_image_storage import (
@@ -3140,7 +3140,7 @@ def follow_user(
 
         try:
 
-            emit_notification(
+            deliver_notification(
                 notification
             )
 

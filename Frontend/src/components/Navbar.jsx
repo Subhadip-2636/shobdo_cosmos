@@ -39,6 +39,8 @@ import {
   useLanguage,
 } from "../Language/LanguageContext";
 
+import NotificationDropdown from "./NotificationDropdown";
+
 import "./Navbar.css";
 
 
@@ -1576,50 +1578,17 @@ function Navbar({
 
           {user && (
 
-            <Link
-              to="/notifications"
-              className={
+            <NotificationDropdown
+              unreadCount={
+                unreadNotificationCount
+              }
+              setUnreadCount={
+                setUnreadNotificationCount
+              }
+              active={
                 notificationsActive
-                  ? "shobdo-navbar-icon-button shobdo-notification-button active"
-                  : "shobdo-navbar-icon-button shobdo-notification-button"
               }
-              aria-label={
-                unreadNotificationCount >
-                0
-                  ? `${labels.notifications}: ${unreadNotificationCount}`
-                  : labels.notifications
-              }
-              aria-current={
-                notificationsActive
-                  ? "page"
-                  : undefined
-              }
-              title={
-                labels.notifications
-              }
-            >
-
-              <Bell
-                size={19}
-                strokeWidth={1.9}
-              />
-
-
-              {unreadNotificationCount >
-                0 && (
-
-                <span
-                  className="shobdo-navbar-notification-badge"
-                  aria-hidden="true"
-                >
-                  {
-                    notificationBadge
-                  }
-                </span>
-
-              )}
-
-            </Link>
+            />
 
           )}
 

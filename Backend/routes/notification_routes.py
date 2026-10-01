@@ -1,10 +1,12 @@
 from flask import Blueprint, jsonify, request
+
 from flask_jwt_extended import (
     get_jwt_identity,
     jwt_required,
 )
 
 from database import db
+
 from models.notification import Notification
 from models.user import User
 from models.writing import Writing
@@ -33,13 +35,6 @@ notification_bp = Blueprint(
 # =========================================================
 
 def get_current_user_id():
-    """
-    Return the authenticated user's ID as an integer.
-
-    Flask-JWT-Extended may return the identity as either
-    a string or an integer depending on how the login token
-    was originally created.
-    """
 
     identity = get_jwt_identity()
 
@@ -48,20 +43,32 @@ def get_current_user_id():
 
     try:
         return int(identity)
-    except (TypeError, ValueError):
+
+    except (
+        TypeError,
+        ValueError,
+    ):
         return None
 
+
+# =========================================================
+# NOTIFICATION RESPONSE
+# =========================================================
 
 def notification_response(
     notification,
 ):
-    """
-    Convert a Notification into frontend-friendly JSON.
 
-    Notification text itself is NOT stored in the database.
-    The frontend creates translated Bengali / English / Hindi
-    text using the structured data returned here.
     """
+    Convert Notification into frontend-friendly structured
+    JSON.
+
+    The frontend can translate notification text based on
+    notification.type.
+    """
+
+    if notification is None:
+        return None
 
     # =====================================================
     # ACTOR
@@ -79,22 +86,30 @@ def notification_response(
         if actor_user:
 
             actor = {
-                "id": actor_user.id,
-                "name": getattr(
-                    actor_user,
-                    "name",
-                    None,
-                ),
-                "username": getattr(
-                    actor_user,
-                    "username",
-                    None,
-                ),
-                "avatar_url": getattr(
-                    actor_user,
-                    "avatar_url",
-                    None,
-                ),
+
+                "id":
+                    actor_user.id,
+
+                "name":
+                    getattr(
+                        actor_user,
+                        "name",
+                        None,
+                    ),
+
+                "username":
+                    getattr(
+                        actor_user,
+                        "username",
+                        None,
+                    ),
+
+                "avatar_url":
+                    getattr(
+                        actor_user,
+                        "avatar_url",
+                        None,
+                    ),
             }
 
     # =====================================================
@@ -113,12 +128,16 @@ def notification_response(
         if writing_model:
 
             writing = {
-                "id": writing_model.id,
-                "title": getattr(
-                    writing_model,
-                    "title",
-                    "",
-                ),
+
+                "id":
+                    writing_model.id,
+
+                "title":
+                    getattr(
+                        writing_model,
+                        "title",
+                        "",
+                    ),
             }
 
     # =====================================================
@@ -137,7 +156,9 @@ def notification_response(
         if comment_model:
 
             comment = {
-                "id": comment_model.id,
+
+                "id":
+                    comment_model.id,
             }
 
     # =====================================================
@@ -145,6 +166,7 @@ def notification_response(
     # =====================================================
 
     return {
+
         "id":
             notification.id,
 
@@ -163,14 +185,94 @@ def notification_response(
         "comment_id":
             notification.comment_id,
 
+        "message":
+            notification.message,
+
+        # -------------------------------------------------
+        # NEW SOCIAL NOTIFICATION FIELDS
+        # -------------------------------------------------
+
+        "target_url":
+            getattr(
+                notification,
+                "target_url",
+                None,
+            ),
+
+        "group_key":
+            getattr(
+                notification,
+                "group_key",
+                None,
+            ),
+
+        # -------------------------------------------------
+        # READ STATE
+        # -------------------------------------------------
+
         "is_read":
             notification.is_read,
 
-        "created_at": (
-            notification.created_at.isoformat()
-            if notification.created_at
-            else None
-        ),
+        "read_at":
+            (
+                notification.read_at.isoformat()
+                if getattr(
+                    notification,
+                    "read_at",
+                    None,
+                )
+                else None
+            ),
+
+        # -------------------------------------------------
+        # EMAIL STATE
+        # -------------------------------------------------
+
+        "email_sent":
+            bool(
+                getattr(
+                    notification,
+                    "email_sent",
+                    False,
+                )
+            ),
+
+        "email_sent_at":
+            (
+                notification.email_sent_at.isoformat()
+                if getattr(
+                    notification,
+                    "email_sent_at",
+                    None,
+                )
+                else None
+            ),
+
+        # -------------------------------------------------
+        # TIMESTAMPS
+        # -------------------------------------------------
+
+        "created_at":
+            (
+                notification.created_at.isoformat()
+                if notification.created_at
+                else None
+            ),
+
+        "updated_at":
+            (
+                notification.updated_at.isoformat()
+                if getattr(
+                    notification,
+                    "updated_at",
+                    None,
+                )
+                else None
+            ),
+
+        # -------------------------------------------------
+        # RELATED OBJECTS
+        # -------------------------------------------------
 
         "actor":
             actor,
@@ -181,6 +283,7 @@ def notification_response(
         "comment":
             comment,
     }
+
 
 # =========================================================
 # GET NOTIFICATIONS
@@ -200,13 +303,20 @@ def notification_response(
 @jwt_required()
 def get_notifications():
 
-    current_user_id = get_current_user_id()
+    current_user_id = (
+        get_current_user_id()
+    )
 
     if current_user_id is None:
 
         return jsonify({
-            "success": False,
-            "message": "Invalid authenticated user.",
+
+            "success":
+                False,
+
+            "message":
+                "Invalid authenticated user.",
+
         }), 401
 
     # -----------------------------------------------------
@@ -231,8 +341,6 @@ def get_notifications():
     if per_page is None or per_page < 1:
         per_page = 20
 
-    # Prevent huge responses.
-
     per_page = min(
         per_page,
         100,
@@ -243,6 +351,7 @@ def get_notifications():
     # -----------------------------------------------------
 
     query = Notification.query.filter(
+
         Notification.recipient_id
         == current_user_id
     )
@@ -252,6 +361,7 @@ def get_notifications():
     # -----------------------------------------------------
 
     unread = (
+
         request.args
         .get(
             "unread",
@@ -268,7 +378,10 @@ def get_notifications():
     }:
 
         query = query.filter(
-            Notification.is_read.is_(False)
+
+            Notification.is_read.is_(
+                False
+            )
         )
 
     # -----------------------------------------------------
@@ -276,22 +389,31 @@ def get_notifications():
     # -----------------------------------------------------
 
     query = query.order_by(
+
         Notification.created_at.desc(),
+
         Notification.id.desc(),
     )
 
     # -----------------------------------------------------
-    # PAGINATE
+    # PAGINATION
     # -----------------------------------------------------
 
     pagination = query.paginate(
+
         page=page,
+
         per_page=per_page,
+
         error_out=False,
     )
 
     notifications = [
-        notification_response(notification)
+
+        notification_response(
+            notification
+        )
+
         for notification
         in pagination.items
     ]
@@ -303,31 +425,42 @@ def get_notifications():
     )
 
     return jsonify({
-        "success": True,
 
-        "notifications": notifications,
+        "success":
+            True,
 
-        "unread_count": unread_count,
+        "notifications":
+            notifications,
+
+        "unread_count":
+            unread_count,
 
         "pagination": {
-            "page": pagination.page,
-            "per_page": pagination.per_page,
-            "total": pagination.total,
-            "pages": pagination.pages,
-            "has_next": pagination.has_next,
-            "has_prev": pagination.has_prev,
+
+            "page":
+                pagination.page,
+
+            "per_page":
+                pagination.per_page,
+
+            "total":
+                pagination.total,
+
+            "pages":
+                pagination.pages,
+
+            "has_next":
+                pagination.has_next,
+
+            "has_prev":
+                pagination.has_prev,
         },
+
     }), 200
 
 
 # =========================================================
 # GET UNREAD COUNT
-# =========================================================
-#
-# GET /api/notifications/unread-count
-#
-# Used by the Navbar notification bell.
-#
 # =========================================================
 
 @notification_bp.get(
@@ -336,13 +469,20 @@ def get_notifications():
 @jwt_required()
 def unread_notification_count():
 
-    current_user_id = get_current_user_id()
+    current_user_id = (
+        get_current_user_id()
+    )
 
     if current_user_id is None:
 
         return jsonify({
-            "success": False,
-            "message": "Invalid authenticated user.",
+
+            "success":
+                False,
+
+            "message":
+                "Invalid authenticated user.",
+
         }), 401
 
     count = (
@@ -352,17 +492,18 @@ def unread_notification_count():
     )
 
     return jsonify({
-        "success": True,
-        "unread_count": count,
+
+        "success":
+            True,
+
+        "unread_count":
+            count,
+
     }), 200
 
 
 # =========================================================
-# MARK ONE NOTIFICATION AS READ
-# =========================================================
-#
-# PATCH /api/notifications/<id>/read
-#
+# MARK ONE AS READ
 # =========================================================
 
 @notification_bp.patch(
@@ -373,13 +514,20 @@ def read_notification(
     notification_id,
 ):
 
-    current_user_id = get_current_user_id()
+    current_user_id = (
+        get_current_user_id()
+    )
 
     if current_user_id is None:
 
         return jsonify({
-            "success": False,
-            "message": "Invalid authenticated user.",
+
+            "success":
+                False,
+
+            "message":
+                "Invalid authenticated user.",
+
         }), 401
 
     notification = db.session.get(
@@ -390,16 +538,17 @@ def read_notification(
     if notification is None:
 
         return jsonify({
-            "success": False,
-            "message": "Notification not found.",
+
+            "success":
+                False,
+
+            "message":
+                "Notification not found.",
+
         }), 404
 
     # -----------------------------------------------------
     # SECURITY
-    # -----------------------------------------------------
-    #
-    # A user can modify only their own notifications.
-    #
     # -----------------------------------------------------
 
     if (
@@ -408,11 +557,18 @@ def read_notification(
     ):
 
         return jsonify({
-            "success": False,
-            "message": "Notification not found.",
+
+            "success":
+                False,
+
+            "message":
+                "Notification not found.",
+
         }), 404
 
-    # Already read = success, no problem.
+    # -----------------------------------------------------
+    # UPDATE READ STATE
+    # -----------------------------------------------------
 
     if not notification.is_read:
 
@@ -422,22 +578,34 @@ def read_notification(
 
         db.session.commit()
 
+    # -----------------------------------------------------
+    # CURRENT UNREAD COUNT
+    # -----------------------------------------------------
+
+    unread_count = (
+        get_unread_notification_count(
+            current_user_id
+        )
+    )
+
     return jsonify({
-        "success": True,
-        "notification": (
+
+        "success":
+            True,
+
+        "notification":
             notification_response(
                 notification
-            )
-        ),
+            ),
+
+        "unread_count":
+            unread_count,
+
     }), 200
 
 
 # =========================================================
 # MARK ALL AS READ
-# =========================================================
-#
-# PATCH /api/notifications/read-all
-#
 # =========================================================
 
 @notification_bp.patch(
@@ -446,13 +614,20 @@ def read_notification(
 @jwt_required()
 def read_all_notifications():
 
-    current_user_id = get_current_user_id()
+    current_user_id = (
+        get_current_user_id()
+    )
 
     if current_user_id is None:
 
         return jsonify({
-            "success": False,
-            "message": "Invalid authenticated user.",
+
+            "success":
+                False,
+
+            "message":
+                "Invalid authenticated user.",
+
         }), 401
 
     updated_count = (
@@ -464,19 +639,24 @@ def read_all_notifications():
     db.session.commit()
 
     return jsonify({
-        "success": True,
-        "message": "All notifications marked as read.",
-        "updated_count": updated_count,
-        "unread_count": 0,
+
+        "success":
+            True,
+
+        "message":
+            "All notifications marked as read.",
+
+        "updated_count":
+            updated_count,
+
+        "unread_count":
+            0,
+
     }), 200
 
 
 # =========================================================
 # DELETE NOTIFICATION
-# =========================================================
-#
-# DELETE /api/notifications/<id>
-#
 # =========================================================
 
 @notification_bp.delete(
@@ -487,13 +667,20 @@ def delete_user_notification(
     notification_id,
 ):
 
-    current_user_id = get_current_user_id()
+    current_user_id = (
+        get_current_user_id()
+    )
 
     if current_user_id is None:
 
         return jsonify({
-            "success": False,
-            "message": "Invalid authenticated user.",
+
+            "success":
+                False,
+
+            "message":
+                "Invalid authenticated user.",
+
         }), 401
 
     notification = db.session.get(
@@ -504,12 +691,17 @@ def delete_user_notification(
     if notification is None:
 
         return jsonify({
-            "success": False,
-            "message": "Notification not found.",
+
+            "success":
+                False,
+
+            "message":
+                "Notification not found.",
+
         }), 404
 
     # -----------------------------------------------------
-    # SECURITY CHECK
+    # SECURITY
     # -----------------------------------------------------
 
     if (
@@ -518,9 +710,18 @@ def delete_user_notification(
     ):
 
         return jsonify({
-            "success": False,
-            "message": "Notification not found.",
+
+            "success":
+                False,
+
+            "message":
+                "Notification not found.",
+
         }), 404
+
+    was_unread = (
+        not notification.is_read
+    )
 
     db.session.delete(
         notification
@@ -528,8 +729,27 @@ def delete_user_notification(
 
     db.session.commit()
 
+    unread_count = (
+        get_unread_notification_count(
+            current_user_id
+        )
+    )
+
     return jsonify({
-        "success": True,
-        "message": "Notification deleted.",
-        "notification_id": notification_id,
+
+        "success":
+            True,
+
+        "message":
+            "Notification deleted.",
+
+        "notification_id":
+            notification_id,
+
+        "was_unread":
+            was_unread,
+
+        "unread_count":
+            unread_count,
+
     }), 200
