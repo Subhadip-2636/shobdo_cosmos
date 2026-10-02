@@ -1,10 +1,10 @@
-import html
+﻿import html
 import os
-import smtplib
 
-from email.message import EmailMessage
-from email.utils import formataddr, parseaddr
+from email.utils import parseaddr
 from urllib.parse import urlparse
+
+import resend
 
 
 # =========================================================
@@ -37,52 +37,25 @@ def get_env_bool(
 
 def get_email_config():
 
-    host = (
-        os.getenv("MAIL_SERVER")
-        or os.getenv("SMTP_HOST")
-        or ""
-    ).strip()
-
-    port_raw = (
-        os.getenv("MAIL_PORT")
-        or os.getenv("SMTP_PORT")
-        or "587"
-    ).strip()
-
-    username = (
-        os.getenv("MAIL_USERNAME")
-        or os.getenv("SMTP_USERNAME")
-        or ""
-    ).strip()
-
-    password = (
-        os.getenv("MAIL_PASSWORD")
-        or os.getenv("SMTP_PASSWORD")
+    api_key = (
+        os.getenv("RESEND_API_KEY")
         or ""
     ).strip()
 
     raw_sender = (
-        os.getenv("MAIL_DEFAULT_SENDER")
-        or os.getenv("SMTP_FROM_EMAIL")
-        or username
-        or ""
+        os.getenv("RESEND_FROM_EMAIL")
+        or "onboarding@resend.dev"
     ).strip()
 
     configured_sender_name = (
-        os.getenv("SMTP_FROM_NAME")
+        os.getenv("RESEND_FROM_NAME")
         or "SHOBDO"
     ).strip()
 
-    # MAIL_DEFAULT_SENDER may be either:
-    #
-    #     address@gmail.com
-    #
-    # or:
-    #
-    #     SHOBDO <address@gmail.com>
-    #
-    parsed_name, parsed_email = parseaddr(
-        raw_sender
+    parsed_name, parsed_email = (
+        parseaddr(
+            raw_sender
+        )
     )
 
     sender_email = (
@@ -96,46 +69,23 @@ def get_email_config():
         or "SHOBDO"
     ).strip()
 
-    use_tls = get_env_bool(
-        "MAIL_USE_TLS",
-        get_env_bool(
-            "SMTP_USE_TLS",
-            True,
-        ),
-    )
-
-    use_ssl = get_env_bool(
-        "MAIL_USE_SSL",
-        get_env_bool(
-            "SMTP_USE_SSL",
-            False,
-        ),
-    )
-
     enabled = get_env_bool(
         "EMAIL_NOTIFICATIONS_ENABLED",
         False,
     )
 
-    try:
-        port = int(port_raw)
-
-    except (
-        TypeError,
-        ValueError,
-    ):
-        port = 587
-
     return {
-        "enabled": enabled,
-        "host": host,
-        "port": port,
-        "username": username,
-        "password": password,
-        "sender_email": sender_email,
-        "sender_name": sender_name,
-        "use_tls": use_tls,
-        "use_ssl": use_ssl,
+        "enabled":
+            enabled,
+
+        "api_key":
+            api_key,
+
+        "sender_email":
+            sender_email,
+
+        "sender_name":
+            sender_name,
     }
 
 
@@ -151,50 +101,28 @@ def validate_email_config(
     if not config.get(
         "enabled"
     ):
+
         return (
             False,
             "Email notifications are disabled.",
         )
 
-    required = [
-        "host",
-        "sender_email",
-    ]
-
-    for key in required:
-
-        if not config.get(key):
-            return (
-                False,
-                f"Missing email configuration: {key}",
-            )
-
-    if (
-        config.get("use_ssl")
-        and config.get("use_tls")
+    if not config.get(
+        "api_key"
     ):
+
         return (
             False,
-            (
-                "SMTP SSL and TLS cannot "
-                "both be enabled."
-            ),
+            "RESEND_API_KEY is missing.",
         )
 
-    username = (
-        config.get("username")
-        or ""
-    ).strip()
+    if not config.get(
+        "sender_email"
+    ):
 
-    password = (
-        config.get("password")
-        or ""
-    ).strip()
-
-    if username and not password:
         return (
             False,
-            "SMTP password is missing.",
+            "RESEND_FROM_EMAIL is missing.",
         )
 
     return (
@@ -219,12 +147,13 @@ def normalize_header_text(
         or default
     )
 
-    # Prevent accidental/newline header injection.
     value = " ".join(
         value.splitlines()
     ).strip()
 
-    return value[:max_length]
+    return value[
+        :max_length
+    ]
 
 
 def normalize_plain_text(
@@ -238,20 +167,30 @@ def normalize_plain_text(
         or default
     ).strip()
 
-    return value[:max_length]
+    return value[
+        :max_length
+    ]
 
 
 def normalize_recipient_email(
     value,
 ):
 
-    _, email_address = parseaddr(
-        str(value or "")
+    _, email_address = (
+        parseaddr(
+            str(
+                value
+                or ""
+            )
+        )
     )
 
     return (
         email_address
-        or str(value or "")
+        or str(
+            value
+            or ""
+        )
     ).strip()
 
 
@@ -292,17 +231,11 @@ def normalize_action_url(
 
         return None
 
-    # Only permit normal website URLs.
-    #
-    # Reject:
-    # javascript:
-    # data:
-    # file:
-    # etc.
     if parsed.scheme not in {
         "http",
         "https",
     }:
+
         return None
 
     if not parsed.netloc:
@@ -312,80 +245,43 @@ def normalize_action_url(
 
 
 # =========================================================
-# BUILD EMAIL MESSAGE
+# FROM ADDRESS
 # =========================================================
 
 
-def build_email_message(
-    recipient_email,
-    subject,
-    text_body,
-    html_body=None,
-    recipient_name=None,
+def build_from_address(
+    config,
 ):
 
-    config = get_email_config()
-
-    recipient_email = (
-        normalize_recipient_email(
-            recipient_email
+    sender_name = (
+        normalize_header_text(
+            config.get(
+                "sender_name"
+            ),
+            default="SHOBDO",
+            max_length=120,
         )
     )
 
-    recipient_name = (
-        normalize_recipient_name(
-            recipient_name
+    sender_email = (
+        config.get(
+            "sender_email"
         )
-    )
+        or ""
+    ).strip()
 
-    subject = normalize_header_text(
-        subject,
-        default="SHOBDO notification",
-        max_length=250,
-    )
+    if sender_name:
 
-    message = EmailMessage()
-
-    message["Subject"] = subject
-
-    message["From"] = formataddr(
-        (
-            config["sender_name"],
-            config["sender_email"],
-        )
-    )
-
-    if recipient_name:
-
-        message["To"] = formataddr(
-            (
-                recipient_name,
-                recipient_email,
-            )
+        return (
+            f"{sender_name} "
+            f"<{sender_email}>"
         )
 
-    else:
-
-        message["To"] = (
-            recipient_email
-        )
-
-    message.set_content(
-        text_body
-    )
-
-    if html_body:
-
-        message.add_alternative(
-            html_body,
-            subtype="html",
-        )
-
-    return message
+    return sender_email
 
 
 # =========================================================
-# SEND EMAIL
+# SEND EMAIL - RESEND HTTPS API
 # =========================================================
 
 
@@ -397,7 +293,9 @@ def send_email(
     recipient_name=None,
 ):
 
-    config = get_email_config()
+    config = (
+        get_email_config()
+    )
 
     valid, error = (
         validate_email_config(
@@ -408,9 +306,14 @@ def send_email(
     if not valid:
 
         return {
-            "success": False,
-            "skipped": True,
-            "error": error,
+            "success":
+                False,
+
+            "skipped":
+                True,
+
+            "error":
+                error,
         }
 
     recipient_email = (
@@ -422,102 +325,145 @@ def send_email(
     if not recipient_email:
 
         return {
-            "success": False,
-            "skipped": True,
+            "success":
+                False,
+
+            "skipped":
+                True,
+
             "error":
                 "Recipient email is missing.",
         }
 
-    text_body = normalize_plain_text(
-        text_body,
-        default="",
-        max_length=10000,
+    recipient_name = (
+        normalize_recipient_name(
+            recipient_name
+        )
     )
+
+    subject = (
+        normalize_header_text(
+            subject,
+            default=
+                "SHOBDO notification",
+            max_length=250,
+        )
+    )
+
+    text_body = (
+        normalize_plain_text(
+            text_body,
+            default="",
+            max_length=10000,
+        )
+    )
+
+    if recipient_name:
+
+        recipient = (
+            f"{recipient_name} "
+            f"<{recipient_email}>"
+        )
+
+    else:
+
+        recipient = (
+            recipient_email
+        )
+
+    params = {
+        "from":
+            build_from_address(
+                config
+            ),
+
+        "to":
+            [
+                recipient
+            ],
+
+        "subject":
+            subject,
+
+        "text":
+            text_body,
+    }
+
+    if html_body:
+
+        params[
+            "html"
+        ] = html_body
 
     try:
 
-        message = build_email_message(
-            recipient_email=
-                recipient_email,
-
-            recipient_name=
-                recipient_name,
-
-            subject=
-                subject,
-
-            text_body=
-                text_body,
-
-            html_body=
-                html_body,
+        resend.api_key = (
+            config[
+                "api_key"
+            ]
         )
 
-        if config["use_ssl"]:
+        response = (
+            resend.Emails.send(
+                params
+            )
+        )
 
-            server = smtplib.SMTP_SSL(
-                config["host"],
-                config["port"],
-                timeout=20,
+        email_id = None
+
+        if isinstance(
+            response,
+            dict,
+        ):
+
+            email_id = (
+                response.get(
+                    "id"
+                )
             )
 
         else:
 
-            server = smtplib.SMTP(
-                config["host"],
-                config["port"],
-                timeout=20,
+            email_id = getattr(
+                response,
+                "id",
+                None,
             )
-
-        try:
-
-            server.ehlo()
-
-            if (
-                config["use_tls"]
-                and not config["use_ssl"]
-            ):
-
-                server.starttls()
-
-                server.ehlo()
-
-            if config["username"]:
-
-                server.login(
-                    config["username"],
-                    config["password"],
-                )
-
-            server.send_message(
-                message
-            )
-
-        finally:
-
-            try:
-                server.quit()
-
-            except Exception:
-                pass
 
         return {
-            "success": True,
-            "skipped": False,
-            "error": None,
+            "success":
+                True,
+
+            "skipped":
+                False,
+
+            "error":
+                None,
+
+            "email_id":
+                email_id,
         }
 
     except Exception as error:
 
         print(
             "EMAIL SEND ERROR:",
-            str(error),
+            str(
+                error
+            ),
         )
 
         return {
-            "success": False,
-            "skipped": False,
-            "error": str(error),
+            "success":
+                False,
+
+            "skipped":
+                False,
+
+            "error":
+                str(
+                    error
+                ),
         }
 
 
@@ -532,9 +478,6 @@ def build_notification_html(
     action_url=None,
     action_label="View on SHOBDO",
 ):
-
-    # HTML escaping is mandatory because notification text
-    # may ultimately contain user-controlled values.
 
     safe_title = html.escape(
         normalize_plain_text(
@@ -552,7 +495,6 @@ def build_notification_html(
         )
     )
 
-    # Preserve plain-text line breaks in HTML safely.
     safe_message = (
         safe_message.replace(
             "\n",
@@ -563,22 +505,27 @@ def build_notification_html(
     safe_action_label = html.escape(
         normalize_plain_text(
             action_label,
-            default="View on SHOBDO",
+            default=
+                "View on SHOBDO",
             max_length=100,
         )
     )
 
-    action_url = normalize_action_url(
-        action_url
+    action_url = (
+        normalize_action_url(
+            action_url
+        )
     )
 
     action_html = ""
 
     if action_url:
 
-        safe_action_url = html.escape(
-            action_url,
-            quote=True,
+        safe_action_url = (
+            html.escape(
+                action_url,
+                quote=True,
+            )
         )
 
         action_html = f"""
@@ -774,23 +721,32 @@ def send_notification_email(
     action_url=None,
 ):
 
-    subject = normalize_header_text(
-        subject,
-        default="SHOBDO notification",
-        max_length=250,
+    subject = (
+        normalize_header_text(
+            subject,
+            default=
+                "SHOBDO notification",
+            max_length=250,
+        )
     )
 
-    message = normalize_plain_text(
-        message,
-        default="",
-        max_length=5000,
+    message = (
+        normalize_plain_text(
+            message,
+            default="",
+            max_length=5000,
+        )
     )
 
-    action_url = normalize_action_url(
-        action_url
+    action_url = (
+        normalize_action_url(
+            action_url
+        )
     )
 
-    text_body = message
+    text_body = (
+        message
+    )
 
     if action_url:
 
@@ -802,9 +758,14 @@ def send_notification_email(
 
     html_body = (
         build_notification_html(
-            title=subject,
-            message=message,
-            action_url=action_url,
+            title=
+                subject,
+
+            message=
+                message,
+
+            action_url=
+                action_url,
         )
     )
 
