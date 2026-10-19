@@ -1,362 +1,337 @@
-// =========================================================
-// SHOBDO - NOTIFICATIONS API
-// =========================================================
 
+/**
+ * SHOBDO — Notifications API
+ *
+ * Compatible with:
+ * - React + Vite
+ * - Flask JWT authentication
+ * - Existing SHOBDO notification routes
+ * - Production and development environments
+ */
 
-// =========================================================
+const DEFAULT_API_URL = "http://127.0.0.1:5000";
+const TOKEN_KEY = "shobdo_token";
+const REQUEST_TIMEOUT_MS = 20000;
+
+// ---------------------------------------------------------
 // API CONFIGURATION
-// =========================================================
-//
-// Works with BOTH:
-//
-// VITE_API_URL=https://shobdo-cosmos.onrender.com
-//
-// and:
-//
-// VITE_API_URL=https://shobdo-cosmos.onrender.com/api
-//
-// Final API URL will always become:
-// https://shobdo-cosmos.onrender.com/api
-//
-// =========================================================
+// ---------------------------------------------------------
 
-const RAW_API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://127.0.0.1:5000";
-
-
-const CLEAN_API_URL =
-  RAW_API_URL
+function normalizeApiUrl(value) {
+  const raw = String(value || DEFAULT_API_URL)
     .trim()
     .replace(/\/+$/, "");
 
+  if (!/^https?:\/\/[^/\s]+/i.test(raw)) {
+    throw new Error(
+      "Invalid SHOBDO API URL. Check VITE_API_URL."
+    );
+  }
 
-const API_URL =
-  CLEAN_API_URL.endsWith("/api")
-    ? CLEAN_API_URL
-    : `${CLEAN_API_URL}/api`;
+  return /\/api$/i.test(raw)
+    ? raw
+    : `${raw}/api`;
+}
 
+const API_URL = normalizeApiUrl(
+  import.meta.env.VITE_API_URL
+);
 
-const TOKEN_KEY =
-  "shobdo_token";
-
-
-// =========================================================
-// TOKEN
-// =========================================================
+// ---------------------------------------------------------
+// AUTHENTICATION
+// ---------------------------------------------------------
 
 function getToken() {
-
-  return localStorage.getItem(
-    TOKEN_KEY
-  );
-
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
 }
-
-
-// =========================================================
-// AUTH HEADERS
-// =========================================================
 
 function getAuthHeaders() {
-
-  const token =
-    getToken();
-
-
   const headers = {
-
-    Accept:
-      "application/json",
-
-    "Content-Type":
-      "application/json",
-
+    Accept: "application/json",
+    "Content-Type": "application/json",
   };
 
+  const token = getToken();
 
   if (token) {
-
-    headers.Authorization =
-      `Bearer ${token}`;
-
+    headers.Authorization = `Bearer ${token}`;
   }
-
 
   return headers;
-
 }
 
+// ---------------------------------------------------------
+// INPUT VALIDATION
+// ---------------------------------------------------------
 
-// =========================================================
-// RESPONSE HANDLER
-// =========================================================
+function positiveInteger(value, name) {
+  const number = Number(value);
 
-async function handleResponse(
-  response
+  if (
+    !Number.isSafeInteger(number) ||
+    number <= 0
+  ) {
+    throw new Error(
+      `${name} must be a positive integer.`
+    );
+  }
+
+  return number;
+}
+
+// ---------------------------------------------------------
+// COMMON REQUEST HANDLER
+// ---------------------------------------------------------
+
+async function notificationRequest(
+  endpoint,
+  {
+    method = "GET",
+    signal,
+  } = {}
 ) {
+  const controller = new AbortController();
 
-  let data = null;
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, REQUEST_TIMEOUT_MS);
 
+  const abortFromCaller = () => {
+    controller.abort();
+  };
+
+  if (signal?.aborted) {
+    controller.abort();
+  } else {
+    signal?.addEventListener(
+      "abort",
+      abortFromCaller,
+      { once: true }
+    );
+  }
 
   try {
+    const response = await fetch(
+      `${API_URL}/notifications${endpoint}`,
+      {
+        method,
+        headers: getAuthHeaders(),
+        signal: controller.signal,
+        cache: "no-store",
+      }
+    );
 
-    data =
-      await response.json();
+    const contentType =
+      response.headers.get("content-type") || "";
 
-  } catch {
+    let data = null;
 
-    data = null;
+    if (contentType.includes("application/json")) {
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+    }
 
-  }
-
-
-  if (!response.ok) {
-
-    const message =
-      data?.message ||
-      data?.error ||
-      `Request failed with status ${response.status}.`;
-
-
-    const error =
-      new Error(
-        message
+    if (!response.ok) {
+      const error = new Error(
+        data?.message ||
+        data?.error ||
+        `Notification request failed (${response.status}).`
       );
 
+      error.status = response.status;
+      error.data = data;
 
-    error.status =
-      response.status;
+      if (response.status === 401) {
+        error.code = "AUTH_REQUIRED";
+      }
 
-    error.data =
-      data;
+      if (response.status === 403) {
+        error.code = "ACCESS_DENIED";
+      }
 
+      throw error;
+    }
+
+    if (!data || typeof data !== "object") {
+      throw new Error(
+        "Invalid response from SHOBDO notification API."
+      );
+    }
+
+    return data;
+  } catch (error) {
+    if (
+      controller.signal.aborted &&
+      !signal?.aborted
+    ) {
+      const timeoutError = new Error(
+        "The notification request timed out."
+      );
+
+      timeoutError.code = "REQUEST_TIMEOUT";
+      throw timeoutError;
+    }
+
+    if (
+      error instanceof TypeError &&
+      !error.status
+    ) {
+      const networkError = new Error(
+        "Unable to connect to SHOBDO. Check your connection."
+      );
+
+      networkError.code = "NETWORK_ERROR";
+      throw networkError;
+    }
 
     throw error;
+  } finally {
+    clearTimeout(timeoutId);
 
+    signal?.removeEventListener(
+      "abort",
+      abortFromCaller
+    );
   }
-
-
-  return data;
-
 }
 
-
-// =========================================================
-// GET ALL / UNREAD NOTIFICATIONS
-// =========================================================
-//
-// Example:
-//
-// getNotifications()
-//
-// getNotifications({
-//   page: 1,
-//   perPage: 20,
-//   unreadOnly: true,
-// });
-//
-// =========================================================
+// ---------------------------------------------------------
+// GET NOTIFICATIONS
+// ---------------------------------------------------------
 
 export async function getNotifications({
   page = 1,
   perPage = 20,
   unreadOnly = false,
+  signal,
 } = {}) {
-
-  const params =
-    new URLSearchParams();
-
-
-  params.set(
-    "page",
-    String(page)
+  const safePage = positiveInteger(
+    page,
+    "Page"
   );
 
-
-  params.set(
-    "per_page",
-    String(perPage)
+  const safePerPage = Math.min(
+    positiveInteger(perPage, "Per-page limit"),
+    100
   );
 
+  const params = new URLSearchParams({
+    page: String(safePage),
+    per_page: String(safePerPage),
+  });
 
   if (unreadOnly) {
-
-    params.set(
-      "unread",
-      "true"
-    );
-
+    params.set("unread", "true");
   }
 
-
-  const url =
-    `${API_URL}/notifications?${params.toString()}`;
-
-
-  const response =
-    await fetch(
-      url,
-      {
-        method: "GET",
-
-        headers:
-          getAuthHeaders(),
-      }
-    );
-
-
-  return handleResponse(
-    response
+  return notificationRequest(
+    `?${params.toString()}`,
+    { signal }
   );
-
 }
 
+// ---------------------------------------------------------
+// GET UNREAD COUNT
+// ---------------------------------------------------------
 
-// =========================================================
-// GET UNREAD NOTIFICATION COUNT
-// =========================================================
-
-export async function getUnreadNotificationCount() {
-
-  const response =
-    await fetch(
-      `${API_URL}/notifications/unread-count`,
-      {
-        method: "GET",
-
-        headers:
-          getAuthHeaders(),
-      }
-    );
-
-
-  return handleResponse(
-    response
+export async function getUnreadNotificationCount({
+  signal,
+} = {}) {
+  return notificationRequest(
+    "/unread-count",
+    { signal }
   );
-
 }
 
-
-// =========================================================
-// MARK ONE NOTIFICATION AS READ
-// =========================================================
+// ---------------------------------------------------------
+// MARK ONE AS READ
+// ---------------------------------------------------------
 
 export async function markNotificationRead(
   notificationId
 ) {
-
-  if (
-    notificationId === undefined ||
-    notificationId === null
-  ) {
-
-    throw new Error(
-      "Notification ID is required."
-    );
-
-  }
-
-
-  const response =
-    await fetch(
-      `${API_URL}/notifications/${notificationId}/read`,
-      {
-        method: "PATCH",
-
-        headers:
-          getAuthHeaders(),
-      }
-    );
-
-
-  return handleResponse(
-    response
+  const id = positiveInteger(
+    notificationId,
+    "Notification ID"
   );
 
+  return notificationRequest(
+    `/${id}/read`,
+    { method: "PATCH" }
+  );
 }
 
-
-// =========================================================
-// MARK ALL NOTIFICATIONS AS READ
-// =========================================================
+// ---------------------------------------------------------
+// MARK ALL AS READ
+// ---------------------------------------------------------
 
 export async function markAllNotificationsRead() {
-
-  const response =
-    await fetch(
-      `${API_URL}/notifications/read-all`,
-      {
-        method: "PATCH",
-
-        headers:
-          getAuthHeaders(),
-      }
-    );
-
-
-  return handleResponse(
-    response
+  return notificationRequest(
+    "/read-all",
+    { method: "PATCH" }
   );
-
 }
 
-
-// =========================================================
+// ---------------------------------------------------------
 // DELETE ONE NOTIFICATION
-// =========================================================
+// ---------------------------------------------------------
 
 export async function deleteNotification(
   notificationId
 ) {
-
-  if (
-    notificationId === undefined ||
-    notificationId === null
-  ) {
-
-    throw new Error(
-      "Notification ID is required."
-    );
-
-  }
-
-
-  const response =
-    await fetch(
-      `${API_URL}/notifications/${notificationId}`,
-      {
-        method: "DELETE",
-
-        headers:
-          getAuthHeaders(),
-      }
-    );
-
-
-  return handleResponse(
-    response
+  const id = positiveInteger(
+    notificationId,
+    "Notification ID"
   );
 
+  return notificationRequest(
+    `/${id}`,
+    { method: "DELETE" }
+  );
 }
 
+// ---------------------------------------------------------
+// SAFE INTERNAL NOTIFICATION NAVIGATION
+// ---------------------------------------------------------
 
-// =========================================================
+export function getSafeNotificationTarget(
+  targetUrl
+) {
+  if (
+    typeof targetUrl !== "string" ||
+    !targetUrl.trim()
+  ) {
+    return "/notifications";
+  }
+
+  const target = targetUrl.trim();
+
+  // Only accept internal absolute application paths.
+  // Reject protocol-relative URLs, backslashes and
+  // control characters.
+  if (
+    !target.startsWith("/") ||
+    target.startsWith("//") ||
+    target.includes("\\") ||
+    /[\u0000-\u001F\u007F]/.test(target)
+  ) {
+    return "/notifications";
+  }
+
+  return target;
+}
+
+// ---------------------------------------------------------
 // DEBUG HELPER
-// =========================================================
-//
-// You can temporarily use:
-//
-// console.log(getNotificationApiUrl());
-//
-// Expected production result:
-//
-// https://shobdo-cosmos.onrender.com/api
-//
-// =========================================================
+// ---------------------------------------------------------
 
 export function getNotificationApiUrl() {
-
   return API_URL;
-
 }

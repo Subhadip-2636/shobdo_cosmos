@@ -1,71 +1,165 @@
+
+/* =========================================================
+   SHOBDO — PREMIUM SOCIAL NOTIFICATION TOAST
+   React • Responsive • Multilingual
+========================================================= */
+
+/* =========================================================
+   TOAST CONTAINER
+========================================================= */
+
 .shobdo-notification-toast {
+  --toast-accent: #956b35;
+  --toast-accent-bg: #f5e9d8;
+
   position: fixed;
 
-  top: 82px;
+  top: calc(82px + env(safe-area-inset-top, 0px));
   right: 22px;
 
-  width: min(390px, calc(100vw - 32px));
+  width: min(400px, calc(100vw - 32px));
 
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
 
-  border: 1px solid rgba(127, 127, 127, 0.2);
-
-  border-radius: 16px;
-
-  background: var(--background, #ffffff);
-
-  box-shadow:
-    0 18px 50px rgba(0, 0, 0, 0.16);
+  box-sizing: border-box;
 
   overflow: hidden;
 
+  border: 1px solid rgba(122, 87, 48, 0.16);
+  border-left: 3px solid var(--toast-accent);
+  border-radius: 16px;
+
+  background: #fffdfa;
+  color: #302923;
+
+  box-shadow:
+    0 22px 55px rgba(42, 30, 21, 0.16),
+    0 5px 14px rgba(42, 30, 21, 0.07);
+
   z-index: 9999;
 
+  transform-origin: top right;
+
   animation:
-    shobdo-toast-enter 0.25s ease-out;
+    shobdo-toast-enter 260ms
+    cubic-bezier(0.2, 0.8, 0.2, 1)
+    both;
 }
 
+/* =========================================================
+   NOTIFICATION TYPE THEMES
+========================================================= */
+
+.shobdo-notification-toast--like {
+  --toast-accent: #c34c69;
+  --toast-accent-bg: #fbe8ee;
+}
+
+.shobdo-notification-toast--comment,
+.shobdo-notification-toast--comment_reply {
+  --toast-accent: #398479;
+  --toast-accent-bg: #e4f3ef;
+}
+
+.shobdo-notification-toast--follow {
+  --toast-accent: #547ec2;
+  --toast-accent-bg: #e8effc;
+}
+
+.shobdo-notification-toast--mention {
+  --toast-accent: #8c68ac;
+  --toast-accent-bg: #f1eafb;
+}
+
+.shobdo-notification-toast--repost {
+  --toast-accent: #8260ac;
+  --toast-accent-bg: #f0e9fa;
+}
+
+.shobdo-notification-toast--message {
+  --toast-accent: #3d87b5;
+  --toast-accent-bg: #e7f4fc;
+}
+
+.shobdo-notification-toast--new_writing {
+  --toast-accent: #a57c32;
+  --toast-accent-bg: #f9f0dd;
+}
+
+.shobdo-notification-toast--security {
+  --toast-accent: #b65b42;
+  --toast-accent-bg: #fae9e2;
+}
+
+.shobdo-notification-toast--system {
+  --toast-accent: #956b35;
+  --toast-accent-bg: #f5e9d8;
+}
+
+/* =========================================================
+   MAIN CLICKABLE AREA
+========================================================= */
 
 .shobdo-notification-toast-main {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
 
   display: flex;
-  align-items: flex-start;
+  align-items: center;
 
   gap: 12px;
-
-  padding: 16px;
+  padding: 15px 12px 15px 15px;
 
   border: 0;
 
   background: transparent;
-
   color: inherit;
 
+  font-family: inherit;
   text-align: left;
 
   cursor: pointer;
+
+  transition: background-color 160ms ease;
 }
 
+.shobdo-notification-toast-main:hover {
+  background: rgba(148, 108, 58, 0.045);
+}
+
+/* =========================================================
+   NOTIFICATION ICON
+========================================================= */
 
 .shobdo-notification-toast-icon {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  flex-shrink: 0;
+  flex: 0 0 auto;
 
-  border-radius: 50%;
+  border-radius: 13px;
 
-  background: rgba(127, 127, 127, 0.1);
+  background: var(--toast-accent-bg);
+  color: var(--toast-accent);
 }
 
+.shobdo-notification-toast-icon svg {
+  width: 21px;
+  height: 21px;
+  stroke-width: 2;
+}
+
+/* =========================================================
+   NOTIFICATION CONTENT
+========================================================= */
 
 .shobdo-notification-toast-content {
+  flex: 1 1 auto;
   min-width: 0;
 
   display: flex;
@@ -74,30 +168,49 @@
   gap: 5px;
 }
 
-
 .shobdo-notification-toast-content strong {
-  font-size: 14px;
-  line-height: 1.45;
-}
-
-
-.shobdo-notification-toast-content span {
-  max-width: 260px;
+  display: -webkit-box;
 
   overflow: hidden;
 
-  color: #6b7280;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 
-  font-size: 13px;
+  color: #302923;
+
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.5;
+
+  overflow-wrap: anywhere;
+}
+
+.shobdo-notification-toast-content > span {
+  display: block;
+
+  max-width: 100%;
+
+  overflow: hidden;
+
+  color: #827467;
+
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
 
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* =========================================================
+   CLOSE BUTTON
+========================================================= */
 
 .shobdo-notification-toast-close {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
 
   margin: 8px 8px 0 0;
 
@@ -105,49 +218,138 @@
   align-items: center;
   justify-content: center;
 
-  flex-shrink: 0;
+  flex: 0 0 auto;
 
   border: 0;
-
   border-radius: 10px;
 
   background: transparent;
-
-  color: inherit;
+  color: #8a7a6a;
 
   cursor: pointer;
-}
 
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
 
 .shobdo-notification-toast-close:hover {
-  background: rgba(127, 127, 127, 0.1);
+  background: #f2e7d9;
+  color: #513c25;
 }
 
+/* =========================================================
+   KEYBOARD ACCESSIBILITY
+========================================================= */
+
+.shobdo-notification-toast-main:focus-visible,
+.shobdo-notification-toast-close:focus-visible {
+  outline: 2px solid #9a7036;
+  outline-offset: -3px;
+}
+
+/* =========================================================
+   ENTRANCE ANIMATION
+========================================================= */
 
 @keyframes shobdo-toast-enter {
-
   from {
     opacity: 0;
-    transform: translateY(-12px);
+    transform: translate3d(0, -14px, 0)
+      scale(0.97);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0)
+      scale(1);
   }
-
 }
 
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 820px) {
+  .shobdo-notification-toast {
+    top: calc(76px + env(safe-area-inset-top, 0px));
+
+    right: 14px;
+
+    width: min(390px, calc(100vw - 28px));
+  }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
 
 @media (max-width: 600px) {
-
   .shobdo-notification-toast {
-    top: 72px;
+    top: calc(70px + env(safe-area-inset-top, 0px));
 
-    right: 16px;
-    left: 16px;
+    left: 12px;
+    right: 12px;
 
     width: auto;
+
+    border-radius: 15px;
   }
 
+  .shobdo-notification-toast-main {
+    padding: 13px 9px 13px 13px;
+    gap: 10px;
+  }
+
+  .shobdo-notification-toast-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+  }
+
+  .shobdo-notification-toast-content strong {
+    font-size: 13px;
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 360px) {
+  .shobdo-notification-toast {
+    left: 7px;
+    right: 7px;
+  }
+
+  .shobdo-notification-toast-main {
+    gap: 8px;
+    padding: 12px 7px 12px 11px;
+  }
+
+  .shobdo-notification-toast-content strong {
+    font-size: 12px;
+  }
+
+  .shobdo-notification-toast-close {
+    width: 30px;
+    height: 30px;
+
+    margin-right: 5px;
+  }
+}
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .shobdo-notification-toast {
+    animation: none;
+  }
+
+  .shobdo-notification-toast-main,
+  .shobdo-notification-toast-close {
+    transition: none;
+  }
 }
